@@ -17,6 +17,9 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  LayoutGrid,
+  LayoutList,
+  ArrowRight,
 } from 'lucide-react'
 import { api, apiPost } from '@/lib/api'
 
@@ -40,8 +43,19 @@ function unwrapList<T>(raw: any): T[] {
   return raw?.data ?? raw?.results ?? raw?.items ?? []
 }
 
+const statusConfig = (status: number, published: boolean) => {
+  if (published)
+    return { text: 'Published', variant: 'success' as const, icon: CheckCircle2 }
+  if (status === 2)
+    return { text: 'Draft', variant: 'warning' as const, icon: Clock }
+  if (status === 3)
+    return { text: 'Scheduled', variant: 'default' as const, icon: Clock }
+  return { text: 'Pending', variant: 'outline' as const, icon: AlertCircle }
+}
+
 export default function BlogPage() {
   const router = useRouter()
+  const [view, setView] = useState<'list' | 'grid'>('list')
   const [searchQuery, setSearchQuery] = useState('')
   const [posts, setPosts] = useState<BlogPostSummary[]>([])
   const [filteredPosts, setFilteredPosts] = useState<BlogPostSummary[]>([])
@@ -93,16 +107,6 @@ export default function BlogPage() {
     setGenerating(false)
   }
 
-  const statusConfig = (status: number, published: boolean) => {
-    if (published)
-      return { text: 'Published', variant: 'success' as const, icon: CheckCircle2 }
-    if (status === 2)
-      return { text: 'Draft', variant: 'warning' as const, icon: Clock }
-    if (status === 3)
-      return { text: 'Scheduled', variant: 'default' as const, icon: Clock }
-    return { text: 'Pending', variant: 'outline' as const, icon: AlertCircle }
-  }
-
   return (
     <div className="space-y-6">
       {/* Stat cards */}
@@ -142,6 +146,26 @@ export default function BlogPage() {
           <Filter className="h-3 w-3" /> Filter
         </Button>
 
+        {/* View toggle */}
+        <div className="flex border border-border rounded-sm overflow-hidden">
+          <button
+            onClick={() => setView('list')}
+            className={`flex items-center justify-center h-7 w-8 transition-colors ${
+              view === 'list' ? 'bg-primary text-white' : 'bg-white text-muted-foreground hover:bg-secondary'
+            }`}
+          >
+            <LayoutList className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={() => setView('grid')}
+            className={`flex items-center justify-center h-7 w-8 border-l border-border transition-colors ${
+              view === 'grid' ? 'bg-primary text-white' : 'bg-white text-muted-foreground hover:bg-secondary'
+            }`}
+          >
+            <LayoutGrid className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
         <div className="flex-1" />
 
         <Button
@@ -163,21 +187,24 @@ export default function BlogPage() {
         </Button>
       </div>
 
-      {/* Posts table */}
-      <Card>
-        <CardContent className="p-0">
-          {/* Table header */}
-          <div className="flex items-center gap-4 px-4 py-2.5 border-b border-border bg-secondary/50 text-[11px] font-semibold text-muted-foreground tracking-wide uppercase">
-            <div className="w-16" />
-            <div className="flex-1">Title</div>
-            <div className="w-24">Status</div>
-            <div className="w-24">Elements</div>
-            <div className="w-28">Created</div>
-            <div className="w-20" />
+      {/* Posts — empty / loading states shared */}
+      {loading ? (
+        view === 'grid' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i}>
+                <Skeleton className="h-44 w-full rounded-b-none" />
+                <CardContent className="p-4 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-1/2" />
+                </CardContent>
+              </Card>
+            ))}
           </div>
-
-          {loading ? (
-            <div className="p-4 space-y-3">
+        ) : (
+          <Card>
+            <CardContent className="p-4 space-y-3">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="flex items-center gap-4">
                   <Skeleton className="h-11 w-16" />
@@ -187,8 +214,12 @@ export default function BlogPage() {
                   </div>
                 </div>
               ))}
-            </div>
-          ) : filteredPosts.length === 0 ? (
+            </CardContent>
+          </Card>
+        )
+      ) : filteredPosts.length === 0 ? (
+        <Card>
+          <CardContent className="p-0">
             <div className="flex flex-col items-center py-16 px-6">
               <FileText className="h-10 w-10 text-muted-foreground/30 mb-3" />
               <p className="text-[14px] font-semibold">
@@ -203,87 +234,155 @@ export default function BlogPage() {
                 </Button>
               )}
             </div>
-          ) : (
-            <div>
-              {filteredPosts.map((post) => {
-                const status = statusConfig(post.status, post.is_published)
-                const StatusIcon = status.icon
-                return (
-                  <div
-                    key={post.id}
-                    className="flex items-center gap-4 px-4 py-3 border-b border-border/60 last:border-0 hover:bg-[#F8F8F8] cursor-pointer transition-colors group"
-                    onClick={() => router.push(`/blog/${post.id}`)}
-                  >
-                    {/* Thumbnail */}
-                    <div className="w-16 h-11 rounded-sm overflow-hidden bg-secondary shrink-0 border border-border/60">
-                      {post.cover_image ? (
-                        <img src={post.cover_image.url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <FileText className="h-4 w-4 text-muted-foreground/30" />
-                        </div>
-                      )}
+          </CardContent>
+        </Card>
+      ) : view === 'grid' ? (
+        /* ─── Grid view ─────────────────────────────────────── */
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 stagger">
+          {filteredPosts.map((post) => {
+            const status = statusConfig(post.status, post.is_published)
+            const StatusIcon = status.icon
+            return (
+              <Card
+                key={post.id}
+                className="overflow-hidden cursor-pointer hover:border-primary/40 transition-colors group"
+                onClick={() => router.push(`/blog/${post.id}`)}
+              >
+                {/* Cover image */}
+                <div className="h-44 bg-secondary overflow-hidden">
+                  {post.cover_image ? (
+                    <img
+                      src={post.cover_image.url}
+                      alt=""
+                      className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#EBF3FC] to-[#F2F2F2]">
+                      <FileText className="h-8 w-8 text-muted-foreground/20" />
                     </div>
+                  )}
+                </div>
 
-                    {/* Title + keyword */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold truncate group-hover:text-primary transition-colors">
-                        {post.title_text}
-                      </p>
-                      {post.focus_keyword && (
-                        <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
-                          {post.focus_keyword}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Status */}
-                    <div className="w-24">
-                      <Badge variant={status.variant} className="gap-1">
-                        <StatusIcon className="h-3 w-3" />
-                        {status.text}
-                      </Badge>
-                    </div>
-
-                    {/* Elements count */}
-                    <div className="w-24 text-[13px] text-muted-foreground">
-                      {post.elements.length} elements
-                    </div>
-
-                    {/* Date */}
-                    <div className="w-28 text-[12px] text-muted-foreground">
+                {/* Content */}
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant={status.variant} className="gap-1">
+                      <StatusIcon className="h-3 w-3" />
+                      {status.text}
+                    </Badge>
+                    <span className="text-[11px] text-muted-foreground ml-auto">
                       {new Date(post.created_at).toLocaleDateString('en-US', {
-                        month: 'short', day: 'numeric', year: 'numeric',
+                        month: 'short', day: 'numeric',
                       })}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="w-20 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={(e) => { e.stopPropagation(); router.push(`/blog/${post.id}`) }}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={(e) => { e.stopPropagation(); router.push(`/blog/${post.id}/preview`) }}
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground/30 my-auto" />
-                    </div>
+                    </span>
                   </div>
-                )
-              })}
+
+                  <h3 className="text-[14px] font-semibold leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                    {post.title_text}
+                  </h3>
+
+                  {post.excerpt && (
+                    <p className="text-[12px] text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
+                      {post.excerpt}
+                    </p>
+                  )}
+
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/60">
+                    <span className="text-[11px] text-muted-foreground">
+                      {post.elements.length} elements
+                      {post.focus_keyword && <> · {post.focus_keyword}</>}
+                    </span>
+                    <span className="text-primary text-[12px] font-semibold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      Open <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      ) : (
+        /* ─── List view ─────────────────────────────────────── */
+        <Card>
+          <CardContent className="p-0">
+            {/* Table header */}
+            <div className="flex items-center gap-4 px-4 py-2.5 border-b border-border bg-secondary/50 text-[11px] font-semibold text-muted-foreground tracking-wide uppercase">
+              <div className="w-16" />
+              <div className="flex-1">Title</div>
+              <div className="w-24">Status</div>
+              <div className="w-24">Elements</div>
+              <div className="w-28">Created</div>
+              <div className="w-20" />
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            {filteredPosts.map((post) => {
+              const status = statusConfig(post.status, post.is_published)
+              const StatusIcon = status.icon
+              return (
+                <div
+                  key={post.id}
+                  className="flex items-center gap-4 px-4 py-3 border-b border-border/60 last:border-0 hover:bg-[#F8F8F8] cursor-pointer transition-colors group"
+                  onClick={() => router.push(`/blog/${post.id}`)}
+                >
+                  <div className="w-16 h-11 rounded-sm overflow-hidden bg-secondary shrink-0 border border-border/60">
+                    {post.cover_image ? (
+                      <img src={post.cover_image.url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <FileText className="h-4 w-4 text-muted-foreground/30" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold truncate group-hover:text-primary transition-colors">
+                      {post.title_text}
+                    </p>
+                    {post.focus_keyword && (
+                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                        {post.focus_keyword}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="w-24">
+                    <Badge variant={status.variant} className="gap-1">
+                      <StatusIcon className="h-3 w-3" />
+                      {status.text}
+                    </Badge>
+                  </div>
+
+                  <div className="w-24 text-[13px] text-muted-foreground">
+                    {post.elements.length} elements
+                  </div>
+
+                  <div className="w-28 text-[12px] text-muted-foreground">
+                    {new Date(post.created_at).toLocaleDateString('en-US', {
+                      month: 'short', day: 'numeric', year: 'numeric',
+                    })}
+                  </div>
+
+                  <div className="w-20 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost" size="icon" className="h-7 w-7"
+                      onClick={(e) => { e.stopPropagation(); router.push(`/blog/${post.id}`) }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost" size="icon" className="h-7 w-7"
+                      onClick={(e) => { e.stopPropagation(); router.push(`/blog/${post.id}/preview`) }}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/30 my-auto" />
+                  </div>
+                </div>
+              )
+            })}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
