@@ -1,0 +1,20 @@
+import { registerElement } from '../registry'
+import { Introduction } from './Introduction'
+import { IntroductionPreview } from './IntroductionPreview'
+import { IntroductionLoading } from './IntroductionLoading'
+import { introductionEditSchema } from './edit_schema'
+import { introductionExample } from './example'
+
+export { Introduction } from './Introduction'
+export { IntroductionPreview } from './IntroductionPreview'
+export { IntroductionLoading } from './IntroductionLoading'
+export { introductionEditSchema } from './edit_schema'
+export { introductionExample } from './example'
+
+registerElement('introduction', {
+  component: Introduction,
+  preview: IntroductionPreview,
+  loading: IntroductionLoading,
+  editSchema: introductionEditSchema,
+  example: introductionExample,
+})
