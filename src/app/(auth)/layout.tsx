@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react'
+import { AuroraLogo } from '@/components/brand/logo'
 
 export default function AuthLayout({
   children,
@@ -14,8 +14,8 @@ export default function AuthLayout({
         <div className="absolute -left-12 -bottom-32 h-[400px] w-[400px] rounded-full bg-white/5" />
 
         <div className="relative z-10 max-w-sm px-10 text-center">
-          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-lg bg-white/15">
-            <Sparkles className="h-7 w-7 text-white" />
+          <div className="mx-auto mb-6">
+            <AuroraLogo size={56} light />
           </div>
           <h1 className="text-[28px] font-semibold text-white leading-tight">Aurora</h1>
           <p className="mt-1 text-[12px] font-medium uppercase tracking-[0.15em] text-white/50">

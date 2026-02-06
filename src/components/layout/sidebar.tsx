@@ -17,8 +17,8 @@ import {
   Target,
   ChevronDown,
   LogOut,
-  Sparkles,
 } from 'lucide-react'
+import { AuroraLogo } from '@/components/brand/logo'
 import { useState } from 'react'
 
 interface NavItem {
@@ -150,9 +150,7 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-[240px] flex-col bg-sidebar">
       {/* Logo bar */}
       <div className="flex h-12 items-center gap-2.5 px-4 border-b border-sidebar-border">
-        <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-sidebar-accent">
-          <Sparkles className="h-3.5 w-3.5 text-white" />
-        </div>
+        <AuroraLogo size={24} light />
         <span className="text-[15px] font-semibold text-white tracking-tight">
           Aurora
         </span>
