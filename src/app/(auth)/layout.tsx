@@ -14,7 +14,7 @@ export default function AuthLayout({
         <div className="absolute -left-12 -bottom-32 h-[400px] w-[400px] rounded-full bg-white/5" />
 
         <div className="relative z-10 max-w-sm px-10 text-center">
-          <div className="mx-auto mb-6">
+          <div className="flex justify-center mb-6">
             <AuroraLogo size={56} light />
           </div>
           <h1 className="text-[28px] font-semibold text-white leading-tight">Aurora</h1>
