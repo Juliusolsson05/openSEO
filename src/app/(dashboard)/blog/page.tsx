@@ -33,6 +33,12 @@ interface BlogPostSummary {
   excerpt: string
 }
 
+/** Unwrap DRF / backend paginated response */
+function unwrapList<T>(raw: any): T[] {
+  if (Array.isArray(raw)) return raw
+  return raw?.data ?? raw?.results ?? raw?.items ?? []
+}
+
 export default function BlogPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'search' | 'generate'>('search')
@@ -47,12 +53,18 @@ export default function BlogPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true)
-    const [postsRes, titlesRes] = await Promise.all([
-      api<BlogPostSummary[]>('/api/aurora/blog/posts/list/'),
-      api<BlogTitle[]>('/api/aurora/blog/titles/'),
-    ])
-    if (postsRes.data) setPosts(postsRes.data)
-    if (titlesRes.data) setTitles(titlesRes.data)
+    try {
+      const [postsRes, titlesRes] = await Promise.all([
+        api<any>('/api/aurora/blog/posts/'),
+        api<any>('/api/aurora/blog/titles/'),
+      ])
+      if (postsRes.data) setPosts(unwrapList<BlogPostSummary>(postsRes.data))
+      if (postsRes.error) console.error('[Blog] posts error:', postsRes.error)
+      if (titlesRes.data) setTitles(unwrapList<BlogTitle>(titlesRes.data))
+      if (titlesRes.error) console.error('[Blog] titles error:', titlesRes.error)
+    } catch (err) {
+      console.error('[Blog] fetchData error:', err)
+    }
     setLoading(false)
   }, [])
 
