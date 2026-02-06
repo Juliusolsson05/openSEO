@@ -1,17 +1,82 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { apiPost } from '@/lib/api'
+import { ArrowRight } from 'lucide-react'
 
 export default function RegisterPage() {
+  const router = useRouter()
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    if (password !== confirm) {
+      setError('Passwords do not match.')
+      return
+    }
+
+    setLoading(true)
+    const { error } = await apiPost('/api/auth/register/', {
+      name,
+      email,
+      password,
+      password_confirm: confirm,
+    })
+
+    if (error) {
+      setError('Could not create account. Please try again.')
+      setLoading(false)
+      return
+    }
+
+    router.push('/login')
+  }
+
   return (
     <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Create an Account</CardTitle>
+      <CardHeader>
+        <CardTitle>Create account</CardTitle>
       </CardHeader>
-      <CardContent className="text-center">
-        <p className="text-muted-foreground mb-4">Registration page under construction.</p>
-        <Link href="/login" className="text-primary hover:underline">
-          Back to Login
-        </Link>
+      <CardContent>
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="text-[13px] font-semibold mb-1 block">Full name</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} className="h-9" required />
+          </div>
+          <div>
+            <label className="text-[13px] font-semibold mb-1 block">Email</label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-9" required />
+          </div>
+          <div>
+            <label className="text-[13px] font-semibold mb-1 block">Password</label>
+            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-9" required />
+          </div>
+          <div>
+            <label className="text-[13px] font-semibold mb-1 block">Confirm password</label>
+            <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="h-9" required />
+          </div>
+
+          {error && <p className="text-[12px] text-destructive bg-[#FDE7E9] border border-destructive/20 rounded-sm px-3 py-2">{error}</p>}
+
+          <Button type="submit" className="w-full h-9" disabled={loading}>
+            {loading ? 'Creating account...' : <>Create account <ArrowRight className="h-3.5 w-3.5" /></>}
+          </Button>
+
+          <p className="text-center text-[12px] text-muted-foreground">
+            Already have an account? <Link href="/login" className="text-primary font-semibold hover:underline">Sign in</Link>
+          </p>
+        </form>
       </CardContent>
     </Card>
   )
