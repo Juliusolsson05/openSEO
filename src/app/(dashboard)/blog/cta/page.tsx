@@ -1,8 +1,361 @@
+'use client'
+
+/**
+ * CTA Management — ported from aurora_dashboard/pages/apps/blog/cta.vue
+ * Campaigns with nested CTAs. CRUD for both.
+ */
+
+import { useEffect, useState } from 'react'
+import { useCtaStore } from '@/stores/cta-store'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Image as ImageIcon,
+  ExternalLink,
+  X,
+  Target,
+  Info,
+} from 'lucide-react'
+
+interface ModalState {
+  type: 'campaign-create' | 'campaign-edit' | 'cta-create' | 'cta-edit' | 'cta-detail' | null
+  data?: any
+}
+
 export default function BlogCtaPage() {
+  const store = useCtaStore()
+  const [modal, setModal] = useState<ModalState>({ type: null })
+
+  // Form state
+  const [campaignName, setCampaignName] = useState('')
+  const [ctaForm, setCtaForm] = useState({
+    campaignId: 0,
+    title: '',
+    description: '',
+    link: '',
+    generateImage: true,
+    image: null as File | null,
+  })
+
+  useEffect(() => {
+    store.fetchCTAs()
+  }, [])
+
+  const handleCreateCampaign = async () => {
+    if (!campaignName.trim()) return
+    await store.createNewCampaign(campaignName.trim())
+    setCampaignName('')
+    setModal({ type: null })
+  }
+
+  const handleEditCampaign = async () => {
+    if (!campaignName.trim() || !modal.data?.id) return
+    await store.editCampaign(modal.data.id, campaignName.trim())
+    setCampaignName('')
+    setModal({ type: null })
+  }
+
+  const handleDeleteCampaign = async (id: number) => {
+    if (!confirm('Delete this campaign and all its CTAs?')) return
+    await store.deleteCampaign(id)
+  }
+
+  const handleCreateCTA = async () => {
+    if (!ctaForm.title || !ctaForm.campaignId) return
+    await store.createNewCTA({
+      campaignId: ctaForm.campaignId,
+      title: ctaForm.title,
+      description: ctaForm.description,
+      link: ctaForm.link,
+      generateImage: ctaForm.generateImage,
+      image: ctaForm.image,
+    })
+    resetCtaForm()
+    setModal({ type: null })
+  }
+
+  const handleEditCTA = async () => {
+    if (!ctaForm.title || !modal.data?.id) return
+    await store.editCTA(modal.data.id, {
+      title: ctaForm.title,
+      description: ctaForm.description,
+      link: ctaForm.link,
+      generateImage: false,
+      image: ctaForm.image,
+    })
+    resetCtaForm()
+    setModal({ type: null })
+  }
+
+  const handleDeleteCTA = async (id: number) => {
+    if (!confirm('Delete this CTA?')) return
+    await store.deleteCTA(id)
+  }
+
+  const resetCtaForm = () => {
+    setCtaForm({ campaignId: 0, title: '', description: '', link: '', generateImage: true, image: null })
+  }
+
+  const openEditCampaign = (campaign: any) => {
+    setCampaignName(campaign.name)
+    setModal({ type: 'campaign-edit', data: campaign })
+  }
+
+  const openCreateCTA = () => {
+    resetCtaForm()
+    if (store.campaigns.length > 0) {
+      setCtaForm((f) => ({ ...f, campaignId: store.campaigns[0].id }))
+    }
+    setModal({ type: 'cta-create' })
+  }
+
+  const openEditCTA = (cta: any, campaignId: number) => {
+    setCtaForm({
+      campaignId,
+      title: cta.title,
+      description: cta.description,
+      link: cta.link || '',
+      generateImage: false,
+      image: null,
+    })
+    setModal({ type: 'cta-edit', data: cta })
+  }
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Blog Cta</h1>
-      <p className="text-muted-foreground">This page is under construction.</p>
+      <div className="flex gap-6">
+        {/* Main content */}
+        <div className="flex-1 space-y-6">
+          {store.isLoading && store.campaigns.length === 0 ? (
+            <div className="space-y-4">
+              {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+            </div>
+          ) : store.campaigns.length === 0 ? (
+            <Card>
+              <CardContent className="py-16 text-center">
+                <Target className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-[14px] font-semibold">No campaigns yet</p>
+                <p className="text-[13px] text-muted-foreground mt-1">
+                  Create your first campaign to start adding CTAs.
+                </p>
+                <Button className="mt-4 gap-1.5" onClick={() => { setCampaignName(''); setModal({ type: 'campaign-create' }) }}>
+                  <Plus className="h-3.5 w-3.5" /> Create Campaign
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            store.campaigns.map((campaign) => (
+              <Card key={campaign.id}>
+                <CardHeader className="flex-row items-center justify-between pb-2">
+                  <CardTitle>{campaign.name}</CardTitle>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditCampaign(campaign)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteCampaign(campaign.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {campaign.ctas.length === 0 ? (
+                    <div className="rounded-sm border border-border bg-warning-light px-3 py-2 text-[12px] text-[#835C00]">
+                      No CTAs under <strong>{campaign.name}</strong> yet.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {campaign.ctas.map((cta) => (
+                        <Card key={cta.id} className="overflow-hidden">
+                          {cta.image && (
+                            <div className="h-32 bg-secondary overflow-hidden">
+                              <img src={cta.image} alt="" className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                          <CardContent className="p-3">
+                            <h4 className="text-[13px] font-semibold">{cta.title}</h4>
+                            <p className="text-[12px] text-muted-foreground mt-1 line-clamp-2">{cta.description}</p>
+                            <div className="flex gap-1 mt-3">
+                              <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={() => setModal({ type: 'cta-detail', data: cta })}>
+                                Details
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditCTA(cta, campaign.id)}>
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteCTA(cta.id)}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
+
+          {/* CTA info */}
+          <Card>
+            <CardContent className="p-4 flex gap-3">
+              <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <div className="text-[12px] text-muted-foreground">
+                <strong className="text-foreground">What is a CTA?</strong>
+                <p className="mt-1 leading-relaxed">
+                  A Call to Action (CTA) is a strategic component designed to convert visitors into customers.
+                  CTAs guide users to perform specific actions like making a purchase or contacting your team.
+                  They can be seamlessly integrated throughout your blog posts.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar */}
+        <div className="w-56 shrink-0 hidden lg:block">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle>Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button className="w-full gap-1.5" size="sm" onClick={() => { setCampaignName(''); setModal({ type: 'campaign-create' }) }}>
+                <Plus className="h-3 w-3" /> New Campaign
+              </Button>
+              <Button variant="outline" className="w-full gap-1.5" size="sm" onClick={openCreateCTA} disabled={store.campaigns.length === 0}>
+                <Plus className="h-3 w-3" /> New CTA
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Modals */}
+      {modal.type && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setModal({ type: null })}>
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <CardHeader className="flex-row items-center justify-between">
+              <CardTitle>
+                {modal.type === 'campaign-create' && 'Create Campaign'}
+                {modal.type === 'campaign-edit' && 'Edit Campaign'}
+                {modal.type === 'cta-create' && 'Create CTA'}
+                {modal.type === 'cta-edit' && 'Edit CTA'}
+                {modal.type === 'cta-detail' && modal.data?.title}
+              </CardTitle>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setModal({ type: null })}>
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Campaign forms */}
+              {(modal.type === 'campaign-create' || modal.type === 'campaign-edit') && (
+                <>
+                  <div>
+                    <label className="text-[13px] font-semibold mb-1 block">Campaign Name</label>
+                    <Input value={campaignName} onChange={(e) => setCampaignName(e.target.value)} placeholder="e.g. Summer Sale" className="h-9" />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => setModal({ type: null })}>Cancel</Button>
+                    <Button onClick={modal.type === 'campaign-create' ? handleCreateCampaign : handleEditCampaign}>
+                      {modal.type === 'campaign-create' ? 'Create' : 'Save'}
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {/* CTA forms */}
+              {(modal.type === 'cta-create' || modal.type === 'cta-edit') && (
+                <>
+                  {modal.type === 'cta-create' && (
+                    <div>
+                      <label className="text-[13px] font-semibold mb-1 block">Campaign</label>
+                      <select
+                        value={ctaForm.campaignId}
+                        onChange={(e) => setCtaForm((f) => ({ ...f, campaignId: Number(e.target.value) }))}
+                        className="h-9 w-full rounded-sm border border-border bg-white px-3 text-[13px] focus:border-primary focus:outline-none"
+                      >
+                        {store.campaigns.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-[13px] font-semibold mb-1 block">Title</label>
+                    <Input value={ctaForm.title} onChange={(e) => setCtaForm((f) => ({ ...f, title: e.target.value }))} className="h-9" />
+                  </div>
+                  <div>
+                    <label className="text-[13px] font-semibold mb-1 block">Description</label>
+                    <textarea
+                      value={ctaForm.description}
+                      onChange={(e) => setCtaForm((f) => ({ ...f, description: e.target.value }))}
+                      rows={3}
+                      className="w-full rounded-sm border border-border bg-white px-3 py-2 text-[13px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[13px] font-semibold mb-1 block">Link URL</label>
+                    <Input value={ctaForm.link} onChange={(e) => setCtaForm((f) => ({ ...f, link: e.target.value }))} placeholder="https://..." className="h-9" />
+                  </div>
+                  {modal.type === 'cta-create' && (
+                    <label className="flex items-center gap-2 text-[13px]">
+                      <input
+                        type="checkbox"
+                        checked={ctaForm.generateImage}
+                        onChange={(e) => setCtaForm((f) => ({ ...f, generateImage: e.target.checked }))}
+                        className="accent-primary"
+                      />
+                      Generate image with AI
+                    </label>
+                  )}
+                  {!ctaForm.generateImage && (
+                    <div>
+                      <label className="text-[13px] font-semibold mb-1 block">Upload Image</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setCtaForm((f) => ({ ...f, image: e.target.files?.[0] || null }))}
+                        className="text-[12px]"
+                      />
+                    </div>
+                  )}
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => setModal({ type: null })}>Cancel</Button>
+                    <Button onClick={modal.type === 'cta-create' ? handleCreateCTA : handleEditCTA}>
+                      {modal.type === 'cta-create' ? 'Create' : 'Save'}
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {/* CTA detail */}
+              {modal.type === 'cta-detail' && modal.data && (
+                <div className="space-y-3">
+                  {modal.data.image && (
+                    <img src={modal.data.image} alt="" className="w-full rounded-sm border border-border" />
+                  )}
+                  <p className="text-[13px]">{modal.data.description}</p>
+                  {modal.data.link && (
+                    <a
+                      href={modal.data.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[13px] text-primary hover:underline"
+                    >
+                      <ExternalLink className="h-3 w-3" /> {modal.data.link}
+                    </a>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
