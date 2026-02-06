@@ -33,45 +33,47 @@ export default function LoginPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Sign in to your Aurora dashboard
-        </p>
-      </div>
+      <h2 className="text-[24px] font-semibold text-foreground leading-tight">
+        Sign in
+      </h2>
+      <p className="mt-1.5 text-[13px] text-muted-foreground">
+        to continue to Aurora Dashboard
+      </p>
 
       {/* Demo credentials */}
-      <div className="mb-6 rounded-xl border border-primary/20 bg-primary-muted p-4">
-        <p className="text-xs font-medium text-primary mb-2">Demo Credentials</p>
-        <div className="space-y-1 text-[13px] text-muted-foreground">
-          <p>
-            Admin: <code className="text-foreground font-medium">admin@demo.com</code> / <code className="text-foreground font-medium">admin</code>
-          </p>
-          <p>
-            Client: <code className="text-foreground font-medium">client@demo.com</code> / <code className="text-foreground font-medium">client</code>
-          </p>
+      <div className="mt-6 rounded-sm border border-[#DEECF9] bg-[#F0F6FF] p-3">
+        <p className="text-[11px] font-semibold text-primary uppercase tracking-wide mb-1.5">
+          Demo Accounts
+        </p>
+        <div className="space-y-0.5 text-[12px] text-[#505050]">
+          <p>Admin: <span className="font-semibold text-foreground">admin@demo.com</span> / <span className="font-semibold text-foreground">admin</span></p>
+          <p>Client: <span className="font-semibold text-foreground">client@demo.com</span> / <span className="font-semibold text-foreground">client</span></p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <label className="text-[13px] font-medium text-foreground">Email</label>
+      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <div>
+          <label className="block text-[13px] font-semibold text-foreground mb-1">
+            Email
+          </label>
           <Input
             type="email"
-            placeholder="you@company.com"
+            placeholder="name@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className="h-9"
             autoFocus
-            className="h-10"
           />
         </div>
 
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label className="text-[13px] font-medium text-foreground">Password</label>
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-[13px] font-semibold text-foreground">
+              Password
+            </label>
             <Link
               href="/forgot-password"
-              className="text-xs text-primary hover:text-primary/80 transition-colors"
+              className="text-[12px] text-primary hover:underline"
             >
               Forgot password?
             </Link>
@@ -81,17 +83,17 @@ export default function LoginPage() {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="h-10"
+            className="h-9"
           />
         </div>
 
         {error && (
-          <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3">
-            <p className="text-sm text-destructive">{error}</p>
+          <div className="rounded-sm border border-[#FDE7E9] bg-[#FDE7E9] px-3 py-2">
+            <p className="text-[12px] text-destructive">{error}</p>
           </div>
         )}
 
-        <Button type="submit" className="w-full h-10 mt-2" disabled={loading}>
+        <Button type="submit" className="w-full h-9" disabled={loading}>
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -105,10 +107,10 @@ export default function LoginPage() {
           )}
         </Button>
 
-        <p className="text-center text-[13px] text-muted-foreground pt-2">
-          New to Aurora?{' '}
-          <Link href="/register" className="text-primary font-medium hover:text-primary/80 transition-colors">
-            Create an account
+        <p className="text-center text-[12px] text-muted-foreground pt-1">
+          No account?{' '}
+          <Link href="/register" className="text-primary font-semibold hover:underline">
+            Create one
           </Link>
         </p>
       </form>

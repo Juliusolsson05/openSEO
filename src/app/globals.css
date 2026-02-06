@@ -1,112 +1,61 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
-
-/* ─── Premium Design System: Aurora by Nordtools ──────────────── */
+/* ─── Aurora × Azure Design System ────────────────────────────── */
+/* Light-only. Microsoft/Azure brand language.                     */
 
 @theme {
-  /* Light mode — warm neutral base with indigo accent */
-  --color-background: oklch(0.985 0.002 260);
-  --color-foreground: oklch(0.13 0.02 260);
-  --color-card: oklch(1 0 0);
-  --color-card-foreground: oklch(0.13 0.02 260);
-  --color-popover: oklch(1 0 0);
-  --color-popover-foreground: oklch(0.13 0.02 260);
+  /* Core palette — Azure blue family */
+  --color-background: #F2F2F2;
+  --color-foreground: #1A1A1A;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #1A1A1A;
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #1A1A1A;
 
-  /* Indigo-violet primary — premium, trustworthy */
-  --color-primary: oklch(0.55 0.18 270);
-  --color-primary-foreground: oklch(0.99 0.005 270);
-  --color-primary-muted: oklch(0.55 0.18 270 / 0.08);
+  /* Azure blue */
+  --color-primary: #0078D4;
+  --color-primary-foreground: #FFFFFF;
+  --color-primary-hover: #106EBE;
+  --color-primary-light: #DEECF9;
 
-  --color-secondary: oklch(0.965 0.005 260);
-  --color-secondary-foreground: oklch(0.25 0.02 260);
+  --color-secondary: #F5F5F5;
+  --color-secondary-foreground: #323130;
 
-  --color-muted: oklch(0.955 0.005 260);
-  --color-muted-foreground: oklch(0.45 0.015 260);
+  --color-muted: #F5F5F5;
+  --color-muted-foreground: #616161;
 
-  --color-accent: oklch(0.955 0.008 270);
-  --color-accent-foreground: oklch(0.25 0.02 260);
+  --color-accent: #F0F6FF;
+  --color-accent-foreground: #0078D4;
 
-  --color-destructive: oklch(0.58 0.22 25);
-  --color-destructive-foreground: oklch(0.99 0 0);
+  --color-destructive: #D13438;
+  --color-destructive-foreground: #FFFFFF;
 
-  --color-border: oklch(0.915 0.005 260);
-  --color-input: oklch(0.915 0.005 260);
-  --color-ring: oklch(0.55 0.18 270);
+  --color-border: #E1E1E1;
+  --color-input: #E1E1E1;
+  --color-ring: #0078D4;
 
-  /* Semantic accents */
-  --color-success: oklch(0.62 0.17 155);
-  --color-success-foreground: oklch(0.99 0 0);
-  --color-warning: oklch(0.75 0.15 75);
-  --color-warning-foreground: oklch(0.25 0.05 75);
-  --color-info: oklch(0.6 0.15 240);
-  --color-info-foreground: oklch(0.99 0 0);
+  /* Semantic */
+  --color-success: #107C10;
+  --color-success-light: #DFF6DD;
+  --color-warning: #FFB900;
+  --color-warning-light: #FFF4CE;
+  --color-info: #0078D4;
+  --color-info-light: #DEECF9;
 
-  /* Sidebar */
-  --color-sidebar: oklch(0.16 0.02 270);
-  --color-sidebar-foreground: oklch(0.75 0.015 260);
-  --color-sidebar-muted: oklch(0.25 0.02 270);
-  --color-sidebar-accent: oklch(0.55 0.18 270);
-  --color-sidebar-border: oklch(0.22 0.02 270);
+  /* Sidebar — dark Azure nav */
+  --color-sidebar: #1B1B1F;
+  --color-sidebar-foreground: #D2D2D2;
+  --color-sidebar-muted: #2D2D30;
+  --color-sidebar-accent: #0078D4;
+  --color-sidebar-border: #3E3E42;
+  --color-sidebar-hover: #37373D;
 
-  /* Radius */
-  --radius: 0.75rem;
-  --radius-sm: 0.5rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.25rem;
-
-  /* Shadows */
-  --shadow-xs: 0 1px 2px oklch(0 0 0 / 0.04);
-  --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.06), 0 1px 2px oklch(0 0 0 / 0.04);
-  --shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.06), 0 2px 4px -2px oklch(0 0 0 / 0.04);
-  --shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.06), 0 4px 6px -4px oklch(0 0 0 / 0.04);
-  --shadow-glow: 0 0 20px oklch(0.55 0.18 270 / 0.15);
-
-  /* Animations */
-  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Radius — Microsoft uses subtle, almost square */
+  --radius: 4px;
+  --radius-sm: 2px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
 }
-
-/* ─── Dark mode overrides ─────────────────────────────────────── */
-
-.dark {
-  --color-background: oklch(0.11 0.015 270);
-  --color-foreground: oklch(0.93 0.005 260);
-  --color-card: oklch(0.145 0.015 270);
-  --color-card-foreground: oklch(0.93 0.005 260);
-  --color-popover: oklch(0.145 0.015 270);
-  --color-popover-foreground: oklch(0.93 0.005 260);
-
-  --color-primary: oklch(0.7 0.16 270);
-  --color-primary-foreground: oklch(0.12 0.02 270);
-  --color-primary-muted: oklch(0.7 0.16 270 / 0.1);
-
-  --color-secondary: oklch(0.18 0.015 270);
-  --color-secondary-foreground: oklch(0.88 0.005 260);
-
-  --color-muted: oklch(0.18 0.015 270);
-  --color-muted-foreground: oklch(0.55 0.015 260);
-
-  --color-accent: oklch(0.2 0.02 270);
-  --color-accent-foreground: oklch(0.88 0.005 260);
-
-  --color-border: oklch(0.22 0.015 270);
-  --color-input: oklch(0.22 0.015 270);
-  --color-ring: oklch(0.7 0.16 270);
-
-  --color-sidebar: oklch(0.09 0.015 270);
-  --color-sidebar-foreground: oklch(0.7 0.015 260);
-  --color-sidebar-muted: oklch(0.16 0.02 270);
-  --color-sidebar-accent: oklch(0.7 0.16 270);
-  --color-sidebar-border: oklch(0.16 0.015 270);
-
-  --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.2), 0 1px 2px oklch(0 0 0 / 0.15);
-  --shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.25), 0 2px 4px -2px oklch(0 0 0 / 0.15);
-  --shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.3), 0 4px 6px -4px oklch(0 0 0 / 0.2);
-  --shadow-glow: 0 0 20px oklch(0.7 0.16 270 / 0.2);
-}
-
-/* ─── Base layer ──────────────────────────────────────────────── */
 
 @layer base {
   * {
@@ -114,94 +63,66 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    @apply bg-background text-foreground;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-size: 14px;
+    line-height: 1.5;
   }
 
-  /* Refined scrollbar */
+  /* Scrollbar — subtle, Microsoft-style */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: oklch(0.7 0 0 / 0.2);
-    border-radius: 999px;
+    background: #C8C8C8;
+    border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.5 0 0 / 0.3);
-  }
-  .dark ::-webkit-scrollbar-thumb {
-    background: oklch(0.4 0 0 / 0.3);
+    background: #A0A0A0;
   }
 
-  /* Selection */
   ::selection {
-    background: oklch(0.55 0.18 270 / 0.2);
-    color: inherit;
+    background: #DEECF9;
+    color: #1A1A1A;
   }
 }
 
-/* ─── Utility layer ───────────────────────────────────────────── */
-
 @layer utilities {
-  /* Glass effect */
-  .glass {
-    background: oklch(1 0 0 / 0.7);
-    backdrop-filter: blur(12px) saturate(1.5);
-    -webkit-backdrop-filter: blur(12px) saturate(1.5);
-  }
-  .dark .glass {
-    background: oklch(0.14 0.015 270 / 0.7);
+  /* Azure gradient wash — light blue → white */
+  .azure-gradient {
+    background: linear-gradient(135deg, #EBF3FC 0%, #F2F2F2 60%, #FFFFFF 100%);
   }
 
-  /* Gradient text */
-  .text-gradient {
-    background: linear-gradient(135deg, oklch(0.55 0.18 270), oklch(0.6 0.2 300));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  /* Azure hero gradient — dark blue band */
+  .azure-hero {
+    background: linear-gradient(135deg, #002050 0%, #0078D4 100%);
   }
 
-  /* Subtle shimmer for loading */
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-  }
-  .shimmer {
-    background: linear-gradient(90deg, transparent 25%, oklch(0.55 0.18 270 / 0.05) 50%, transparent 75%);
-    background-size: 200% 100%;
-    animation: shimmer 2s ease-in-out infinite;
-  }
-
-  /* Glow ring for focused/active elements */
-  .ring-glow {
-    box-shadow: 0 0 0 1px oklch(0.55 0.18 270 / 0.3), var(--shadow-glow);
-  }
-
-  /* Fade-in animation */
-  @keyframes fade-in {
-    from { opacity: 0; transform: translateY(6px); }
+  /* Fade in */
+  @keyframes azure-fade-in {
+    from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
   }
   .animate-in {
-    animation: fade-in 0.4s var(--ease-spring) both;
+    animation: azure-fade-in 0.3s ease-out both;
   }
 
   /* Stagger children */
   .stagger > * {
-    animation: fade-in 0.4s var(--ease-spring) both;
+    animation: azure-fade-in 0.3s ease-out both;
   }
   .stagger > *:nth-child(1) { animation-delay: 0ms; }
-  .stagger > *:nth-child(2) { animation-delay: 50ms; }
-  .stagger > *:nth-child(3) { animation-delay: 100ms; }
-  .stagger > *:nth-child(4) { animation-delay: 150ms; }
-  .stagger > *:nth-child(5) { animation-delay: 200ms; }
-  .stagger > *:nth-child(6) { animation-delay: 250ms; }
-  .stagger > *:nth-child(7) { animation-delay: 300ms; }
-  .stagger > *:nth-child(8) { animation-delay: 350ms; }
+  .stagger > *:nth-child(2) { animation-delay: 40ms; }
+  .stagger > *:nth-child(3) { animation-delay: 80ms; }
+  .stagger > *:nth-child(4) { animation-delay: 120ms; }
+  .stagger > *:nth-child(5) { animation-delay: 160ms; }
+  .stagger > *:nth-child(6) { animation-delay: 200ms; }
+  .stagger > *:nth-child(7) { animation-delay: 240ms; }
+  .stagger > *:nth-child(8) { animation-delay: 280ms; }
 }

@@ -7,29 +7,29 @@ export default function AuthLayout({
 }) {
   return (
     <div className="flex min-h-screen">
-      {/* Left panel — branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-sidebar items-center justify-center overflow-hidden">
-        {/* Gradient orbs */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-primary/20 blur-[120px]" />
-          <div className="absolute bottom-1/4 right-1/4 h-64 w-64 rounded-full bg-purple-500/15 blur-[100px]" />
-        </div>
+      {/* Left — Azure-style branding panel */}
+      <div className="hidden lg:flex lg:w-[480px] azure-hero items-center justify-center relative overflow-hidden">
+        {/* Subtle diagonal accent */}
+        <div className="absolute -right-24 -top-24 h-[500px] w-[500px] rounded-full bg-white/5" />
+        <div className="absolute -left-12 -bottom-32 h-[400px] w-[400px] rounded-full bg-white/5" />
 
-        <div className="relative z-10 max-w-md px-12 text-center">
-          <div className="mx-auto mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-purple-500 shadow-2xl shadow-primary/30">
-            <Sparkles className="h-8 w-8 text-white" />
+        <div className="relative z-10 max-w-sm px-10 text-center">
+          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-lg bg-white/15">
+            <Sparkles className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Aurora</h1>
-          <p className="mt-2 text-sm text-sidebar-foreground/60 tracking-wide uppercase">by Nordtools</p>
-          <p className="mt-6 text-[15px] leading-relaxed text-sidebar-foreground/70">
-            AI-powered content engine. Generate, optimize, and publish blog content that ranks — on autopilot.
+          <h1 className="text-[28px] font-semibold text-white leading-tight">Aurora</h1>
+          <p className="mt-1 text-[12px] font-medium uppercase tracking-[0.15em] text-white/50">
+            by Nordtools
+          </p>
+          <p className="mt-6 text-[15px] leading-relaxed text-white/70">
+            AI-powered content engine. Generate, optimize, and publish blog content that ranks.
           </p>
         </div>
       </div>
 
-      {/* Right panel — form */}
-      <div className="flex flex-1 items-center justify-center bg-background p-6">
-        <div className="w-full max-w-[420px] animate-in">{children}</div>
+      {/* Right — form area */}
+      <div className="flex flex-1 items-center justify-center bg-white p-8">
+        <div className="w-full max-w-[380px] animate-in">{children}</div>
       </div>
     </div>
   )
