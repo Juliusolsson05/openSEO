@@ -1,0 +1,140 @@
+'use client'
+
+/**
+ * BaseEdit — edit modal that renders dynamic form fields based on edit schemas.
+ * Ported from aurora_dashboard/views/apps/blog/elements/BaseEdit.vue
+ */
+
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { EditFieldRenderer } from './edit/EditFieldRenderer'
+import { useBlogStore } from '@/stores/blog-store'
+import { useElementsStore } from '@/stores/elements-store'
+import { getEditSchema } from './registry'
+import type { ElementType, EditField } from './types'
+
+interface BaseEditProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  content: any
+  blogId: number
+  elementId: number
+  onContentUpdated?: (content: any) => void
+}
+
+export function BaseEdit({
+  open,
+  onOpenChange,
+  content,
+  blogId,
+  elementId,
+  onContentUpdated,
+}: BaseEditProps) {
+  const [editedContent, setEditedContent] = useState<any>({})
+  const [loading, setLoading] = useState(false)
+  const post = useBlogStore((s) => s.post)
+  const updateElement = useElementsStore((s) => s.updateElement)
+
+  // Determine element type from store
+  const elementType = post?.elements.find((el) => el.id === elementId)
+    ?.element_type as ElementType | undefined
+
+  const editSchema = elementType ? getEditSchema(elementType) : null
+
+  useEffect(() => {
+    if (open) {
+      setEditedContent({ ...content })
+    }
+  }, [open, content])
+
+  const handleFieldUpdate = (key: string, value: any, passthrough?: boolean) => {
+    if (passthrough) {
+      setEditedContent(value)
+    } else {
+      setEditedContent((prev: any) => ({ ...prev, [key]: value }))
+    }
+  }
+
+  const handlePooledFieldUpdate = (keys: string[], value: any) => {
+    setEditedContent((prev: any) => {
+      const updated = { ...prev }
+      keys.forEach((key) => {
+        updated[key] = value[key]
+      })
+      return updated
+    })
+  }
+
+  const handleSave = async () => {
+    setLoading(true)
+    try {
+      const result = await updateElement(elementId, editedContent, blogId)
+      if (result.success) {
+        onContentUpdated?.(editedContent)
+        onOpenChange(false)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-background rounded-lg shadow-lg w-full max-w-xl max-h-[80vh] overflow-y-auto">
+        <div className="p-6">
+          <h2 className="text-lg font-semibold mb-4">
+            {editSchema?.title || 'Edit Content'}
+          </h2>
+
+          {editSchema ? (
+            <div className="space-y-4">
+              {Object.entries(editSchema.fields).map(([key, field]) => {
+                // Pooled field
+                if ('poolField' in field && field.poolField) {
+                  const pf = field.poolField
+                  const pooledValue = pf.keys.reduce(
+                    (acc: any, k: string) => ({ ...acc, [k]: editedContent[k] }),
+                    {}
+                  )
+                  return (
+                    <EditFieldRenderer
+                      key={key}
+                      field={pf.field}
+                      value={pooledValue}
+                      onChange={(val) => handlePooledFieldUpdate(pf.keys, val)}
+                    />
+                  )
+                }
+
+                // Regular field
+                const editField = field as EditField
+                const value = editField.passthrough ? editedContent : editedContent[key]
+                return (
+                  <EditFieldRenderer
+                    key={key}
+                    field={editField}
+                    value={value}
+                    onChange={(val) => handleFieldUpdate(key, val, editField.passthrough)}
+                  />
+                )
+              })}
+            </div>
+          ) : (
+            <p className="text-muted-foreground">No edit schema available for this element type.</p>
+          )}
+
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={loading}>
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

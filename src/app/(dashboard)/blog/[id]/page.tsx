@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { useBlogStore } from '@/stores/blog-store'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ElementRenderer } from '@/components/blog/elements/ElementRenderer'
 
 export default function BlogPostPage() {
   const params = useParams()
@@ -60,31 +61,16 @@ export default function BlogPostPage() {
               />
             )}
 
-            {/* Elements */}
-            <div className="space-y-6">
-              {post.elements.map((element) => {
-                if (element.isLoading) {
-                  return (
-                    <div key={element.id} className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-2/3" />
-                    </div>
-                  )
-                }
-
-                return (
-                  <div key={element.id} className="border-b pb-4 last:border-0">
-                    <span className="text-xs uppercase text-muted-foreground">
-                      {element.element_type}
-                    </span>
-                    {/* Element components will be rendered here in Phase 4 */}
-                    <pre className="mt-2 text-sm whitespace-pre-wrap">
-                      {JSON.stringify(element.content, null, 2)}
-                    </pre>
-                  </div>
-                )
-              })}
+            {/* Elements — rendered via the element system */}
+            <div className="space-y-2">
+              {post.elements.map((element) => (
+                <ElementRenderer
+                  key={element.id}
+                  element={element}
+                  blogId={post.id}
+                  editable={true}
+                />
+              ))}
             </div>
           </CardContent>
         </Card>
