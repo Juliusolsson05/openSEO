@@ -1,0 +1,244 @@
+'use client'
+
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import {
+  X,
+  Send,
+  Linkedin,
+  Facebook,
+  Copy,
+  Eye,
+  Loader2,
+  Sparkles,
+} from 'lucide-react'
+import { api, apiPost } from '@/lib/api'
+
+interface Message {
+  sender: 'user' | 'quillo'
+  text: string
+  type?: 'facebook' | 'linkedin'
+}
+
+interface LinkedInData {
+  json: any
+  html: string
+}
+
+interface Props {
+  isOpen: boolean
+  blogPostId: number
+  onClose: () => void
+}
+
+export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Props) {
+  const [messages, setMessages] = useState<Message[]>([
+    { sender: 'quillo', text: '' },
+  ])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [linkedInLoading, setLinkedInLoading] = useState(false)
+  const [linkedInProgress, setLinkedInProgress] = useState(0)
+  const [linkedInPost, setLinkedInPost] = useState<LinkedInData | null>(null)
+  const [showLinkedInPreview, setShowLinkedInPreview] = useState(false)
+  const chatRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = useCallback(() => {
+    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight
+  }, [])
+
+  useEffect(() => { scrollToBottom() }, [messages, loading, scrollToBottom])
+
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return
+    const text = input
+    setInput('')
+    setMessages((m) => [...m, { sender: 'user', text }])
+    setLoading(true)
+
+    try {
+      const { data } = await apiPost<string>('/api/aurora/blog/quillo/analyze/chat', {
+        blog_post_id: blogPostId,
+        question: text,
+      })
+      setMessages((m) => [...m, { sender: 'quillo', text: data ?? 'No response.' }])
+    } catch {
+      setMessages((m) => [...m, { sender: 'quillo', text: 'Sorry, I encountered an error. Please try again.' }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const convertToLinkedIn = async () => {
+    setLinkedInLoading(true)
+    setLinkedInProgress(0)
+    setLinkedInPost(null)
+
+    const interval = setInterval(() => {
+      setLinkedInProgress((p) => Math.min(p + 3.3, 99))
+    }, 1000)
+
+    try {
+      const { data } = await api<any>(`/api/aurora/debug/testing_linkedin_whole/?blog_post_id=${blogPostId}`)
+      if (data?.json && data?.html) {
+        setLinkedInPost({ json: data.json, html: data.html.replace(/\n/g, '') })
+      }
+    } catch {
+      setMessages((m) => [...m, { sender: 'quillo', text: 'Error converting to LinkedIn post.' }])
+    } finally {
+      clearInterval(interval)
+      setLinkedInLoading(false)
+      setLinkedInProgress(100)
+    }
+  }
+
+  const convertToFacebook = async () => {
+    setLoading(true)
+    try {
+      const { data } = await apiPost<any>('/api/aurora/blog/quillo/post/facebook', {
+        blog_post_id: blogPostId,
+      })
+      if (data?.facebook_post) {
+        setMessages((m) => [...m, { sender: 'quillo', text: data.facebook_post, type: 'facebook' }])
+      }
+    } catch {
+      setMessages((m) => [...m, { sender: 'quillo', text: 'Error converting to Facebook post.' }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const copyText = (text: string) => {
+    navigator.clipboard.writeText(text.replace(/<[^>]+>/g, ''))
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
+        <Card className="w-full max-w-3xl h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+          {/* Header */}
+          <CardHeader className="flex-row items-center justify-between bg-[#1B1B1F] text-white rounded-t-sm px-4 py-3 shrink-0">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <CardTitle className="text-white text-[16px]">Chat with Quillo</CardTitle>
+            </div>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/10" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </CardHeader>
+
+          {/* Messages */}
+          <CardContent className="flex-1 overflow-y-auto p-4 space-y-3" ref={chatRef}>
+            {messages.map((msg, i) => (
+              <div key={i} className={`max-w-[80%] ${msg.sender === 'user' ? 'ml-auto' : 'mr-auto'}`}>
+                {msg.sender === 'quillo' && i === 0 ? (
+                  <div className="bg-[#EBF3FC] border-l-[3px] border-primary p-4 rounded-sm">
+                    <p className="text-[14px] font-semibold mb-2">Hello, I'm Quillo! 👋</p>
+                    <p className="text-[13px] text-muted-foreground mb-2">I can help you with your content:</p>
+                    <ul className="text-[12px] text-muted-foreground space-y-1 list-disc pl-4">
+                      <li>Content analysis and suggestions</li>
+                      <li>SEO optimization</li>
+                      <li>Readability and engagement improvements</li>
+                      <li>Convert to LinkedIn or Facebook formats</li>
+                      <li>Writing style recommendations</li>
+                    </ul>
+                  </div>
+                ) : msg.type === 'facebook' ? (
+                  <div className="bg-[#F0F8FF] border-l-[3px] border-[#1877F2] p-4 rounded-sm">
+                    <p className="text-[13px] font-semibold mb-2">Facebook Post 📘</p>
+                    <div className="bg-white border border-border rounded-sm p-3 text-[13px] whitespace-pre-wrap">{msg.text}</div>
+                    <Button variant="outline" size="sm" className="mt-2 gap-1 text-[11px]" onClick={() => copyText(msg.text)}>
+                      <Copy className="h-3 w-3" /> Copy
+                    </Button>
+                  </div>
+                ) : (
+                  <div className={`rounded-sm p-3 text-[13px] leading-relaxed ${
+                    msg.sender === 'user' ? 'bg-[#EBF3FC] text-foreground' : 'bg-secondary text-foreground'
+                  }`}>
+                    {msg.text}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {loading && (
+              <div className="mr-auto bg-secondary rounded-sm p-3 flex items-center gap-2 text-[13px] text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Quillo is thinking...
+              </div>
+            )}
+
+            {linkedInLoading && (
+              <div className="w-full bg-secondary rounded-sm p-3">
+                <div className="w-full h-[6px] rounded-full bg-border overflow-hidden mb-2">
+                  <div className="h-full bg-[#0077B5] rounded-full transition-all" style={{ width: `${linkedInProgress}%` }} />
+                </div>
+                <span className="text-[12px] text-muted-foreground">Converting to LinkedIn post...</span>
+              </div>
+            )}
+
+            {linkedInPost && (
+              <div className="w-full bg-[#E6F2FF] border-l-[3px] border-[#0077B5] p-4 rounded-sm">
+                <p className="text-[13px] font-semibold mb-2">LinkedIn Post 🔗</p>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="gap-1 text-[11px]" onClick={() => copyText(linkedInPost.html)}>
+                    <Copy className="h-3 w-3" /> Copy
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-1 text-[11px]" onClick={() => setShowLinkedInPreview(true)}>
+                    <Eye className="h-3 w-3" /> Preview
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+
+          {/* Input area */}
+          <div className="border-t border-border px-4 py-3 flex items-center gap-2 shrink-0">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+              placeholder="Type your message..."
+              disabled={loading}
+              className="flex-1 h-9 rounded-sm border border-border bg-white px-3 text-[13px] placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none disabled:opacity-50"
+            />
+            <Button size="sm" onClick={sendMessage} disabled={!input.trim() || loading} className="gap-1">
+              <Send className="h-3.5 w-3.5" /> Send
+            </Button>
+          </div>
+
+          {/* Social conversion actions */}
+          <div className="border-t border-border px-4 py-2 flex items-center justify-center gap-2 shrink-0">
+            <Button variant="outline" size="sm" className="gap-1 text-[11px]" onClick={convertToLinkedIn} disabled={loading || linkedInLoading}>
+              <Linkedin className="h-3.5 w-3.5" /> LinkedIn
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1 text-[11px]" onClick={convertToFacebook} disabled={loading || linkedInLoading}>
+              <Facebook className="h-3.5 w-3.5" /> Facebook
+            </Button>
+          </div>
+        </Card>
+      </div>
+
+      {/* LinkedIn preview */}
+      {showLinkedInPreview && linkedInPost && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30" onClick={() => setShowLinkedInPreview(false)}>
+          <Card className="w-full max-w-xl" onClick={(e) => e.stopPropagation()}>
+            <CardHeader className="flex-row items-center justify-between">
+              <CardTitle>LinkedIn Post Preview</CardTitle>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowLinkedInPreview(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="prose text-[13px]" dangerouslySetInnerHTML={{ __html: linkedInPost.html }} />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </>
+  )
+}

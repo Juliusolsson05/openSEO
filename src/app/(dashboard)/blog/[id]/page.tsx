@@ -22,6 +22,8 @@ import {
 
 import '@/components/blog/elements'
 import { ElementRenderer } from '@/components/blog/elements/ElementRenderer'
+import QuilloChat from '@/components/blog/QuilloChat'
+import QuilloAutopilot from '@/components/blog/QuilloAutopilot'
 
 export default function BlogPostPage() {
   const params = useParams()
@@ -231,6 +233,10 @@ export default function BlogPostPage() {
           )}
         </div>
       </div>
+
+      {/* Quillo AI */}
+      <QuilloChat blogPostId={post.id} />
+      <QuilloAutopilot postId={post.id} />
     </div>
   )
 }
