@@ -6,6 +6,7 @@ import { createFacebookPost } from '@/server/ai/quillo/create-facebook-post'
 import { generateSeoAnalysis } from '@/server/ai/quillo/generate-seo-analysis'
 import { elementService } from '@/server/services/element.service'
 import * as quilloRepository from '@/server/repositories/quillo.repository'
+import { appendTaskLog, completeTask, createTask, failTask, setTaskRunning } from '@/server/tasks/runtime'
 
 export class QuilloService {
   async analyzePost(companyId: number, postId: number) {
@@ -85,32 +86,70 @@ export class QuilloService {
   }
 
   async runAutopilot(companyId: number, blogPostId: number) {
-    const taskId = crypto.randomUUID()
+    const task = createTask()
+    const taskId = task.id
 
     const asyncWork = async () => {
       try {
+        setTaskRunning(taskId, 'autopilot')
+
         const post = await prisma.blogPost.findFirst({
           where: { id: blogPostId, companyId },
           include: { elements: { orderBy: { order: 'asc' } } },
         })
-        if (!post) return
+
+        if (!post) {
+          failTask(taskId, 'Blog post not found')
+          return
+        }
+
+        appendTaskLog(taskId, {
+          stage: 'autopilot',
+          type: 'planned',
+          data: {
+            post_id: post.id,
+            total_elements: post.elements.length,
+          },
+        })
 
         for (const el of post.elements) {
           const type = el.element_type.toLowerCase()
-          if (['paragraph', 'introduction', 'conclusion', 'list_paragraph'].includes(type)) {
-            try {
-              await elementService.humanizeElementByContext(companyId, blogPostId, el.id)
-            } catch (e) {
-              console.error(`[Autopilot] Failed to improve element ${el.id}:`, e)
-            }
+          if (!['paragraph', 'introduction', 'conclusion', 'list_paragraph'].includes(type)) {
+            continue
+          }
+
+          appendTaskLog(taskId, {
+            stage: 'content_improvement',
+            type: 'started',
+            data: { element_id: el.id, element_type: type },
+          })
+
+          try {
+            await elementService.humanizeElementByContext(companyId, blogPostId, el.id)
+            appendTaskLog(taskId, {
+              stage: 'content_improvement',
+              type: 'completed',
+              data: { element_id: el.id, element_type: type },
+            })
+          } catch (e) {
+            const message = e instanceof Error ? e.message : String(e)
+            appendTaskLog(taskId, {
+              stage: 'content_improvement',
+              type: 'error',
+              data: { element_id: el.id, element_type: type, error: message },
+            })
+            console.error(`[Autopilot] Failed to improve element ${el.id}:`, e)
           }
         }
+
+        completeTask(taskId, 'Autopilot enhancement complete.')
       } catch (e) {
         console.error('[Autopilot] Error:', e)
+        failTask(taskId, e instanceof Error ? e.message : String(e))
       }
     }
 
-    asyncWork()
+    void asyncWork()
     return { task_id: taskId, status: 'accepted' as const }
   }
 

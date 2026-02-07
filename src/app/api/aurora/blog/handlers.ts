@@ -11,6 +11,7 @@ import { quilloService } from '@/server/services/quillo.service'
 import { blogPostIdSchema, listBlogPostsQuerySchema, updateBlogPostSchema } from '@/server/validators/blog.validators'
 import { addElementSchema, updateElementSchema } from '@/server/validators/element.validators'
 import { serializeElement } from '@/server/utils/element-type'
+import { getTask } from '@/server/tasks/runtime'
 
 function buildBlogPostsPageUrl(searchParams: URLSearchParams, page: number, limit: number) {
   const params = new URLSearchParams(searchParams)
@@ -454,15 +455,29 @@ export const quilloAutopilotHandler = apiHandler(async (ctx) => {
   return raw(await quilloService.runAutopilot(ctx.companyId!, blogPostId), 202)
 })
 
-export const quilloAutopilotStatusHandler = apiHandler(async () => raw({
-  status: 'completed',
-  logs: [{
-    stage: 'autopilot',
-    type: 'status',
-    timestamp: new Date().toISOString(),
-    data: { status: 'completed', message: 'Autopilot enhancement complete.' },
-  }],
-}))
+export const quilloAutopilotStatusHandler = apiHandler(async (ctx) => {
+  const taskId = String(ctx.params.taskId ?? '')
+  if (!taskId) {
+    return raw({ detail: 'taskId is required' }, 400)
+  }
+
+  const task = getTask(taskId)
+  if (!task) {
+    return raw({
+      task_id: taskId,
+      status: 'not_available',
+      detail: 'Task not found or expired',
+      logs: [],
+    }, 404)
+  }
+
+  return raw({
+    task_id: task.id,
+    status: task.status,
+    logs: task.logs,
+    error: task.error ?? null,
+  })
+})
 
 export const companyQuilloHandler = apiHandler(async (ctx) => raw(await quilloService.getCompanyAnalysis(ctx.companyId!)))
 export const companyQuilloAnalyzeHandler = apiHandler(async (ctx) => raw(await quilloService.analyzeCompany(ctx.companyId!)))
