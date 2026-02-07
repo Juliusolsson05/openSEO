@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { api, apiDelete, apiPost, apiPut } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -35,6 +37,7 @@ export default function DictionaryDetailPage() {
   const [search, setSearch] = useState('')
   const [definitionFilter, setDefinitionFilter] = useState<'all' | 'missing' | 'ready'>('all')
   const [loadingWordId, setLoadingWordId] = useState<number | null>(null)
+  const [generatingAll, setGeneratingAll] = useState(false)
   const [editing, setEditing] = useState<Record<number, Partial<Word>>>({})
 
   const fetchDictionary = async () => {
@@ -88,43 +91,68 @@ export default function DictionaryDetailPage() {
 
   const generateDefinition = async (word: Word) => {
     setLoadingWordId(word.id)
-    const { error } = await apiPost('/api/aurora/dictionary/generation/definition/generate/', {
-      session_id: Number(params.id),
-      word: word.keyword,
-    })
-    setLoadingWordId(null)
-    if (error) return window.alert(error.message)
-    fetchDictionary()
+    try {
+      const { error } = await apiPost('/api/aurora/dictionary/generation/definition/generate/', {
+        session_id: Number(params.id),
+        word: word.keyword,
+      })
+      if (error) throw error
+      await fetchDictionary()
+      toast.success(`Definition generated for "${word.keyword}"`)
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to generate definition')
+    } finally {
+      setLoadingWordId(null)
+    }
   }
 
   const generateMissing = async () => {
-    const { error } = await apiPost('/api/aurora/dictionary/generation/definition/generate/', {
-      session_id: Number(params.id),
-      include_priority_two: true,
-      batch_size: 20,
-    })
-    if (error) return window.alert(error.message)
-    fetchDictionary()
+    setGeneratingAll(true)
+    const toastId = toast.loading('Generating definitions...')
+    try {
+      const { error } = await apiPost('/api/aurora/dictionary/generation/definition/generate/', {
+        session_id: Number(params.id),
+        include_priority_two: true,
+        batch_size: 20,
+      })
+      if (error) throw error
+      await fetchDictionary()
+      toast.success('Missing definitions generated', { id: toastId })
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to generate missing definitions', { id: toastId })
+    } finally {
+      setGeneratingAll(false)
+    }
   }
 
   const saveWord = async (id: number) => {
     const patch = editing[id]
     if (!patch) return
-    const { error } = await apiPut(`/api/aurora/dictionary/modify/word/${id}`, patch)
-    if (error) return window.alert(error.message)
-    setEditing((prev) => {
-      const next = { ...prev }
-      delete next[id]
-      return next
-    })
-    fetchDictionary()
+    try {
+      const { error } = await apiPut(`/api/aurora/dictionary/modify/word/${id}`, patch)
+      if (error) throw error
+      setEditing((prev) => {
+        const next = { ...prev }
+        delete next[id]
+        return next
+      })
+      await fetchDictionary()
+      toast.success('Word saved')
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to save word')
+    }
   }
 
   const deleteWord = async (id: number) => {
     if (!window.confirm('Delete word?')) return
-    const { error } = await apiDelete(`/api/aurora/dictionary/modify/word/${id}`)
-    if (error) return window.alert(error.message)
-    fetchDictionary()
+    try {
+      const { error } = await apiDelete(`/api/aurora/dictionary/modify/word/${id}`)
+      if (error) throw error
+      await fetchDictionary()
+      toast.success('Word deleted')
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to delete word')
+    }
   }
 
   if (!dictionary) {
@@ -146,7 +174,16 @@ export default function DictionaryDetailPage() {
               <p className="text-sm text-muted-foreground">{dictionary.subject} · {dictionary.language.toUpperCase()}</p>
             </div>
             <div className="flex gap-2">
-              <Button className="rounded-sm" onClick={generateMissing}>Generate missing definitions</Button>
+              <Button className="rounded-sm" onClick={generateMissing} disabled={generatingAll}>
+                {generatingAll ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate missing definitions'
+                )}
+              </Button>
               <Button variant="outline" className="rounded-sm">Export</Button>
             </div>
           </div>

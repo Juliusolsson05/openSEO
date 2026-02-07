@@ -15,6 +15,7 @@ import { RegenerateModal } from './modals/RegenerateModal'
 import { ConfirmDeleteModal } from './modals/ConfirmDeleteModal'
 import { EnhanceModal } from './modals/EnhanceModal'
 import { ComponentSelectModal } from './modals/ComponentSelectModal'
+import { toast } from 'sonner'
 import type { ElementType } from './types'
 
 interface BaseElementProps {
@@ -89,6 +90,7 @@ export function BaseElement({
         status: 'in_progress',
         elementType: payload.new_element_type,
       })
+      const toastId = toast.loading('Regenerating element...')
       try {
         const result = await elementsStore.regenerateElement({
           blog_post_id: blogId,
@@ -99,11 +101,14 @@ export function BaseElement({
         })
         if (result.success && post) {
           await fetchPost(post.id, true)
+          toast.success('Element regenerated', { id: toastId })
         } else {
           removeSkeletonLoaderByOperationId(opId)
+          toast.error('Failed to regenerate element', { id: toastId })
         }
       } catch {
         removeSkeletonLoaderByOperationId(opId)
+        toast.error('Failed to regenerate element', { id: toastId })
       }
     },
     [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId]
@@ -118,15 +123,19 @@ export function BaseElement({
       type: 'enhancement',
       status: 'in_progress',
     })
+    const toastId = toast.loading('Enhancing element...')
     try {
       const result = await elementsStore.enhanceElement(blogId, elementId)
       if (result.success && post) {
         await fetchPost(post.id, true)
+        toast.success('Element enhanced', { id: toastId })
       } else {
         removeSkeletonLoaderByOperationId(opId)
+        toast.error('Failed to enhance element', { id: toastId })
       }
     } catch {
       removeSkeletonLoaderByOperationId(opId)
+      toast.error('Failed to enhance element', { id: toastId })
     }
   }, [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId])
 
@@ -138,15 +147,21 @@ export function BaseElement({
       type: 'enhancement',
       status: 'in_progress',
     })
+    const toastId = toast.loading('Humanizing element...')
     try {
       const result = await elementsStore.humanizeElement(blogId, elementId)
       if (result.success && post) {
+        // TODO: implement proper task polling
+        await new Promise((resolve) => setTimeout(resolve, 3000))
         await fetchPost(post.id, true)
+        toast.success('Element humanized', { id: toastId })
       } else {
         removeSkeletonLoaderByOperationId(opId)
+        toast.error('Failed to humanize element', { id: toastId })
       }
     } catch {
       removeSkeletonLoaderByOperationId(opId)
+      toast.error('Failed to humanize element', { id: toastId })
     }
   }, [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId])
 
@@ -158,7 +173,12 @@ export function BaseElement({
       if (result.success) {
         onElementDeleted?.(elementId)
         if (post) await fetchPost(post.id, true)
+        toast.success('Element deleted')
+      } else {
+        toast.error(result.error || 'Failed to delete element')
       }
+    } catch {
+      toast.error('Failed to delete element')
     } finally {
       setLoading(false)
     }
@@ -176,6 +196,7 @@ export function BaseElement({
         position: { afterElementId: elementId },
         elementType,
       })
+      const toastId = toast.loading('Adding element...')
       try {
         const result = await elementsStore.addElement({
           blog_post_id: blogId,
@@ -185,11 +206,14 @@ export function BaseElement({
         })
         if (result.success && post) {
           await fetchPost(post.id, true)
+          toast.success('Element added', { id: toastId })
         } else {
           removeSkeletonLoaderByOperationId(opId)
+          toast.error('Failed to add element', { id: toastId })
         }
       } catch {
         removeSkeletonLoaderByOperationId(opId)
+        toast.error('Failed to add element', { id: toastId })
       }
     },
     [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId]

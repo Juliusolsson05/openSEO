@@ -23,6 +23,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import { api, apiPost } from '@/lib/api'
+import { toast } from 'sonner'
 
 interface BlogTitle { id: number; title_text: string; status: number | string }
 
@@ -115,9 +116,16 @@ export default function BlogPage() {
 
   const generateNext = async () => {
     setGenerating(true)
-    await apiPost('/api/aurora/blog/posts/generate/', {})
-    await fetchData()
-    setGenerating(false)
+    try {
+      const { error } = await apiPost('/api/aurora/blog/posts/generate/', {})
+      if (error) throw error
+      await fetchData()
+      toast.success('Blog post generated')
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to generate post')
+    } finally {
+      setGenerating(false)
+    }
   }
 
   return (

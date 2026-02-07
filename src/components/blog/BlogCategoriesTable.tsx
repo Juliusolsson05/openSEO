@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { api, apiDelete, apiPost, apiPut } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -129,26 +130,47 @@ export default function BlogCategoriesTable() {
 
   const runGenerate = async () => {
     setActionLoading((v) => ({ ...v, generate: true }))
-    await apiPost('/api/aurora/blog/categories/generate/', {})
-    await fetchCategories()
-    setActionLoading((v) => ({ ...v, generate: false }))
+    try {
+      const { error } = await apiPost('/api/aurora/blog/categories/generate/', {})
+      if (error) throw error
+      await fetchCategories()
+      toast.success('Categories generated')
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to generate categories')
+    } finally {
+      setActionLoading((v) => ({ ...v, generate: false }))
+    }
   }
 
   const runCategorize = async () => {
     setActionLoading((v) => ({ ...v, categorize: true }))
-    await apiPost('/api/aurora/blog/categories/categorize/', {})
-    await fetchCategories()
-    setActionLoading((v) => ({ ...v, categorize: false }))
+    try {
+      const { error } = await apiPost('/api/aurora/blog/categories/categorize/', {})
+      if (error) throw error
+      await fetchCategories()
+      toast.success('Titles categorized')
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to categorize titles')
+    } finally {
+      setActionLoading((v) => ({ ...v, categorize: false }))
+    }
   }
 
   const addCategory = async () => {
     if (!newCategoryName.trim()) return
     setActionLoading((v) => ({ ...v, add: true }))
-    await apiPost('/api/aurora/blog/categories/', { name: newCategoryName.trim() })
-    setNewCategoryName('')
-    setAddOpen(false)
-    await fetchCategories()
-    setActionLoading((v) => ({ ...v, add: false }))
+    try {
+      const { error } = await apiPost('/api/aurora/blog/categories/', { name: newCategoryName.trim() })
+      if (error) throw error
+      setNewCategoryName('')
+      setAddOpen(false)
+      await fetchCategories()
+      toast.success('Category added')
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to add category')
+    } finally {
+      setActionLoading((v) => ({ ...v, add: false }))
+    }
   }
 
   const openEdit = (category: Category) => {
@@ -160,32 +182,54 @@ export default function BlogCategoriesTable() {
   const saveEdit = async () => {
     if (!editCategoryId || !editCategoryName.trim()) return
     setActionLoading((v) => ({ ...v, edit: true }))
-    await apiPut(`/api/aurora/blog/categories/${editCategoryId}/`, {
-      name: editCategoryName.trim(),
-    })
-    setEditOpen(false)
-    setEditCategoryId(null)
-    setEditCategoryName('')
-    await fetchCategories()
-    setActionLoading((v) => ({ ...v, edit: false }))
+    try {
+      const { error } = await apiPut(`/api/aurora/blog/categories/${editCategoryId}/`, {
+        name: editCategoryName.trim(),
+      })
+      if (error) throw error
+      setEditOpen(false)
+      setEditCategoryId(null)
+      setEditCategoryName('')
+      await fetchCategories()
+      toast.success('Category updated')
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to update category')
+    } finally {
+      setActionLoading((v) => ({ ...v, edit: false }))
+    }
   }
 
   const deleteOne = async (id: number) => {
     setActionLoading((v) => ({ ...v, deleteOneId: id }))
-    await apiDelete(`/api/aurora/blog/categories/${id}/`)
-    await fetchCategories()
-    setActionLoading((v) => ({ ...v, deleteOneId: 0 }))
+    try {
+      const { error } = await apiDelete(`/api/aurora/blog/categories/${id}/`)
+      if (error) throw error
+      await fetchCategories()
+      toast.success('Category deleted')
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to delete category')
+    } finally {
+      setActionLoading((v) => ({ ...v, deleteOneId: 0 }))
+    }
   }
 
   const deleteSelected = async () => {
     if (selectedIds.length === 0) return
     setActionLoading((v) => ({ ...v, deleteSelected: true }))
-    await apiPost('/api/aurora/blog/categories/bulk-delete/', {
-      category_ids: selectedIds,
-    })
-    setSelectedIds([])
-    await fetchCategories()
-    setActionLoading((v) => ({ ...v, deleteSelected: false }))
+    try {
+      const deleteCount = selectedIds.length
+      const { error } = await apiPost('/api/aurora/blog/categories/bulk-delete/', {
+        category_ids: selectedIds,
+      })
+      if (error) throw error
+      setSelectedIds([])
+      await fetchCategories()
+      toast.success(`Deleted ${deleteCount} categories`)
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to delete selected categories')
+    } finally {
+      setActionLoading((v) => ({ ...v, deleteSelected: false }))
+    }
   }
 
   return (

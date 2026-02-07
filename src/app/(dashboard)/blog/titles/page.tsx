@@ -3,7 +3,7 @@
 import { Label } from '@/components/ui/label'
 
 import { useEffect, useState, useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -18,11 +18,12 @@ import {
   X,
   Play,
   Plus,
-  RefreshCw,
-  ChevronDown,
+  Loader2,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { useTitlesStore } from '@/stores/titles-store'
 import { apiPost } from '@/lib/api'
+import { useAction } from '@/hooks/use-action'
 
 const statusMap: Record<number, { text: string; variant: 'outline' | 'default' | 'success' | 'warning' }> = {
   1: { text: 'Pending', variant: 'warning' },
@@ -38,13 +39,23 @@ export default function BlogTitlesPage() {
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editText, setEditText] = useState('')
-  const [generating, setGenerating] = useState(false)
+  const [generatingAll, setGeneratingAll] = useState(false)
+  const [bulkGenerating, setBulkGenerating] = useState(false)
+  const [generatingTitleId, setGeneratingTitleId] = useState<number | null>(null)
+  const [deletingTitleId, setDeletingTitleId] = useState<number | null>(null)
+  const [savingEdit, setSavingEdit] = useState(false)
   const [showGenForm, setShowGenForm] = useState(false)
   const [genTopic, setGenTopic] = useState('')
   const [genCount, setGenCount] = useState('5')
   const [genLoading, setGenLoading] = useState(false)
+  const { run: runGenerateAll } = useAction({
+    successMessage: false,
+    errorMessage: false,
+  })
 
-  useEffect(() => { fetchTitles() }, [fetchTitles])
+  useEffect(() => {
+    fetchTitles()
+  }, [fetchTitles])
 
   const filtered = useMemo(() => {
     let items = titlesData
@@ -58,6 +69,12 @@ export default function BlogTitlesPage() {
 
   const pendingCount = titlesData.filter((t) => t.status === 1).length
   const generatedCount = titlesData.filter((t) => t.status === 2).length
+
+  const getErrorMessage = (e: unknown, fallback: string) => {
+    if (e instanceof Error && e.message) return e.message
+    if (typeof e === 'string' && e.trim()) return e
+    return fallback
+  }
 
   const toggleSelect = (id: number) => {
     setSelected((prev) => {
@@ -82,57 +99,145 @@ export default function BlogTitlesPage() {
 
   const saveEdit = async () => {
     if (editingId === null) return
-    await updateTitle(editingId, { title_text: editText })
-    setEditingId(null)
+    setSavingEdit(true)
+    try {
+      await updateTitle(editingId, { title_text: editText })
+      toast.success('Title updated')
+      setEditingId(null)
+    } catch (e) {
+      toast.error(getErrorMessage(e, 'Failed to update title'))
+    } finally {
+      setSavingEdit(false)
+    }
   }
 
   const handleDelete = async (id: number) => {
-    await deleteTitle(id)
-    setSelected((prev) => { const n = new Set(prev); n.delete(id); return n })
+    setDeletingTitleId(id)
+    try {
+      await deleteTitle(id)
+      setSelected((prev) => {
+        const n = new Set(prev)
+        n.delete(id)
+        return n
+      })
+      toast.success('Title deleted')
+    } catch (e) {
+      toast.error(getErrorMessage(e, 'Failed to delete title'))
+    } finally {
+      setDeletingTitleId(null)
+    }
   }
 
   const handleBulkDelete = async () => {
     if (!confirm(`Delete ${selected.size} titles?`)) return
-    for (const id of selected) {
-      await deleteTitle(id)
+
+    const total = selected.size
+    if (total === 0) return
+
+    const toastId = toast.loading(`Deleting 0/${total}...`)
+    let completed = 0
+
+    try {
+      for (const id of selected) {
+        await deleteTitle(id)
+        completed += 1
+        toast.loading(`Deleting ${completed}/${total}...`, { id: toastId })
+      }
+      setSelected(new Set())
+      toast.success(`Deleted ${completed} title${completed === 1 ? '' : 's'}`, { id: toastId })
+    } catch (e) {
+      toast.error(getErrorMessage(e, `Failed deleting titles (${completed}/${total} complete)`), { id: toastId })
     }
-    setSelected(new Set())
   }
 
   const handleGenerate = async (id: number) => {
-    await generatePost(id)
+    setGeneratingTitleId(id)
+    try {
+      await generatePost(id)
+      toast.success('Post generated')
+    } catch (e) {
+      toast.error(getErrorMessage(e, 'Failed to generate post'))
+    } finally {
+      setGeneratingTitleId(null)
+    }
   }
 
   const handleBulkGenerate = async () => {
-    setGenerating(true)
-    for (const id of selected) {
+    const pendingSelected = Array.from(selected).filter((id) => {
       const title = titlesData.find((t) => t.id === id)
-      if (title && title.status === 1) {
-        await generatePost(id)
-      }
+      return title?.status === 1
+    })
+
+    const total = pendingSelected.length
+    if (total === 0) {
+      toast.error('No pending titles selected')
+      return
     }
-    setSelected(new Set())
-    setGenerating(false)
+
+    setBulkGenerating(true)
+    const toastId = toast.loading(`Generating 0/${total}...`)
+    let completed = 0
+
+    try {
+      for (const id of pendingSelected) {
+        setGeneratingTitleId(id)
+        await generatePost(id)
+        completed += 1
+        toast.loading(`Generating ${completed}/${total}...`, { id: toastId })
+      }
+      setSelected(new Set())
+      toast.success(`Generated ${completed} post${completed === 1 ? '' : 's'}`, { id: toastId })
+    } catch (e) {
+      toast.error(getErrorMessage(e, `Failed generating posts (${completed}/${total} complete)`), { id: toastId })
+    } finally {
+      setGeneratingTitleId(null)
+      setBulkGenerating(false)
+    }
   }
 
   const handleGenerateAll = async () => {
-    setGenerating(true)
-    await apiPost('/api/aurora/blog/posts/generate/', {})
-    await fetchTitles()
-    setGenerating(false)
+    setGeneratingAll(true)
+    const total = pendingCount
+    const toastId = toast.loading(total > 0 ? `Generating posts... (0/${total})` : 'Generating posts...')
+
+    try {
+      const ok = await runGenerateAll(async () => {
+        const { error } = await apiPost('/api/aurora/blog/posts/generate/', {})
+        if (error) throw error
+        await fetchTitles()
+        return true
+      })
+
+      if (!ok) throw new Error('Failed to generate all posts')
+
+      toast.success('Finished generating all pending posts', { id: toastId })
+    } catch (e) {
+      toast.error(getErrorMessage(e, 'Failed to generate all posts'), { id: toastId })
+    } finally {
+      setGeneratingAll(false)
+    }
   }
 
   const handleGenerateTitles = async () => {
     if (!genTopic.trim()) return
     setGenLoading(true)
-    await apiPost('/api/aurora/blog/titles/generate/', {
-      topic: genTopic,
-      count: parseInt(genCount) || 5,
-    })
-    await fetchTitles()
-    setGenTopic('')
-    setGenLoading(false)
-    setShowGenForm(false)
+
+    try {
+      const { error } = await apiPost('/api/aurora/blog/titles/generate/', {
+        topic: genTopic,
+        count: parseInt(genCount) || 5,
+      })
+      if (error) throw error
+
+      await fetchTitles()
+      toast.success(`Generated titles for "${genTopic}"`)
+      setGenTopic('')
+      setShowGenForm(false)
+    } catch (e) {
+      toast.error(getErrorMessage(e, 'Failed to generate titles'))
+    } finally {
+      setGenLoading(false)
+    }
   }
 
   return (
@@ -204,19 +309,19 @@ export default function BlogTitlesPage() {
         {/* Bulk actions */}
         {selected.size > 0 && (
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5 text-destructive" onClick={handleBulkDelete}>
+            <Button variant="outline" size="sm" className="gap-1.5 text-destructive" onClick={handleBulkDelete} disabled={bulkGenerating || generatingAll}>
               <Trash2 className="h-3 w-3" /> Delete ({selected.size})
             </Button>
-            <Button size="sm" className="gap-1.5" onClick={handleBulkGenerate} disabled={generating}>
-              <Play className="h-3 w-3" /> Generate ({selected.size})
+            <Button size="sm" className="gap-1.5" onClick={handleBulkGenerate} disabled={bulkGenerating || generatingAll}>
+              {bulkGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />} Generate ({selected.size})
             </Button>
           </div>
         )}
 
         {pendingCount > 0 && (
-          <Button size="sm" className="gap-1.5" onClick={handleGenerateAll} disabled={generating}>
-            {generating ? (
-              <><div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" /> Generating...</>
+          <Button size="sm" className="gap-1.5" onClick={handleGenerateAll} disabled={generatingAll || bulkGenerating}>
+            {generatingAll ? (
+              <><Loader2 className="h-3 w-3 animate-spin" /> Generating...</>
             ) : (
               <><Sparkles className="h-3.5 w-3.5" /> Generate All ({pendingCount})</>
             )}
@@ -255,7 +360,7 @@ export default function BlogTitlesPage() {
               </div>
               <Button onClick={handleGenerateTitles} disabled={genLoading || !genTopic.trim()} className="gap-1.5">
                 {genLoading ? (
-                  <><div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" /> Generating...</>
+                  <><Loader2 className="h-3 w-3 animate-spin" /> Generating...</>
                 ) : (
                   <><Sparkles className="h-3.5 w-3.5" /> Generate Titles</>
                 )}
@@ -311,6 +416,8 @@ export default function BlogTitlesPage() {
               {filtered.map((title) => {
                 const status = statusMap[title.status] || statusMap[1]
                 const isEditing = editingId === title.id
+                const isGeneratingThisRow = generatingTitleId === title.id
+                const isDeletingThisRow = deletingTitleId === title.id
 
                 return (
                   <div key={title.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-border/60 last:border-0 hover:bg-muted group">
@@ -329,12 +436,15 @@ export default function BlogTitlesPage() {
                             onChange={(e) => setEditText(e.target.value)}
                             className="flex-1 h-7 rounded-sm border border-primary bg-white px-2 text-[13px] focus:outline-none"
                             autoFocus
-                            onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditingId(null) }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveEdit()
+                              if (e.key === 'Escape') setEditingId(null)
+                            }}
                           />
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-success" onClick={saveEdit}>
-                            <Check className="h-3.5 w-3.5" />
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-success" onClick={saveEdit} disabled={savingEdit}>
+                            {savingEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingId(null)}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingId(null)} disabled={savingEdit}>
                             <X className="h-3.5 w-3.5" />
                           </Button>
                         </div>
@@ -359,16 +469,30 @@ export default function BlogTitlesPage() {
                     <div className="w-28 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       {!isEditing && (
                         <>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit(title.id, title.title_text)} title="Edit">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit(title.id, title.title_text)} title="Edit" disabled={isGeneratingThisRow || isDeletingThisRow || generatingAll || bulkGenerating}>
                             <Pencil className="h-3 w-3" />
                           </Button>
                           {title.status === 1 && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={() => handleGenerate(title.id)} title="Generate post">
-                              <Play className="h-3 w-3" />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-primary"
+                              onClick={() => handleGenerate(title.id)}
+                              title="Generate post"
+                              disabled={isDeletingThisRow || generatingAll || bulkGenerating || isGeneratingThisRow}
+                            >
+                              {isGeneratingThisRow ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(title.id)} title="Delete">
-                            <Trash2 className="h-3 w-3" />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive"
+                            onClick={() => handleDelete(title.id)}
+                            title="Delete"
+                            disabled={isGeneratingThisRow || isDeletingThisRow || generatingAll || bulkGenerating}
+                          >
+                            {isDeletingThisRow ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
                           </Button>
                         </>
                       )}
