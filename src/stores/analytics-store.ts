@@ -139,7 +139,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
           }).catch(() => ({ data: null, error: new Error('dictionary failed') })),
           api<BlogMetaResponse>('/api/aurora/analytics/blog/meta')
             .catch(() => ({ data: null, error: new Error('meta failed') })),
-          api<BlogTitle[]>('/api/aurora/blog/titles/')
+          api<{ data: BlogTitle[]; total: number } | BlogTitle[]>('/api/aurora/blog/titles/')
             .catch(() => ({ data: null, error: new Error('titles failed') })),
           api<BlogGeneralResponse>('/api/aurora/analytics/blog/general', {
             params: { include_recommendations: 'false' },
@@ -155,7 +155,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
           linkedWords: dictionaryRes.data?.all_words_link_count ?? [],
           dictionaryData: dictionaryRes.data ?? null,
           blogMetaData: blogMetaRes.data ?? null,
-          blogTitles: blogTitlesRes.data ?? [],
+          blogTitles: Array.isArray(blogTitlesRes.data) ? blogTitlesRes.data : (blogTitlesRes.data?.data ?? []),
           generalBlogData: generalBlogRes.data ?? null,
           elementBreakdown: elementsRes.data ?? null,
           isLoading: false,

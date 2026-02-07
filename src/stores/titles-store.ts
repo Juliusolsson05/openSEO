@@ -26,12 +26,13 @@ export const useTitlesStore = create<TitlesState>((set, get) => ({
 
   fetchTitles: async () => {
     set({ loading: true, error: null })
-    const { data, error } = await api<BlogTitle[]>('/api/aurora/blog/titles/')
+    const { data, error } = await api<{ data: BlogTitle[]; total: number } | BlogTitle[]>('/api/aurora/blog/titles/')
     if (error) {
       set({ error: error.message, loading: false })
       return
     }
-    set({ titlesData: data ?? [], loading: false })
+    const items = Array.isArray(data) ? data : (data?.data ?? [])
+    set({ titlesData: items, loading: false })
   },
 
   updateTitle: async (titleId, updatedData) => {
