@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Sparkles, X, ArrowRight } from 'lucide-react'
+import { Modal } from '@/components/ui/modal'
+import { Sparkles, X, ArrowRight, AlertCircle } from 'lucide-react'
 import { useAutopilotStore } from '@/stores/autopilot-store'
 
 interface Props {
@@ -79,33 +80,37 @@ export default function QuilloAutopilot({ postId }: Props) {
       </div>
 
       {/* Info modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setShowModal(false)}>
-          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-            <CardHeader>
-              <CardTitle className="text-[16px]">Quillo Autopilot</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-[13px] text-muted-foreground">
-                Quillo Autopilot enhances your blog by:
+      <Modal open={showModal} onClose={() => setShowModal(false)}>
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-[16px]">Quillo Autopilot</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-md p-3">
+              <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-[12px] text-amber-800">
+                Autopilot is currently being migrated. Some features may run slower than usual while we optimize the new backend.
               </p>
-              <ul className="text-[13px] text-muted-foreground space-y-1.5 list-disc pl-5">
-                <li>Automatically generating relevant images</li>
-                <li>Adding rich, contextual content</li>
-                <li>Optimizing for better engagement</li>
-                <li>Saving time while maintaining quality</li>
-              </ul>
-              <p className="text-[13px] text-muted-foreground">
-                Let Quillo transform your blog posts into compelling content automatically.
-              </p>
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => setShowModal(false)}>Cancel</Button>
-                <Button size="sm" onClick={handleStart} disabled={isRunning}>Start Autopilot</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            </div>
+            <p className="text-[13px] text-muted-foreground">
+              Quillo Autopilot enhances your blog by:
+            </p>
+            <ul className="text-[13px] text-muted-foreground space-y-1.5 list-disc pl-5">
+              <li>Automatically generating relevant images</li>
+              <li>Adding rich, contextual content</li>
+              <li>Optimizing for better engagement</li>
+              <li>Saving time while maintaining quality</li>
+            </ul>
+            <p className="text-[13px] text-muted-foreground">
+              Let Quillo transform your blog posts into compelling content automatically.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={() => setShowModal(false)}>Cancel</Button>
+              <Button size="sm" onClick={handleStart} disabled={isRunning}>Start Autopilot</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </Modal>
     </>
   )
 }

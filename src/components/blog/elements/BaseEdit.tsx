@@ -1,7 +1,5 @@
 'use client'
 
-import { createPortal } from 'react-dom'
-
 /**
  * BaseEdit — edit modal that renders dynamic form fields based on edit schemas.
  * Ported from aurora_dashboard/views/apps/blog/elements/BaseEdit.vue
@@ -9,6 +7,7 @@ import { createPortal } from 'react-dom'
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { Modal } from '@/components/ui/modal'
 import { EditFieldRenderer } from './edit/EditFieldRenderer'
 import { useBlogStore } from '@/stores/blog-store'
 import { useElementsStore } from '@/stores/elements-store'
@@ -80,10 +79,8 @@ export function BaseEdit({
     }
   }
 
-  if (!open) return null
-
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+  return (
+    <Modal open={open} onClose={() => onOpenChange(false)}>
       <div className="bg-background rounded-lg shadow-lg w-full max-w-xl max-h-[80vh] overflow-y-auto">
         <div className="p-6">
           <h2 className="text-lg font-semibold mb-4">
@@ -137,7 +134,6 @@ export function BaseEdit({
           </div>
         </div>
       </div>
-    </div>,
-    document.body
+    </Modal>
   )
 }
