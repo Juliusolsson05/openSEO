@@ -8,54 +8,53 @@ import { Separator } from '@/components/ui/separator'
 type BlogElement = {
   id: number
   element_type: string
-  content?: {
-    title?: string
-  }
+  content?: Record<string, unknown>
 }
 
 type ContextPreviewProps = PreviewComponentProps & {
   elements?: BlogElement[]
 }
 
+function getTitle(content?: Record<string, unknown>) {
+  if (!content) return ''
+  const candidates = [content.title, content.heading, content.label, content.question]
+  const first = candidates.find((v) => typeof v === 'string' && v.trim().length > 0)
+  return typeof first === 'string' ? first : ''
+}
+
 function buildTableOfContents(elements: BlogElement[]): Array<{ id: number; title: string }> {
   if (!elements?.length) return []
 
+  const normalized = elements.filter((e) => String(e.element_type).toLowerCase() !== 'context')
+  if (!normalized.length) return []
+
   const toc: Array<{ id: number; title: string }> = []
 
-  toc.push({ id: elements[0].id, title: 'Introduction' })
+  const intro = normalized.find((e) => String(e.element_type).toLowerCase() === 'introduction') ?? normalized[0]
+  toc.push({ id: intro.id, title: getTitle(intro.content) || 'Introduction' })
 
-  if (elements.length > 2) {
-    elements.forEach((element, index) => {
-      if (
-        element &&
-        index !== 0 &&
-        index !== elements.length - 1 &&
-        [
-          'paragraph',
-          'list_paragraph',
-          'numbered_list_paragraph',
-          'featured_snippet_block',
-          'list_featured_snippet_block',
-        ].includes(element.element_type) &&
-        element.content?.title
-      ) {
-        toc.push({
-          id: element.id,
-          title: element.content.title,
-        })
-      }
-    })
-  }
+  for (const element of normalized) {
+    const type = String(element.element_type).toLowerCase()
+    if (element.id === intro.id) continue
+    if (type === 'conclusion') continue
 
-  if (elements.length >= 2) {
-    const secondToLast = elements[elements.length - 2]
-    if (secondToLast?.element_type === 'faq') {
-      toc.push({ id: secondToLast.id, title: 'FAQ' })
+    if (type === 'faq') {
+      toc.push({ id: element.id, title: 'FAQ' })
+      continue
+    }
+
+    const title = getTitle(element.content)
+    if (!title) continue
+
+    if (['paragraph', 'list_paragraph', 'numbered_list_paragraph', 'featured_snippet_block', 'list_featured_snippet_block', 'table', 'timeline', 'pros_and_cons', 'versus', 'checklist', 'snippet_block', 'statistic', 'case_study', 'tool_recommendation', 'product_recommendations', 'affiliate_recommendations'].includes(type)) {
+      toc.push({ id: element.id, title })
     }
   }
 
-  const last = elements[elements.length - 1]
-  if (last) toc.push({ id: last.id, title: 'Conclusion' })
+  const conclusion = [...normalized].reverse().find((e) => String(e.element_type).toLowerCase() === 'conclusion') ?? normalized[normalized.length - 1]
+  if (!toc.some((i) => i.id === conclusion.id)) {
+    toc.push({ id: conclusion.id, title: getTitle(conclusion.content) || 'Conclusion' })
+  }
 
   return toc
 }
