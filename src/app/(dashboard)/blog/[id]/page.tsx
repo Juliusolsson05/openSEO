@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useBlogStore } from '@/stores/blog-store'
 import { Card, CardContent } from '@/components/ui/card'
@@ -24,12 +24,14 @@ import '@/components/blog/elements'
 import { ElementRenderer } from '@/components/blog/elements/ElementRenderer'
 import QuilloChat from '@/components/blog/QuilloChat'
 import QuilloAutopilot from '@/components/blog/QuilloAutopilot'
+import { ImageStudio } from '@/components/blog/ImageStudio'
 
 export default function BlogPostPage() {
   const params = useParams()
   const router = useRouter()
   const postId = params.id as string
   const { post, loading, error, fetchPost } = useBlogStore()
+  const [coverStudioOpen, setCoverStudioOpen] = useState(false)
 
   useEffect(() => {
     if (postId) fetchPost(postId)
@@ -107,9 +109,12 @@ export default function BlogPostPage() {
               <h1 className="text-[22px] font-semibold leading-tight mb-5">{post.title_text}</h1>
 
               {post.cover_image && (
-                <div className="mb-6 rounded-sm overflow-hidden border border-border">
-                  <img src={post.cover_image.url} alt={post.cover_image.description} className="w-full h-auto" />
-                </div>
+                <button type="button" className="group relative mb-6 block w-full overflow-hidden rounded-sm border border-border text-left" onClick={() => setCoverStudioOpen(true)}>
+                  <img src={post.cover_image.url} alt={post.cover_image.description} className="h-auto w-full" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 text-sm font-medium text-white opacity-0 transition group-hover:bg-black/35 group-hover:opacity-100">
+                    ✏️ Edit in Studio
+                  </div>
+                </button>
               )}
 
               <div className="space-y-2">
@@ -233,6 +238,19 @@ export default function BlogPostPage() {
           )}
         </div>
       </div>
+
+      {post.cover_image ? (
+        <ImageStudio
+          open={coverStudioOpen}
+          onClose={() => setCoverStudioOpen(false)}
+          blogId={post.id}
+          imageNumber={1}
+          currentUrl={post.cover_image.url}
+          currentDescription={post.cover_image.description}
+          postTitle={post.title_text}
+          onImageApplied={() => fetchPost(post.id, true)}
+        />
+      ) : null}
 
       {/* Quillo AI */}
       <QuilloChat blogPostId={post.id} />
