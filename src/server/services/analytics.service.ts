@@ -7,8 +7,8 @@ export class AnalyticsService {
     return analyticsRepository.getBlogPostReadability(companyId, blogPostId)
   }
 
-  async getGeneralAnalytics(companyId: number) {
-    return analyticsRepository.getGeneralBlogAnalytics(companyId)
+  async getGeneralAnalytics(companyId: number, includeRecommendations = true) {
+    return analyticsRepository.getGeneralBlogAnalytics(companyId, includeRecommendations)
   }
 
   async getMetaAnalytics(companyId: number) {
@@ -19,8 +19,8 @@ export class AnalyticsService {
     return analyticsRepository.getElementCounts(companyId)
   }
 
-  async getDictionaryAnalytics(companyId: number) {
-    return analyticsRepository.getDictionaryAnalytics(companyId)
+  async getDictionaryAnalytics(companyId: number, includeAllWordsLinks = false) {
+    return analyticsRepository.getDictionaryAnalytics(companyId, includeAllWordsLinks)
   }
 
   async getLatestLog(companyId: number) {

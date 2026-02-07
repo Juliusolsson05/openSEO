@@ -1593,16 +1593,15 @@ async function handleAurora(ctx: {
 
   // ANALYTICS
   if (path === 'analytics/blog/readability') {
-    const blogPostId = Number(ctx.searchParams.get('blog_post_id') ?? 0)
-    if (!blogPostId) {
-      return raw({ detail: 'blog_post_id query parameter is required.' }, 400)
-    }
+    const blogPostId = Number(ctx.searchParams.get('blog_post_id') ?? 0) || undefined
     const data = await analyticsService.getReadabilityAnalytics(ctx.companyId, blogPostId)
     return raw(data)
   }
 
   if (path === 'analytics/blog/general') {
-    const data = await analyticsService.getGeneralAnalytics(ctx.companyId)
+    const includeRecommendationsParam = (ctx.searchParams.get('include_recommendations') ?? 'true').toLowerCase()
+    const includeRecommendations = !['false', '0', 'no'].includes(includeRecommendationsParam)
+    const data = await analyticsService.getGeneralAnalytics(ctx.companyId, includeRecommendations)
     return raw(data)
   }
 
@@ -1621,7 +1620,8 @@ async function handleAurora(ctx: {
     if (!dictionaryCount) {
       return raw({ error: 'No dictionary found for this company' }, 404)
     }
-    const data = await analyticsService.getDictionaryAnalytics(ctx.companyId)
+    const includeAllWordsLinks = (ctx.searchParams.get('include_all_words_links') ?? 'false').toLowerCase() === 'true'
+    const data = await analyticsService.getDictionaryAnalytics(ctx.companyId, includeAllWordsLinks)
     return raw(data)
   }
 
