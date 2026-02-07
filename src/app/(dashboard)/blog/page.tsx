@@ -23,13 +23,13 @@ import {
 } from 'lucide-react'
 import { api, apiPost } from '@/lib/api'
 
-interface BlogTitle { id: number; title_text: string; status: number }
+interface BlogTitle { id: number; title_text: string; status: number | string }
 
 interface BlogPostSummary {
   id: number
   title_text: string
   slug: string
-  status: number
+  status: number | string
   is_published: boolean
   created_at: string
   cover_image: { url: string; description: string } | null
@@ -43,13 +43,16 @@ function unwrapList<T>(raw: any): T[] {
   return raw?.data ?? raw?.results ?? raw?.items ?? []
 }
 
-const statusConfig = (status: number, published: boolean) => {
+const statusConfig = (status: number | string, published: boolean) => {
   if (published)
     return { text: 'Published', variant: 'success' as const, icon: CheckCircle2 }
-  if (status === 2)
+  const s = typeof status === 'string' ? status.toUpperCase() : status
+  if (s === 'GENERATED' || s === 2)
     return { text: 'Draft', variant: 'warning' as const, icon: Clock }
-  if (status === 3)
+  if (s === 'SCHEDULED' || s === 3)
     return { text: 'Scheduled', variant: 'default' as const, icon: Clock }
+  if (s === 'TO_BE_GENERATED' || s === 1)
+    return { text: 'In Queue', variant: 'outline' as const, icon: AlertCircle }
   return { text: 'Pending', variant: 'outline' as const, icon: AlertCircle }
 }
 
@@ -63,7 +66,7 @@ export default function BlogPage() {
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
 
-  const postsLeftToGenerate = titles.filter((t) => t.status === 1).length
+  const postsLeftToGenerate = titles.filter((t) => t.status === 1 || t.status === 'TO_BE_GENERATED' || (t as any).status === 'to_be_generated').length
   const publishedCount = posts.filter((p) => p.is_published).length
   const draftCount = posts.filter((p) => !p.is_published).length
 

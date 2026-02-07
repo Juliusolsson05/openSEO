@@ -54,24 +54,30 @@ export function registerElement(
 
 // ─── Lookup functions ────────────────────────────────────────────────
 
+function normalize(type: string): ElementType {
+  return type.toLowerCase() as ElementType
+}
+
 export function getComponent(type: ElementType): ComponentType<ElementComponentProps> {
-  return (componentRegistry[type] as ComponentType<ElementComponentProps>) || (DefaultComponent as any)
+  const key = normalize(type)
+  return (componentRegistry[key] as ComponentType<ElementComponentProps>) || (DefaultComponent as any)
 }
 
 export function getPreviewComponent(type: ElementType): ComponentType<PreviewComponentProps> {
-  return (previewRegistry[type] as ComponentType<PreviewComponentProps>) || (DefaultPreview as any)
+  const key = normalize(type)
+  return (previewRegistry[key] as ComponentType<PreviewComponentProps>) || (DefaultPreview as any)
 }
 
 export function getLoadingComponent(type: ElementType): ComponentType {
-  return loadingRegistry[type] || DefaultLoading
+  return loadingRegistry[normalize(type)] || DefaultLoading
 }
 
 export function getEditSchema(type: ElementType): EditSchema | null {
-  return editSchemaRegistry[type] || null
+  return editSchemaRegistry[normalize(type)] || null
 }
 
 export function getExample(type: ElementType): any | null {
-  return exampleRegistry[type] || null
+  return exampleRegistry[normalize(type)] || null
 }
 
 // ─── Element renderer helper ─────────────────────────────────────────
