@@ -1,5 +1,7 @@
-import { NotFoundError } from '@/server/api/errors'
+import { prisma } from '@/lib/prisma'
+import { NotFoundError, ValidationError } from '@/server/api/errors'
 import * as ctaRepository from '@/server/repositories/cta.repository'
+import { serializeElement } from '@/server/utils/element-type'
 import type {
   CreateCampaignInput,
   CreateCtaInput,
@@ -70,6 +72,62 @@ export class CtaService {
     }
 
     return ctaRepository.deleteCTA(ctaId)
+  }
+
+  async addCtaToPost(companyId: number, blogPostId: number, elementId: number, ctaId: number) {
+    if (!blogPostId || !elementId || !ctaId) {
+      throw new ValidationError('blog_post_id, element_id, and cta_id are required')
+    }
+
+    const blogPost = await prisma.blogPost.findFirst({
+      where: { id: blogPostId, companyId },
+      select: { id: true },
+    })
+    if (!blogPost) throw new NotFoundError('Blog post not found')
+
+    const targetElement = await prisma.blogPostElement.findFirst({
+      where: { id: elementId, blogPostId },
+      select: { id: true, order: true },
+    })
+    if (!targetElement) throw new NotFoundError('Target element not found')
+
+    const cta = await prisma.cTA.findFirst({
+      where: {
+        id: ctaId,
+        campaign: { companyId },
+      },
+      select: { id: true, title: true, description: true, image: true, link: true },
+    })
+    if (!cta) throw new NotFoundError('CTA not found')
+
+    const created = await prisma.$transaction(async (tx) => {
+      await tx.blogPostElement.updateMany({
+        where: {
+          blogPostId,
+          order: { gt: targetElement.order },
+        },
+        data: {
+          order: { increment: 1 },
+        },
+      })
+
+      return tx.blogPostElement.create({
+        data: {
+          blogPostId,
+          element_type: 'CTA' as any,
+          order: targetElement.order + 1,
+          content: {
+            cta_id: cta.id,
+            title: cta.title,
+            description: cta.description,
+            image: cta.image,
+            link: cta.link,
+          },
+        },
+      })
+    })
+
+    return serializeElement(created)
   }
 }
 

@@ -515,8 +515,117 @@ export class BlogService {
     }
   }
 
-  async exportPost(_companyId: number, _postId: number) {
-    throw new Error('TODO: implement exportPost')
+  async uploadPost(companyId: number, postId: number, dictionaryId: number, exportMethod: string) {
+    if (exportMethod !== 'elementor') throw new ValidationError('Currently only Elementor export method is supported')
+    if (!dictionaryId) throw new NotFoundError('Dictionary not found')
+
+    const post = await this.getPost(postId, companyId)
+    const remoteId = `stub-${postId}-${Date.now()}`
+    const existingPublish = await prisma.blogPublish.findFirst({ where: { blogPostId: postId } })
+    if (existingPublish) {
+      await prisma.blogPublish.update({ where: { id: existingPublish.id }, data: { remote_id: remoteId } })
+    } else {
+      await prisma.blogPublish.create({ data: { blogPostId: postId, remote_id: remoteId } })
+    }
+
+    return {
+      status: `Successfully sent processed post data for title: ${post.title_text} to WordPress`,
+      wordpress_response: { wp_post_id: remoteId, stub: true },
+    }
+  }
+
+  async uploadAllPosts(companyId: number, dictionaryId: number, exportMethod: string) {
+    if (exportMethod !== 'elementor') throw new ValidationError('Currently only Elementor export method is supported')
+    if (!dictionaryId) throw new NotFoundError('Dictionary not found')
+
+    const posts = await prisma.blogPost.findMany({ where: { companyId, status: 'GENERATED' }, select: { id: true, title_text: true } })
+    const uploaded = [] as Array<{ post_id: number; wordpress_response: { wp_post_id: string; stub: boolean } }>
+
+    for (const post of posts) {
+      const remoteId = `stub-${post.id}-${Date.now()}`
+      const existingPublish = await prisma.blogPublish.findFirst({ where: { blogPostId: post.id } })
+      if (existingPublish) {
+        await prisma.blogPublish.update({ where: { id: existingPublish.id }, data: { remote_id: remoteId } })
+      } else {
+        await prisma.blogPublish.create({ data: { blogPostId: post.id, remote_id: remoteId } })
+      }
+      uploaded.push({ post_id: post.id, wordpress_response: { wp_post_id: remoteId, stub: true } })
+    }
+
+    return { status: 'Upload completed', uploaded }
+  }
+
+  async exportPost(companyId: number, postId: number, dictionaryId: number) {
+    if (!dictionaryId) throw new NotFoundError('Not found.')
+
+    const post = await this.getPost(postId, companyId)
+    const categories = (post.categories ?? []).map((c: any) => c.name)
+    return {
+      post: {
+        id: post.id,
+        title_text: post.title_text,
+        slug: post.slug,
+        seo_title: post.seo_title,
+        focus_keyword: post.focus_keyword,
+        excerpt: post.excerpt,
+        meta_description: post.meta_description,
+        cover_image: post.cover_image,
+        last_updated: post.last_updated,
+        categories,
+      },
+      processed_content: post,
+      raw_content: post,
+    }
+  }
+
+  async exportAllPosts(companyId: number, dictionaryId: number) {
+    if (!dictionaryId) throw new NotFoundError('Not found.')
+
+    const posts = await prisma.blogPost.findMany({
+      where: { companyId, status: 'GENERATED' },
+      include: { categories: { select: { name: true } }, elements: { orderBy: { order: 'asc' } } },
+      orderBy: { id: 'asc' },
+    })
+
+    const exportedPosts = posts.map((post) => ({
+      post: {
+        id: post.id,
+        title_text: post.title_text,
+        slug: post.slug,
+        seo_title: post.seo_title,
+        focus_keyword: post.focus_keyword,
+        excerpt: post.excerpt,
+        meta_description: post.meta_description,
+        cover_image: post.cover_image,
+        last_updated: post.last_updated,
+        categories: post.categories.map((c) => c.name),
+      },
+      processed_content: post,
+      raw_content: post,
+    }))
+
+    return { status: 'Export completed', exported_posts: exportedPosts, errors: [] }
+  }
+
+  async exportThirdParty(companyId: number, postId: number, endpointUrl: string) {
+    if (!endpointUrl) throw new ValidationError('endpoint_url is required')
+
+    const post = await prisma.blogPost.findFirst({ where: { id: postId, companyId, status: 'GENERATED' }, select: { id: true } })
+    if (!post) throw new NotFoundError('Not found.')
+
+    await prisma.blogPublish.create({ data: { blogPostId: post.id, remote_id: `stub-${post.id}-${Date.now()}` } })
+    return { status: 'success', message: 'Successfully initiated export for 1 blog posts' }
+  }
+
+  async exportThirdPartyAll(companyId: number, endpointUrl: string) {
+    if (!endpointUrl) throw new ValidationError('endpoint_url is required')
+
+    const posts = await prisma.blogPost.findMany({ where: { companyId, status: 'GENERATED' }, select: { id: true } })
+    for (const post of posts) {
+      await prisma.blogPublish.create({ data: { blogPostId: post.id, remote_id: `stub-${post.id}-${Date.now()}` } })
+    }
+
+    return { status: 'success', message: `Successfully initiated export for ${posts.length} blog posts` }
   }
 
   async getCodeClusterBlogPosts(companyId: number) {

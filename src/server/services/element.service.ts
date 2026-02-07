@@ -253,6 +253,100 @@ export class ElementService {
     return prisma.blogPostElement.update({ where: { id: blogElement.id }, data: { content: normalized as Prisma.InputJsonValue } })
   }
 
+  async deleteElementFromPost(companyId: number, blogPostId: number, elementId: number) {
+    const blogPost = await prisma.blogPost.findFirst({ where: { id: blogPostId, companyId } })
+    if (!blogPost) throw new NotFoundError('Not found.')
+
+    const element = await prisma.blogPostElement.findFirst({ where: { id: elementId, blogPostId: blogPost.id } })
+    if (!element) throw new NotFoundError('Not found.')
+
+    await prisma.$transaction(async (tx) => {
+      await tx.blogPostElement.delete({ where: { id: element.id } })
+      await tx.blogPostElement.updateMany({
+        where: { blogPostId: blogPost.id, order: { gt: element.order } },
+        data: { order: { decrement: 1 } },
+      })
+      await tx.blogPostElement.findMany({
+        where: { blogPostId: blogPost.id },
+        orderBy: { order: 'asc' },
+        select: { id: true, element_type: true, order: true, content: true },
+      })
+    })
+  }
+
+  async createTemplate(name: string, elementType: string, structure: unknown) {
+    const slugValue = String(name).toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-')
+    return prisma.blogElementTemplate.create({
+      data: {
+        name: String(name),
+        slug: `${slugValue}-${Date.now()}`,
+        element_type: String(elementType) as any,
+        structure: structure as any,
+      },
+    })
+  }
+
+  async applyTemplate(elementId: number, templateId: number) {
+    const element = await prisma.blogPostElement.findUnique({ where: { id: elementId } })
+    if (!element) throw new NotFoundError('Blog post element not found.')
+
+    const template = await prisma.blogElementTemplate.findUnique({ where: { id: templateId } })
+    if (!template) throw new NotFoundError('Element template not found.')
+
+    const current = (element.content as Record<string, unknown>) ?? {}
+    const patch = (template.structure as Record<string, unknown>) ?? {}
+    const next = { ...current }
+    for (const [k, v] of Object.entries(patch)) {
+      if (k in next) (next as any)[k] = v
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.blogPostElement.update({ where: { id: element.id }, data: { content: next as any } })
+      await tx.elementHyperlink.deleteMany({ where: { blogPostElementId: element.id } })
+    })
+
+    return {
+      element,
+      next,
+    }
+  }
+
+  async addCtaElement(companyId: number, blogPostId: number, elementId: number, ctaId: number) {
+    const blogPost = await prisma.blogPost.findFirst({ where: { id: blogPostId, companyId } })
+    if (!blogPost) throw new NotFoundError('Not found.')
+
+    const targetElement = await prisma.blogPostElement.findFirst({ where: { id: elementId, blogPostId: blogPost.id } })
+    if (!targetElement) throw new NotFoundError('Not found.')
+
+    const cta = await prisma.cTA.findFirst({
+      where: { id: ctaId, campaign: { companyId } },
+      select: { id: true, title: true, image: true, link: true, description: true },
+    })
+    if (!cta) throw new NotFoundError('Not found.')
+
+    const created = await prisma.$transaction(async (tx) => {
+      await tx.blogPostElement.updateMany({
+        where: { blogPostId: blogPost.id, order: { gt: targetElement.order } },
+        data: { order: { increment: 1 } },
+      })
+
+      return tx.blogPostElement.create({
+        data: {
+          blogPostId: blogPost.id,
+          element_type: 'CTA' as any,
+          order: targetElement.order + 1,
+          content: {
+            image_url: cta.image,
+            target_url: cta.link,
+            title: cta.title,
+          },
+        },
+      })
+    })
+
+    return { created, cta }
+  }
+
   async listTemplates() { throw new Error('TODO: implement listTemplates') }
 }
 

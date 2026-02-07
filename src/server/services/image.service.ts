@@ -1,126 +1,9 @@
 import { NotFoundError, ValidationError } from '@/server/api/errors'
 import { generateGptImage, generateIdeogramImage, generateImagenImage, generateNanoBananaImage } from '@/server/ai/image/generate-image'
+import { uploadUrlToCloudinary, uploadBinaryToCloudinary, uploadBase64ToCloudinary } from '@/server/utils/cloudinary'
 import * as imageRepository from '@/server/repositories/image.repository'
 
 const DEFAULT_PLACEHOLDER_URL = 'https://res.cloudinary.com/dl9qdd24e/image/upload/v1732560659/600x400_fqbihy.png'
-
-function getCloudinaryCredentials() {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME
-  const apiKey = process.env.CLOUDINARY_API_KEY
-  const apiSecret = process.env.CLOUDINARY_API_SECRET
-  if (!cloudName || !apiKey || !apiSecret) return null
-  return { cloudName, apiKey, apiSecret }
-}
-
-async function generateCloudinarySignature(params: Record<string, string>, apiSecret: string) {
-  // Cloudinary signed upload: sort params alphabetically, join as key=value&..., append api_secret, SHA-1 hash
-  const sortedKeys = Object.keys(params).sort()
-  const toSign = sortedKeys.map((k) => `${k}=${params[k]}`).join('&') + apiSecret
-  const encoder = new TextEncoder()
-  const data = encoder.encode(toSign)
-  const hashBuffer = await crypto.subtle.digest('SHA-1', data)
-  return Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, '0')).join('')
-}
-
-async function uploadBinaryToCloudinary(file: File, folder: string) {
-  const creds = getCloudinaryCredentials()
-  if (!creds) {
-    console.error('[ImageService] Missing Cloudinary credentials (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET)')
-    return null
-  }
-
-  const timestamp = String(Math.floor(Date.now() / 1000))
-  const paramsToSign: Record<string, string> = { folder, timestamp }
-  const signature = await generateCloudinarySignature(paramsToSign, creds.apiSecret)
-
-  const form = new FormData()
-  form.set('file', file)
-  form.set('folder', folder)
-  form.set('timestamp', timestamp)
-  form.set('api_key', creds.apiKey)
-  form.set('signature', signature)
-
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${creds.cloudName}/image/upload`, {
-    method: 'POST',
-    body: form,
-  })
-
-  if (!res.ok) {
-    const errBody = await res.text().catch(() => '')
-    console.error(`[ImageService] Cloudinary binary upload failed: ${res.status} ${errBody}`)
-    return null
-  }
-  const data = (await res.json()) as { secure_url?: string }
-  return data.secure_url ?? null
-}
-
-async function uploadUrlToCloudinary(imageUrl: string, folder: string) {
-  const creds = getCloudinaryCredentials()
-  if (!creds) {
-    console.error('[ImageService] Missing Cloudinary credentials (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET)')
-    return null
-  }
-
-  const timestamp = String(Math.floor(Date.now() / 1000))
-  const paramsToSign: Record<string, string> = { folder, timestamp }
-  const signature = await generateCloudinarySignature(paramsToSign, creds.apiSecret)
-
-  const body = new URLSearchParams({
-    file: imageUrl,
-    folder,
-    timestamp,
-    api_key: creds.apiKey,
-    signature,
-  })
-
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${creds.cloudName}/image/upload`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body,
-  })
-
-  if (!res.ok) {
-    const errBody = await res.text().catch(() => '')
-    console.error(`[ImageService] Cloudinary URL upload failed: ${res.status} ${errBody}`)
-    return null
-  }
-  const data = (await res.json()) as { secure_url?: string }
-  return data.secure_url ?? null
-}
-
-async function uploadBase64ToCloudinary(base64: string, folder: string, mimeType: 'image/png' | 'image/jpeg' | 'image/webp' = 'image/png') {
-  const creds = getCloudinaryCredentials()
-  if (!creds) {
-    console.error('[ImageService] Missing Cloudinary credentials (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET)')
-    return null
-  }
-
-  const timestamp = String(Math.floor(Date.now() / 1000))
-  const paramsToSign: Record<string, string> = { folder, timestamp }
-  const signature = await generateCloudinarySignature(paramsToSign, creds.apiSecret)
-
-  const body = new URLSearchParams({
-    file: `data:${mimeType};base64,${base64}`,
-    folder,
-    timestamp,
-    api_key: creds.apiKey,
-    signature,
-  })
-
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${creds.cloudName}/image/upload`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body,
-  })
-
-  if (!res.ok) {
-    const errBody = await res.text().catch(() => '')
-    console.error(`[ImageService] Cloudinary base64 upload failed: ${res.status} ${errBody}`)
-    return null
-  }
-  const data = (await res.json()) as { secure_url?: string }
-  return data.secure_url ?? null
-}
 
 export class ImageService {
   async generateImages(companyId: number, payload: unknown) {
@@ -350,6 +233,25 @@ export class ImageService {
     return {
       status: `Successfully uploaded and replaced image ${imageNumber} for blog post: ${post.title_text}`,
       new_url: newUrl,
+    }
+  }
+
+  async saveEditedImage(payload: unknown) {
+    const body = typeof payload === 'string' ? JSON.parse(payload) : (payload ?? {}) as Record<string, unknown>
+    const source = String((body as Record<string, unknown>).source ?? '')
+    const versions = Array.isArray((body as Record<string, unknown>).versions)
+      ? ((body as Record<string, unknown>).versions as Array<Record<string, unknown>>)
+      : []
+    const pngVersion = versions.find((version) => version.format === 'png')
+
+    if (!pngVersion) throw new ValidationError('No PNG version found')
+    if (!source) throw new ValidationError('Invalid JSON data')
+
+    const fileName = source.split('/').pop() || 'edited-image.png'
+    return {
+      message: `Successfully saved ${fileName}`,
+      script: `app.echoToOE('Saved: ${fileName}');`,
+      newSource: source,
     }
   }
 

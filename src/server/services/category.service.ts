@@ -8,6 +8,11 @@ type UpdateCategoryPayload = {
   name?: string
 }
 
+type AddCategoriesByNameResult = {
+  added: string[]
+  existing: string[]
+}
+
 export class CategoryService {
   async listCategories(companyId: number) {
     return categoryRepository.findMany(companyId)
@@ -23,6 +28,27 @@ export class CategoryService {
     )
   }
 
+  async addCategoriesByName(companyId: number, names: string[]): Promise<AddCategoriesByNameResult> {
+    const added: string[] = []
+    const existing: string[] = []
+
+    for (const name of names) {
+      const normalized = name.trim()
+      if (!normalized) continue
+
+      const exists = await prisma.category.findFirst({ where: { companyId, name: normalized } })
+      if (exists) {
+        existing.push(normalized)
+        continue
+      }
+
+      await categoryRepository.create(companyId, { name: normalized })
+      added.push(normalized)
+    }
+
+    return { added, existing }
+  }
+
   async editCategory(id: number, companyId: number, data: UpdateCategoryPayload) {
     const existing = await categoryRepository.findById(id)
     if (!existing || existing.companyId !== companyId) {
@@ -30,6 +56,17 @@ export class CategoryService {
     }
 
     const updated = await categoryRepository.update(id, data)
+    if (!updated) throw new NotFoundError('Category not found')
+    return updated
+  }
+
+  async updateCategory(id: number, companyId: number, name: string) {
+    const existing = await categoryRepository.findById(id)
+    if (!existing || existing.companyId !== companyId) {
+      throw new NotFoundError('Category not found')
+    }
+
+    const updated = await categoryRepository.update(id, { name })
     if (!updated) throw new NotFoundError('Category not found')
     return updated
   }
@@ -43,6 +80,15 @@ export class CategoryService {
     return categoryRepository.remove(id)
   }
 
+  async deleteSingleCategory(id: number, companyId: number) {
+    const existing = await categoryRepository.findById(id)
+    if (!existing || existing.companyId !== companyId) {
+      throw new NotFoundError('Category not found')
+    }
+
+    await categoryRepository.remove(id)
+  }
+
   async bulkDeleteCategories(ids: number[], companyId: number) {
     const categories = await Promise.all(ids.map((id) => categoryRepository.findById(id)))
 
@@ -51,6 +97,13 @@ export class CategoryService {
     }
 
     return categoryRepository.bulkDelete(ids)
+  }
+
+  async getImpactedTitleIdsForCategoryIds(companyId: number, categoryIds: number[]) {
+    return prisma.title.findMany({
+      where: { companyId, categories: { some: { id: { in: categoryIds } } } },
+      select: { id: true },
+    })
   }
 
   async generateCategories(companyId: number) {

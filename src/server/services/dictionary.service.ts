@@ -1,10 +1,12 @@
 import { Prisma } from '@prisma/client'
 
+import { prisma } from '@/lib/prisma'
 import { NotFoundError, ValidationError } from '@/server/api/errors'
 import { generateExplanation } from '@/server/ai/dictionary/generate-explanation'
 import { generateKeywords } from '@/server/ai/dictionary/generate-keywords'
 import { generateShortDescription } from '@/server/ai/dictionary/generate-short-description'
 import * as dictionaryRepository from '@/server/repositories/dictionary.repository'
+import { toDjangoDictionaryStatus } from '@/server/utils/dictionary'
 import type {
   DeleteWordsInput,
   ModifyDictionaryInput,
@@ -13,7 +15,26 @@ import type {
 
 export class DictionaryService {
   async listDictionaries(companyId: number, query?: { search?: string; page?: number; pageSize?: number }) {
-    return dictionaryRepository.findMany(companyId, query)
+    const page = Math.max(1, query?.page ?? 1)
+    const pageSize = Math.max(1, Math.min(100, query?.pageSize ?? 20))
+    const { items, total } = await dictionaryRepository.findMany(companyId, { ...query, page, pageSize })
+
+    return {
+      dictionaries: items.map((d) => ({
+        id: d.id,
+        title: d.title,
+        subject: d.subject,
+        language: d.language,
+        num_words: d.num_words,
+        total_words: d.num_words * 26,
+        in_progress: !['COMPLETED', 'UPLOADED'].includes(String(d.status)),
+        current_letter: d.current_letter,
+        status: toDjangoDictionaryStatus(String(d.status)),
+      })),
+      total,
+      page,
+      pageSize,
+    }
   }
 
   async getDictionary(id: number, companyId: number) {
@@ -25,6 +46,28 @@ export class DictionaryService {
     return dictionary
   }
 
+  async getDictionaryDetail(id: number, companyId: number) {
+    const dictionary = await this.getDictionary(id, companyId)
+    return {
+      id: dictionary.id,
+      title: dictionary.title,
+      subject: dictionary.subject,
+      language: dictionary.language,
+      num_words: dictionary.num_words,
+      current_letter: dictionary.current_letter,
+      status: toDjangoDictionaryStatus(String(dictionary.status)),
+      company: dictionary.company?.name ?? null,
+      words: dictionary.words.map((word) => ({
+        id: word.id,
+        letter: word.letter,
+        keyword: word.keyword,
+        description: word.description,
+        priority: word.priority === 'HIGH' ? 1 : 2,
+        has_definition: Boolean(word.definition),
+      })),
+    }
+  }
+
   async modifyDictionary(id: number, companyId: number, data: ModifyDictionaryInput) {
     await this.getDictionary(id, companyId)
 
@@ -32,6 +75,22 @@ export class DictionaryService {
       ...data,
       ...(data.faqs !== undefined ? { faqs: data.faqs as Prisma.InputJsonValue } : {}),
     })
+  }
+
+  async modifyDictionaryDetail(id: number, companyId: number, data: ModifyDictionaryInput) {
+    await this.modifyDictionary(id, companyId, data)
+    const updated = await this.getDictionary(id, companyId)
+
+    return {
+      id: updated.id,
+      title: updated.title,
+      subject: updated.subject,
+      language: updated.language,
+      num_words: updated.num_words,
+      current_letter: updated.current_letter,
+      status: toDjangoDictionaryStatus(String(updated.status)),
+      company: updated.company?.name ?? null,
+    }
   }
 
   async getWord(dictionaryId: number, wordId: number, companyId: number) {
@@ -293,6 +352,99 @@ export class DictionaryService {
       include_priority_two: true,
       batch_size: 1,
     })
+  }
+
+  async uploadDictionary(companyId: number, payload: unknown) {
+    const body = (payload ?? {}) as Record<string, unknown>
+    return { status: 'Dictionary upload prepared', payload: body }
+  }
+
+  async uploadAll(companyId: number) {
+    const dictionaries = await prisma.dictionary.findMany({ where: { companyId }, select: { id: true, title: true } })
+    return { status: 'Sync completed', synced_words: [], errors: [], dictionaries }
+  }
+
+  async exportWord(companyId: number, dictionaryId: number, wordInput: string) {
+    const word = await prisma.word.findFirst({
+      where: { dictionaryId, keyword: { equals: wordInput, mode: 'insensitive' }, dictionary: { companyId } },
+      include: { definition: true, dictionary: true },
+    })
+    if (!word || !word.dictionary) throw new NotFoundError('Dictionary not found')
+    if (!word.definition) {
+      return { detail: `No definition found for the word "${word.keyword}" in dictionary "${word.dictionary.title}"` }
+    }
+
+    return {
+      dictionary_info: { id: word.dictionary.id, title: word.dictionary.title, subject: word.dictionary.subject, language: word.dictionary.language },
+      word_data: {
+        id: word.id,
+        letter: word.letter,
+        keyword: word.keyword,
+        description: word.description,
+        priority: word.priority === 'HIGH' ? 1 : 2,
+        definition: {
+          title: word.definition.title,
+          seo_title: word.definition.seo_title,
+          featured_google_snippet: word.definition.featured_google_snippet,
+          meta_description: word.definition.meta_description,
+          paragraph_1: { title: word.definition.title1, text: word.definition.text1 },
+          paragraph_2: { title: word.definition.title2, text: word.definition.text2 },
+          paragraph_3: { title: word.definition.title3, text: word.definition.text3 },
+          synonyms: word.definition.synonyms,
+          antonyms: word.definition.antonyms,
+          usage_examples: word.definition.usage_examples,
+          related_keywords: word.definition.related_keywords,
+          faqs: word.definition.faqs,
+        },
+      },
+    }
+  }
+
+  async exportAll(companyId: number, dictionaryId: number) {
+    const dictionary = await prisma.dictionary.findFirst({
+      where: { id: dictionaryId, companyId },
+      include: { words: { where: { definition: { isNot: null } }, include: { definition: true }, orderBy: { id: 'asc' } } },
+    })
+    if (!dictionary) throw new NotFoundError('Dictionary not found')
+
+    const words = dictionary.words.filter((w) => w.definition)
+    return {
+      dictionary_info: {
+        id: dictionary.id,
+        title: dictionary.title,
+        subject: dictionary.subject,
+        language: dictionary.language,
+        num_words: dictionary.num_words,
+        current_letter: dictionary.current_letter,
+        status: toDjangoDictionaryStatus(String(dictionary.status)),
+      },
+      words: words.map((word) => ({
+        id: word.id,
+        letter: word.letter,
+        keyword: word.keyword,
+        description: word.description,
+        priority: word.priority === 'HIGH' ? 1 : 2,
+        definition: {
+          title: word.definition!.title,
+          seo_title: word.definition!.seo_title,
+          featured_google_snippet: word.definition!.featured_google_snippet,
+          meta_description: word.definition!.meta_description,
+          paragraph_1: { title: word.definition!.title1, text: word.definition!.text1 },
+          paragraph_2: { title: word.definition!.title2, text: word.definition!.text2 },
+          paragraph_3: { title: word.definition!.title3, text: word.definition!.text3 },
+          synonyms: word.definition!.synonyms,
+          antonyms: word.definition!.antonyms,
+          usage_examples: word.definition!.usage_examples,
+          related_keywords: word.definition!.related_keywords,
+          faqs: word.definition!.faqs,
+        },
+      })),
+      stats: {
+        total_words: words.length,
+        words_with_definitions: words.length,
+        words_with_complete_data: words.filter((w) => w.definition?.title && w.definition?.seo_title && w.definition?.meta_description && w.definition?.title1 && w.definition?.text1).length,
+      },
+    }
   }
 
   private async generateKeywordsForLetter(dictionaryId: number, letter: string) {

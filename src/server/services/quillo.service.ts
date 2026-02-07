@@ -1,8 +1,10 @@
+import { prisma } from '@/lib/prisma'
 import { NotFoundError, ValidationError } from '@/server/api/errors'
 import { analyzeBlogPost } from '@/server/ai/quillo/analyze-blog-post'
 import { continueChat } from '@/server/ai/quillo/continue-chat'
 import { createFacebookPost } from '@/server/ai/quillo/create-facebook-post'
 import { generateSeoAnalysis } from '@/server/ai/quillo/generate-seo-analysis'
+import { elementService } from '@/server/services/element.service'
 import * as quilloRepository from '@/server/repositories/quillo.repository'
 
 export class QuilloService {
@@ -82,8 +84,34 @@ export class QuilloService {
     return { ...(analysis as object), is_new_analysis: true }
   }
 
-  async runAutopilot(_companyId: number, _payload: unknown) {
-    return { detail: 'Task queue not migrated' }
+  async runAutopilot(companyId: number, blogPostId: number) {
+    const taskId = crypto.randomUUID()
+
+    const asyncWork = async () => {
+      try {
+        const post = await prisma.blogPost.findFirst({
+          where: { id: blogPostId, companyId },
+          include: { elements: { orderBy: { order: 'asc' } } },
+        })
+        if (!post) return
+
+        for (const el of post.elements) {
+          const type = el.element_type.toLowerCase()
+          if (['paragraph', 'introduction', 'conclusion', 'list_paragraph'].includes(type)) {
+            try {
+              await elementService.humanizeElementByContext(companyId, blogPostId, el.id)
+            } catch (e) {
+              console.error(`[Autopilot] Failed to improve element ${el.id}:`, e)
+            }
+          }
+        }
+      } catch (e) {
+        console.error('[Autopilot] Error:', e)
+      }
+    }
+
+    asyncWork()
+    return { task_id: taskId, status: 'accepted' as const }
   }
 
   async generateFacebookPost(companyId: number, postId: number) {
