@@ -4,7 +4,9 @@ import { Label } from '@/components/ui/label'
 
 import { FormEvent, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { setCookie } from 'cookies-next'
 import { api, apiPost } from '@/lib/api'
+import { useAuthStore, USER_TYPES } from '@/stores/auth-store'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -14,8 +16,13 @@ import { CheckCircle2, Loader2, XCircle } from 'lucide-react'
 type SyncStartResponse = { job_id: string; status: 'accepted' | 'running' }
 type SyncJobStatus = 'accepted' | 'running' | 'completed' | 'failed' | 'not_available'
 type CompanyCredentials = { api_endpoint?: string | null; api_key?: string | null }
+type CompanyListItem = { id: number; name: string }
 
 export default function PublishingPage() {
+  const userData = useAuthStore((s) => s.userData)
+  const isAdmin = userData?.userType === USER_TYPES.Administrator
+  const [companies, setCompanies] = useState<CompanyListItem[]>([])
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(userData?.companyId ?? null)
   const [publishingEndpoint, setPublishingEndpoint] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [hasExistingKey, setHasExistingKey] = useState(false)
@@ -36,11 +43,29 @@ export default function PublishingPage() {
     setIsLoading(false)
   }
 
+  const switchCompany = (companyId: number) => {
+    setSelectedCompanyId(companyId)
+    setCookie('companyId', String(companyId), {
+      sameSite: 'lax',
+      secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
+    })
+    setActiveJobId(null)
+    setJobState(null)
+    setStatus(null)
+    void loadCompanyData()
+  }
+
   useEffect(() => {
     setTimeout(() => {
       void loadCompanyData()
+      if (isAdmin) {
+        void (async () => {
+          const { data } = await api<{ companies: CompanyListItem[] }>('/api/admin/companies')
+          if (data?.companies) setCompanies(data.companies)
+        })()
+      }
     }, 0)
-  }, [])
+  }, [isAdmin])
 
   const submitForm = async (e: FormEvent) => {
     e.preventDefault()
@@ -100,7 +125,23 @@ export default function PublishingPage() {
 
   return (
     <div className="space-y-4" style={{ fontSize: 13 }}>
-      <h1 className="text-xl font-semibold">Publishing</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-xl font-semibold">Publishing</h1>
+        {isAdmin && companies.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Company</span>
+            <select
+              value={selectedCompanyId ?? ''}
+              onChange={(e) => switchCompany(Number(e.target.value))}
+              className="h-8 rounded-sm border border-border bg-white px-2 text-[13px] focus:border-primary focus:outline-none"
+            >
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>{c.name} ({c.id})</option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
 
       {/* API Config */}
       <Card className="rounded-sm border-border bg-white">
