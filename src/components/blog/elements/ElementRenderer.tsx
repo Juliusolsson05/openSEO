@@ -3,11 +3,12 @@
 /**
  * ElementRenderer — resolves element_type to the correct component and renders it.
  * Handles loading skeleton state and fallback to DefaultComponent.
+ *
+ * NOTE: Individual components (Paragraph, FAQ, etc.) already wrap themselves
+ * in <BaseElement> internally, so we do NOT wrap again here.
  */
 
-import { Skeleton } from '@/components/ui/skeleton'
-import { getComponent, getLoadingComponent } from './registry'
-import { BaseElement } from './BaseElement'
+import { getComponent, getLoadingComponent, getPreviewComponent, type PreviewComponentProps } from './registry'
 import type { BlogPostElement } from '@/stores/types'
 import type { ElementType } from './types'
 
@@ -16,6 +17,10 @@ interface ElementRendererProps {
   blogId: number
   /** true = inside the post editor (actions visible), false = preview mode */
   editable?: boolean
+  /** Force preview component registry when rendering read-only output */
+  preview?: boolean
+  /** Additional props forwarded to preview components */
+  previewProps?: Omit<PreviewComponentProps, 'content'>
   onContentUpdated?: (content: any) => void
   onElementAdded?: (element: any) => void
   onElementDeleted?: (elementId: number) => void
@@ -25,6 +30,8 @@ export function ElementRenderer({
   element,
   blogId,
   editable = true,
+  preview = false,
+  previewProps,
   onContentUpdated,
   onElementAdded,
   onElementDeleted,
@@ -35,36 +42,31 @@ export function ElementRenderer({
     return <Loading />
   }
 
-  const Component = getComponent(element.element_type as ElementType)
+  if (editable && !preview) {
+    const Component = getComponent(element.element_type as ElementType)
 
-  if (editable) {
     return (
-      <BaseElement
+      <Component
+        content={element.content}
         blogId={blogId}
         elementId={element.id}
-        content={element.content}
+        editable={editable}
         onContentUpdated={onContentUpdated}
         onElementAdded={onElementAdded}
         onElementDeleted={onElementDeleted}
-      >
-        <Component
-          content={element.content}
-          blogId={blogId}
-          elementId={element.id}
-          onContentUpdated={onContentUpdated}
-          onElementAdded={onElementAdded}
-          onElementDeleted={onElementDeleted}
-        />
-      </BaseElement>
+      />
     )
   }
 
-  // Preview mode — no action buttons
+  const PreviewComponent = getPreviewComponent(element.element_type as ElementType)
+
   return (
-    <Component
+    <PreviewComponent
       content={element.content}
       blogId={blogId}
       elementId={element.id}
+      hyperlink={element.hyperlink}
+      {...previewProps}
     />
   )
 }

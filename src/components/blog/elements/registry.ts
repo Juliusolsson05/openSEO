@@ -22,6 +22,15 @@ export interface ElementComponentProps {
 
 export interface PreviewComponentProps {
   content: any
+  blogId?: number
+  elementId?: number
+  postTitle?: string
+  imageNumber?: number | null
+  hyperlink?: any
+  companyName?: string
+  isCoverImage?: boolean
+  elements?: any[]
+  [key: string]: any
 }
 
 // ─── Component registries ────────────────────────────────────────────

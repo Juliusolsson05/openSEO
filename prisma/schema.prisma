@@ -227,6 +227,10 @@ model BlogPost {
   reviewed         Boolean  @default(false)
   last_updated     DateTime @updatedAt
 
+  share_token      String?  @unique
+  share_enabled    Boolean  @default(false)
+  share_expires_at DateTime?
+
   company       Company?      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   bulk_schedule BulkSchedule? @relation(fields: [bulkScheduleId], references: [id], onDelete: SetNull)
 
@@ -271,6 +275,18 @@ model BlogPostPostLink {
   @@id([fromBlogPostId, toBlogPostId])
   @@index([fromBlogPostId])
   @@index([toBlogPostId])
+}
+
+model ShareLink {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  token     String   @unique @default(uuid())
+  enabled   Boolean  @default(true)
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([postId])
 }
 
 model BlogPublish {
