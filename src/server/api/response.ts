@@ -17,6 +17,10 @@ export function success<T>(data: T, status = 200): NextResponse<ApiSuccessRespon
   return NextResponse.json({ success: true, data }, { status })
 }
 
+export function raw<T>(data: T, status = 200): NextResponse {
+  return NextResponse.json(data, { status })
+}
+
 export function error(message: string, status: number, details?: unknown): NextResponse<ApiErrorResponse> {
   return NextResponse.json(
     {

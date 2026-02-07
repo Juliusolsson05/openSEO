@@ -12,12 +12,32 @@ const blogSortSchema = z.enum([
   'scheduledDateAsc',
 ])
 
+const categoryIdsSchema = z
+  .union([
+    z.array(z.coerce.number().int().positive()),
+    z.coerce.number().int().positive(),
+    z.string(),
+  ])
+  .optional()
+  .transform((value) => {
+    if (value === undefined) return undefined
+    if (Array.isArray(value)) return value
+    if (typeof value === 'number') return [value]
+
+    return value
+      .split(',')
+      .map((item) => Number(item.trim()))
+      .filter((item) => Number.isInteger(item) && item > 0)
+  })
+
 export const listBlogPostsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
   status: blogStatusSchema.optional(),
   search: z.string().trim().min(1).optional(),
   categoryId: z.coerce.number().int().positive().optional(),
+  categoryIds: categoryIdsSchema,
+  publishStatus: z.enum(['published', 'drafts', 'all']).optional(),
   sort: blogSortSchema.default('createdAtDesc'),
 })
 

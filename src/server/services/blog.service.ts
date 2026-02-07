@@ -37,9 +37,14 @@ async function ensureUniqueSlug(baseSlug: string, excludeId?: number): Promise<s
 
 export class BlogService {
   async listPosts(companyId: number, query: ListBlogPostsQueryInput) {
+    const normalizedQuery = {
+      ...query,
+      categoryIds: query.categoryIds ?? (query.categoryId ? [query.categoryId] : undefined),
+    }
+
     const [data, total] = await Promise.all([
-      blogRepository.findMany(companyId, query),
-      blogRepository.count(companyId, query),
+      blogRepository.findMany(companyId, normalizedQuery),
+      blogRepository.count(companyId, normalizedQuery),
     ])
 
     return { data, total }
@@ -141,6 +146,10 @@ export class BlogService {
     }
 
     await blogRepository.deletePost(id, companyId)
+  }
+
+  async listFocusKeywords(companyId: number) {
+    return blogRepository.listFocusKeywords(companyId)
   }
 
   // TODO: Generation endpoints

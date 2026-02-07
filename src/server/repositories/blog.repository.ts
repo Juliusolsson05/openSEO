@@ -7,7 +7,8 @@ type ListBlogPostsFilters = {
   pageSize: number
   status?: 'TO_BE_GENERATED' | 'APPROVED' | 'REJECTED' | 'GENERATED'
   search?: string
-  categoryId?: number
+  categoryIds?: number[]
+  publishStatus?: 'published' | 'drafts' | 'all'
   sort?:
     | 'createdAtDesc'
     | 'createdAtAsc'
@@ -21,11 +22,13 @@ function buildWhere(companyId: number, filters: Omit<ListBlogPostsFilters, 'page
   return {
     companyId,
     ...(filters.status ? { status: filters.status } : {}),
-    ...(filters.categoryId
+    ...(filters.categoryIds?.length
       ? {
           categories: {
             some: {
-              id: filters.categoryId,
+              id: {
+                in: filters.categoryIds,
+              },
             },
           },
         }
@@ -39,6 +42,28 @@ function buildWhere(companyId: number, filters: Omit<ListBlogPostsFilters, 'page
             { excerpt: { contains: filters.search, mode: 'insensitive' } },
             { meta_description: { contains: filters.search, mode: 'insensitive' } },
           ],
+        }
+      : {}),
+    ...(filters.publishStatus === 'published'
+      ? {
+          publishes: {
+            some: {
+              remote_id: {
+                not: null,
+              },
+            },
+          },
+        }
+      : {}),
+    ...(filters.publishStatus === 'drafts'
+      ? {
+          publishes: {
+            none: {
+              remote_id: {
+                not: null,
+              },
+            },
+          },
         }
       : {}),
   }
@@ -62,44 +87,71 @@ function buildOrderBy(sort: ListBlogPostsFilters['sort']): Prisma.BlogPostOrderB
   }
 }
 
+function withIsPublished<T extends { publishes: Array<{ remote_id: string | null }> }>(post: T) {
+  return {
+    ...post,
+    is_published: post.publishes.some((publish) => publish.remote_id !== null),
+  }
+}
+
+const blogPostInclude = {
+  categories: true,
+  publishes: {
+    orderBy: {
+      sync_date: 'desc' as const,
+    },
+  },
+  elements: {
+    orderBy: {
+      order: 'asc' as const,
+    },
+    include: {
+      hyperlink: true,
+    },
+  },
+  post_linking_from: {
+    include: {
+      toBlogPost: {
+        select: {
+          id: true,
+          title_text: true,
+          excerpt: true,
+          cover_image: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.BlogPostInclude
+
 export async function findMany(companyId: number, filters: ListBlogPostsFilters) {
   const where = buildWhere(companyId, {
     status: filters.status,
     search: filters.search,
-    categoryId: filters.categoryId,
+    categoryIds: filters.categoryIds,
+    publishStatus: filters.publishStatus,
   })
 
-  return prisma.blogPost.findMany({
+  const posts = await prisma.blogPost.findMany({
     where,
     skip: (filters.page - 1) * filters.pageSize,
     take: filters.pageSize,
     orderBy: buildOrderBy(filters.sort),
-    include: {
-      categories: true,
-      publishes: true,
-    },
+    include: blogPostInclude,
   })
+
+  return posts.map(withIsPublished)
 }
 
 export async function findById(id: number, companyId: number) {
-  return prisma.blogPost.findFirst({
+  const post = await prisma.blogPost.findFirst({
     where: {
       id,
       companyId,
     },
-    include: {
-      categories: true,
-      publishes: true,
-      elements: {
-        orderBy: {
-          order: 'asc',
-        },
-        include: {
-          hyperlink: true,
-        },
-      },
-    },
+    include: blogPostInclude,
   })
+
+  return post ? withIsPublished(post) : null
 }
 
 export async function findBySlug(slug: string) {
@@ -110,40 +162,22 @@ export async function findBySlug(slug: string) {
 }
 
 export async function create(data: Prisma.BlogPostCreateInput) {
-  return prisma.blogPost.create({
+  const post = await prisma.blogPost.create({
     data,
-    include: {
-      categories: true,
-      publishes: true,
-      elements: {
-        orderBy: {
-          order: 'asc',
-        },
-        include: {
-          hyperlink: true,
-        },
-      },
-    },
+    include: blogPostInclude,
   })
+
+  return withIsPublished(post)
 }
 
 export async function update(id: number, data: Prisma.BlogPostUpdateInput) {
-  return prisma.blogPost.update({
+  const post = await prisma.blogPost.update({
     where: { id },
     data,
-    include: {
-      categories: true,
-      publishes: true,
-      elements: {
-        orderBy: {
-          order: 'asc',
-        },
-        include: {
-          hyperlink: true,
-        },
-      },
-    },
+    include: blogPostInclude,
   })
+
+  return withIsPublished(post)
 }
 
 export async function deletePost(id: number, companyId: number) {
@@ -160,4 +194,26 @@ export async function deletePost(id: number, companyId: number) {
 export async function count(companyId: number, filters: Omit<ListBlogPostsFilters, 'page' | 'pageSize' | 'sort'>) {
   const where = buildWhere(companyId, filters)
   return prisma.blogPost.count({ where })
+}
+
+export async function listFocusKeywords(companyId: number) {
+  const rows = await prisma.blogPost.findMany({
+    where: {
+      companyId,
+      focus_keyword: {
+        not: null,
+      },
+    },
+    select: {
+      focus_keyword: true,
+    },
+    distinct: ['focus_keyword'],
+    orderBy: {
+      focus_keyword: 'asc',
+    },
+  })
+
+  return rows
+    .map((row) => row.focus_keyword)
+    .filter((value): value is string => Boolean(value))
 }

@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { create } from 'zustand'
 import { getSession, signIn, signOut, useSession } from 'next-auth/react'
+import { setCookie, deleteCookie } from 'cookies-next'
 
 export const USER_TYPES = {
   Demo: 1,
@@ -84,11 +85,19 @@ export const useAuthStore = create<AuthState>((set) => ({
       userAbilityRules: getAbilityRules(user.userType),
     })
 
+    if (user.companyId !== null && user.companyId !== undefined) {
+      setCookie('companyId', String(user.companyId), {
+        sameSite: 'lax',
+        secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
+      })
+    }
+
     return user
   },
 
   logout: async () => {
     await signOut({ redirect: false })
+    deleteCookie('companyId')
     set({ userData: null, userAbilityRules: [], isAuthenticated: false })
   },
 
@@ -109,6 +118,7 @@ export function useAuthSessionSync() {
 
     if (!session?.user) {
       setUser(null)
+      deleteCookie('companyId')
       return
     }
 
@@ -120,5 +130,12 @@ export function useAuthSessionSync() {
       companyId: session.user.companyId,
       company: session.user.company,
     })
+
+    if (session.user.companyId !== null && session.user.companyId !== undefined) {
+      setCookie('companyId', String(session.user.companyId), {
+        sameSite: 'lax',
+        secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
+      })
+    }
   }, [session, setUser, status])
 }

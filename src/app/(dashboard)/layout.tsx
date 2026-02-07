@@ -31,7 +31,7 @@ export default function DashboardLayout({
       <div className="ml-[240px] flex flex-col min-h-screen">
         <Topbar />
         <main className="flex-1 p-6 lg:p-8">
-          <div className="animate-in">{children}</div>
+          <div>{children}</div>
         </main>
       </div>
     </div>
