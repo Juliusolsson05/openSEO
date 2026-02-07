@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
@@ -45,7 +46,7 @@ export default function QuilloAutopilot({ postId }: Props) {
     }
   }
 
-  return (
+  return createPortal(
     <>
       {/* Floating button */}
       <div className={`fixed z-40 transition-all duration-300 ${
@@ -116,6 +117,7 @@ export default function QuilloAutopilot({ postId }: Props) {
           </Card>
         </DialogContent>
       </Dialog>
-    </>
+    </>,
+    document.body
   )
 }
