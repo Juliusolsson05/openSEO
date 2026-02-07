@@ -145,7 +145,7 @@ export default function BlogTitlesPage() {
         <Card>
           <CardContent className="p-4">
             <p className="text-[11px] font-semibold tracking-[0.06em] text-muted-foreground">PENDING</p>
-            <p className="text-[28px] font-semibold mt-1 leading-none text-[#835C00]">{loading ? '–' : pendingCount}</p>
+            <p className="text-[28px] font-semibold mt-1 leading-none text-warning-foreground">{loading ? '–' : pendingCount}</p>
           </CardContent>
         </Card>
         <Card>

@@ -169,7 +169,7 @@ export default function QuilloChat({ blogPostId }: Props) {
                           <p className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">Weaknesses</p>
                           {analysis.overall_analysis.weaknesses.map((w, i) => (
                             <div key={i} className="flex items-start gap-2 mb-1.5">
-                              <AlertTriangle className="h-3.5 w-3.5 text-[#835C00] shrink-0 mt-0.5" />
+                              <AlertTriangle className="h-3.5 w-3.5 text-warning-foreground shrink-0 mt-0.5" />
                               <span className="text-[12px]">{w}</span>
                             </div>
                           ))}

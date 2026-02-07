@@ -11,7 +11,7 @@ const badgeVariants = cva(
         secondary: 'bg-secondary text-secondary-foreground',
         destructive: 'bg-destructive/10 text-destructive',
         success: 'bg-success-light text-success',
-        warning: 'bg-warning-light text-[#835C00]',
+        warning: 'bg-warning-light text-warning-foreground',
         outline: 'border border-border bg-white text-muted-foreground',
       },
     },

@@ -165,7 +165,7 @@ export default function BlogCtaPage() {
                 </CardHeader>
                 <CardContent>
                   {campaign.ctas.length === 0 ? (
-                    <div className="rounded-sm border border-border bg-warning-light px-3 py-2 text-[12px] text-[#835C00]">
+                    <div className="rounded-sm border border-border bg-warning-light px-3 py-2 text-[12px] text-warning-foreground">
                       No CTAs under <strong>{campaign.name}</strong> yet.
                     </div>
                   ) : (

@@ -118,7 +118,7 @@ export default function BlogPage() {
         {[
           { label: 'TOTAL POSTS', value: posts.length, color: 'text-foreground' },
           { label: 'PUBLISHED', value: publishedCount, color: 'text-success' },
-          { label: 'DRAFTS', value: draftCount, color: 'text-[#835C00]' },
+          { label: 'DRAFTS', value: draftCount, color: 'text-warning-foreground' },
           { label: 'IN QUEUE', value: postsLeftToGenerate, color: 'text-primary' },
         ].map((stat) => (
           <Card key={stat.label}>
