@@ -1,11 +1,15 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { Search, Bell, FileText, Tags, BookOpen, Package, HelpCircle } from 'lucide-react'
+import { Search, Bell, FileText, Tags, BookOpen, Package, HelpCircle, Building2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { setCookie } from 'cookies-next'
 
 import { api } from '@/lib/api'
+import { useAuthStore, USER_TYPES } from '@/stores/auth-store'
 import { Button } from '@/components/ui/button'
+
+type CompanyListItem = { id: number; name: string }
 
 type GlobalSearchItem = {
   id: string
@@ -78,6 +82,37 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
   const title = getPageTitle(pathname)
+  const userData = useAuthStore((s) => s.userData)
+  const isAdmin = userData?.userType === USER_TYPES.Administrator
+
+  const [companies, setCompanies] = useState<CompanyListItem[]>([])
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(userData?.companyId ?? null)
+
+  useEffect(() => {
+    if (!isAdmin) return
+    setTimeout(() => {
+      void (async () => {
+        const { data } = await api<{ companies: CompanyListItem[] } | CompanyListItem[]>('/api/admin/companies')
+        const items = Array.isArray(data) ? data : (data?.companies ?? [])
+        setCompanies(items)
+      })()
+    }, 0)
+  }, [isAdmin])
+
+  useEffect(() => {
+    if (userData?.companyId && userData.companyId !== selectedCompanyId) {
+      setTimeout(() => setSelectedCompanyId(userData.companyId), 0)
+    }
+  }, [userData?.companyId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const switchCompany = (companyId: number) => {
+    setSelectedCompanyId(companyId)
+    setCookie('companyId', String(companyId), {
+      sameSite: 'lax',
+      secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
+    })
+    window.location.reload()
+  }
 
   const [searchFocused, setSearchFocused] = useState(false)
   const [query, setQuery] = useState('')
@@ -199,6 +234,21 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
         <span className="text-[13px] text-muted-foreground">/</span>
         <span className="text-[13px] font-semibold text-foreground">{title}</span>
       </div>
+
+      {isAdmin && companies.length > 1 && (
+        <div className="flex items-center gap-1.5 ml-2">
+          <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+          <select
+            value={selectedCompanyId ?? ''}
+            onChange={(e) => switchCompany(Number(e.target.value))}
+            className="h-7 rounded-sm border border-border bg-secondary px-2 pr-6 text-[11px] font-medium text-foreground focus:border-primary focus:outline-none"
+          >
+            {companies.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="flex-1" />
 
