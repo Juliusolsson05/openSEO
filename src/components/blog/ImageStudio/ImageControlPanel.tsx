@@ -5,7 +5,8 @@ import { IdeogramControls } from './providers/IdeogramControls'
 import { GptImageControls } from './providers/GptImageControls'
 import { StockPhotoControls } from './providers/StockPhotoControls'
 import { UploadControls } from './providers/UploadControls'
-import { GeminiControls } from './providers/GeminiControls'
+import { NanoBananaControls } from './providers/NanoBananaControls'
+import { ImagenControls } from './providers/ImagenControls'
 import { Button } from '@/components/ui/button'
 
 interface Props {
@@ -25,8 +26,12 @@ interface Props {
   setGptSize: (value: '1024x1024' | '1536x1024' | '1024x1536' | 'auto') => void
   gptBackground: 'auto' | 'transparent' | 'opaque'
   setGptBackground: (value: 'auto' | 'transparent' | 'opaque') => void
-  geminiAspectRatio: '1:1' | '3:4' | '4:3' | '9:16' | '16:9'
-  setGeminiAspectRatio: (value: '1:1' | '3:4' | '4:3' | '9:16' | '16:9') => void
+  nanoModel: 'flash' | 'pro'
+  setNanoModel: (value: 'flash' | 'pro') => void
+  nanoAspectRatio: '1:1' | '3:4' | '4:3' | '9:16' | '16:9'
+  setNanoAspectRatio: (value: '1:1' | '3:4' | '4:3' | '9:16' | '16:9') => void
+  imagenAspectRatio: '1:1' | '3:4' | '4:3' | '9:16' | '16:9'
+  setImagenAspectRatio: (value: '1:1' | '3:4' | '4:3' | '9:16' | '16:9') => void
   onGenerate: () => void
   isGenerating: boolean
   onStockSelect: (url: string) => void
@@ -39,7 +44,8 @@ export function ImageControlPanel(props: Props) {
   const providers: Array<{ key: ImageStudioProvider; label: string }> = [
     { key: 'ideogram', label: 'Ideogram' },
     { key: 'gpt-image', label: 'GPT Image' },
-    { key: 'gemini', label: 'Gemini ✨' },
+    { key: 'nano-banana', label: 'Nano Banana ✨' },
+    { key: 'imagen', label: 'Imagen (Google)' },
     { key: 'stock', label: 'Stock Photos' },
     { key: 'upload', label: 'Upload' },
     { key: 'photopea', label: 'Photopea' },
@@ -88,12 +94,25 @@ export function ImageControlPanel(props: Props) {
         />
       ) : null}
 
-      {props.provider === 'gemini' ? (
-        <GeminiControls
+      {props.provider === 'nano-banana' ? (
+        <NanoBananaControls
           prompt={props.prompt}
           setPrompt={props.setPrompt}
-          aspectRatio={props.geminiAspectRatio}
-          setAspectRatio={props.setGeminiAspectRatio}
+          model={props.nanoModel}
+          setModel={props.setNanoModel}
+          aspectRatio={props.nanoAspectRatio}
+          setAspectRatio={props.setNanoAspectRatio}
+          onGenerate={props.onGenerate}
+          isGenerating={props.isGenerating}
+        />
+      ) : null}
+
+      {props.provider === 'imagen' ? (
+        <ImagenControls
+          prompt={props.prompt}
+          setPrompt={props.setPrompt}
+          aspectRatio={props.imagenAspectRatio}
+          setAspectRatio={props.setImagenAspectRatio}
           onGenerate={props.onGenerate}
           isGenerating={props.isGenerating}
         />

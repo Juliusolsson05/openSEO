@@ -39,7 +39,9 @@ export function ImageStudio({
   const [gptQuality, setGptQuality] = useState<'low' | 'medium' | 'high'>('medium')
   const [gptSize, setGptSize] = useState<'1024x1024' | '1536x1024' | '1024x1536' | 'auto'>('auto')
   const [gptBackground, setGptBackground] = useState<'auto' | 'transparent' | 'opaque'>('auto')
-  const [geminiAspectRatio, setGeminiAspectRatio] = useState<'1:1' | '3:4' | '4:3' | '9:16' | '16:9'>('16:9')
+  const [nanoModel, setNanoModel] = useState<'flash' | 'pro'>('flash')
+  const [nanoAspectRatio, setNanoAspectRatio] = useState<'1:1' | '3:4' | '4:3' | '9:16' | '16:9'>('16:9')
+  const [imagenAspectRatio, setImagenAspectRatio] = useState<'1:1' | '3:4' | '4:3' | '9:16' | '16:9'>('16:9')
   const [selectedUrl, setSelectedUrl] = useState<string | null>(currentUrl ?? null)
   const [history, setHistory] = useState<HistoryEntry[]>(
     currentUrl ? [{ url: currentUrl, provider: 'ideogram', timestamp: Date.now() }] : []
@@ -73,14 +75,15 @@ export function ImageStudio({
         post_id: blogId,
         image_number: imageNumber,
         force_prompt: prompt,
-        provider: provider === 'gpt-image' ? 'gpt-image' : provider === 'gemini' ? 'gemini' : 'ideogram',
+        provider: provider === 'gpt-image' || provider === 'nano-banana' || provider === 'imagen' ? provider : 'ideogram',
         version: ideogramQuality,
         magic_prompt: magicPrompt,
         gpt_quality: gptQuality,
         gpt_size: gptSize,
         gpt_background: gptBackground,
         gpt_output_format: 'png',
-        gemini_aspect_ratio: geminiAspectRatio,
+        nano_model: nanoModel,
+        aspect_ratio: provider === 'imagen' ? imagenAspectRatio : nanoAspectRatio,
       })
       if (!error && data?.new_url) addToHistory(data.new_url, provider)
     } finally {
@@ -176,8 +179,12 @@ export function ImageStudio({
                   setGptSize={setGptSize}
                   gptBackground={gptBackground}
                   setGptBackground={setGptBackground}
-                  geminiAspectRatio={geminiAspectRatio}
-                  setGeminiAspectRatio={setGeminiAspectRatio}
+                  nanoModel={nanoModel}
+                  setNanoModel={setNanoModel}
+                  nanoAspectRatio={nanoAspectRatio}
+                  setNanoAspectRatio={setNanoAspectRatio}
+                  imagenAspectRatio={imagenAspectRatio}
+                  setImagenAspectRatio={setImagenAspectRatio}
                   onGenerate={onGenerate}
                   isGenerating={isGenerating}
                   onStockSelect={onStockSelect}

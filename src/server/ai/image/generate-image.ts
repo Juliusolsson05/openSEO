@@ -1,3 +1,4 @@
+import { GoogleGenAI, Modality } from '@google/genai'
 import { getOpenAIClient } from '../clients'
 
 interface ImageResult {
@@ -16,6 +17,13 @@ interface Base64ImageResult {
   error?: never
 }
 
+interface NanoBananaResult {
+  prompt: string
+  b64_json: string
+  mimeType: string
+  error?: never
+}
+
 interface ImageError {
   error: string
   url?: never
@@ -24,6 +32,12 @@ interface ImageError {
 type GenerateResult = ImageResult | ImageError
 
 type GenerateBase64Result = Base64ImageResult | ImageError
+
+type GenerateNanoBananaResult = NanoBananaResult | ImageError
+
+const GEMINI_ASPECT_RATIOS = ['1:1', '3:4', '4:3', '9:16', '16:9'] as const
+
+type GeminiAspectRatio = typeof GEMINI_ASPECT_RATIOS[number]
 
 export async function generateIdeogramImage(
   prompt: string,
@@ -103,5 +117,74 @@ export async function generateGptImage(
     }
   } catch (err) {
     return { error: `GPT Image: ${err instanceof Error ? err.message : String(err)}` }
+  }
+}
+
+export async function generateNanoBananaImage(
+  prompt: string,
+  model: 'flash' | 'pro' = 'flash',
+  aspectRatio: GeminiAspectRatio = '16:9',
+): Promise<GenerateNanoBananaResult> {
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) return { error: 'Gemini API key is not configured.' }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey })
+    const modelName = model === 'pro' ? 'gemini-3-pro-image-preview' : 'gemini-2.5-flash-preview-image'
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: prompt || 'A professional blog header image',
+      config: {
+        responseModalities: [Modality.IMAGE],
+        ...(model === 'pro' ? { imageConfig: { aspectRatio } } : {}),
+      },
+    })
+
+    const part = response.candidates?.[0]?.content?.parts?.find((p) => p.inlineData)
+    const b64 = part?.inlineData?.data
+    const mimeType = part?.inlineData?.mimeType ?? 'image/png'
+
+    if (!b64) return { error: 'Nano Banana returned no image data' }
+
+    return {
+      b64_json: b64,
+      mimeType,
+      prompt,
+    }
+  } catch (err) {
+    return { error: `Nano Banana: ${err instanceof Error ? err.message : String(err)}` }
+  }
+}
+
+export async function generateImagenImage(
+  prompt: string,
+  aspectRatio: GeminiAspectRatio = '16:9',
+  numberOfImages = 1,
+): Promise<GenerateBase64Result> {
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) return { error: 'Gemini API key is not configured.' }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey })
+    const response = await ai.models.generateImages({
+      model: 'imagen-4.0-generate-preview-06-06',
+      prompt: prompt || 'A professional blog header image',
+      config: {
+        numberOfImages,
+        aspectRatio,
+      },
+    })
+
+    const b64 = response.generatedImages?.[0]?.image?.imageBytes
+    if (!b64) return { error: 'Imagen returned no image data' }
+
+    return {
+      b64_json: b64,
+      output_format: 'png',
+      prompt,
+      resolution: aspectRatio,
+    }
+  } catch (err) {
+    return { error: `Imagen: ${err instanceof Error ? err.message : String(err)}` }
   }
 }
