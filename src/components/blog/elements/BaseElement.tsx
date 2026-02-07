@@ -15,6 +15,7 @@ import { RegenerateModal } from './modals/RegenerateModal'
 import { ConfirmDeleteModal } from './modals/ConfirmDeleteModal'
 import { EnhanceModal } from './modals/EnhanceModal'
 import { ComponentSelectModal } from './modals/ComponentSelectModal'
+import SelectCTAModal from '@/components/blog/SelectCTAModal'
 import { toast } from 'sonner'
 import type { ElementType } from './types'
 
@@ -58,6 +59,7 @@ export function BaseElement({
   const [showEnhanceModal, setShowEnhanceModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showAddElementModal, setShowAddElementModal] = useState(false)
+  const [showSelectCtaModal, setShowSelectCtaModal] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const elementsStore = useElementsStore()
@@ -219,19 +221,48 @@ export function BaseElement({
     [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId]
   )
 
-  const handleTemplateSelect = useCallback(
-    (templateId: string) => {
-      if (templateId === 'call_to_action') {
-        if (onOpenCtaModal) {
-          onOpenCtaModal()
-        } else {
-          console.log('CTA template selected (no CTA modal wired yet).')
-        }
-      }
+  const handleTemplateSelect = useCallback((templateId: string) => {
+    if (templateId === 'call_to_action') {
       setShowAddElementModal(false)
-    },
-    [onOpenCtaModal]
-  )
+      setShowSelectCtaModal(true)
+      return
+    }
+    setShowAddElementModal(false)
+  }, [])
+
+  const handleCtaSelected = useCallback(async (ctaId: number) => {
+    const opId = ++opIdRef.current
+    const toastId = toast.loading('Adding CTA...')
+
+    insertSkeletonLoader(opId, {
+      elementId,
+      type: 'new',
+      status: 'in_progress',
+      position: { afterElementId: elementId },
+      elementType: 'call_to_action',
+    })
+
+    try {
+      const result = await elementsStore.addElement({
+        blog_post_id: blogId,
+        element_id: elementId,
+        cta_id: ctaId,
+      })
+
+      if (result.success && post) {
+        await fetchPost(post.id, true)
+        toast.success('CTA inserted', { id: toastId })
+      } else {
+        removeSkeletonLoaderByOperationId(opId)
+        toast.error(result.error || 'Failed to insert CTA', { id: toastId })
+      }
+    } catch {
+      removeSkeletonLoaderByOperationId(opId)
+      toast.error('Failed to insert CTA', { id: toastId })
+    } finally {
+      setShowSelectCtaModal(false)
+    }
+  }, [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId])
 
   return (
     <div
@@ -325,6 +356,12 @@ export function BaseElement({
         onSelect={handleAddElement}
         onTemplateSelect={handleTemplateSelect}
         loading={loading}
+      />
+
+      <SelectCTAModal
+        modelValue={showSelectCtaModal}
+        onOpenChange={setShowSelectCtaModal}
+        onCtaSelected={handleCtaSelected}
       />
     </div>
   )
