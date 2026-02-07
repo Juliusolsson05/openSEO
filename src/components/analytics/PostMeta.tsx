@@ -1,6 +1,7 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 
 interface OversizedSeoTitle {
   post_id: number
@@ -36,35 +37,35 @@ function DataTable<T extends OversizedSeoTitle | OversizedMetaDescription>({
     <div>
       <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide">{heading}</p>
       <div className="overflow-x-auto rounded-sm border border-border">
-        <table className="w-full text-left text-[12px]">
-          <thead className="bg-muted">
-            <tr>
-              <th className="border-b border-border px-3 py-2">Post ID</th>
-              <th className="border-b border-border px-3 py-2">Title/Description</th>
-              <th className="border-b border-border px-3 py-2">Focus Keyword</th>
-              <th className="border-b border-border px-3 py-2">Extra Characters</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="w-full text-left text-[12px]">
+          <TableHeader className="bg-muted">
+            <TableRow>
+              <TableHead className="border-b border-border px-3 py-2">Post ID</TableHead>
+              <TableHead className="border-b border-border px-3 py-2">Title/Description</TableHead>
+              <TableHead className="border-b border-border px-3 py-2">Focus Keyword</TableHead>
+              <TableHead className="border-b border-border px-3 py-2">Extra Characters</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {rows.map((row) => (
-              <tr key={`${row.post_id}-${row.extra_chars}`}>
-                <td className="border-b border-border px-3 py-2">{row.post_id}</td>
-                <td className={`border-b border-border px-3 py-2 ${highlight ? 'bg-destructive/10' : ''}`}>
+              <TableRow key={`${row.post_id}-${row.extra_chars}`}>
+                <TableCell className="border-b border-border px-3 py-2">{row.post_id}</TableCell>
+                <TableCell className={`border-b border-border px-3 py-2 ${highlight ? 'bg-destructive/10' : ''}`}>
                   {getText(row)}
-                </td>
-                <td className="border-b border-border px-3 py-2">{row.focus_keyword}</td>
-                <td className="border-b border-border px-3 py-2">{row.extra_chars}</td>
-              </tr>
+                </TableCell>
+                <TableCell className="border-b border-border px-3 py-2">{row.focus_keyword}</TableCell>
+                <TableCell className="border-b border-border px-3 py-2">{row.extra_chars}</TableCell>
+              </TableRow>
             ))}
             {rows.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-3 py-6 text-center text-muted-foreground">
+              <TableRow>
+                <TableCell colSpan={4} className="px-3 py-6 text-center text-muted-foreground">
                   No issues found.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   )

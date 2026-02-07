@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 
 interface ScoreBreakdownItem {
   score: number
@@ -56,27 +57,27 @@ export function GeneralScore({ generalSeoScore, scoreBreakdown }: GeneralScorePr
             <DialogTitle className="text-[14px]">Score Breakdown</DialogTitle>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-auto rounded-sm border border-border">
-            <table className="w-full text-left text-[12px]">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="border-b border-border px-3 py-2">Metric</th>
-                  <th className="border-b border-border px-3 py-2">Score</th>
-                  <th className="border-b border-border px-3 py-2">Weight</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table className="w-full text-left text-[12px]">
+              <TableHeader className="bg-muted">
+                <TableRow>
+                  <TableHead className="border-b border-border px-3 py-2">Metric</TableHead>
+                  <TableHead className="border-b border-border px-3 py-2">Score</TableHead>
+                  <TableHead className="border-b border-border px-3 py-2">Weight</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {entries.map(([key, item]) => (
-                  <tr key={key}>
-                    <td className="border-b border-border px-3 py-2 capitalize">{key.replace(/_/g, ' ')}</td>
-                    <td className="border-b border-border px-3 py-2">{Math.round(item.score)}</td>
-                    <td className="border-b border-border px-3 py-2">{item.weight <= 1 ? Math.round(item.weight * 100) : Math.round(item.weight)}%</td>
-                  </tr>
+                  <TableRow key={key}>
+                    <TableCell className="border-b border-border px-3 py-2 capitalize">{key.replace(/_/g, ' ')}</TableCell>
+                    <TableCell className="border-b border-border px-3 py-2">{Math.round(item.score)}</TableCell>
+                    <TableCell className="border-b border-border px-3 py-2">{item.weight <= 1 ? Math.round(item.weight * 100) : Math.round(item.weight)}%</TableCell>
+                  </TableRow>
                 ))}
                 {entries.length === 0 && (
-                  <tr><td colSpan={3} className="px-3 py-6 text-center text-muted-foreground">No breakdown data available.</td></tr>
+                  <TableRow><TableCell colSpan={3} className="px-3 py-6 text-center text-muted-foreground">No breakdown data available.</TableCell></TableRow>
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </DialogContent>
       </Dialog>

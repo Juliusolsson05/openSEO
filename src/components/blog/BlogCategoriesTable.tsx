@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 
 interface Category {
   id: number
@@ -223,10 +224,10 @@ export default function BlogCategoriesTable() {
           </div>
         ) : (
           <div className="overflow-x-auto rounded-sm border border-border">
-            <table className="w-full border-collapse text-left text-[13px]">
-              <thead className="bg-background">
-                <tr>
-                  <th className="w-10 border-b border-border px-3 py-2">
+            <Table className="w-full border-collapse text-left text-[13px]">
+              <TableHeader className="bg-background">
+                <TableRow>
+                  <TableHead className="w-10 border-b border-border px-3 py-2">
                     <input
                       type="checkbox"
                       checked={allSelected}
@@ -235,29 +236,29 @@ export default function BlogCategoriesTable() {
                       }}
                       onChange={toggleSelectAll}
                     />
-                  </th>
-                  <th className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Name</th>
-                  <th className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Post Count</th>
-                  <th className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHead>
+                  <TableHead className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Name</TableHead>
+                  <TableHead className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Post Count</TableHead>
+                  <TableHead className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {categories.map((category) => (
-                  <tr key={category.id} className="odd:bg-white even:bg-background">
-                    <td className="border-b border-border px-3 py-2">
+                  <TableRow key={category.id} className="odd:bg-white even:bg-background">
+                    <TableCell className="border-b border-border px-3 py-2">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(category.id)}
                         onChange={() => toggleSelect(category.id)}
                       />
-                    </td>
-                    <td className="border-b border-border px-3 py-2">{category.name}</td>
-                    <td className="border-b border-border px-3 py-2">
+                    </TableCell>
+                    <TableCell className="border-b border-border px-3 py-2">{category.name}</TableCell>
+                    <TableCell className="border-b border-border px-3 py-2">
                       <Badge className="rounded-sm bg-background text-muted-foreground hover:bg-background">
                         {category.post_count}
                       </Badge>
-                    </td>
-                    <td className="border-b border-border px-3 py-2">
+                    </TableCell>
+                    <TableCell className="border-b border-border px-3 py-2">
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
@@ -275,11 +276,11 @@ export default function BlogCategoriesTable() {
                           {actionLoading.deleteOneId === category.id ? 'Deleting...' : 'Delete'}
                         </Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </CardContent>

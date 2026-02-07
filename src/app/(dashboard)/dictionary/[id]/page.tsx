@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 
 interface Word {
   id: number
@@ -130,21 +131,21 @@ export default function DictionaryDetailPage() {
               <div key={letter} className="space-y-2">
                 <h3 className="font-semibold">Words starting with “{letter}”</h3>
                 <div className="border border-border rounded-sm overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-background text-left">
-                      <tr>
-                        <th className="p-2">Keyword</th>
-                        <th className="p-2">Description</th>
-                        <th className="p-2">Priority</th>
-                        <th className="p-2">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                  <Table className="w-full">
+                    <TableHeader className="bg-background text-left">
+                      <TableRow>
+                        <TableHead className="p-2">Keyword</TableHead>
+                        <TableHead className="p-2">Description</TableHead>
+                        <TableHead className="p-2">Priority</TableHead>
+                        <TableHead className="p-2">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {grouped[letter].map((word) => {
                         const edit = editing[word.id]
                         return (
-                          <tr key={word.id} className="border-t border-border">
-                            <td className="p-2">
+                          <TableRow key={word.id} className="border-t border-border">
+                            <TableCell className="p-2">
                               <Input
                                 className="rounded-sm"
                                 value={edit?.keyword ?? word.keyword}
@@ -152,8 +153,8 @@ export default function DictionaryDetailPage() {
                                   setEditing((prev) => ({ ...prev, [word.id]: { ...(prev[word.id] || {}), keyword: e.target.value } }))
                                 }
                               />
-                            </td>
-                            <td className="p-2">
+                            </TableCell>
+                            <TableCell className="p-2">
                               <Input
                                 className="rounded-sm"
                                 value={edit?.description ?? word.description}
@@ -161,8 +162,8 @@ export default function DictionaryDetailPage() {
                                   setEditing((prev) => ({ ...prev, [word.id]: { ...(prev[word.id] || {}), description: e.target.value } }))
                                 }
                               />
-                            </td>
-                            <td className="p-2 w-24">
+                            </TableCell>
+                            <TableCell className="p-2 w-24">
                               <Input
                                 className="rounded-sm"
                                 type="number"
@@ -171,8 +172,8 @@ export default function DictionaryDetailPage() {
                                   setEditing((prev) => ({ ...prev, [word.id]: { ...(prev[word.id] || {}), priority: Number(e.target.value) } }))
                                 }
                               />
-                            </td>
-                            <td className="p-2">
+                            </TableCell>
+                            <TableCell className="p-2">
                               <div className="flex flex-wrap gap-2">
                                 {word.has_definition ? (
                                   <Link href={`/dictionary/${dictionary.id}/${word.id}`}>
@@ -186,12 +187,12 @@ export default function DictionaryDetailPage() {
                                 <Button variant="outline" className="rounded-sm h-8" onClick={() => saveWord(word.id)}>Save</Button>
                                 <Button variant="outline" className="rounded-sm h-8" onClick={() => deleteWord(word.id)}>Delete</Button>
                               </div>
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         )
                       })}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             ))}

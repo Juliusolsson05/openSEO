@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import {
   ChevronLeft,
   ChevronRight,
@@ -141,24 +142,24 @@ export default function BlogSchedulingPage() {
           {loading ? (
             <div className="p-6"><Skeleton className="h-72 w-full" /></div>
           ) : (
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
+            <Table className="w-full border-collapse">
+              <TableHeader>
+                <TableRow>
                   {DAYS.map((d) => (
-                    <th key={d} className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide pb-2 text-center w-[14.28%]">{d}</th>
+                    <TableHead key={d} className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide pb-2 text-center w-[14.28%]">{d}</TableHead>
                   ))}
-                </tr>
-              </thead>
-              <tbody>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {weeks.map((week, wi) => (
-                  <tr key={wi}>
+                  <TableRow key={wi}>
                     {week.map((day, di) => {
                       const key = day.toISOString().slice(0, 10)
                       const dayPosts = postsByDate[key] || []
                       const isCurrent = day.getMonth() === month
                       const isToday = day.getTime() === today.getTime()
                       return (
-                        <td key={di} className={`border border-border/60 p-1 align-top h-20 ${!isCurrent ? 'bg-secondary/30' : ''} ${isToday ? 'bg-info-light' : ''}`}>
+                        <TableCell key={di} className={`border border-border/60 p-1 align-top h-20 ${!isCurrent ? 'bg-secondary/30' : ''} ${isToday ? 'bg-info-light' : ''}`}>
                           <span className={`text-[11px] font-semibold ${isToday ? 'text-primary' : isCurrent ? 'text-foreground' : 'text-muted-foreground/40'}`}>
                             {day.getDate()}
                           </span>
@@ -168,13 +169,13 @@ export default function BlogSchedulingPage() {
                             </div>
                           ))}
                           {dayPosts.length > 2 && <span className="text-[10px] text-muted-foreground">+{dayPosts.length - 2}</span>}
-                        </td>
+                        </TableCell>
                       )
                     })}
-                  </tr>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
