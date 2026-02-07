@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 export const listTitlesQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  pageSize: z.coerce.number().int().min(1).max(1000).default(50),
   status: z.nativeEnum(TitleStatus).optional(),
   search: z.string().optional(),
 })
