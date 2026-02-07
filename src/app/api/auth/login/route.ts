@@ -20,6 +20,7 @@ const USER_TYPE_RULES: Record<number, string[]> = {
 
 const AUTH_SECRET = process.env.AUTH_SECRET || 'nordtools-dev-secret-change-in-production'
 const SESSION_COOKIE = 'authjs.session-token'
+const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60 // 30 days
 
 export async function POST(req: NextRequest) {
   try {
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
       },
       secret: AUTH_SECRET,
       salt: SESSION_COOKIE,
-      maxAge: 60 * 60, // 1 hour
+      maxAge: SESSION_MAX_AGE_SECONDS,
     })
 
     const res = NextResponse.json({
@@ -77,19 +78,33 @@ export async function POST(req: NextRequest) {
     })
 
     // Set NextAuth session cookie (same name NextAuth uses)
+    const secure = req.nextUrl.protocol === 'https:'
+
     res.cookies.set(SESSION_COOKIE, sessionToken, {
       path: '/',
       httpOnly: true,
       sameSite: 'lax',
-      maxAge: 60 * 60,
+      secure,
+      maxAge: SESSION_MAX_AGE_SECONDS,
     })
+
+    if (secure) {
+      res.cookies.set(`__Secure-${SESSION_COOKIE}`, sessionToken, {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: true,
+        maxAge: SESSION_MAX_AGE_SECONDS,
+      })
+    }
 
     // Django-compatible cookies for parity
     res.cookies.set('access', sessionToken, {
       path: '/',
       httpOnly: true,
       sameSite: 'lax',
-      maxAge: 60 * 60,
+      secure,
+      maxAge: SESSION_MAX_AGE_SECONDS,
     })
 
     return res

@@ -2,7 +2,8 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuthStore, useAuthSessionSync } from '@/stores/auth-store'
+import { useSession } from 'next-auth/react'
+import { useAuthSessionSync } from '@/stores/auth-store'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Topbar } from '@/components/layout/topbar'
 
@@ -11,19 +12,19 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { isAuthenticated } = useAuthStore()
+  const { status } = useSession()
   const router = useRouter()
 
-  // Sync NextAuth session → Zustand store
+  // Keep Zustand in sync with NextAuth session.
   useAuthSessionSync()
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (status === 'unauthenticated') {
       router.push('/login')
     }
-  }, [isAuthenticated, router])
+  }, [status, router])
 
-  if (!isAuthenticated) return null
+  if (status !== 'authenticated') return null
 
   return (
     <div className="min-h-screen bg-background">

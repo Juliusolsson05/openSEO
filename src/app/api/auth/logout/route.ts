@@ -13,6 +13,7 @@ export const POST = apiHandler(
     response.cookies.set('__Secure-authjs.session-token', expired, { path: '/', httpOnly: true, sameSite: 'lax', secure: true, expires: new Date(0) })
     response.cookies.set('next-auth.session-token', expired, { path: '/', httpOnly: true, sameSite: 'lax', expires: new Date(0) })
     response.cookies.set('__Secure-next-auth.session-token', expired, { path: '/', httpOnly: true, sameSite: 'lax', secure: true, expires: new Date(0) })
+    response.cookies.set('access', '', { path: '/', httpOnly: true, sameSite: 'lax', expires: new Date(0) })
     return response
   },
   { auth: false },
