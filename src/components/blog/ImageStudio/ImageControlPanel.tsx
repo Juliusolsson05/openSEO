@@ -5,6 +5,7 @@ import { IdeogramControls } from './providers/IdeogramControls'
 import { GptImageControls } from './providers/GptImageControls'
 import { StockPhotoControls } from './providers/StockPhotoControls'
 import { UploadControls } from './providers/UploadControls'
+import { GeminiControls } from './providers/GeminiControls'
 import { Button } from '@/components/ui/button'
 
 interface Props {
@@ -24,6 +25,8 @@ interface Props {
   setGptSize: (value: '1024x1024' | '1536x1024' | '1024x1536' | 'auto') => void
   gptBackground: 'auto' | 'transparent' | 'opaque'
   setGptBackground: (value: 'auto' | 'transparent' | 'opaque') => void
+  geminiAspectRatio: '1:1' | '3:4' | '4:3' | '9:16' | '16:9'
+  setGeminiAspectRatio: (value: '1:1' | '3:4' | '4:3' | '9:16' | '16:9') => void
   onGenerate: () => void
   isGenerating: boolean
   onStockSelect: (url: string) => void
@@ -36,6 +39,7 @@ export function ImageControlPanel(props: Props) {
   const providers: Array<{ key: ImageStudioProvider; label: string }> = [
     { key: 'ideogram', label: 'Ideogram' },
     { key: 'gpt-image', label: 'GPT Image' },
+    { key: 'gemini', label: 'Gemini ✨' },
     { key: 'stock', label: 'Stock Photos' },
     { key: 'upload', label: 'Upload' },
     { key: 'photopea', label: 'Photopea' },
@@ -79,6 +83,17 @@ export function ImageControlPanel(props: Props) {
           setSize={props.setGptSize}
           background={props.gptBackground}
           setBackground={props.setGptBackground}
+          onGenerate={props.onGenerate}
+          isGenerating={props.isGenerating}
+        />
+      ) : null}
+
+      {props.provider === 'gemini' ? (
+        <GeminiControls
+          prompt={props.prompt}
+          setPrompt={props.setPrompt}
+          aspectRatio={props.geminiAspectRatio}
+          setAspectRatio={props.setGeminiAspectRatio}
           onGenerate={props.onGenerate}
           isGenerating={props.isGenerating}
         />

@@ -15,6 +15,8 @@ interface Props {
 const PROVIDER_SHORT: Record<string, string> = {
   ideogram: 'IDG',
   'gpt-image': 'GPT',
+  'nano-banana': 'NAN',
+  imagen: 'IMG',
   stock: 'STK',
   upload: 'UPL',
   photopea: 'PEA',

@@ -1,4 +1,4 @@
-export type ImageStudioProvider = 'ideogram' | 'gpt-image' | 'stock' | 'upload' | 'photopea'
+export type ImageStudioProvider = 'ideogram' | 'gpt-image' | 'nano-banana' | 'imagen' | 'stock' | 'upload' | 'photopea'
 
 export type HistoryEntry = {
   url: string

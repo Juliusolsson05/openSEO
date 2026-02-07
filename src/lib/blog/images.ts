@@ -10,11 +10,13 @@ interface RegenerateBlogImagePayload {
   version?: number
   magic_prompt?: boolean
   force_prompt?: string
-  provider?: 'ideogram' | 'gpt-image'
+  provider?: 'ideogram' | 'gpt-image' | 'nano-banana' | 'imagen'
   gpt_quality?: 'low' | 'medium' | 'high'
   gpt_size?: '1024x1024' | '1536x1024' | '1024x1536' | 'auto'
   gpt_background?: 'auto' | 'transparent' | 'opaque'
   gpt_output_format?: 'png' | 'jpeg' | 'webp'
+  nano_model?: 'flash' | 'pro'
+  aspect_ratio?: string
 }
 
 export async function regenerateBlogImage(payload: RegenerateBlogImagePayload) {
