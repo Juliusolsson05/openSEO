@@ -306,12 +306,16 @@ const routeHandler = apiHandler(async (ctx) => {
     const company = await getCompany(ctx.companyId)
     const settings = asObject(company.settings)
 
+    // Deep-merge into existing category settings so we don't clobber sibling keys
+    const existingCategory = asObject(settings[category])
+    const merged = { ...existingCategory, ...nextSettings }
+
     const updated = await prisma.company.update({
       where: { id: ctx.companyId },
       data: {
         settings: {
           ...settings,
-          [category]: nextSettings,
+          [category]: merged,
         } as Prisma.InputJsonValue,
       },
       select: { settings: true },

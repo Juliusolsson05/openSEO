@@ -1,15 +1,15 @@
 'use client'
 
-import { Label } from '@/components/ui/label'
-
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
-import { Eye, Save, X } from 'lucide-react'
+import { Label } from '@/components/ui/label'
+import { Eye, Save, Loader2, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { api, apiPost } from '@/lib/api'
 
 import '@/components/blog/elements'
 import {
@@ -26,8 +26,7 @@ interface ElementSetting {
   rarity: Rarity
 }
 
-const STORAGE_KEY = 'aurora-element-settings-v1'
-
+/** Default config — matches Django INITIAL_GENERATION_ELEMENTS + all known types */
 const defaultConfig: ElementSetting[] = [
   { type: 'paragraph', enabled: true, rarity: 'common' },
   { type: 'list_paragraph', enabled: true, rarity: 'common' },
@@ -61,20 +60,57 @@ function pretty(type: string) {
     .replace(/\b\w/g, (m) => m.toUpperCase())
 }
 
+/** Convert settings array → Record<string, boolean> for the API */
+function toRecord(settings: ElementSetting[]): Record<string, boolean> {
+  const rec: Record<string, boolean> = {}
+  for (const s of settings) rec[s.type] = s.enabled
+  return rec
+}
+
+/** Merge a Record<string, boolean> from the API into our default config */
+function mergeFromApi(saved: Record<string, boolean>): ElementSetting[] {
+  return defaultConfig.map((def) => ({
+    ...def,
+    enabled: saved[def.type] !== undefined ? saved[def.type] : def.enabled,
+  }))
+}
+
 export default function ElementsPage() {
   const [settings, setSettings] = useState<ElementSetting[]>(defaultConfig)
   const [search, setSearch] = useState('')
   const [previewType, setPreviewType] = useState<ElementType | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null)
+  const [dirty, setDirty] = useState(false)
 
-  useEffect(() => {
+  // Load from API on mount
+  const loadSettings = useCallback(async () => {
+    setLoading(true)
     try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed)) setSettings(parsed)
+      const { data } = await api<{ settings: Record<string, any> }>(
+        '/api/nordtools/settings',
+        { params: { category: 'aurora.blog' } },
+      )
+      const saved = data?.settings?.initial_generation_elements
+      if (saved && typeof saved === 'object') {
+        setSettings(mergeFromApi(saved as Record<string, boolean>))
       }
-    } catch {}
+    } catch {
+      // Use defaults if API fails
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => { loadSettings() }, [loadSettings])
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 3000)
+    return () => clearTimeout(t)
+  }, [toast])
 
   const grouped = useMemo(() => {
     const by: Record<Rarity, ElementSetting[]> = { common: [], uncommon: [], rare: [] }
@@ -90,11 +126,27 @@ export default function ElementsPage() {
 
   const toggle = (type: ElementType) => {
     setSettings((prev) => prev.map((e) => (e.type === type ? { ...e, enabled: !e.enabled } : e)))
+    setDirty(true)
   }
 
-  const save = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+  const save = async () => {
+    setSaving(true)
+    try {
+      const { error } = await apiPost(
+        '/api/nordtools/settings/update?category=aurora.blog',
+        { settings: { initial_generation_elements: toRecord(settings) } },
+      )
+      if (error) throw error
+      setToast({ message: 'Element settings saved', variant: 'success' })
+      setDirty(false)
+    } catch {
+      setToast({ message: 'Failed to save settings', variant: 'error' })
+    } finally {
+      setSaving(false)
+    }
   }
+
+  const enabledCount = settings.filter((s) => s.enabled).length
 
   const PreviewComponent = previewType ? getPreviewComponent(previewType) : null
   const previewExample = previewType ? getExample(previewType) : null
@@ -135,20 +187,41 @@ export default function ElementsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-md text-[13px] font-medium shadow-lg ${toast.variant === 'success' ? 'bg-[#DFF6DD] text-[#107C10]' : 'bg-[#FDE7E9] text-[#D13438]'}`}>
+          {toast.message}
+        </div>
+      )}
+
       <Card>
         <CardHeader className="flex-row items-center justify-between pb-3">
-          <CardTitle>Element Settings</CardTitle>
+          <div className="space-y-1">
+            <CardTitle>Element Settings</CardTitle>
+            <p className="text-[12px] text-muted-foreground">
+              {enabledCount} of {settings.length} elements enabled for generation
+            </p>
+          </div>
           <div className="flex items-center gap-2">
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search elements" className="h-8 w-64" />
-            <Button size="sm" className="gap-1.5" onClick={save}>
-              <Save className="h-3.5 w-3.5" /> Save Changes
+            <Button size="sm" className="gap-1.5" onClick={save} disabled={saving || !dirty}>
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              {saving ? 'Saving…' : 'Save Changes'}
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Section rarity="common" items={grouped.common} />
-          <Section rarity="uncommon" items={grouped.uncommon} />
-          <Section rarity="rare" items={grouped.rare} />
+          {loading ? (
+            <div className="flex items-center justify-center py-12 text-[13px] text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading settings…
+            </div>
+          ) : (
+            <>
+              <Section rarity="common" items={grouped.common} />
+              <Section rarity="uncommon" items={grouped.uncommon} />
+              <Section rarity="rare" items={grouped.rare} />
+            </>
+          )}
         </CardContent>
       </Card>
 

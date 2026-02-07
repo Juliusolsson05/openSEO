@@ -17,6 +17,21 @@ import type {
 
 const DEFAULT_IMAGE = 'https://res.cloudinary.com/dl9qdd24e/image/upload/v1732560659/600x400_fqbihy.png'
 
+/** Default element types allowed during initial generation — matches Django INITIAL_GENERATION_ELEMENTS */
+const DEFAULT_GENERATION_ELEMENTS: Record<string, boolean> = {
+  introduction: true,
+  paragraph: true,
+  image: true,
+  faq: true,
+  conclusion: true,
+  list_paragraph: true,
+  numbered_list_paragraph: true,
+  featured_snippet_block: true,
+  table: true,
+  pros_and_cons: true,
+  quote: true,
+}
+
 function slugify(input: string): string {
   return input
     .toLowerCase()
@@ -179,7 +194,7 @@ export class BlogService {
 
     const settings = (company.settings ?? {}) as Record<string, any>
     const blogSettings = settings['aurora.blog'] ?? {}
-    const allowedElements = blogSettings.initial_generation_elements
+    const allowedElements = blogSettings.initial_generation_elements ?? DEFAULT_GENERATION_ELEMENTS
     const structureModel = blogSettings.blog_post_structure_model ?? 'gpt-4o'
     const contentModel = blogSettings.blog_post_content_model ?? 'gpt-4o-mini'
 
@@ -316,7 +331,7 @@ export class BlogService {
     const blogSettings = settings['aurora.blog'] ?? {}
     const structureModel = blogSettings.blog_post_structure_model ?? 'gpt-4o'
     const contentModel = blogSettings.blog_post_content_model ?? 'gpt-4o-mini'
-    const allowedElements = blogSettings.initial_generation_elements
+    const allowedElements = blogSettings.initial_generation_elements ?? DEFAULT_GENERATION_ELEMENTS
 
     const { structure } = await generateStructure(blogPost.title_text, structureModel, allowedElements)
     const { elements } = await generateBlogPost(
