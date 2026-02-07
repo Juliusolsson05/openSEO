@@ -391,7 +391,14 @@ export class ImageService {
     }
   }
 
-  async searchStockPhotos(_companyId: number, query: string, page = 1, perPage = 10) {
+  async searchStockPhotos(
+    _companyId: number,
+    query: string,
+    page = 1,
+    perPage = 10,
+    orientation?: 'landscape' | 'portrait' | 'square',
+    color?: string,
+  ) {
     if (!query) throw new ValidationError('Search query is required')
     const key = process.env.PEXELS
     if (!key) throw new Error('Pexels API key is not set')
@@ -400,6 +407,8 @@ export class ImageService {
     url.searchParams.set('query', query)
     url.searchParams.set('page', String(page))
     url.searchParams.set('per_page', String(perPage))
+    if (orientation) url.searchParams.set('orientation', orientation)
+    if (color) url.searchParams.set('color', color)
 
     const res = await fetch(url, { headers: { Authorization: key } })
     if (!res.ok) throw new Error(`Error communicating with Pexels API: ${res.status}`)

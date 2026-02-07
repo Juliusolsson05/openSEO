@@ -50,6 +50,8 @@ export async function useStockPhoto(payload: UseStockPhotoPayload) {
 
 export interface PexelsImage {
   id: number
+  width?: number
+  height?: number
   photographer: string
   src: {
     original: string
@@ -65,13 +67,21 @@ export interface SearchImagesResponse {
   images: PexelsImage[]
 }
 
-export async function searchStockPhotos(query: string, page = 1, perPage = 12) {
+export async function searchStockPhotos(
+  query: string,
+  page = 1,
+  perPage = 12,
+  orientation?: 'landscape' | 'portrait' | 'square',
+  color?: string,
+) {
   return api<SearchImagesResponse>('/api/aurora/blog/images/stock_photos/search', {
     method: 'GET',
     params: {
       query,
       page,
       per_page: perPage,
+      ...(orientation ? { orientation } : {}),
+      ...(color ? { color } : {}),
     },
   })
 }

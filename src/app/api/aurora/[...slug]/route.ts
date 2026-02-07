@@ -1317,9 +1317,11 @@ async function handleAurora(ctx: {
     const query = ctx.searchParams.get('query') ?? ''
     const page = Number(ctx.searchParams.get('page') ?? 1)
     const perPage = Number(ctx.searchParams.get('per_page') ?? 10)
+    const orientation = (ctx.searchParams.get('orientation') ?? undefined) as 'landscape' | 'portrait' | 'square' | undefined
+    const color = ctx.searchParams.get('color') ?? undefined
 
     try {
-      const result = await imageService.searchStockPhotos(ctx.companyId, query, page, perPage)
+      const result = await imageService.searchStockPhotos(ctx.companyId, query, page, perPage, orientation, color)
       return raw(result)
     } catch (err) {
       if (err instanceof Error) {
