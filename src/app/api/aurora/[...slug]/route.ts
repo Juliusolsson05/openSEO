@@ -269,6 +269,14 @@ async function handleAurora(ctx: {
       raw_content: post,
     })))
   }
+  if (path === 'blog/posts/export/third-party/all') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    return raw({
+      status: 'Third-party export prepared for all blog posts',
+      provider: body.provider ?? null,
+      payload: body,
+    })
+  }
   if (path === 'blog/posts/export/third-party') {
     const body = (ctx.body ?? {}) as Record<string, unknown>
     return raw({ status: 'Third-party export prepared', provider: body.provider ?? null, payload: body })
@@ -891,6 +899,10 @@ async function handleAurora(ctx: {
       orderBy: { id: 'asc' },
     })
     return raw(dictionaries)
+  }
+
+  if (path === 'dictionary/dictionary/export/third-party/all') {
+    return raw({ detail: 'Not implemented yet (third-party export for all dictionaries)' }, 501)
   }
 
   if (path.startsWith('dictionary/dictionary/export/third-party')) {
