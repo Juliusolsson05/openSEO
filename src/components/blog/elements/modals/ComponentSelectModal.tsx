@@ -5,7 +5,7 @@ import { Search, Eye, X, LayoutGrid, List, Sparkles, LayoutTemplate } from 'luci
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Modal } from '@/components/ui/modal'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { GENERATE_ELEMENT_TYPES, type ElementType } from '../types'
 import { getPreviewComponent, getExample, getIcon } from '../registry'
 
@@ -70,8 +70,8 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
 
   return (
     <>
-      <Modal open={open} onClose={handleClose} zClass="z-[70]">
-        <div className="bg-background rounded-sm border border-info-light w-full max-w-5xl p-5 max-h-[85vh] overflow-y-auto">
+      <Dialog open={open} onOpenChange={(next) => { if (!next) handleClose() }}>
+        <DialogContent className="z-[70] bg-background rounded-sm border border-info-light w-full max-w-5xl p-5 max-h-[85vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[16px] font-semibold">Add Element</h2>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleClose}>
@@ -220,12 +220,13 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
               {loading ? 'Adding...' : mode === 'generate' ? 'Add Element' : 'Use Template'}
             </Button>
           </div>
-        </div>
-      </Modal>
+        </DialogContent>
+      </Dialog>
 
       {previewType && previewExample && (
-        <Modal open={true} onClose={() => setPreviewType(null)} zClass="z-[80]" overlayClass="bg-black/40">
-          <Card className="w-full max-w-3xl border-border rounded-sm">
+        <Dialog open={true} onOpenChange={(next) => { if (!next) setPreviewType(null) }}>
+          <DialogContent className="z-[80] max-w-3xl border-border rounded-sm p-0"> 
+            <Card className="w-full max-w-3xl border-border rounded-sm">
             <CardHeader className="flex-row items-center justify-between py-3">
               <CardTitle className="text-[14px]">{pretty(previewType)} Preview</CardTitle>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPreviewType(null)}>
@@ -235,8 +236,9 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
             <CardContent className="max-h-[70vh] overflow-y-auto">
               {createElement(getPreviewComponent(previewType), { content: previewExample as unknown })}
             </CardContent>
-          </Card>
-        </Modal>
+            </Card>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   )

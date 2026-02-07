@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Modal } from '@/components/ui/modal'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface Props {
   open: boolean
@@ -12,21 +12,17 @@ interface Props {
 
 export function EnhanceModal({ open, onOpenChange, onEnhance, loading }: Props) {
   return (
-    <Modal open={open} onClose={() => onOpenChange(false)}>
-      <div className="bg-background rounded-lg shadow-lg w-full max-w-sm p-6">
-        <h2 className="text-lg font-semibold mb-2">Enhance Content</h2>
-        <p className="text-sm text-muted-foreground mb-6">
-          AI will improve this element&apos;s content quality and readability.
-        </p>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            Cancel
-          </Button>
-          <Button onClick={onEnhance} disabled={loading}>
-            {loading ? 'Enhancing...' : 'Enhance'}
-          </Button>
-        </div>
-      </div>
-    </Modal>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Enhance Content</DialogTitle>
+          <DialogDescription>AI will improve this element&apos;s content quality and readability.</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
+          <Button onClick={onEnhance} disabled={loading}>{loading ? 'Enhancing...' : 'Enhance'}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Modal } from '@/components/ui/modal'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { regenerateBlogImage, uploadBlogPostImage, useStockPhoto } from '@/lib/blog/images'
 import { ImageControlPanel } from './ImageControlPanel'
 import { ImagePreviewPanel } from './ImagePreviewPanel'
@@ -105,8 +105,8 @@ export function ImageStudio({
 
   return (
     <>
-      <Modal open={open} onClose={onClose}>
-        <div className="w-[min(1100px,95vw)] max-h-[85vh] overflow-hidden rounded-lg border border-border bg-background p-4">
+      <Dialog open={open} onOpenChange={(next) => { if (!next) onClose() }}>
+        <DialogContent className="w-[min(1100px,95vw)] max-w-none max-h-[85vh] overflow-hidden rounded-lg border border-border bg-background p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Image Studio</h2>
             <div className="flex items-center gap-2">
@@ -150,8 +150,8 @@ export function ImageStudio({
           </div>
 
           <ImageHistory items={history} activeUrl={selectedUrl} onSelect={setSelectedUrl} onApply={onApply} onCancel={onClose} applying={isApplying} />
-        </div>
-      </Modal>
+        </DialogContent>
+      </Dialog>
 
       {editableImageUrl ? (
         <PhotopeaEditor

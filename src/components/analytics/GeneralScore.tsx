@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Modal } from '@/components/ui/modal'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface ScoreBreakdownItem {
   score: number
@@ -19,11 +19,10 @@ export function GeneralScore({ generalSeoScore, scoreBreakdown }: GeneralScorePr
   const [open, setOpen] = useState(false)
 
   const score = Math.max(0, Math.min(100, generalSeoScore || 0))
-  const color = score >= 80 ? '#107C10' : score >= 50 ? '#FFB900' : '#D13438' // theme: success/warning/destructive
+  const color = score >= 80 ? '#107C10' : score >= 50 ? '#FFB900' : '#D13438'
 
   const entries = useMemo(() => Object.entries(scoreBreakdown || {}), [scoreBreakdown])
 
-  // SVG uses viewBox so it scales responsively
   const vbSize = 210
   const stroke = 14
   const radius = (vbSize - stroke) / 2
@@ -39,19 +38,8 @@ export function GeneralScore({ generalSeoScore, scoreBreakdown }: GeneralScorePr
         <CardContent className="flex flex-col items-center gap-4">
           <div className="relative w-[160px] sm:w-[200px] lg:w-[210px]">
             <svg viewBox={`0 0 ${vbSize} ${vbSize}`} className="w-full">
-              <circle cx={vbSize / 2} cy={vbSize / 2} r={radius} stroke="#E1E1E1" /* theme: border */ strokeWidth={stroke} fill="none" transform={`rotate(-90 ${vbSize / 2} ${vbSize / 2})`} />
-              <circle
-                cx={vbSize / 2}
-                cy={vbSize / 2}
-                r={radius}
-                stroke={color}
-                strokeWidth={stroke}
-                fill="none"
-                strokeDasharray={c}
-                strokeDashoffset={offset}
-                strokeLinecap="round"
-                transform={`rotate(-90 ${vbSize / 2} ${vbSize / 2})`}
-              />
+              <circle cx={vbSize / 2} cy={vbSize / 2} r={radius} stroke="#E1E1E1" strokeWidth={stroke} fill="none" transform={`rotate(-90 ${vbSize / 2} ${vbSize / 2})`} />
+              <circle cx={vbSize / 2} cy={vbSize / 2} r={radius} stroke={color} strokeWidth={stroke} fill="none" strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" transform={`rotate(-90 ${vbSize / 2} ${vbSize / 2})`} />
               <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" fill={color} fontSize="44" fontWeight="bold">{score}</text>
               <text x="50%" y="60%" textAnchor="middle" dominantBaseline="middle" fill="#999" fontSize="11">SEO SCORE</text>
             </svg>
@@ -62,14 +50,11 @@ export function GeneralScore({ generalSeoScore, scoreBreakdown }: GeneralScorePr
         </CardContent>
       </Card>
 
-      <Modal open={open} onClose={() => setOpen(false)}>
-        <div className="w-[720px] max-w-[95vw] rounded-sm border border-border bg-white p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-[14px] font-semibold">Score Breakdown</h3>
-            <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-              Close
-            </Button>
-          </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="w-[720px] max-w-[95vw]">
+          <DialogHeader>
+            <DialogTitle className="text-[14px]">Score Breakdown</DialogTitle>
+          </DialogHeader>
           <div className="max-h-[60vh] overflow-auto rounded-sm border border-border">
             <table className="w-full text-left text-[12px]">
               <thead className="bg-muted">
@@ -88,17 +73,13 @@ export function GeneralScore({ generalSeoScore, scoreBreakdown }: GeneralScorePr
                   </tr>
                 ))}
                 {entries.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="px-3 py-6 text-center text-muted-foreground">
-                      No breakdown data available.
-                    </td>
-                  </tr>
+                  <tr><td colSpan={3} className="px-3 py-6 text-center text-muted-foreground">No breakdown data available.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
-        </div>
-      </Modal>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

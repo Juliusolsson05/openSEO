@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Modal } from '@/components/ui/modal'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Sparkles, X, ArrowRight, AlertCircle } from 'lucide-react'
 import { useAutopilotStore } from '@/stores/autopilot-store'
 
@@ -80,8 +80,9 @@ export default function QuilloAutopilot({ postId }: Props) {
       </div>
 
       {/* Info modal */}
-      <Modal open={showModal} onClose={() => setShowModal(false)}>
-        <Card className="w-full max-w-md">
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="w-full max-w-md p-0 border-0 bg-transparent shadow-none">
+          <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="text-[16px]">Quillo Autopilot</CardTitle>
           </CardHeader>
@@ -109,8 +110,9 @@ export default function QuilloAutopilot({ postId }: Props) {
               <Button size="sm" onClick={handleStart} disabled={isRunning}>Start Autopilot</Button>
             </div>
           </CardContent>
-        </Card>
-      </Modal>
+          </Card>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

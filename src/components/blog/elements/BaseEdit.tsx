@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Modal } from '@/components/ui/modal'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { EditFieldRenderer } from './edit/EditFieldRenderer'
 import { useBlogStore } from '@/stores/blog-store'
 import { useElementsStore } from '@/stores/elements-store'
@@ -80,8 +80,8 @@ export function BaseEdit({
   }
 
   return (
-    <Modal open={open} onClose={() => onOpenChange(false)}>
-      <div className="bg-background rounded-lg shadow-lg w-full max-w-xl max-h-[80vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full max-w-xl max-h-[80vh] overflow-y-auto p-0">
         <div className="p-6">
           <h2 className="text-lg font-semibold mb-4">
             {editSchema?.title || 'Edit Content'}
@@ -133,7 +133,7 @@ export function BaseEdit({
             </Button>
           </div>
         </div>
-      </div>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   )
 }

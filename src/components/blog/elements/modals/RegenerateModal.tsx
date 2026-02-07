@@ -3,7 +3,11 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Modal } from '@/components/ui/modal'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { GENERATE_ELEMENT_TYPES } from '../types'
 
 interface Props {
@@ -26,49 +30,36 @@ export function RegenerateModal({ open, onOpenChange, onRegenerate, loading }: P
   const canSubmit = createNew ? newType !== '' && newCount > 0 : true
 
   return (
-    <Modal open={open} onClose={() => onOpenChange(false)}>
-      <div className="bg-background rounded-lg shadow-lg w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold mb-4">Regenerate Content</h2>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full max-w-md">
+        <DialogHeader><DialogTitle>Regenerate Content</DialogTitle></DialogHeader>
 
-        <textarea
-          className="w-full min-h-[80px] rounded-md border bg-background px-3 py-2 text-sm"
+        <Textarea
           placeholder="Enter any specific instructions for regeneration"
           value={note}
           onChange={(e) => setNote(e.target.value)}
         />
 
-        <label className="flex items-center gap-2 mt-4 text-sm">
-          <input
-            type="checkbox"
-            checked={createNew}
-            onChange={(e) => setCreateNew(e.target.checked)}
-          />
-          New element(s)
-        </label>
+        <div className="flex items-center gap-2 text-sm">
+          <Checkbox id="new-elements" checked={createNew} onCheckedChange={(v) => setCreateNew(Boolean(v))} />
+          <Label htmlFor="new-elements">New element(s)</Label>
+        </div>
 
         {createNew && (
-          <div className="space-y-3 mt-3">
-            <select
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              value={newType}
-              onChange={(e) => setNewType(e.target.value)}
-            >
-              <option value="">Select element type</option>
-              {GENERATE_ELEMENT_TYPES.map((t) => (
-                <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
-              ))}
-            </select>
-            <Input
-              type="number"
-              min={1}
-              value={newCount}
-              onChange={(e) => setNewCount(Number(e.target.value))}
-              placeholder="Number of elements"
-            />
+          <div className="space-y-3">
+            <Select value={newType} onValueChange={setNewType}>
+              <SelectTrigger><SelectValue placeholder="Select element type" /></SelectTrigger>
+              <SelectContent>
+                {GENERATE_ELEMENT_TYPES.map((t) => (
+                  <SelectItem key={t} value={t}>{t.replace(/_/g, ' ')}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input type="number" min={1} value={newCount} onChange={(e) => setNewCount(Number(e.target.value))} placeholder="Number of elements" />
           </div>
         )}
 
-        <div className="flex justify-end gap-2 mt-6">
+        <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
           <Button
             onClick={() => onRegenerate({
@@ -76,11 +67,9 @@ export function RegenerateModal({ open, onOpenChange, onRegenerate, loading }: P
               ...(createNew ? { new_element_type: newType, new_element_count: newCount } : {}),
             })}
             disabled={!canSubmit || loading}
-          >
-            {loading ? 'Generating...' : 'Generate'}
-          </Button>
-        </div>
-      </div>
-    </Modal>
+          >{loading ? 'Generating...' : 'Generate'}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

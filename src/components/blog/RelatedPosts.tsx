@@ -37,10 +37,10 @@ export default function RelatedPosts({ posts, variant }: RelatedPostsProps) {
                 <img
                   src={linked.cover_image.url}
                   alt={linked.cover_image.description || linked.title_text}
-                  className="h-11 w-14 shrink-0 rounded-[2px] object-cover"
+                  className="h-11 w-14 shrink-0 rounded-sm object-cover"
                 />
               ) : (
-                <div className="h-11 w-14 shrink-0 rounded-[2px] bg-muted" />
+                <div className="h-11 w-14 shrink-0 rounded-sm bg-muted" />
               )}
               <p className="line-clamp-2 text-[13px] font-medium leading-snug group-hover:text-primary">
                 {linked.title_text}
