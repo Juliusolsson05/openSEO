@@ -217,7 +217,7 @@ async function handleAurora(ctx: {
   }
 
   if (path === 'health/celery') {
-    return raw({ status: 'ok', celery: 'not_migrated' })
+    return raw({ detail: 'Not found.' }, 404)
   }
 
   if (!ctx.companyId) throw new NotFoundError('Missing company context')
