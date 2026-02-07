@@ -13,6 +13,11 @@ import { ArrayFieldInput } from './fields/ArrayField'
 import { NumberFieldInput } from './fields/NumberField'
 import { UrlFieldInput } from './fields/UrlField'
 import { SelectFieldInput } from './fields/SelectField'
+import { ObjectFieldInput } from './fields/ObjectField'
+import { NestedArrayFieldInput } from './fields/NestedArrayField'
+import { ArrayObjectFieldInput } from './fields/ArrayObjectField'
+import { PercentageFieldInput } from './fields/PercentageField'
+import { FaqFieldInput } from './fields/FaqField'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
@@ -30,8 +35,10 @@ export function EditFieldRenderer({ field, value, onChange }: EditFieldRendererP
       return <TextFieldInput field={field} value={value} onChange={onChange} />
 
     case 'number':
-    case 'percentage':
       return <NumberFieldInput field={field} value={value} onChange={onChange} />
+
+    case 'percentage':
+      return <PercentageFieldInput field={field} value={value} onChange={onChange} />
 
     case 'url':
       return <UrlFieldInput field={field} value={value} onChange={onChange} />
@@ -43,23 +50,13 @@ export function EditFieldRenderer({ field, value, onChange }: EditFieldRendererP
       return <ArrayFieldInput field={field} value={value} onChange={onChange} />
 
     case 'object':
+      return <ObjectFieldInput field={field} value={value} onChange={onChange} />
+
     case 'nested-array':
+      return <NestedArrayFieldInput field={field} value={value} onChange={onChange} />
+
     case 'array-object':
-      // Object-like fields render sub-fields recursively
-      return (
-        <div className="space-y-3 border rounded-lg p-3">
-          <Label className="text-sm font-medium text-muted-foreground">{field.label}</Label>
-          {field.fields &&
-            Object.entries(field.fields).map(([key, subField]) => (
-              <EditFieldRenderer
-                key={key}
-                field={subField}
-                value={value?.[key]}
-                onChange={(val) => onChange({ ...value, [key]: val })}
-              />
-            ))}
-        </div>
-      )
+      return <ArrayObjectFieldInput field={field} value={value} onChange={onChange} />
 
     case 'color':
       return (
@@ -74,9 +71,11 @@ export function EditFieldRenderer({ field, value, onChange }: EditFieldRendererP
         </div>
       )
 
+    case 'faq':
+      return <FaqFieldInput field={field} value={value} onChange={onChange} />
+
     case 'table':
     case 'dynamic-table':
-    case 'faq':
     case 'pros-cons':
     case 'versus':
       // Complex field types — render as JSON textarea fallback for now
