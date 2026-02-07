@@ -2,7 +2,7 @@
 
 import { BasePreview } from '../BasePreview'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
-import { Button } from '@/components/ui/button'
+import { ExternalLink, CheckCircle2, Quote, Building2, ArrowRight } from 'lucide-react'
 import type { PreviewComponentProps } from '../registry'
 import type { CaseStudyContent } from './CaseStudy'
 
@@ -11,105 +11,88 @@ interface CaseStudyPreviewProps extends Omit<PreviewComponentProps, 'content'> {
 }
 
 const extractDomain = (url: string): string => {
-  return String(url || '')
-    .replace(/^https?:\/\/(www\.)?/, '')
-    .replace(/\/$/, '')
-}
-
-const convertToRGBA = (hexColor: string): string => {
-  const value = String(hexColor || '').trim()
-  const fallback = 'rgba(0, 0, 0, 0.05)'
-
-  if (!/^#[0-9a-fA-F]{6}$/.test(value)) return fallback
-
-  const r = parseInt(value.slice(1, 3), 16)
-  const g = parseInt(value.slice(3, 5), 16)
-  const b = parseInt(value.slice(5, 7), 16)
-
-  return `rgba(${r}, ${g}, ${b}, 0.3)`
+  return String(url || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
 }
 
 export function CaseStudyPreview({ content }: CaseStudyPreviewProps) {
   const results = Array.isArray(content?.results) ? content.results : []
+  const headerColor = content?.headerColor && /^#[0-9a-fA-F]{6}$/.test(content.headerColor) ? content.headerColor : '#0078D4'
 
   return (
     <BasePreview content={content}>
-      <div className="mx-auto max-w-5xl overflow-hidden rounded-lg bg-white shadow-md">
-        <div
-          className="flex items-center justify-between gap-5 p-8 text-white"
-          style={{ backgroundColor: convertToRGBA(content?.headerColor) }}
-        >
-          <div className="w-[90%] flex-1">
-            <h2
-              className="mb-2 text-[22px] font-bold leading-[1.5]"
-              dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.title) }}
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="relative px-8 py-7 text-white" style={{ backgroundColor: headerColor }}>
+          <div className="flex items-start justify-between gap-6">
+            <div className="min-w-0 flex-1">
+              <h2
+                className="text-[22px] font-semibold leading-tight tracking-tight"
+                dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.title) }}
+              />
+              <div className="mt-3 flex items-center gap-2 text-[14px] font-medium text-white/80">
+                <Building2 className="h-3.5 w-3.5" />
+                <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.clientName) }} />
+                <span className="text-white/50">·</span>
+                <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.industry) }} />
+              </div>
+            </div>
+            <img
+              src={`https://img.logo.dev/${extractDomain(content?.companyWebsite)}?token=pk_PJnue9akRVmT-qo6GmYjhA`}
+              alt={`${content?.clientName || 'Company'} Logo`}
+              className="h-14 w-14 shrink-0 rounded-lg bg-white object-contain p-1.5 shadow-sm"
             />
-            <p className="w-fit bg-white px-[10px] py-[10px] text-xl text-black">
-              <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.clientName) }} /> |{' '}
-              <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.industry) }} />
-            </p>
           </div>
-
-          <img
-            src={`https://img.logo.dev/${extractDomain(content?.companyWebsite)}?token=pk_PJnue9akRVmT-qo6GmYjhA`}
-            alt={`${content?.clientName || 'Company'} Logo`}
-            className="h-20 w-auto rounded-md shadow-sm"
-          />
         </div>
 
-        <div className="p-8">
-          <div className="mb-8">
-            <h3 className="mb-3 text-2xl font-semibold text-gray-900">The Challenge</h3>
-            <div
-              className="leading-relaxed text-gray-600"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(content?.challenge) }}
-            />
+        <div className="px-8 py-6 space-y-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
+              <h3 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">The Challenge</h3>
+              <div className="text-[15px] leading-[1.7] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(content?.challenge) }} />
+            </div>
+            <div>
+              <h3 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">The Solution</h3>
+              <div className="text-[15px] leading-[1.7] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(content?.solution) }} />
+            </div>
           </div>
 
-          <div className="mb-8">
-            <h3 className="mb-3 text-2xl font-semibold text-gray-900">The Solution</h3>
-            <div
-              className="leading-relaxed text-gray-600"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(content?.solution) }}
-            />
-          </div>
-
-          <div className="mb-8">
-            <h3 className="mb-3 text-2xl font-semibold text-gray-900">The Results</h3>
-            <ul className="list-none p-0">
+          <div>
+            <h3 className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Key Results</h3>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {results.map((result, index) => (
-                <li key={index} className="mb-3 flex items-center">
-                  <i className="ri-checkbox-circle-fill mr-3 text-xl text-green-500" />
-                  <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(result) }} />
-                </li>
+                <div key={index} className="flex items-start gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <span className="text-[14px] leading-snug text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(result) }} />
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
 
-          <div className="mt-8 rounded-md bg-slate-50 p-6">
-            <blockquote className="mb-3 italic text-gray-600">
-              "<span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.testimonial?.quote) }} />"
-            </blockquote>
-            <p
-              className="text-right font-semibold text-gray-800"
-              dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.testimonial?.author) }}
-            />
-          </div>
+          {content?.testimonial?.quote && (
+            <div className="relative rounded-lg border border-border bg-secondary/30 px-6 py-5">
+              <Quote className="absolute top-4 left-4 h-5 w-5 text-muted-foreground/30" />
+              <blockquote
+                className="pl-6 text-[16px] font-light italic leading-[1.7] text-foreground"
+                dangerouslySetInnerHTML={{ __html: renderMarkdownInline(`"${content.testimonial.quote}"`) }}
+              />
+              <p className="mt-3 pl-6 text-[13px] font-semibold text-muted-foreground">
+                — <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content.testimonial.author) }} />
+              </p>
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center justify-between bg-slate-50 p-6">
-          <a
-            href={content?.companyWebsite}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-blue-600 transition-colors duration-200 hover:text-blue-800"
-          >
-            Visit <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.clientName) }} /> Website
-          </a>
-          <Button type="button" variant="link" className="flex items-center p-0 font-medium text-blue-600 transition-colors duration-200 hover:text-blue-800">
-            Read Full Case Study <i className="ri-arrow-right-line ml-2" />
-          </Button>
-        </div>
+        {content?.companyWebsite && (
+          <div className="flex items-center justify-between border-t border-border px-8 py-4">
+            <a href={content.companyWebsite} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[13px] font-medium text-primary transition-colors hover:underline">
+              <ExternalLink className="h-3.5 w-3.5" />
+              Visit {content.clientName}
+            </a>
+            <span className="flex items-center gap-1 text-[13px] font-medium text-primary cursor-pointer hover:underline">
+              Read Full Case Study
+              <ArrowRight className="h-3.5 w-3.5" />
+            </span>
+          </div>
+        )}
       </div>
     </BasePreview>
   )
