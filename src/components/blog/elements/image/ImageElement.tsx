@@ -33,12 +33,16 @@ export function ImageElement({ content, blogId, elementId, onContentUpdated, onE
   const fetchPost = useBlogStore((s) => s.fetchPost)
 
   const imageNumber = useMemo(() => {
-    if (typeof parsedContent.image_number === 'number') return parsedContent.image_number
+    if (typeof parsedContent.image_number === 'number' && parsedContent.image_number > 1) {
+      return parsedContent.image_number
+    }
     if (!post?.elements?.length) return 1
 
-    const imageElements = post.elements.filter((element) => element.element_type === 'image')
+    const imageElements = post.elements.filter((element) => String(element.element_type).toLowerCase() === 'image')
     const index = imageElements.findIndex((element) => element.id === elementId)
-    return index >= 0 ? index + 1 : 1
+
+    // Backend contract: 1 = cover image, first in-post image starts at 2.
+    return index >= 0 ? index + 2 : 1
   }, [elementId, parsedContent.image_number, post?.elements])
 
   const src = resolveImageUrl(parsedContent.url)

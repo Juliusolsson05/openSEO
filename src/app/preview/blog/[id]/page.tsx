@@ -71,7 +71,7 @@ function getImageNumbers(elements: BlogPostElement[]) {
   let count = 0
 
   elements.forEach((element) => {
-    if (element.element_type === 'image') {
+    if (String(element.element_type).toLowerCase() === 'image') {
       count += 1
       numbers[element.id] = count
     }
