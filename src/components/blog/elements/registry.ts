@@ -15,6 +15,8 @@ export interface ElementComponentProps {
   content: any
   blogId: number
   elementId: number
+  postTitle?: string
+  imageNumber?: number | null
   onContentUpdated?: (content: any) => void
   onElementAdded?: (element: any) => void
   onElementDeleted?: (elementId: number) => void

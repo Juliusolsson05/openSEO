@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { api, apiPost, apiDelete } from '@/lib/api'
+import { generateImages } from '@/components/blog/actions/generateImages'
 import { useBlogStore } from '@/stores/blog-store'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -148,9 +149,18 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
       selectedAction.inputs.forEach((input) => {
         if (input.type === 'number' && payload[input.key] !== '') payload[input.key] = Number(payload[input.key])
       })
-      const request = selectedAction.method === 'POST'
-        ? apiPost(selectedAction.endpoint, payload)
-        : api(selectedAction.endpoint, { method: selectedAction.method, params: selectedAction.method === 'GET' ? payload : undefined, body: selectedAction.method === 'GET' ? undefined : JSON.stringify(payload) })
+      const request = selectedAction.action === 'generateImages'
+        ? generateImages({
+            post_id: Number(payload.post_id),
+            version: Number(payload.version) as 1 | 2 | 3,
+            force: Boolean(payload.force),
+            magic_prompt: Boolean(payload.magic_prompt),
+            gpt_prompt: Boolean(payload.gpt_prompt),
+            quality_thumbnail: Boolean(payload.quality_thumbnail),
+          })
+        : selectedAction.method === 'POST'
+          ? apiPost(selectedAction.endpoint, payload)
+          : api(selectedAction.endpoint, { method: selectedAction.method, params: selectedAction.method === 'GET' ? payload : undefined, body: selectedAction.method === 'GET' ? undefined : JSON.stringify(payload) })
       const { error } = await request
       if (error) throw error
 
