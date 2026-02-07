@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { api, apiDelete, apiPost, apiPut } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -42,7 +43,7 @@ export default function DictionaryDetailPage() {
 
   const fetchDictionary = async () => {
     const { data, error } = await api<Dictionary>(`/api/aurora/dictionary/dictionary/${params.id}`)
-    if (error) return window.alert(error.message)
+    if (error) { toast.error(error.message); return }
     setDictionary(data)
   }
 
@@ -53,7 +54,7 @@ export default function DictionaryDetailPage() {
       const { data, error } = await api<Dictionary>(`/api/aurora/dictionary/dictionary/${params.id}`)
       if (!alive) return
       if (error) {
-        window.alert(error.message)
+        toast.error(error.message)
         return
       }
       setDictionary(data)
@@ -143,8 +144,9 @@ export default function DictionaryDetailPage() {
     }
   }
 
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
+
   const deleteWord = async (id: number) => {
-    if (!window.confirm('Delete word?')) return
     try {
       const { error } = await apiDelete(`/api/aurora/dictionary/modify/word/${id}`)
       if (error) throw error
@@ -263,7 +265,7 @@ export default function DictionaryDetailPage() {
                             </Button>
                           )}
                           <Button size="sm" variant="outline" className="h-7 rounded-sm" onClick={() => saveWord(word.id)}>Save</Button>
-                          <Button size="sm" variant="outline" className="h-7 rounded-sm" onClick={() => deleteWord(word.id)}>Delete</Button>
+                          <Button size="sm" variant="outline" className="h-7 rounded-sm" onClick={() => setPendingDeleteId(word.id)}>Delete</Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -274,6 +276,18 @@ export default function DictionaryDetailPage() {
           </div>
         </CardContent>
       </Card>
+      <Dialog open={pendingDeleteId !== null} onOpenChange={(open) => { if (!open) setPendingDeleteId(null) }}>
+        <DialogContent className="w-full max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete Word</DialogTitle>
+            <DialogDescription>Are you sure you want to delete this word? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingDeleteId(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => { if (pendingDeleteId) { deleteWord(pendingDeleteId); setPendingDeleteId(null) } }}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

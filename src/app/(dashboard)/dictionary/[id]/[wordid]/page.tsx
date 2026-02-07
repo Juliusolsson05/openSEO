@@ -43,7 +43,7 @@ export default function WordDetailPage() {
   useEffect(() => {
     const load = async () => {
       const { data, error } = await api<WordDefinition>(`/api/aurora/dictionary/dictionary/${params.id}/word/${params.wordid}/`)
-      if (error) return window.alert(error.message)
+      if (error) return
       setWord(data)
     }
     void load()

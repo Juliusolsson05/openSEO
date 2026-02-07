@@ -44,7 +44,6 @@ export function InlineList({ items, onChange, ordered = false, className, placeh
 
   const removeItem = (index: number) => {
     if (normalized.length === 1) {
-      if (!window.confirm('This will remove the only list item. Continue?')) return
       onChange([''])
       setFocusIndex(0)
       return
