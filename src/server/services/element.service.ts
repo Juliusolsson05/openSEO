@@ -1,4 +1,4 @@
-import type { BlogPostElementType, Prisma } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 
 import { prisma } from '@/lib/prisma'
 import { NotFoundError, ValidationError } from '@/server/api/errors'
@@ -12,13 +12,13 @@ import * as elementRepository from '@/server/repositories/element.repository'
 import { toAiElementType, toDbElementType } from '@/server/utils/element-type'
 
 type ElementPayload = {
-  elementType: BlogPostElementType
+  elementType: string
   content: Prisma.InputJsonValue
   order?: number
 }
 
 type ElementUpdatePayload = {
-  elementType?: BlogPostElementType
+  elementType?: string
   content?: Prisma.InputJsonValue
   order?: number
 }

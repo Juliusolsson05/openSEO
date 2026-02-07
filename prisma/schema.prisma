@@ -29,36 +29,8 @@ enum TitleOperation {
   KEYWORD_SYNCING
 }
 
-enum BlogPostElementType {
-  INTRODUCTION
-  CONCLUSION
-  FAQ
-  IMAGE
-  PARAGRAPH
-  LIST_PARAGRAPH
-  NUMBERED_LIST_PARAGRAPH
-  QUOTE
-  LIST_FEATURED_SNIPPET_BLOCK
-  FEATURED_SNIPPET_BLOCK
-  GLOSSARY
-  PRODUCT_RECOMMENDATIONS
-}
-
-enum BlogElementTemplateType {
-  INTRODUCTION
-  CONCLUSION
-  FAQ
-  IMAGE
-  PARAGRAPH
-  LIST_PARAGRAPH
-  NUMBERED_LIST_PARAGRAPH
-  QUOTE
-  LIST_FEATURED_SNIPPET_BLOCK
-  FEATURED_SNIPPET_BLOCK
-  GLOSSARY
-  PRODUCT_RECOMMENDATIONS
-  CTA
-}
+// Element types are stored as plain strings to support AI-generated types
+// (tool_recommendation, case_study, checklist, etc.)
 
 enum DictionaryStatus {
   IN_PROGRESS
@@ -316,7 +288,7 @@ model BlogPublish {
 model BlogPostElement {
   id           Int                 @id @default(autoincrement())
   blogPostId   Int
-  element_type BlogPostElementType
+  element_type String
   order        Int
   content      Json
   created_at   DateTime            @default(now())
@@ -519,7 +491,7 @@ model BlogElementTemplate {
   id           Int                     @id @default(autoincrement())
   name         String                  @unique
   slug         String                  @unique
-  element_type BlogElementTemplateType
+  element_type String
   structure    Json
   created_at   DateTime                @default(now())
 }

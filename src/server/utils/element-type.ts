@@ -1,46 +1,32 @@
-import { BlogPostElementType } from '@prisma/client'
+/**
+ * Element type utilities — maps between AI-generated lowercase names
+ * and DB storage format (UPPERCASE).
+ * 
+ * Now that element_type is a plain String in the DB, any type is accepted.
+ */
 
-const AI_TO_DB: Record<string, BlogPostElementType> = {
-  introduction: BlogPostElementType.INTRODUCTION,
-  conclusion: BlogPostElementType.CONCLUSION,
-  faq: BlogPostElementType.FAQ,
-  image: BlogPostElementType.IMAGE,
-  paragraph: BlogPostElementType.PARAGRAPH,
-  list_paragraph: BlogPostElementType.LIST_PARAGRAPH,
-  numbered_list_paragraph: BlogPostElementType.NUMBERED_LIST_PARAGRAPH,
-  quote: BlogPostElementType.QUOTE,
-  list_featured_snippet_block: BlogPostElementType.LIST_FEATURED_SNIPPET_BLOCK,
-  featured_snippet_block: BlogPostElementType.FEATURED_SNIPPET_BLOCK,
-  glossary: BlogPostElementType.GLOSSARY,
-  product_recommendations: BlogPostElementType.PRODUCT_RECOMMENDATIONS,
+export function toDbElementType(value: string): string {
+  return value.toUpperCase()
 }
 
-const DB_TO_AI: Record<BlogPostElementType, string> = Object.fromEntries(
-  Object.entries(AI_TO_DB).map(([key, value]) => [value, key]),
-) as Record<BlogPostElementType, string>
-
-export function toDbElementType(value: string): BlogPostElementType | null {
-  return AI_TO_DB[value] ?? null
-}
-
-export function toAiElementType(value: BlogPostElementType): string {
-  return DB_TO_AI[value] ?? value.toLowerCase()
+export function toAiElementType(value: string): string {
+  return value.toLowerCase()
 }
 
 export function serializeElement(element: {
   id: number
-  blogPostId: number
-  element_type: BlogPostElementType
+  element_type: string
   order: number
   content: unknown
-  created_at?: Date
+  created_at: Date | string
+  hyperlink?: { matched_keywords: unknown } | null
 }) {
   return {
     id: element.id,
     element_type: toAiElementType(element.element_type),
-    content: element.content,
     order: element.order,
-    blog_post: element.blogPostId,
+    content: element.content,
     created_at: element.created_at,
+    hyperlink: element.hyperlink ?? null,
   }
 }

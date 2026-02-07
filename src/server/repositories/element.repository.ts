@@ -1,16 +1,16 @@
-import { Prisma, type BlogPostElementType } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 
 import { prisma } from '@/lib/prisma'
 
 type CreateElementArgs = {
   blogPostId: number
-  elementType: BlogPostElementType
+  elementType: string
   content: Prisma.InputJsonValue
   order?: number
 }
 
 type UpdateElementArgs = {
-  elementType?: BlogPostElementType
+  elementType?: string
   content?: Prisma.InputJsonValue
   order?: number
 }
