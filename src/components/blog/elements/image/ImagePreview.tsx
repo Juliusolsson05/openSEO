@@ -1,4 +1,3 @@
-import NextImage from 'next/image'
 import { BasePreview } from '../BasePreview'
 import type { PreviewComponentProps } from '../registry'
 
@@ -27,14 +26,11 @@ export function ImagePreview({ content }: PreviewComponentProps) {
 
   return (
     <BasePreview content={content}>
-      <div className="relative my-8 h-[250px] w-full overflow-hidden rounded-lg md:h-[400px]">
-        <NextImage
+      <div className="my-8 w-full overflow-hidden rounded-lg">
+        <img
           src={src}
           alt={alt}
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, 1024px"
-          unoptimized={src.startsWith('http://') || src.startsWith('https://')}
+          className="w-full h-auto max-h-[600px] object-contain"
         />
       </div>
     </BasePreview>

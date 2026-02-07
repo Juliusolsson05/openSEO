@@ -12,6 +12,8 @@ interface Props {
 const PROVIDER_LABELS: Record<ImageStudioProvider, string> = {
   ideogram: 'Ideogram',
   'gpt-image': 'GPT Image',
+  'nano-banana': 'Nano Banana',
+  imagen: 'Imagen',
   stock: 'Stock Photos',
   upload: 'Upload',
   photopea: 'Photopea',
@@ -31,7 +33,7 @@ export function ImagePreviewPanel({ imageUrl, provider, isGenerating }: Props) {
           <img
             src={imageUrl}
             alt="Preview"
-            className="max-h-full max-w-full rounded object-contain"
+            className="h-auto max-h-full w-auto max-w-full rounded object-contain"
           />
         ) : (
           <div className="text-center text-sm text-muted-foreground">
