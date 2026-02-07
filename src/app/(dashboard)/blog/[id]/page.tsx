@@ -147,6 +147,9 @@ export default function BlogPostPage() {
 
         {/* Sidebar */}
         <div className="w-64 shrink-0 space-y-4 hidden lg:block">
+          {/* Admin Actions */}
+          <AdminMenu postId={post.id} onRefreshPost={() => fetchPost(post.id, true)} />
+
           {/* Details */}
           <Card>
             <CardContent className="p-4">
@@ -188,44 +191,11 @@ export default function BlogPostPage() {
             </CardContent>
           </Card>
 
-          {/* SEO */}
-          {(post.seo_title || post.meta_description) && (
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-3">
-                  SEO
-                </p>
-                <div className="space-y-3">
-                  {post.seo_title && (
-                    <div>
-                      <p className="text-[11px] text-muted-foreground mb-0.5">Title Tag</p>
-                      <p className="text-[12px] leading-relaxed">{post.seo_title}</p>
-                      <div className="mt-1.5 h-[3px] rounded-full bg-secondary overflow-hidden">
-                        <div
-                          className="h-full bg-primary transition-all"
-                          style={{ width: `${Math.min((post.seo_title.length / 60) * 100, 100)}%` }}
-                        />
-                      </div>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{post.seo_title.length}/60</p>
-                    </div>
-                  )}
-                  {post.meta_description && (
-                    <div>
-                      <p className="text-[11px] text-muted-foreground mb-0.5">Meta Description</p>
-                      <p className="text-[11px] text-muted-foreground leading-relaxed">{post.meta_description}</p>
-                      <div className="mt-1.5 h-[3px] rounded-full bg-secondary overflow-hidden">
-                        <div
-                          className="h-full bg-primary transition-all"
-                          style={{ width: `${Math.min((post.meta_description.length / 160) * 100, 100)}%` }}
-                        />
-                      </div>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{post.meta_description.length}/160</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* SEO — editable with keyword highlighting */}
+          <PostInfoSidepanel
+            post={post as any}
+            onUpdatePost={() => fetchPost(post.id, true)}
+          />
 
           <BlogGlossary elements={post.elements} />
 
