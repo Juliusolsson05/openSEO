@@ -5,14 +5,14 @@ import type { ExamplePost } from './types'
 /**
  * Merged data layer.
  *
- * Synced posts (from Aurora webhook) override fixture posts by slug.
+ * Synced posts (from Aurora webhook → SQLite) override fixture posts by slug.
  * Fixture posts fill the rest. This means:
  * - Fresh install → shows fixture/demo content
  * - After sync    → shows real Aurora-generated content + remaining fixtures
  */
 
-export function getAllPosts(): ExamplePost[] {
-  const synced = getSyncedPosts()
+export async function getAllPosts(): Promise<ExamplePost[]> {
+  const synced = await getSyncedPosts()
   const syncedSlugs = new Set(synced.map((p) => p.slug))
   const fixtures = EXAMPLE_POSTS.filter((p) => !syncedSlugs.has(p.slug))
   return [...synced, ...fixtures].sort(
@@ -20,8 +20,9 @@ export function getAllPosts(): ExamplePost[] {
   )
 }
 
-export function getPosts() {
-  return getAllPosts().map((post) => ({
+export async function getPosts() {
+  const all = await getAllPosts()
+  return all.map((post) => ({
     id: post.id,
     slug: post.slug,
     title: post.title,
@@ -31,17 +32,17 @@ export function getPosts() {
   }))
 }
 
-export function getPost(slug: string) {
-  return getAllPosts().find((post) => post.slug === slug) ?? null
+export async function getPost(slug: string) {
+  const all = await getAllPosts()
+  return all.find((post) => post.slug === slug) ?? null
 }
 
-export function getDictionary() {
-  const synced = getSyncedDictionaries()
-  // Return first synced dictionary if available, otherwise fixtures
+export async function getDictionary() {
+  const synced = await getSyncedDictionaries()
   return synced[0] ?? EXAMPLE_DICTIONARY
 }
 
-export function getWord(wordId: string) {
-  const dict = getDictionary()
+export async function getWord(wordId: string) {
+  const dict = await getDictionary()
   return dict.words.find((word) => word.id === wordId) ?? null
 }

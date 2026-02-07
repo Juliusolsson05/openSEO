@@ -2,8 +2,8 @@ import Link from 'next/link'
 import { getPosts } from '../_lib/data'
 import { ArrowRight } from 'lucide-react'
 
-export default function ExampleBlogIndex() {
-  const posts = getPosts()
+export default async function ExampleBlogIndex() {
+  const posts = await getPosts()
   const featured = posts[0]
   const sidebar = posts.slice(1, 4)
   const row = posts.slice(4, 10)

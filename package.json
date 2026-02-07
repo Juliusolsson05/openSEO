@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "prisma generate && prisma generate --schema=prisma/example/schema.prisma",
+    "db:example:push": "prisma db push --schema=prisma/example/schema.prisma"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.73.0",

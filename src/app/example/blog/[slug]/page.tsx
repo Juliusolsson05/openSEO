@@ -42,10 +42,10 @@ function TableOfContents({ elements }: { elements: { id: string; element_type: s
 
 export default async function ExampleBlogPostPage({ params }: PageProps) {
   const { slug } = await params
-  const post = getPost(slug)
+  const post = await getPost(slug)
   if (!post) notFound()
 
-  const allPosts = getPosts()
+  const allPosts = await getPosts()
   const currentIdx = allPosts.findIndex((p) => p.slug === slug)
   const prevPost = currentIdx > 0 ? allPosts[currentIdx - 1] : null
   const nextPost = currentIdx < allPosts.length - 1 ? allPosts[currentIdx + 1] : null

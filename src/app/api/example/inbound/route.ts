@@ -18,8 +18,9 @@
  * Auth: Bearer token validated against EXAMPLE_INBOUND_KEY env var.
  * If EXAMPLE_INBOUND_KEY is not set, all requests are accepted (dev mode).
  *
- * Customers: copy this file + store.ts into your own Next.js project.
- * Replace the file store with your own database.
+ * Storage: SQLite database via Prisma (prisma/example/schema.prisma).
+ * Customers: copy this file + _lib/store.ts + _lib/prisma.ts into your
+ * own Next.js project and swap SQLite for your production database.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -71,24 +72,27 @@ type AuroraPostPayload = {
   }
 }
 
-function toExamplePost(payload: AuroraPostPayload): ExamplePost | null {
+function toExamplePost(payload: AuroraPostPayload): { post: ExamplePost; auroraId?: number } | null {
   const post = payload.post
   const content = payload.processed_content
   if (!post?.slug || !post?.title_text) return null
 
   return {
-    id: `synced-${post.id ?? post.slug}`,
-    slug: post.slug,
-    title: post.title_text,
-    excerpt: post.excerpt ?? post.meta_description ?? '',
-    cover_image_url: '',
-    published_at: new Date().toISOString().slice(0, 10),
-    elements: (content?.elements ?? []).map((el) => ({
-      id: String(el.id),
-      order: el.order,
-      element_type: el.element_type,
-      content: el.content,
-    })),
+    auroraId: post.id,
+    post: {
+      id: `synced-${post.id ?? post.slug}`,
+      slug: post.slug,
+      title: post.title_text,
+      excerpt: post.excerpt ?? post.meta_description ?? '',
+      cover_image_url: '',
+      published_at: new Date().toISOString().slice(0, 10),
+      elements: (content?.elements ?? []).map((el) => ({
+        id: String(el.id),
+        order: el.order,
+        element_type: el.element_type,
+        content: el.content,
+      })),
+    },
   }
 }
 
@@ -121,7 +125,7 @@ type AuroraDictPayload = {
   }[]
 }
 
-function toExampleDictionary(payload: AuroraDictPayload): ExampleDictionary | null {
+function toExampleDictionary(payload: AuroraDictPayload): { dict: ExampleDictionary; auroraId?: number } | null {
   const dict = payload.dictionary
   if (!dict) return null
 
@@ -142,11 +146,14 @@ function toExampleDictionary(payload: AuroraDictPayload): ExampleDictionary | nu
   }))
 
   return {
-    id: `synced-${dict.id ?? 'dict'}`,
-    name: dict.title ?? 'Dictionary',
-    description: dict.subject ?? '',
-    word_count: words.length,
-    words,
+    auroraId: dict.id,
+    dict: {
+      id: `synced-${dict.id ?? 'dict'}`,
+      name: dict.title ?? 'Dictionary',
+      description: dict.subject ?? '',
+      word_count: words.length,
+      words,
+    },
   }
 }
 
@@ -172,30 +179,30 @@ export async function POST(req: NextRequest) {
 
   switch (event) {
     case 'post.upsert': {
-      const post = toExamplePost(innerPayload as AuroraPostPayload)
-      if (!post) return json({ error: 'Invalid post payload — slug and title_text required' }, 400)
-      upsertSyncedPost(post)
-      return json({ status: 'ok', delivery_id: eventId, post_slug: post.slug })
+      const result = toExamplePost(innerPayload as AuroraPostPayload)
+      if (!result) return json({ error: 'Invalid post payload — slug and title_text required' }, 400)
+      await upsertSyncedPost(result.post, result.auroraId)
+      return json({ status: 'ok', delivery_id: eventId, post_slug: result.post.slug })
     }
 
     case 'post.delete': {
       const slug = (innerPayload as { post?: { slug?: string } }).post?.slug
       if (!slug) return json({ error: 'Missing post.slug' }, 400)
-      const deleted = deleteSyncedPost(slug)
+      const deleted = await deleteSyncedPost(slug)
       return json({ status: deleted ? 'deleted' : 'not_found', delivery_id: eventId })
     }
 
     case 'dictionary.upsert': {
-      const dict = toExampleDictionary(innerPayload as AuroraDictPayload)
-      if (!dict) return json({ error: 'Invalid dictionary payload' }, 400)
-      upsertSyncedDictionary(dict)
-      return json({ status: 'ok', delivery_id: eventId, dictionary_id: dict.id })
+      const result = toExampleDictionary(innerPayload as AuroraDictPayload)
+      if (!result) return json({ error: 'Invalid dictionary payload' }, 400)
+      await upsertSyncedDictionary(result.dict, result.auroraId)
+      return json({ status: 'ok', delivery_id: eventId, dictionary_id: result.dict.id })
     }
 
     case 'dictionary.delete': {
       const dictId = (innerPayload as { dictionary?: { id?: number } }).dictionary?.id
       if (!dictId) return json({ error: 'Missing dictionary.id' }, 400)
-      const deleted = deleteSyncedDictionary(`synced-${dictId}`)
+      const deleted = await deleteSyncedDictionary(`synced-${dictId}`)
       return json({ status: deleted ? 'deleted' : 'not_found', delivery_id: eventId })
     }
 

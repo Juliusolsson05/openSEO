@@ -1,101 +1,171 @@
 /**
- * File-based store for synced content.
+ * Database store for synced content (SQLite via Prisma).
  *
- * Synced posts and dictionaries are persisted to a JSON file so they survive
- * dev-server restarts. The example site reads from both this store and the
- * static fixtures — synced data takes priority (by slug/id).
+ * Synced posts and dictionaries are persisted to a separate SQLite database.
+ * The example site reads from both this store and the static fixtures —
+ * synced data takes priority (by slug/id).
  *
- * Customers would replace this with their own database. The store interface
- * is intentionally simple: upsert + delete + list.
+ * Customers would replace this with their own PostgreSQL/MySQL database.
+ * The Prisma schema is at prisma/example/schema.prisma.
  */
-import fs from 'node:fs'
-import path from 'node:path'
-import type { ExampleDictionary, ExamplePost } from './types'
-
-const STORE_DIR = path.join(process.cwd(), '.example-store')
-const POSTS_FILE = path.join(STORE_DIR, 'posts.json')
-const DICTIONARIES_FILE = path.join(STORE_DIR, 'dictionaries.json')
-
-function ensureDir() {
-  if (!fs.existsSync(STORE_DIR)) fs.mkdirSync(STORE_DIR, { recursive: true })
-}
+import { exampleDb } from './prisma'
+import type { ExampleDictionary, ExamplePost, ExampleWord } from './types'
 
 // ─── Posts ──────────────────────────────────────────────────────────
 
-function readPosts(): ExamplePost[] {
-  if (!fs.existsSync(POSTS_FILE)) return []
-  try {
-    return JSON.parse(fs.readFileSync(POSTS_FILE, 'utf-8')) as ExamplePost[]
-  } catch {
-    return []
+export async function getSyncedPosts(): Promise<ExamplePost[]> {
+  const posts = await exampleDb.post.findMany({
+    include: { elements: { orderBy: { order: 'asc' } } },
+    orderBy: { publishedAt: 'desc' },
+  })
+
+  return posts.map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    excerpt: p.excerpt,
+    cover_image_url: p.coverImage,
+    published_at: p.publishedAt,
+    elements: p.elements.map((el) => ({
+      id: el.id,
+      order: el.order,
+      element_type: el.elementType,
+      content: JSON.parse(el.content) as Record<string, unknown>,
+    })),
+  }))
+}
+
+export async function upsertSyncedPost(post: ExamplePost, auroraId?: number): Promise<ExamplePost> {
+  const existing = await exampleDb.post.findFirst({
+    where: { OR: [{ slug: post.slug }, ...(auroraId ? [{ auroraId }] : [])] },
+  })
+
+  const postData = {
+    slug: post.slug,
+    title: post.title,
+    excerpt: post.excerpt,
+    coverImage: post.cover_image_url,
+    publishedAt: post.published_at,
+    auroraId: auroraId ?? undefined,
   }
-}
 
-function writePosts(posts: ExamplePost[]) {
-  ensureDir()
-  fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2))
-}
+  let savedPost
 
-export function getSyncedPosts(): ExamplePost[] {
-  return readPosts()
-}
-
-export function upsertSyncedPost(post: ExamplePost): ExamplePost {
-  const posts = readPosts()
-  const idx = posts.findIndex((p) => p.slug === post.slug || p.id === post.id)
-  if (idx >= 0) {
-    posts[idx] = post
+  if (existing) {
+    // Delete old elements and replace
+    await exampleDb.element.deleteMany({ where: { postId: existing.id } })
+    savedPost = await exampleDb.post.update({
+      where: { id: existing.id },
+      data: {
+        ...postData,
+        elements: {
+          create: post.elements.map((el) => ({
+            auroraId: el.id,
+            order: el.order,
+            elementType: el.element_type,
+            content: JSON.stringify(el.content),
+          })),
+        },
+      },
+    })
   } else {
-    posts.push(post)
+    savedPost = await exampleDb.post.create({
+      data: {
+        ...postData,
+        elements: {
+          create: post.elements.map((el) => ({
+            auroraId: el.id,
+            order: el.order,
+            elementType: el.element_type,
+            content: JSON.stringify(el.content),
+          })),
+        },
+      },
+    })
   }
-  writePosts(posts)
-  return post
+
+  return { ...post, id: savedPost.id }
 }
 
-export function deleteSyncedPost(slug: string): boolean {
-  const posts = readPosts()
-  const filtered = posts.filter((p) => p.slug !== slug)
-  if (filtered.length === posts.length) return false
-  writePosts(filtered)
+export async function deleteSyncedPost(slug: string): Promise<boolean> {
+  const post = await exampleDb.post.findUnique({ where: { slug } })
+  if (!post) return false
+  await exampleDb.post.delete({ where: { id: post.id } })
   return true
 }
 
 // ─── Dictionaries ───────────────────────────────────────────────────
 
-function readDictionaries(): ExampleDictionary[] {
-  if (!fs.existsSync(DICTIONARIES_FILE)) return []
-  try {
-    return JSON.parse(fs.readFileSync(DICTIONARIES_FILE, 'utf-8')) as ExampleDictionary[]
-  } catch {
-    return []
+export async function getSyncedDictionaries(): Promise<ExampleDictionary[]> {
+  const dicts = await exampleDb.dictionary.findMany({
+    include: { words: { orderBy: { keyword: 'asc' } } },
+  })
+
+  return dicts.map((d) => ({
+    id: d.id,
+    name: d.name,
+    description: d.description,
+    word_count: d.words.length,
+    words: d.words.map((w): ExampleWord => ({
+      id: w.id,
+      keyword: w.keyword,
+      definition: JSON.parse(w.definition) as ExampleWord['definition'],
+    })),
+  }))
+}
+
+export async function upsertSyncedDictionary(dict: ExampleDictionary, auroraId?: number): Promise<ExampleDictionary> {
+  const existing = await exampleDb.dictionary.findFirst({
+    where: { OR: [{ id: dict.id }, ...(auroraId ? [{ auroraId }] : [])] },
+  })
+
+  const dictData = {
+    name: dict.name,
+    description: dict.description,
+    auroraId: auroraId ?? undefined,
   }
-}
 
-function writeDictionaries(dicts: ExampleDictionary[]) {
-  ensureDir()
-  fs.writeFileSync(DICTIONARIES_FILE, JSON.stringify(dicts, null, 2))
-}
-
-export function getSyncedDictionaries(): ExampleDictionary[] {
-  return readDictionaries()
-}
-
-export function upsertSyncedDictionary(dict: ExampleDictionary): ExampleDictionary {
-  const dicts = readDictionaries()
-  const idx = dicts.findIndex((d) => d.id === dict.id)
-  if (idx >= 0) {
-    dicts[idx] = dict
-  } else {
-    dicts.push(dict)
+  if (existing) {
+    await exampleDb.word.deleteMany({ where: { dictionaryId: existing.id } })
+    await exampleDb.dictionary.update({
+      where: { id: existing.id },
+      data: {
+        ...dictData,
+        words: {
+          create: dict.words.map((w) => ({
+            auroraId: w.id,
+            keyword: w.keyword,
+            letter: w.keyword[0]?.toUpperCase() ?? '',
+            definition: JSON.stringify(w.definition),
+          })),
+        },
+      },
+    })
+    return { ...dict, id: existing.id }
   }
-  writeDictionaries(dicts)
-  return dict
+
+  const saved = await exampleDb.dictionary.create({
+    data: {
+      ...dictData,
+      words: {
+        create: dict.words.map((w) => ({
+          auroraId: w.id,
+          keyword: w.keyword,
+          letter: w.keyword[0]?.toUpperCase() ?? '',
+          definition: JSON.stringify(w.definition),
+        })),
+      },
+    },
+  })
+
+  return { ...dict, id: saved.id }
 }
 
-export function deleteSyncedDictionary(dictId: string): boolean {
-  const dicts = readDictionaries()
-  const filtered = dicts.filter((d) => d.id !== dictId)
-  if (filtered.length === dicts.length) return false
-  writeDictionaries(filtered)
+export async function deleteSyncedDictionary(id: string): Promise<boolean> {
+  const dict = await exampleDb.dictionary.findFirst({
+    where: { OR: [{ id }, { auroraId: parseInt(id.replace('synced-', ''), 10) || -1 }] },
+  })
+  if (!dict) return false
+  await exampleDb.dictionary.delete({ where: { id: dict.id } })
   return true
 }

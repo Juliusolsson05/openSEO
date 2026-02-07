@@ -10,11 +10,11 @@ type PageProps = {
 
 export default async function ExampleDictionaryWordPage({ params }: PageProps) {
   const { wordId } = await params
-  const word = getWord(wordId)
+  const word = await getWord(wordId)
 
   if (!word) notFound()
 
-  const dictionary = getDictionary()
+  const dictionary = await getDictionary()
   const related = dictionary.words.filter((item) => item.id !== word.id).slice(0, 5)
 
   return (
