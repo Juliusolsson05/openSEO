@@ -1,35 +1,104 @@
-/**
- * Analytics store — ported from aurora_dashboard/stores/analytics/analyticsStore.ts
- */
-
 import { create } from 'zustand'
 import { api } from '@/lib/api'
 
+interface AnalyticsMetric {
+  value: number
+  value_description: string
+  computation_method: string
+  value_recommendation?: string
+}
+
+interface ScoreBreakdownItem {
+  score: number
+  weight: number
+}
+
+export interface BlogGeneralResponse {
+  total_blog_posts: AnalyticsMetric
+  published_blog_posts: AnalyticsMetric
+  average_post_length: AnalyticsMetric
+  average_keyword_density: AnalyticsMetric
+  average_link_density: AnalyticsMetric
+  average_total_links: AnalyticsMetric
+  average_internal_links: AnalyticsMetric
+  average_outgoing_links: AnalyticsMetric
+  average_tool_recommendations: AnalyticsMetric
+  average_case_studies: AnalyticsMetric
+  focus_keywords: string[]
+  general_seo_score: number
+  score_breakdown: Record<string, ScoreBreakdownItem>
+}
+
+interface OversizedSeoTitle {
+  post_id: number
+  title: string
+  focus_keyword: string
+  extra_chars: number
+}
+
+interface OversizedMetaDescription {
+  post_id: number
+  meta_description: string
+  focus_keyword: string
+  extra_chars: number
+}
+
+export interface BlogMetaResponse {
+  avg_meta_description_length: number
+  avg_seo_title_length: number
+  focus_keyword_density_meta: number
+  focus_keyword_density_seo_title: number
+  oversized_seo_titles: OversizedSeoTitle[]
+  oversized_meta_descriptions: OversizedMetaDescription[]
+}
+
+interface DictionaryWordCount {
+  word: string
+  link_count: number
+}
+
+export interface DictionaryGeneralResponse {
+  total_words: number
+  total_definitions: number
+  total_hyperlinks: number
+  most_linked_words: DictionaryWordCount[]
+  isolated_words_count: number
+  isolated_words: string[]
+  all_words_link_count: DictionaryWordCount[]
+  words_per_letter: Record<string, number>
+  high_priority_words: number
+  low_priority_words: number
+}
+
+export interface BlogTitle {
+  id: number
+  title_text: string
+  generated_date: string | null
+  categories: Array<{ id: number; name: string }>
+  post_linking: number[]
+}
+
 interface AnalyticsState {
-  linkedWords: Array<{ word: string; link_count: number }>
-  dictionaryData: {
-    total_words: number
-    total_definitions: number
-    isolated_words_count: number
-  } | null
-  blogMetaData: {
-    oversized_seo_titles: Array<{ id: string; title: string }>
-    oversized_meta_descriptions: Array<{ id: string; description: string }>
-  } | null
-  blogTitles: any[]
-  generalBlogData: {
-    general_seo_score: number
-    score_breakdown: Record<string, number>
-    [key: string]: any
-  } | null
+  linkedWords: DictionaryWordCount[]
+  dictionaryData: DictionaryGeneralResponse | null
+  blogMetaData: BlogMetaResponse | null
+  blogTitles: BlogTitle[]
+  generalBlogData: BlogGeneralResponse | null
   isLoading: boolean
   error: string | null
+  fetchPromise: Promise<void> | null
+
+  hasGeneralData: () => boolean
+  hasBlogTitles: () => boolean
+  hasDictionaryData: () => boolean
+  hasBlogMetaData: () => boolean
+  hasData: () => boolean
 
   fetchAnalyticsData: () => Promise<void>
   clearStore: () => void
 }
 
-export const useAnalyticsStore = create<AnalyticsState>((set) => ({
+export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
   linkedWords: [],
   dictionaryData: null,
   blogMetaData: null,
@@ -37,43 +106,60 @@ export const useAnalyticsStore = create<AnalyticsState>((set) => ({
   generalBlogData: null,
   isLoading: false,
   error: null,
+  fetchPromise: null,
+
+  hasGeneralData: () => Boolean(get().generalBlogData),
+  hasBlogTitles: () => get().blogTitles.length > 0,
+  hasDictionaryData: () => Boolean(get().dictionaryData),
+  hasBlogMetaData: () => Boolean(get().blogMetaData),
+  hasData: () => {
+    const state = get()
+    return state.hasGeneralData() || state.hasBlogTitles() || state.hasDictionaryData() || state.hasBlogMetaData()
+  },
 
   fetchAnalyticsData: async () => {
-    set({ isLoading: true, error: null })
+    const existing = get().fetchPromise
+    if (existing) return existing
 
-    try {
-      const [dictionaryRes, blogMetaRes, blogTitlesRes, generalBlogRes] =
-        await Promise.all([
-          api('/api/aurora/analytics/dictionary/general', {
+    const fetcher = (async () => {
+      set({ isLoading: true, error: null })
+
+      try {
+        const [dictionaryRes, blogMetaRes, blogTitlesRes, generalBlogRes] = await Promise.all([
+          api<DictionaryGeneralResponse>('/api/aurora/analytics/dictionary/general', {
             params: { include_all_words_links: true },
           }),
-          api('/api/aurora/analytics/blog/meta'),
-          api('/api/aurora/blog/titles/'),
-          api('/api/aurora/analytics/blog/general', {
+          api<BlogMetaResponse>('/api/aurora/analytics/blog/meta'),
+          api<BlogTitle[]>('/api/aurora/blog/titles/'),
+          api<BlogGeneralResponse>('/api/aurora/analytics/blog/general', {
             params: { include_recommendations: false },
           }),
         ])
 
-      set({
-        linkedWords: dictionaryRes.data?.all_words_link_count ?? [],
-        dictionaryData: dictionaryRes.data
-          ? {
-              total_words: dictionaryRes.data.total_words ?? 0,
-              total_definitions: dictionaryRes.data.total_definitions ?? 0,
-              isolated_words_count: dictionaryRes.data.isolated_words_count ?? 0,
-            }
-          : null,
-        blogMetaData: blogMetaRes.data ?? null,
-        blogTitles: blogTitlesRes.data ?? [],
-        generalBlogData: generalBlogRes.data ?? null,
-        isLoading: false,
-      })
-    } catch (error) {
-      set({
-        error: 'Some analytics data could not be loaded. Please try again later.',
-        isLoading: false,
-      })
-    }
+        if (dictionaryRes.error || blogMetaRes.error || blogTitlesRes.error || generalBlogRes.error) {
+          throw new Error('One or more analytics endpoints failed')
+        }
+
+        set({
+          linkedWords: dictionaryRes.data?.all_words_link_count ?? [],
+          dictionaryData: dictionaryRes.data ?? null,
+          blogMetaData: blogMetaRes.data ?? null,
+          blogTitles: blogTitlesRes.data ?? [],
+          generalBlogData: generalBlogRes.data ?? null,
+          isLoading: false,
+          fetchPromise: null,
+        })
+      } catch {
+        set({
+          error: 'Some analytics data could not be loaded. Please try again later.',
+          isLoading: false,
+          fetchPromise: null,
+        })
+      }
+    })()
+
+    set({ fetchPromise: fetcher })
+    return fetcher
   },
 
   clearStore: () =>
@@ -85,5 +171,6 @@ export const useAnalyticsStore = create<AnalyticsState>((set) => ({
       generalBlogData: null,
       isLoading: false,
       error: null,
+      fetchPromise: null,
     }),
 }))
