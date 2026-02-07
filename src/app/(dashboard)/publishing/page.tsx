@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react'
 
-type SyncStartResponse = { job_id: string; status: 'accepted' | 'running' }
 type SyncJobStatus = 'accepted' | 'running' | 'completed' | 'failed' | 'not_available'
 type CompanyCredentials = { api_endpoint?: string | null; api_key?: string | null }
 export default function PublishingPage() {
@@ -66,7 +65,7 @@ export default function PublishingPage() {
     setStatus(null)
     setIsSyncing(kind)
     const endpoint = kind === 'posts' ? '/api/v1/publishing/sync/posts/all' : '/api/v1/publishing/sync/dictionaries/all'
-    const { data, error } = await apiPost<SyncStartResponse | { data: SyncStartResponse }>(endpoint, {})
+    const { data, error } = await apiPost<Record<string, unknown>>(endpoint, {})
 
     if (error) {
       setStatus({ type: 'error', message: error.message || `Failed to start ${kind} sync.` })
@@ -74,26 +73,31 @@ export default function PublishingPage() {
       return
     }
 
-    const payload = Array.isArray(data) ? null : (data && 'data' in data ? data.data : data)
-    const jobId = payload?.job_id
+    // Unwrap { success, data: { job_id, status } } or { job_id, status }
+    const inner = (data && typeof data === 'object' && 'data' in data && data.data && typeof data.data === 'object')
+      ? (data.data as Record<string, unknown>)
+      : (data as Record<string, unknown> | null)
+    const jobId = inner?.job_id as string | undefined
     if (!jobId) {
-      setStatus({ type: 'error', message: 'Could not read job id from sync response.' })
+      setStatus({ type: 'error', message: `Could not read job id from sync response. Got: ${JSON.stringify(data)}` })
       setIsSyncing(null)
       return
     }
 
     setActiveJobId(jobId)
-    setJobState(payload.status)
+    setJobState((inner.status as SyncJobStatus) ?? 'accepted')
     setStatus({ type: 'success', message: `${kind === 'posts' ? 'Post' : 'Dictionary'} sync started.` })
     setIsSyncing(null)
   }
 
   const refreshJob = async () => {
     if (!activeJobId) return
-    const { data, error } = await api<{ status: SyncJobStatus } | { data: { status: SyncJobStatus } }>(`/api/v1/publishing/jobs/${activeJobId}`)
+    const { data, error } = await api<Record<string, unknown>>(`/api/v1/publishing/jobs/${activeJobId}`)
     if (error || !data) return
-    const payload = 'data' in data && data.data && typeof data.data === 'object' ? data.data : data
-    const s = (payload as { status: SyncJobStatus }).status
+    const inner = (typeof data === 'object' && 'data' in data && data.data && typeof data.data === 'object')
+      ? (data.data as Record<string, unknown>)
+      : data
+    const s = inner?.status as SyncJobStatus | undefined
     if (s) setJobState(s)
   }
 
