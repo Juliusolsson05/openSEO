@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useRef, type ReactNode } from 'react'
-import { Pencil, RefreshCw, Sparkles, Heart, Trash2, Plus } from 'lucide-react'
+import { Pencil, RefreshCw, Sparkles, Heart, Trash2, Plus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useElementsStore } from '@/stores/elements-store'
 import { useBlogStore } from '@/stores/blog-store'
