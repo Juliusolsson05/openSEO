@@ -15,6 +15,7 @@ import {
   Layers,
   BookOpen,
   Target,
+  Shield,
   ChevronDown,
   LogOut,
 } from 'lucide-react'
@@ -26,6 +27,7 @@ interface NavItem {
   title: string
   href: string
   icon: React.ElementType
+  tourId?: string
   children?: NavItem[]
 }
 
@@ -38,8 +40,8 @@ const navigation: NavSection[] = [
   {
     heading: 'CONTENT',
     items: [
-      { title: 'Blog Posts', href: '/blog', icon: FileText },
-      { title: 'Titles', href: '/blog/titles', icon: Heading },
+      { title: 'Blog Posts', href: '/blog', icon: FileText, tourId: 'nav-blog-posts' },
+      { title: 'Titles', href: '/blog/titles', icon: Heading, tourId: 'nav-titles' },
       { title: 'Scheduling', href: '/blog/scheduling', icon: CalendarDays },
       { title: 'Call to Actions', href: '/blog/cta', icon: Target },
     ],
@@ -47,7 +49,7 @@ const navigation: NavSection[] = [
   {
     heading: 'INSIGHTS',
     items: [
-      { title: 'Analytics', href: '/analytics', icon: BarChart3 },
+      { title: 'Analytics', href: '/analytics', icon: BarChart3, tourId: 'nav-analytics' },
     ],
   },
   {
@@ -64,6 +66,7 @@ const navigation: NavSection[] = [
         title: 'Settings',
         href: '/settings',
         icon: Settings,
+        tourId: 'nav-settings',
         children: [
           { title: 'General', href: '/settings', icon: Settings },
           { title: 'Company Profile', href: '/company-profile', icon: Building2 },
@@ -96,6 +99,7 @@ function NavLink({ item, pathname, nested = false }: { item: NavItem; pathname: 
   return (
     <Link
       href={item.href}
+      data-tour={item.tourId}
       className={cn(
         'group relative flex items-center gap-3 py-[7px] text-[13px] transition-colors',
         nested ? 'pl-9 pr-4 text-[12px]' : 'px-4',
@@ -121,6 +125,7 @@ function NavGroup({ item, pathname }: { item: NavItem; pathname: string }) {
   const Icon = item.icon
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isActive) setOpen(true)
   }, [isActive])
 
@@ -130,6 +135,7 @@ function NavGroup({ item, pathname }: { item: NavItem; pathname: string }) {
         type="button"
         variant="ghost"
         onClick={() => setOpen(!open)}
+        data-tour={item.tourId}
         className={cn(
           'group h-auto w-full justify-start gap-3 rounded-none px-4 py-[7px] text-[13px] transition-colors',
           isActive
@@ -162,6 +168,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const { userData, logout } = useAuthStore()
   const router = useRouter()
+  const isAdmin = userData?.userType === 4
 
   const handleLogout = async () => {
     await logout()
@@ -196,6 +203,15 @@ export function Sidebar() {
             )}
           </div>
         ))}
+
+        {isAdmin ? (
+          <div className="mb-1">
+            <p className="px-4 pt-3 pb-1 text-[11px] font-semibold tracking-[0.08em] text-sidebar-foreground/40">
+              ADMIN
+            </p>
+            <NavLink item={{ title: 'Users', href: '/admin/users', icon: Shield }} pathname={pathname} />
+          </div>
+        ) : null}
       </nav>
 
       {/* User bar */}
