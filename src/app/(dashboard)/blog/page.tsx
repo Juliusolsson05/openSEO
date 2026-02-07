@@ -190,6 +190,7 @@ export default function BlogPage() {
         <div className="flex-1" />
 
         <Button
+          data-tour="generate-post-btn"
           onClick={generateNext}
           disabled={generating || postsLeftToGenerate === 0}
           className="gap-1.5"

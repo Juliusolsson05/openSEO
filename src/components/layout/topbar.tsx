@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { Search, Bell, FileText, Tags, BookOpen, Package } from 'lucide-react'
+import { Search, Bell, FileText, Tags, BookOpen, Package, HelpCircle } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { api } from '@/lib/api'
@@ -74,7 +74,7 @@ function resultTypeIcon(type: GlobalSearchItem['type']) {
 
 const LAST_SEEN_KEY = 'aurora:notifications:lastSeenAt'
 
-export function Topbar() {
+export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
   const title = getPageTitle(pathname)
@@ -202,7 +202,7 @@ export function Topbar() {
 
       <div className="flex-1" />
 
-      <div ref={searchBoxRef} className="relative">
+      <div ref={searchBoxRef} className="relative" data-tour="topbar-search">
         <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
         <input
           id="global-search"
@@ -293,6 +293,20 @@ export function Topbar() {
           </div>
         ) : null}
       </div>
+
+      {onStartTour ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onStartTour}
+          className="h-8 w-8 rounded-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+          aria-label="Take the tour"
+          title="Take the tour"
+        >
+          <HelpCircle className="h-4 w-4" />
+        </Button>
+      ) : null}
 
       <div ref={notificationsRef} className="relative">
         <Button
