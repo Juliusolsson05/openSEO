@@ -1,12 +1,19 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
+import { Plus, Trash2 } from 'lucide-react'
 import { BaseElement } from '../BaseElement'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import type { ElementComponentProps } from '../registry'
 import { useElementsStore } from '@/stores/elements-store'
-import { useAutoSave } from '@/hooks/use-auto-save'
-import { InlineRichText, InlineTable, InlineText, SaveIndicator, useInlineEdit } from '../inline'
+import { useInlineEdit } from '../inline/InlineEditProvider'
+import { InlineEditorShell } from '../inline/InlineEditorShell'
+import { useElementDraft } from '@/hooks/use-element-draft'
+import { useElementSave } from '@/hooks/use-element-save'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 
 interface TableContent {
   title?: string
@@ -17,66 +24,177 @@ interface TableContent {
 }
 
 export function Table({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
-  const [localContent, setLocalContent] = useState<TableContent>((content ?? {}) as TableContent)
   const updateElement = useElementsStore((s) => s.updateElement)
-  const { isEditing, startEditing } = useInlineEdit()
+  const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
 
-  useEffect(() => setLocalContent((content ?? {}) as TableContent), [content])
+  const initial = (content ?? { title: '', text_before: '', headers: [], rows: [], text_after: '' }) as TableContent
+  const { draft, patch, reset, commit, rebase, isDirty } = useElementDraft<TableContent>(initial)
 
-  const { save, flush, status } = useAutoSave(async (next) => {
-    const result = await updateElement(elementId, next, blogId)
-    if (result.success) onContentUpdated?.(next)
-    return result.success
-  })
+  useEffect(() => { rebase((content ?? { title: '', text_before: '', headers: [], rows: [], text_after: '' }) as TableContent) }, [content])
 
-  const handleChange = (next: TableContent) => {
-    setLocalContent(next)
-    void save(next)
+  const saveFn = useCallback(async (data: TableContent) => {
+    const result = await updateElement(elementId, data, blogId)
+    if (result.success) onContentUpdated?.(data)
+    return result
+  }, [updateElement, elementId, blogId, onContentUpdated])
+
+  const { save, status, error } = useElementSave(saveFn)
+
+  const handleSave = async () => {
+    if (!isDirty) return
+    const ok = await save(draft)
+    if (ok) {
+      commit()
+      stopEditing()
+    }
   }
 
-  const headers = Array.isArray(localContent.headers) ? localContent.headers : []
-  const rows = Array.isArray(localContent.rows) ? localContent.rows : []
+  const handleCancel = () => {
+    reset()
+    stopEditing()
+  }
+
+  const headers = Array.isArray(draft.headers) ? draft.headers : []
+  const rows = Array.isArray(draft.rows) ? draft.rows : []
+
+  const updateHeader = (index: number, value: string) => {
+    const next = [...headers]
+    next[index] = value
+    patch({ headers: next })
+  }
+
+  const addColumn = () => {
+    patch({
+      headers: [...headers, ''],
+      rows: rows.map((row) => [...row, '']),
+    })
+  }
+
+  const removeColumn = (index: number) => {
+    patch({
+      headers: headers.filter((_, i) => i !== index),
+      rows: rows.map((row) => row.filter((_, i) => i !== index)),
+    })
+  }
+
+  const updateCell = (rowIndex: number, colIndex: number, value: string) => {
+    const nextRows = rows.map((row) => [...row])
+    if (!nextRows[rowIndex]) nextRows[rowIndex] = []
+    nextRows[rowIndex][colIndex] = value
+    patch({ rows: nextRows })
+  }
+
+  const addRow = () => {
+    patch({ rows: [...rows, new Array(headers.length).fill('')] })
+  }
+
+  const removeRow = (rowIndex: number) => {
+    patch({ rows: rows.filter((_, i) => i !== rowIndex) })
+  }
+
+  const viewContent = (content ?? {}) as TableContent
+  const viewHeaders = Array.isArray(viewContent.headers) ? viewContent.headers : []
+  const viewRows = Array.isArray(viewContent.rows) ? viewContent.rows : []
 
   return (
-    <BaseElement content={localContent} blogId={blogId} elementId={elementId} allowEdit={false} onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
-      <div className="space-y-3">
-        {editing ? (
-          <>
-            <InlineText elementId={elementId} value={localContent.title ?? ''} onChange={(value) => handleChange({ ...localContent, title: value })} onBlur={() => void flush()} as="h3" className="mb-6 text-2xl font-semibold" placeholder="Table title" />
-            <InlineRichText elementId={elementId} value={localContent.text_before ?? ''} onChange={(value) => handleChange({ ...localContent, text_before: value })} onBlur={() => void flush()} className="my-6" placeholder="Text before table" />
-            <InlineTable headers={headers} rows={rows} onChange={(nextHeaders, nextRows) => handleChange({ ...localContent, headers: nextHeaders, rows: nextRows })} className="my-8" />
-            <InlineRichText elementId={elementId} value={localContent.text_after ?? ''} onChange={(value) => handleChange({ ...localContent, text_after: value })} onBlur={() => void flush()} className="my-6" placeholder="Text after table" />
-          </>
-        ) : (
-          <div className="cursor-text" onClick={() => startEditing(elementId)}>
-            <h3 className="mb-6 text-2xl font-semibold" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(localContent.title ?? '') }} />
-            {localContent.text_before ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(localContent.text_before) }} /> : null}
-            <div className="my-8 overflow-x-auto rounded-lg border shadow-sm">
-              <table className="w-full border-separate border-spacing-0">
-                <thead>
-                  <tr className="bg-muted/50">
-                    {headers.map((header, index) => (
-                      <th key={index} className="border-b px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(header) }} />
+    <BaseElement content={content} blogId={blogId} elementId={elementId} allowEdit={false} onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
+      {editing ? (
+        <InlineEditorShell title="Table" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
+          <div data-inline-edit-root="true" className="space-y-4">
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input value={draft.title ?? ''} onChange={(e) => patch({ title: e.target.value })} placeholder="Table title" />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Text before table</Label>
+              <Textarea value={draft.text_before ?? ''} onChange={(e) => patch({ text_before: e.target.value })} placeholder="Text before table" rows={4} />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Headers</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addColumn}>
+                  <Plus className="mr-1 h-4 w-4" /> Add column
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {headers.map((header, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input value={header} onChange={(e) => updateHeader(index, e.target.value)} placeholder={`Header ${index + 1}`} />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeColumn(index)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Rows</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addRow}>
+                  <Plus className="mr-1 h-4 w-4" /> Add row
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {rows.map((row, rowIndex) => (
+                  <div key={rowIndex} className="flex items-start gap-2">
+                    <div className="grid flex-1 gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(headers.length, 1)}, minmax(0, 1fr))` }}>
+                      {new Array(Math.max(headers.length, 1)).fill(null).map((_, colIndex) => (
+                        <Input
+                          key={colIndex}
+                          value={row[colIndex] ?? ''}
+                          onChange={(e) => updateCell(rowIndex, colIndex, e.target.value)}
+                          placeholder={`Row ${rowIndex + 1}, col ${colIndex + 1}`}
+                        />
+                      ))}
+                    </div>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeRow(rowIndex)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Text after table</Label>
+              <Textarea value={draft.text_after ?? ''} onChange={(e) => patch({ text_after: e.target.value })} placeholder="Text after table" rows={4} />
+            </div>
+          </div>
+        </InlineEditorShell>
+      ) : (
+        <div
+          className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
+          onClick={() => isEditModeEnabled && startEditing(elementId)}
+        >
+          <h3 className="mb-6 text-2xl font-semibold" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(viewContent.title ?? '') }} />
+          {viewContent.text_before ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_before) }} /> : null}
+          <div className="my-8 overflow-x-auto rounded-lg border shadow-sm">
+            <table className="w-full border-separate border-spacing-0">
+              <thead>
+                <tr className="bg-muted/50">
+                  {viewHeaders.map((header, index) => (
+                    <th key={index} className="border-b px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(header) }} />
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {viewRows.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {row.map((cell, cellIndex) => (
+                      <td key={cellIndex} className="border-b px-4 py-3 text-sm" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(cell) }} />
                     ))}
                   </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {row.map((cell, cellIndex) => (
-                        <td key={cellIndex} className="border-b px-4 py-3 text-sm" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(cell) }} />
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {localContent.text_after ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(localContent.text_after) }} /> : null}
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
-        <SaveIndicator status={status} />
-      </div>
+          {viewContent.text_after ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_after) }} /> : null}
+        </div>
+      )}
     </BaseElement>
   )
 }

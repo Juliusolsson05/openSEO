@@ -1,51 +1,90 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import { useElementsStore } from '@/stores/elements-store'
-import { useAutoSave } from '@/hooks/use-auto-save'
-import { InlineRichText, InlineText, SaveIndicator, useInlineEdit } from '../inline'
+import { useInlineEdit } from '../inline/InlineEditProvider'
+import { InlineEditorShell } from '../inline/InlineEditorShell'
+import { useElementDraft } from '@/hooks/use-element-draft'
+import { useElementSave } from '@/hooks/use-element-save'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 
 type SnippetContent = { title?: string; text?: string }
 
 export function SnippetBlock({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
-  const [localContent, setLocalContent] = useState<SnippetContent>((content ?? {}) as SnippetContent)
   const updateElement = useElementsStore((s) => s.updateElement)
-  const { isEditing, startEditing } = useInlineEdit()
+  const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
 
-  useEffect(() => setLocalContent((content ?? {}) as SnippetContent), [content])
+  const initial = (content ?? { title: '', text: '' }) as SnippetContent
+  const { draft, patch, reset, commit, rebase, isDirty } = useElementDraft<SnippetContent>(initial)
 
-  const { save, flush, status } = useAutoSave(async (next) => {
-    const result = await updateElement(elementId, next, blogId)
-    if (result.success) onContentUpdated?.(next)
-    return result.success
-  })
+  useEffect(() => { rebase((content ?? { title: '', text: '' }) as SnippetContent) }, [content])
 
-  const handleChange = (key: keyof SnippetContent, value: string) => {
-    const next = { ...localContent, [key]: value }
-    setLocalContent(next)
-    void save(next)
+  const saveFn = useCallback(async (data: SnippetContent) => {
+    const result = await updateElement(elementId, data, blogId)
+    if (result.success) onContentUpdated?.(data)
+    return result
+  }, [updateElement, elementId, blogId, onContentUpdated])
+
+  const { save, status, error } = useElementSave(saveFn)
+
+  const handleSave = async () => {
+    if (!isDirty) return
+    const ok = await save(draft)
+    if (ok) {
+      commit()
+      stopEditing()
+    }
   }
 
+  const handleCancel = () => {
+    reset()
+    stopEditing()
+  }
+
+  const viewContent = (content ?? {}) as SnippetContent
+
   return (
-    <BaseElement content={localContent} blogId={blogId} elementId={elementId} allowEdit={false} onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
-      <div className="my-[30px] border-[10px] border-primary bg-[rgba(211,211,211,0.44)] p-[45px] space-y-3">
-        {editing ? (
-          <>
-            <InlineText elementId={elementId} value={localContent.title ?? ''} onChange={(v) => handleChange('title', v)} onBlur={() => void flush()} as="h2" className="text-[28px] font-medium leading-[40px]" placeholder="Snippet title" />
-            <InlineRichText elementId={elementId} value={localContent.text ?? ''} onChange={(v) => handleChange('text', v)} onBlur={() => void flush()} className="text-[18px] leading-[32px]" placeholder="Snippet text" />
-          </>
-        ) : (
-          <div className="cursor-text" onClick={() => startEditing(elementId)}>
-            <h2 className="mb-5 text-[28px] font-medium leading-[40px]" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(localContent.title ?? '') }} />
-            <p className="text-[18px] leading-[32px]" dangerouslySetInnerHTML={{ __html: renderMarkdown(localContent.text ?? '') }} />
+    <BaseElement content={content} blogId={blogId} elementId={elementId} allowEdit={false} onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
+      {editing ? (
+        <InlineEditorShell title="Snippet" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
+          <div data-inline-edit-root="true" className="my-[30px] border-[10px] border-primary bg-[rgba(211,211,211,0.44)] p-[45px] space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor={`snippet-title-${elementId}`}>Title</Label>
+              <Input
+                id={`snippet-title-${elementId}`}
+                value={draft.title ?? ''}
+                onChange={(e) => patch({ title: e.target.value })}
+                placeholder="Snippet title"
+                className="text-[28px] font-medium leading-[40px]"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`snippet-text-${elementId}`}>Text</Label>
+              <Textarea
+                id={`snippet-text-${elementId}`}
+                value={draft.text ?? ''}
+                onChange={(e) => patch({ text: e.target.value })}
+                placeholder="Snippet text"
+                className="min-h-[140px] text-[18px] leading-[32px]"
+              />
+            </div>
           </div>
-        )}
-        <SaveIndicator status={status} />
-      </div>
+        </InlineEditorShell>
+      ) : (
+        <div
+          className={`my-[30px] border-[10px] border-primary bg-[rgba(211,211,211,0.44)] p-[45px] space-y-3 ${isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}`}
+          onClick={() => isEditModeEnabled && startEditing(elementId)}
+        >
+          <h2 className="mb-5 text-[28px] font-medium leading-[40px]" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(viewContent.title ?? '') }} />
+          <p className="text-[18px] leading-[32px]" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text ?? '') }} />
+        </div>
+      )}
     </BaseElement>
   )
 }

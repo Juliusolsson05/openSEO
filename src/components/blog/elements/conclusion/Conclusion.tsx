@@ -1,12 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
 import { renderMarkdown } from '@/lib/markdown'
 import { useElementsStore } from '@/stores/elements-store'
-import { useAutoSave } from '@/hooks/use-auto-save'
-import { InlineRichText, InlineText, SaveIndicator, useInlineEdit } from '../inline'
+import { useInlineEdit } from '../inline/InlineEditProvider'
+import { InlineEditorShell } from '../inline/InlineEditorShell'
+import { useElementDraft } from '@/hooks/use-element-draft'
+import { useElementSave } from '@/hooks/use-element-save'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 
 type ConclusionContent = {
   title?: string
@@ -21,30 +26,42 @@ const formatConclusionText = (value: string) => {
 }
 
 export function Conclusion({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
-  const [localContent, setLocalContent] = useState<ConclusionContent>((content ?? {}) as ConclusionContent)
   const updateElement = useElementsStore((s) => s.updateElement)
-  const { isEditing, startEditing } = useInlineEdit()
+  const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
 
-  useEffect(() => {
-    setLocalContent((content ?? {}) as ConclusionContent)
-  }, [content])
+  const initial = (content ?? { title: '', text: '' }) as ConclusionContent
+  const { draft, patch, reset, commit, rebase, isDirty } = useElementDraft<ConclusionContent>(initial)
 
-  const { save, flush, status } = useAutoSave(async (next) => {
-    const result = await updateElement(elementId, next, blogId)
-    if (result.success) onContentUpdated?.(next)
-    return result.success
-  })
+  useEffect(() => { rebase((content ?? { title: '', text: '' }) as ConclusionContent) }, [content])
 
-  const handleContentChange = (key: keyof ConclusionContent, value: string) => {
-    const next = { ...localContent, [key]: value }
-    setLocalContent(next)
-    void save(next)
+  const saveFn = useCallback(async (data: ConclusionContent) => {
+    const result = await updateElement(elementId, data, blogId)
+    if (result.success) onContentUpdated?.(data)
+    return result
+  }, [updateElement, elementId, blogId, onContentUpdated])
+
+  const { save, status, error } = useElementSave(saveFn)
+
+  const handleSave = async () => {
+    if (!isDirty) return
+    const ok = await save(draft)
+    if (ok) {
+      commit()
+      stopEditing()
+    }
   }
+
+  const handleCancel = () => {
+    reset()
+    stopEditing()
+  }
+
+  const viewContent = (content ?? {}) as ConclusionContent
 
   return (
     <BaseElement
-      content={localContent}
+      content={content}
       blogId={blogId}
       elementId={elementId}
       allowEdit={false}
@@ -53,42 +70,43 @@ export function Conclusion({ content, blogId, elementId, onContentUpdated, onEle
       onContentUpdated={onContentUpdated}
       onElementDeleted={onElementDeleted}
     >
-      <div className="space-y-2">
-        {editing ? (
-          <>
-            <InlineText
-              elementId={elementId}
-              value={localContent.title ?? 'Conclusion'}
-              onChange={(value) => handleContentChange('title', value)}
-              onBlur={() => void flush()}
-              as="h2"
-              className="mb-3 text-2xl font-semibold"
-              placeholder="Conclusion"
-            />
-            <InlineRichText
-              elementId={elementId}
-              value={localContent.text ?? ''}
-              onChange={(value) => handleContentChange('text', value)}
-              onBlur={() => void flush()}
-              className="custom-content my-[15px] text-lg font-light leading-[1.77778] text-foreground"
-              placeholder="Write conclusion..."
-            />
-          </>
-        ) : (
-          <>
-            <h2 className="mb-3 text-2xl font-semibold cursor-text" onClick={() => startEditing(elementId)}>
-              {localContent.title ?? 'Conclusion'}
-            </h2>
-            <div
-              className="custom-content my-[15px] text-lg font-light leading-[1.77778] text-foreground cursor-text"
-              onClick={() => startEditing(elementId)}
-              dangerouslySetInnerHTML={{ __html: formatConclusionText(localContent.text ?? '') }}
-            />
-          </>
-        )}
-
-        <SaveIndicator status={status} />
-      </div>
+      {editing ? (
+        <InlineEditorShell title="Conclusion" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
+          <div data-inline-edit-root="true" className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor={`conclusion-title-${elementId}`}>Title</Label>
+              <Input
+                id={`conclusion-title-${elementId}`}
+                value={draft.title ?? ''}
+                onChange={(e) => patch({ title: e.target.value })}
+                placeholder="Conclusion"
+                className="text-2xl font-semibold"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`conclusion-text-${elementId}`}>Text</Label>
+              <Textarea
+                id={`conclusion-text-${elementId}`}
+                value={draft.text ?? ''}
+                onChange={(e) => patch({ text: e.target.value })}
+                placeholder="Write conclusion..."
+                className="min-h-[140px] custom-content my-[15px] text-lg font-light leading-[1.77778] text-foreground"
+              />
+            </div>
+          </div>
+        </InlineEditorShell>
+      ) : (
+        <div
+          className={`space-y-2 ${isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}`}
+          onClick={() => isEditModeEnabled && startEditing(elementId)}
+        >
+          <h2 className="mb-3 text-2xl font-semibold">{viewContent.title ?? 'Conclusion'}</h2>
+          <div
+            className="custom-content my-[15px] text-lg font-light leading-[1.77778] text-foreground"
+            dangerouslySetInnerHTML={{ __html: formatConclusionText(viewContent.text ?? '') }}
+          />
+        </div>
+      )}
     </BaseElement>
   )
 }

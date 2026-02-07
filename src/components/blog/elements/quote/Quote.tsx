@@ -1,12 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
 import { renderMarkdownInline } from '@/lib/markdown'
 import { useElementsStore } from '@/stores/elements-store'
-import { useAutoSave } from '@/hooks/use-auto-save'
-import { InlineText, SaveIndicator, useInlineEdit } from '../inline'
+import { useInlineEdit } from '../inline/InlineEditProvider'
+import { InlineEditorShell } from '../inline/InlineEditorShell'
+import { useElementDraft } from '@/hooks/use-element-draft'
+import { useElementSave } from '@/hooks/use-element-save'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 
 type QuoteContent = {
   text?: string
@@ -17,50 +22,99 @@ type QuoteContent = {
 }
 
 export function Quote({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
-  const [localContent, setLocalContent] = useState<QuoteContent>((content ?? {}) as QuoteContent)
   const updateElement = useElementsStore((s) => s.updateElement)
-  const { isEditing, startEditing } = useInlineEdit()
+  const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
 
-  useEffect(() => setLocalContent((content ?? {}) as QuoteContent), [content])
+  const initial = (content ?? { text: '', quote: '', author: '', description: '' }) as QuoteContent
+  const { draft, patch, reset, commit, rebase, isDirty } = useElementDraft<QuoteContent>(initial)
 
-  const { save, flush, status } = useAutoSave(async (next) => {
-    const result = await updateElement(elementId, next, blogId)
-    if (result.success) onContentUpdated?.(next)
-    return result.success
-  })
+  useEffect(() => { rebase((content ?? { text: '', quote: '', author: '', description: '' }) as QuoteContent) }, [content])
 
-  const handleChange = (key: keyof QuoteContent, value: string) => {
-    const next = { ...localContent, [key]: value }
-    setLocalContent(next)
-    void save(next)
+  const saveFn = useCallback(async (data: QuoteContent) => {
+    const result = await updateElement(elementId, data, blogId)
+    if (result.success) onContentUpdated?.(data)
+    return result
+  }, [updateElement, elementId, blogId, onContentUpdated])
+
+  const { save, status, error } = useElementSave(saveFn)
+
+  const handleSave = async () => {
+    if (!isDirty) return
+    const ok = await save(draft)
+    if (ok) {
+      commit()
+      stopEditing()
+    }
   }
 
-  const quote = localContent.quote ?? localContent.text ?? ''
-  const author = localContent.author ?? localContent.person ?? ''
-  const description = localContent.description ?? ''
+  const handleCancel = () => {
+    reset()
+    stopEditing()
+  }
+
+  const viewContent = (content ?? {}) as QuoteContent
+  const quote = viewContent.quote ?? viewContent.text ?? ''
+  const author = viewContent.author ?? viewContent.person ?? ''
+  const description = viewContent.description ?? ''
 
   return (
-    <BaseElement content={localContent} blogId={blogId} elementId={elementId} allowEdit={false} onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
-      <div className="space-y-2 rounded-lg bg-muted/60 p-6">
-        {editing ? (
-          <>
-            <InlineText elementId={elementId} value={localContent.text ?? ''} onChange={(v) => handleChange('text', v)} onBlur={() => void flush()} multiline className="text-lg" placeholder="Intro text (optional)" />
-            <InlineText elementId={elementId} value={quote} onChange={(v) => handleChange('quote', v)} onBlur={() => void flush()} multiline className="text-3xl" placeholder="Quote" />
-            <InlineText elementId={elementId} value={author} onChange={(v) => handleChange('author', v)} onBlur={() => void flush()} className="text-2xl" placeholder="Author" />
-            <InlineText elementId={elementId} value={description} onChange={(v) => handleChange('description', v)} onBlur={() => void flush()} className="text-base" placeholder="Author description" />
-          </>
-        ) : (
-          <div className="cursor-text" onClick={() => startEditing(elementId)}>
-            {localContent.text ? <p className="mb-3" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(localContent.text) }} /> : null}
-            <p className="text-3xl" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(quote) }} />
-            <p className="mt-4 text-2xl">— <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(author) }} />
-              {description ? <span className="ml-1 text-base font-light" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(description) }} /> : null}
-            </p>
+    <BaseElement content={content} blogId={blogId} elementId={elementId} allowEdit={false} onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
+      {editing ? (
+        <InlineEditorShell title="Quote" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
+          <div data-inline-edit-root="true" className="space-y-4 rounded-lg bg-muted/60 p-6">
+            <div className="space-y-2">
+              <Label htmlFor={`quote-intro-${elementId}`}>Intro text (optional)</Label>
+              <Input
+                id={`quote-intro-${elementId}`}
+                value={draft.text ?? ''}
+                onChange={(e) => patch({ text: e.target.value })}
+                placeholder="Intro text (optional)"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`quote-quote-${elementId}`}>Quote</Label>
+              <Textarea
+                id={`quote-quote-${elementId}`}
+                value={draft.quote ?? ''}
+                onChange={(e) => patch({ quote: e.target.value })}
+                placeholder="Quote"
+                className="min-h-[120px] text-3xl"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`quote-author-${elementId}`}>Author</Label>
+              <Input
+                id={`quote-author-${elementId}`}
+                value={draft.author ?? draft.person ?? ''}
+                onChange={(e) => patch({ author: e.target.value })}
+                placeholder="Author"
+                className="text-2xl"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`quote-description-${elementId}`}>Description</Label>
+              <Input
+                id={`quote-description-${elementId}`}
+                value={draft.description ?? ''}
+                onChange={(e) => patch({ description: e.target.value })}
+                placeholder="Author description"
+              />
+            </div>
           </div>
-        )}
-        <SaveIndicator status={status} />
-      </div>
+        </InlineEditorShell>
+      ) : (
+        <div
+          className={`space-y-2 rounded-lg bg-muted/60 p-6 ${isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}`}
+          onClick={() => isEditModeEnabled && startEditing(elementId)}
+        >
+          {viewContent.text ? <p className="mb-3" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(viewContent.text) }} /> : null}
+          <p className="text-3xl" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(quote) }} />
+          <p className="mt-4 text-2xl">— <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(author) }} />
+            {description ? <span className="ml-1 text-base font-light" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(description) }} /> : null}
+          </p>
+        </div>
+      )}
     </BaseElement>
   )
 }

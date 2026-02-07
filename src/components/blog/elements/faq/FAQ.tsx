@@ -1,68 +1,137 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
+import { Plus, Trash2 } from 'lucide-react'
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
 import { useElementsStore } from '@/stores/elements-store'
-import { useAutoSave } from '@/hooks/use-auto-save'
-import { InlineFAQ, InlineText, SaveIndicator, useInlineEdit } from '../inline'
+import { useInlineEdit } from '../inline/InlineEditProvider'
+import { InlineEditorShell } from '../inline/InlineEditorShell'
+import { useElementDraft } from '@/hooks/use-element-draft'
+import { useElementSave } from '@/hooks/use-element-save'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 
 type FAQItem = { question: string; answer: string }
 type FAQContent = { title?: string; items: FAQItem[] }
 
-const normalizeContent = (content: any): FAQContent => {
-  if (Array.isArray(content)) {
-    return { title: 'FAQ', items: content as FAQItem[] }
+const normalizeContent = (value: unknown): FAQContent => {
+  if (Array.isArray(value)) {
+    return { title: 'FAQ', items: value as FAQItem[] }
   }
+
+  const raw = (value ?? {}) as { title?: string; items?: FAQItem[] }
+
   return {
-    title: content?.title ?? 'FAQ',
-    items: Array.isArray(content?.items) ? content.items : [],
+    title: raw.title ?? 'FAQ',
+    items: Array.isArray(raw.items) ? raw.items : [],
   }
 }
 
 export function FAQ({ content, blogId, elementId, onContentUpdated, onElementAdded, onElementDeleted }: ElementComponentProps) {
-  const [localContent, setLocalContent] = useState<FAQContent>(normalizeContent(content))
   const updateElement = useElementsStore((s) => s.updateElement)
-  const { isEditing, startEditing } = useInlineEdit()
+  const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
 
-  useEffect(() => setLocalContent(normalizeContent(content)), [content])
+  const initial = normalizeContent(content)
+  const { draft, patch, reset, commit, rebase, isDirty } = useElementDraft<FAQContent>(initial)
 
-  const { save, flush, status } = useAutoSave(async (next) => {
-    const result = await updateElement(elementId, next, blogId)
-    if (result.success) onContentUpdated?.(next)
-    return result.success
-  })
+  useEffect(() => { rebase(normalizeContent(content)) }, [content])
 
-  const handleChange = (next: FAQContent) => {
-    setLocalContent(next)
-    void save(next)
+  const saveFn = useCallback(async (data: FAQContent) => {
+    const result = await updateElement(elementId, data, blogId)
+    if (result.success) onContentUpdated?.(data)
+    return result
+  }, [updateElement, elementId, blogId, onContentUpdated])
+
+  const { save, status, error } = useElementSave(saveFn)
+
+  const handleSave = async () => {
+    if (!isDirty) return
+    const ok = await save(draft)
+    if (ok) {
+      commit()
+      stopEditing()
+    }
   }
 
+  const handleCancel = () => {
+    reset()
+    stopEditing()
+  }
+
+  const items = Array.isArray(draft.items) ? draft.items : []
+
+  const updateItem = (index: number, key: keyof FAQItem, value: string) => {
+    const next = [...items]
+    next[index] = { ...next[index], [key]: value }
+    patch({ items: next })
+  }
+
+  const addItem = () => patch({ items: [...items, { question: '', answer: '' }] })
+  const removeItem = (index: number) => patch({ items: items.filter((_, i) => i !== index) })
+
+  const viewContent = normalizeContent(content)
+
   return (
-    <BaseElement content={localContent} blogId={blogId} elementId={elementId} allowEdit={false} allowDelete={false} allowAddElement={false} onContentUpdated={onContentUpdated} onElementAdded={onElementAdded} onElementDeleted={onElementDeleted}>
-      <div className="space-y-4">
-        {editing ? (
-          <>
-            <InlineText elementId={elementId} value={localContent.title ?? 'FAQ'} onChange={(value) => handleChange({ ...localContent, title: value })} onBlur={() => void flush()} as="h2" className="mt-12 text-3xl font-semibold tracking-tight" placeholder="FAQ title" />
-            <InlineFAQ items={localContent.items} onChange={(items) => handleChange({ ...localContent, items })} />
-          </>
-        ) : (
-          <div className="cursor-text" onClick={() => startEditing(elementId)}>
-            <h2 className="mt-12 text-3xl font-semibold tracking-tight">{localContent.title || 'FAQ'}</h2>
-            <div className="space-y-3 mt-4">
-              {localContent.items.map((item, index) => (
-                <div key={index} className="overflow-hidden rounded-lg border bg-card px-6 py-4">
-                  <div className="font-medium" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(item.question) }} />
-                  <div className="mt-2 prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: renderMarkdown(item.answer) }} />
-                </div>
-              ))}
+    <BaseElement content={content} blogId={blogId} elementId={elementId} allowEdit={false} allowDelete={false} allowAddElement={false} onContentUpdated={onContentUpdated} onElementAdded={onElementAdded} onElementDeleted={onElementDeleted}>
+      {editing ? (
+        <InlineEditorShell title="FAQ" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
+          <div data-inline-edit-root="true" className="space-y-4">
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input value={draft.title ?? 'FAQ'} onChange={(e) => patch({ title: e.target.value })} placeholder="FAQ title" />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>FAQ items</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addItem}>
+                  <Plus className="mr-1 h-4 w-4" /> Add item
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                {items.map((item, index) => (
+                  <div key={index} className="rounded-lg border bg-card p-4 space-y-3">
+                    <div className="space-y-2">
+                      <Label>Question</Label>
+                      <Input value={item.question ?? ''} onChange={(e) => updateItem(index, 'question', e.target.value)} placeholder="Question" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Answer</Label>
+                      <Textarea value={item.answer ?? ''} onChange={(e) => updateItem(index, 'answer', e.target.value)} placeholder="Answer" rows={4} />
+                    </div>
+                    <div>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => removeItem(index)}>
+                        <Trash2 className="mr-1 h-4 w-4" /> Remove item
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        )}
-        <SaveIndicator status={status} />
-      </div>
+        </InlineEditorShell>
+      ) : (
+        <div
+          className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
+          onClick={() => isEditModeEnabled && startEditing(elementId)}
+        >
+          <h2 className="mt-12 text-3xl font-semibold tracking-tight">{viewContent.title || 'FAQ'}</h2>
+          <div className="space-y-3 mt-4">
+            {viewContent.items.map((item, index) => (
+              <div key={index} className="overflow-hidden rounded-lg border bg-card px-6 py-4">
+                <div className="font-medium" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(item.question) }} />
+                <div className="mt-2 prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: renderMarkdown(item.answer) }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </BaseElement>
   )
 }

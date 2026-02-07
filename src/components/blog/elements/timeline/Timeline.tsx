@@ -1,13 +1,19 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import { useElementsStore } from '@/stores/elements-store'
-import { useAutoSave } from '@/hooks/use-auto-save'
-import { InlineRichText, InlineText, SaveIndicator, useInlineEdit } from '../inline'
+import { useInlineEdit } from '../inline/InlineEditProvider'
+import { InlineEditorShell } from '../inline/InlineEditorShell'
+import { useElementDraft } from '@/hooks/use-element-draft'
+import { useElementSave } from '@/hooks/use-element-save'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 
 interface TimelineEvent {
   date: string
@@ -23,82 +29,124 @@ interface TimelineContent {
 }
 
 export function Timeline({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
-  const [localContent, setLocalContent] = useState<TimelineContent>((content ?? {}) as TimelineContent)
-  const [expanded, setExpanded] = useState<number | null>(0)
   const updateElement = useElementsStore((s) => s.updateElement)
-  const { isEditing, startEditing } = useInlineEdit()
+  const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
 
-  useEffect(() => setLocalContent((content ?? {}) as TimelineContent), [content])
+  const initial = (content ?? { title: '', text_before: '', events: [], text_after: '' }) as TimelineContent
+  const { draft, patch, reset, commit, rebase, isDirty } = useElementDraft<TimelineContent>(initial)
 
-  const { save, flush, status } = useAutoSave(async (next) => {
-    const result = await updateElement(elementId, next, blogId)
-    if (result.success) onContentUpdated?.(next)
-    return result.success
-  })
+  useEffect(() => { rebase((content ?? { title: '', text_before: '', events: [], text_after: '' }) as TimelineContent) }, [content])
 
-  const handleChange = (next: TimelineContent) => {
-    setLocalContent(next)
-    void save(next)
+  const saveFn = useCallback(async (data: TimelineContent) => {
+    const result = await updateElement(elementId, data, blogId)
+    if (result.success) onContentUpdated?.(data)
+    return result
+  }, [updateElement, elementId, blogId, onContentUpdated])
+
+  const { save, status, error } = useElementSave(saveFn)
+
+  const handleSave = async () => {
+    if (!isDirty) return
+    const ok = await save(draft)
+    if (ok) {
+      commit()
+      stopEditing()
+    }
   }
 
-  const events = Array.isArray(localContent.events) ? localContent.events : []
+  const handleCancel = () => {
+    reset()
+    stopEditing()
+  }
+
+  const events = Array.isArray(draft.events) ? draft.events : []
 
   const updateEvent = (index: number, key: keyof TimelineEvent, value: string) => {
-    const nextEvents = [...events]
-    nextEvents[index] = { ...nextEvents[index], [key]: value }
-    handleChange({ ...localContent, events: nextEvents })
+    const next = [...events]
+    next[index] = { ...next[index], [key]: value }
+    patch({ events: next })
   }
 
+  const addEvent = () => patch({ events: [...events, { date: '', title: '', description: '' }] })
+  const removeEvent = (index: number) => patch({ events: events.filter((_, i) => i !== index) })
+
+  const viewContent = (content ?? {}) as TimelineContent
+  const viewEvents = Array.isArray(viewContent.events) ? viewContent.events : []
+
   return (
-    <BaseElement content={localContent} blogId={blogId} elementId={elementId} allowEdit={false} onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
-      <div className="timeline-wrapper space-y-3">
-        {editing ? (
-          <>
-            <InlineText elementId={elementId} value={localContent.title ?? ''} onChange={(v) => handleChange({ ...localContent, title: v })} onBlur={() => void flush()} as="h3" className="text-2xl font-semibold" placeholder="Timeline title" />
-            <InlineRichText elementId={elementId} value={localContent.text_before ?? ''} onChange={(v) => handleChange({ ...localContent, text_before: v })} onBlur={() => void flush()} placeholder="Text before timeline" />
+    <BaseElement content={content} blogId={blogId} elementId={elementId} allowEdit={false} onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
+      {editing ? (
+        <InlineEditorShell title="Timeline" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
+          <div data-inline-edit-root="true" className="space-y-4">
             <div className="space-y-2">
-              {events.map((event, index) => (
-                <div key={index} className="rounded border p-3">
-                  <button type="button" className="w-full text-left font-medium" onClick={() => setExpanded((current) => (current === index ? null : index))}>
-                    {event.title || `Event ${index + 1}`}
-                  </button>
-                  {expanded === index ? (
-                    <div className="mt-2 space-y-2">
-                      <InlineText value={event.date ?? ''} onChange={(v) => updateEvent(index, 'date', v)} placeholder="Date" className="text-sm" />
-                      <InlineText value={event.title ?? ''} onChange={(v) => updateEvent(index, 'title', v)} placeholder="Event title" className="text-lg" />
-                      <InlineText value={event.description ?? ''} onChange={(v) => updateEvent(index, 'description', v)} multiline placeholder="Description" />
-                      <button type="button" className="inline-flex items-center gap-1 text-sm text-destructive" onClick={() => handleChange({ ...localContent, events: events.filter((_, i) => i !== index) })}>
-                        <Trash2 className="h-4 w-4" /> Delete event
-                      </button>
+              <Label>Title</Label>
+              <Input value={draft.title ?? ''} onChange={(e) => patch({ title: e.target.value })} placeholder="Timeline title" />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Text before timeline</Label>
+              <Textarea value={draft.text_before ?? ''} onChange={(e) => patch({ text_before: e.target.value })} placeholder="Text before timeline" rows={4} />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Events</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addEvent}>
+                  <Plus className="mr-1 h-4 w-4" /> Add event
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                {events.map((event, index) => (
+                  <div key={index} className="rounded-lg border p-4 space-y-3">
+                    <div className="space-y-2">
+                      <Label>Date</Label>
+                      <Input value={event.date ?? ''} onChange={(e) => updateEvent(index, 'date', e.target.value)} placeholder="Date" />
                     </div>
-                  ) : null}
-                </div>
-              ))}
-              <button type="button" className="inline-flex items-center gap-1 text-sm text-primary" onClick={() => handleChange({ ...localContent, events: [...events, { date: '', title: '', description: '' }] })}>
-                <Plus className="h-4 w-4" /> Add event
-              </button>
+                    <div className="space-y-2">
+                      <Label>Title</Label>
+                      <Input value={event.title ?? ''} onChange={(e) => updateEvent(index, 'title', e.target.value)} placeholder="Event title" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Textarea value={event.description ?? ''} onChange={(e) => updateEvent(index, 'description', e.target.value)} placeholder="Description" rows={4} />
+                    </div>
+                    <div>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => removeEvent(index)}>
+                        <Trash2 className="mr-1 h-4 w-4" /> Remove event
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <InlineRichText elementId={elementId} value={localContent.text_after ?? ''} onChange={(v) => handleChange({ ...localContent, text_after: v })} onBlur={() => void flush()} placeholder="Text after timeline" />
-          </>
-        ) : (
-          <div className="cursor-text" onClick={() => startEditing(elementId)}>
-            {localContent.title ? <h3 className="mb-4 text-2xl font-semibold" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(localContent.title) }} /> : null}
-            {localContent.text_before ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(localContent.text_before) }} /> : null}
-            <div className="space-y-6">
-              {events.map((event, index) => (
-                <div key={index} className="rounded border-l-4 border-l-primary p-4">
-                  <div className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(event.date ?? '') }} />
-                  <h4 className="text-xl font-semibold text-primary" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(event.title ?? '') }} />
-                  <div dangerouslySetInnerHTML={{ __html: renderMarkdown(event.description ?? '') }} />
-                </div>
-              ))}
+
+            <div className="space-y-2">
+              <Label>Text after timeline</Label>
+              <Textarea value={draft.text_after ?? ''} onChange={(e) => patch({ text_after: e.target.value })} placeholder="Text after timeline" rows={4} />
             </div>
-            {localContent.text_after ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(localContent.text_after) }} /> : null}
           </div>
-        )}
-        <SaveIndicator status={status} />
-      </div>
+        </InlineEditorShell>
+      ) : (
+        <div
+          className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
+          onClick={() => isEditModeEnabled && startEditing(elementId)}
+        >
+          {viewContent.title ? <h3 className="mb-4 text-2xl font-semibold" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(viewContent.title) }} /> : null}
+          {viewContent.text_before ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_before) }} /> : null}
+          <div className="space-y-6">
+            {viewEvents.map((event, index) => (
+              <div key={index} className="rounded border-l-4 border-l-primary p-4">
+                <div className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(event.date ?? '') }} />
+                <h4 className="text-xl font-semibold text-primary" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(event.title ?? '') }} />
+                <div dangerouslySetInnerHTML={{ __html: renderMarkdown(event.description ?? '') }} />
+              </div>
+            ))}
+          </div>
+          {viewContent.text_after ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_after) }} /> : null}
+        </div>
+      )}
     </BaseElement>
   )
 }

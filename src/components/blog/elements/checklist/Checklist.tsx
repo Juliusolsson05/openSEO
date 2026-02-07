@@ -1,82 +1,141 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect } from 'react'
+import { Plus, Trash2 } from 'lucide-react'
 import { BaseElement } from '../BaseElement'
 import { renderMarkdownInline } from '@/lib/markdown'
 import type { ElementComponentProps } from '../registry'
 import { useElementsStore } from '@/stores/elements-store'
-import { useAutoSave } from '@/hooks/use-auto-save'
-import { InlineList, InlineText, SaveIndicator, useInlineEdit } from '../inline'
+import { useInlineEdit } from '../inline/InlineEditProvider'
+import { InlineEditorShell } from '../inline/InlineEditorShell'
+import { useElementDraft } from '@/hooks/use-element-draft'
+import { useElementSave } from '@/hooks/use-element-save'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 
 type ChecklistItem = { text?: string; action?: string; checked?: boolean }
 type ChecklistContent = { title?: string; items?: ChecklistItem[] }
 
 export function Checklist({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
-  const [localContent, setLocalContent] = useState<ChecklistContent>((content ?? {}) as ChecklistContent)
   const updateElement = useElementsStore((s) => s.updateElement)
-  const { isEditing, startEditing } = useInlineEdit()
+  const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
 
-  useEffect(() => setLocalContent((content ?? {}) as ChecklistContent), [content])
+  const initial = (content ?? { title: '', items: [] }) as ChecklistContent
+  const { draft, patch, reset, commit, rebase, isDirty } = useElementDraft<ChecklistContent>(initial)
 
-  const { save, flush, status } = useAutoSave(async (next) => {
+  useEffect(() => { rebase((content ?? { title: '', items: [] }) as ChecklistContent) }, [content])
+
+  const saveFn = useCallback(async (data: ChecklistContent) => {
+    const result = await updateElement(elementId, data, blogId)
+    if (result.success) onContentUpdated?.(data)
+    return result
+  }, [updateElement, elementId, blogId, onContentUpdated])
+
+  const { save, status, error } = useElementSave(saveFn)
+
+  const handleSave = async () => {
+    if (!isDirty) return
+    const ok = await save(draft)
+    if (ok) {
+      commit()
+      stopEditing()
+    }
+  }
+
+  const handleCancel = () => {
+    reset()
+    stopEditing()
+  }
+
+  const items = Array.isArray(draft.items) ? draft.items : []
+
+  const updateItemText = (index: number, value: string) => {
+    const next = [...items]
+    const prev = next[index] ?? {}
+    next[index] = { ...prev, text: value, action: value }
+    patch({ items: next })
+  }
+
+  const updateItemChecked = (index: number, checked: boolean) => {
+    const next = [...items]
+    const prev = next[index] ?? {}
+    next[index] = { ...prev, checked }
+    patch({ items: next })
+  }
+
+  const addItem = () => patch({ items: [...items, { text: '', action: '', checked: false }] })
+  const removeItem = (index: number) => patch({ items: items.filter((_, i) => i !== index) })
+
+  const view = (content ?? {}) as ChecklistContent
+  const viewItems = Array.isArray(view.items) ? view.items : []
+
+  const toggleViewCheck = async (index: number) => {
+    const nextItems = viewItems.map((item, idx) => (idx === index ? { ...item, checked: !item.checked } : item))
+    const next = { ...view, items: nextItems }
     const result = await updateElement(elementId, next, blogId)
     if (result.success) onContentUpdated?.(next)
-    return result.success
-  })
-
-  const listItems = useMemo(() => (Array.isArray(localContent.items) ? localContent.items.map((i) => i.text ?? i.action ?? '') : []), [localContent.items])
-
-  const handleTitleChange = (title: string) => {
-    const next = { ...localContent, title }
-    setLocalContent(next)
-    void save(next)
-  }
-
-  const handleItemsChange = (items: string[]) => {
-    const next = {
-      ...localContent,
-      items: items.map((text, idx) => ({ text, action: text, checked: localContent.items?.[idx]?.checked ?? false })),
-    }
-    setLocalContent(next)
-    void save(next)
-  }
-
-  const toggleCheck = (index: number) => {
-    const next = {
-      ...localContent,
-      items: (localContent.items ?? []).map((item, idx) => (idx === index ? { ...item, checked: !item.checked } : item)),
-    }
-    setLocalContent(next)
-    void save(next)
   }
 
   return (
-    <BaseElement content={localContent} blogId={blogId} elementId={elementId} allowEdit={false} onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
-      <div className="mx-auto max-w-[800px] rounded-lg border bg-card p-6 shadow-sm space-y-3">
+    <BaseElement content={content} blogId={blogId} elementId={elementId} allowEdit={false} onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
+      <div className="mx-auto max-w-[800px] space-y-3 rounded-lg border bg-card p-6 shadow-sm">
         {editing ? (
-          <>
-            <InlineText elementId={elementId} value={localContent.title ?? ''} onChange={handleTitleChange} onBlur={() => void flush()} as="h2" className="text-3xl font-bold" placeholder="Checklist title" />
-            <InlineList items={listItems} onChange={handleItemsChange} placeholder="Checklist item" />
-          </>
+          <InlineEditorShell title="Checklist" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
+            <div data-inline-edit-root="true" className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor={`${elementId}-title`}>Title</Label>
+                <Input id={`${elementId}-title`} value={draft.title ?? ''} onChange={(e) => patch({ title: e.target.value })} placeholder="Checklist title" />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Items</Label>
+                <div className="space-y-2">
+                  {items.map((item, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Checkbox
+                        checked={!!item.checked}
+                        onCheckedChange={(value) => updateItemChecked(index, value === true)}
+                        aria-label={`Toggle item ${index + 1}`}
+                      />
+                      <Input
+                        value={item.text ?? item.action ?? ''}
+                        onChange={(e) => updateItemText(index, e.target.value)}
+                        placeholder={`Item ${index + 1}`}
+                      />
+                      <button type="button" onClick={() => removeItem(index)} className="rounded p-2 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={addItem} className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+                    <Plus className="h-4 w-4" /> Add item
+                  </button>
+                </div>
+              </div>
+            </div>
+          </InlineEditorShell>
         ) : (
-          <div className="cursor-text" onClick={() => startEditing(elementId)}>
-            <h2 className="mb-4 text-3xl font-bold text-primary" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(localContent.title ?? '') }} />
+          <div
+            className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
+            onClick={() => isEditModeEnabled && startEditing(elementId)}
+          >
+            <h2 className="mb-4 text-3xl font-bold text-primary" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(view.title ?? '') }} />
             <ul className="space-y-1">
-              {(localContent.items ?? []).map((item, index) => {
+              {viewItems.map((item, index) => {
                 const text = item.text ?? item.action ?? ''
                 const checked = !!item.checked
                 return (
-                  <li key={index} className="flex items-center gap-2" onClick={() => toggleCheck(index)}>
-                    <input type="checkbox" checked={checked} onChange={() => toggleCheck(index)} />
-                    <span className={checked ? 'line-through text-muted-foreground' : ''} dangerouslySetInnerHTML={{ __html: renderMarkdownInline(text) }} />
+                  <li key={index} className="flex items-center gap-2" onClick={() => void toggleViewCheck(index)}>
+                    <input type="checkbox" checked={checked} onChange={() => void toggleViewCheck(index)} />
+                    <span className={checked ? 'text-muted-foreground line-through' : ''} dangerouslySetInnerHTML={{ __html: renderMarkdownInline(text) }} />
                   </li>
                 )
               })}
             </ul>
           </div>
         )}
-        <SaveIndicator status={status} />
       </div>
     </BaseElement>
   )

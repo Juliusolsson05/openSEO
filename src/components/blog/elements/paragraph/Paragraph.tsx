@@ -1,12 +1,17 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, type FormEvent } from 'react'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
 import { useElementsStore } from '@/stores/elements-store'
-import { useAutoSave } from '@/hooks/use-auto-save'
-import { InlineRichText, InlineText, SaveIndicator, useInlineEdit } from '../inline'
+import { useInlineEdit } from '../inline/InlineEditProvider'
+import { InlineEditorShell } from '../inline/InlineEditorShell'
+import { useElementDraft } from '@/hooks/use-element-draft'
+import { useElementSave } from '@/hooks/use-element-save'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 
 type HyperlinkMatch = {
   keyword: string
@@ -71,50 +76,60 @@ export function Paragraph({
   onElementAdded,
   hyperlink,
 }: ParagraphProps) {
-  const [localContent, setLocalContent] = useState<ParagraphContent>((content ?? {}) as ParagraphContent)
   const updateElement = useElementsStore((s) => s.updateElement)
-  const { isEditing, startEditing } = useInlineEdit()
+  const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
 
-  useEffect(() => {
-    setLocalContent((content ?? {}) as ParagraphContent)
-  }, [content])
+  const initial = (content ?? { title: '', text: '' }) as ParagraphContent
+  const { draft, patch, reset, commit, rebase, isDirty } = useElementDraft<ParagraphContent>(initial)
 
-  const { save, flush, status } = useAutoSave(async (next) => {
-    const result = await updateElement(elementId, next, blogId)
-    if (result.success) onContentUpdated?.(next)
-    return result.success
-  })
+  useEffect(() => { rebase((content ?? { title: '', text: '' }) as ParagraphContent) }, [content])
 
-  const handleContentChange = (key: keyof ParagraphContent, value: string) => {
-    const next = { ...localContent, [key]: value }
-    setLocalContent(next)
-    void save(next)
+  const saveFn = useCallback(async (data: ParagraphContent) => {
+    const result = await updateElement(elementId, data, blogId)
+    if (result.success) onContentUpdated?.(data)
+    return result
+  }, [updateElement, elementId, blogId, onContentUpdated])
+
+  const { save, status, error } = useElementSave(saveFn)
+
+  const handleSave = async () => {
+    if (!isDirty) return
+    const ok = await save(draft)
+    if (ok) {
+      commit()
+      stopEditing()
+    }
   }
 
-  const formattedTitle = useMemo(() => {
-    const title = localContent?.title ?? ''
-    if (hyperlink?.matched_keywords?.title?.length) {
-      return renderMarkdownInline(createHyperlinkedText(title, hyperlink.matched_keywords.title))
-    }
-    return renderMarkdownInline(title)
-  }, [localContent?.title, hyperlink?.matched_keywords?.title])
+  const handleCancel = () => {
+    reset()
+    stopEditing()
+  }
 
-  const formattedText = useMemo(() => {
-    let text = localContent?.text ?? ''
-    text = text.replace(/(<br\s*\/?>)(?!<br\s*\/?>)/g, '<br/><br/>')
-    text = text.replace(/(<br\s*\/?>){3,}/g, '<br/><br/>')
+  const handleAutoResize = (event: FormEvent<HTMLTextAreaElement>) => {
+    const el = event.currentTarget
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }
 
-    if (hyperlink?.matched_keywords?.text?.length) {
-      text = createHyperlinkedText(text, hyperlink.matched_keywords.text)
-    }
+  const viewContent = (content ?? {}) as ParagraphContent
 
-    return renderMarkdown(text)
-  }, [localContent?.text, hyperlink?.matched_keywords?.text])
+  const formattedTitle = hyperlink?.matched_keywords?.title?.length
+    ? renderMarkdownInline(createHyperlinkedText(viewContent.title ?? '', hyperlink.matched_keywords.title))
+    : renderMarkdownInline(viewContent.title ?? '')
+
+  let formattedTextInput = viewContent.text ?? ''
+  formattedTextInput = formattedTextInput.replace(/(<br\s*\/?>)(?!<br\s*\/?>)/g, '<br/><br/>')
+  formattedTextInput = formattedTextInput.replace(/(<br\s*\/?>){3,}/g, '<br/><br/>')
+  if (hyperlink?.matched_keywords?.text?.length) {
+    formattedTextInput = createHyperlinkedText(formattedTextInput, hyperlink.matched_keywords.text)
+  }
+  const formattedText = renderMarkdown(formattedTextInput)
 
   return (
     <BaseElement
-      content={localContent}
+      content={content}
       blogId={blogId}
       elementId={elementId}
       allowEdit={false}
@@ -122,44 +137,41 @@ export function Paragraph({
       onElementDeleted={onElementDeleted}
       onElementAdded={onElementAdded}
     >
-      <div className="space-y-2">
-        {editing ? (
-          <>
-            <InlineText
-              elementId={elementId}
-              value={localContent.title ?? ''}
-              onChange={(value) => handleContentChange('title', value)}
-              onBlur={() => void flush()}
-              as="h3"
-              className="mb-3 text-2xl font-semibold custom-content"
-              placeholder="Paragraph title"
-            />
-            <InlineRichText
-              elementId={elementId}
-              value={localContent.text ?? ''}
-              onChange={(value) => handleContentChange('text', value)}
-              onBlur={() => void flush()}
-              className="my-[15px] text-[1.125rem] font-light leading-[1.77778] text-foreground custom-content"
-              placeholder="Write your paragraph..."
-            />
-          </>
-        ) : (
-          <>
-            <h3
-              className="mb-3 text-2xl font-semibold custom-content cursor-text"
-              onClick={() => startEditing(elementId)}
-              dangerouslySetInnerHTML={{ __html: formattedTitle }}
-            />
-            <p
-              className="my-[15px] text-[1.125rem] font-light leading-[1.77778] text-foreground custom-content cursor-text"
-              onClick={() => startEditing(elementId)}
-              dangerouslySetInnerHTML={{ __html: formattedText }}
-            />
-          </>
-        )}
-
-        <SaveIndicator status={status} />
-      </div>
+      {editing ? (
+        <InlineEditorShell title="Paragraph" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
+          <div data-inline-edit-root="true" className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor={`paragraph-title-${elementId}`}>Title</Label>
+              <Input
+                id={`paragraph-title-${elementId}`}
+                value={draft.title ?? ''}
+                onChange={(e) => patch({ title: e.target.value })}
+                placeholder="Paragraph title"
+                className="text-2xl font-semibold custom-content"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`paragraph-text-${elementId}`}>Text</Label>
+              <Textarea
+                id={`paragraph-text-${elementId}`}
+                value={draft.text ?? ''}
+                onChange={(e) => patch({ text: e.target.value })}
+                onInput={handleAutoResize}
+                placeholder="Write your paragraph..."
+                className="min-h-[140px] resize-none overflow-hidden my-[15px] text-[1.125rem] font-light leading-[1.77778] text-foreground custom-content"
+              />
+            </div>
+          </div>
+        </InlineEditorShell>
+      ) : (
+        <div
+          className={`space-y-2 ${isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}`}
+          onClick={() => isEditModeEnabled && startEditing(elementId)}
+        >
+          <h3 className="mb-3 text-2xl font-semibold custom-content" dangerouslySetInnerHTML={{ __html: formattedTitle }} />
+          <p className="my-[15px] text-[1.125rem] font-light leading-[1.77778] text-foreground custom-content" dangerouslySetInnerHTML={{ __html: formattedText }} />
+        </div>
+      )}
     </BaseElement>
   )
 }
