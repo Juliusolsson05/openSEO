@@ -716,8 +716,8 @@ async function handleAurora(ctx: {
     const elementType = String(body.element_type ?? body.elementType ?? '')
     const generationNote = String(body.generation_note ?? body.generationNote ?? '')
 
-    if (!blogPostId || !elementId || !elementType || !generationNote) {
-      throw new ValidationError('blog_post_id, element_id, element_type, and generation_note are required')
+    if (!blogPostId || !elementId || !elementType) {
+      throw new ValidationError('blog_post_id, element_id, and element_type are required')
     }
 
     const created = await elementService.addGeneratedElement(ctx.companyId, {
