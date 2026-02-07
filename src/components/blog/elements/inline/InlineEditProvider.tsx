@@ -1,8 +1,10 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { useEditorUiStore } from '@/stores/editor-ui-store'
 
 interface InlineEditContextValue {
+  isEditModeEnabled: boolean
   activeElementId: number | null
   startEditing: (elementId: number) => void
   stopEditing: () => void
@@ -10,6 +12,7 @@ interface InlineEditContextValue {
 }
 
 const InlineEditContext = createContext<InlineEditContextValue>({
+  isEditModeEnabled: false,
   activeElementId: null,
   startEditing: () => {},
   stopEditing: () => {},
@@ -18,13 +21,22 @@ const InlineEditContext = createContext<InlineEditContextValue>({
 
 export function InlineEditProvider({ children }: { children: ReactNode }) {
   const [activeElementId, setActiveElementId] = useState<number | null>(null)
+  const isEditModeEnabled = useEditorUiStore((s) => s.isEditModeEnabled)
 
-  const startEditing = useCallback((id: number) => setActiveElementId(id), [])
+  useEffect(() => {
+    if (!isEditModeEnabled) setActiveElementId(null)
+  }, [isEditModeEnabled])
+
+  const startEditing = useCallback((id: number) => {
+    if (!isEditModeEnabled) return
+    setActiveElementId(id)
+  }, [isEditModeEnabled])
+
   const stopEditing = useCallback(() => setActiveElementId(null), [])
-  const isEditing = useCallback((id: number) => activeElementId === id, [activeElementId])
+  const isEditing = useCallback((id: number) => isEditModeEnabled && activeElementId === id, [activeElementId, isEditModeEnabled])
 
   return (
-    <InlineEditContext.Provider value={{ activeElementId, startEditing, stopEditing, isEditing }}>
+    <InlineEditContext.Provider value={{ isEditModeEnabled, activeElementId, startEditing, stopEditing, isEditing }}>
       {children}
     </InlineEditContext.Provider>
   )

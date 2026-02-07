@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { api, apiPost, apiDelete } from '@/lib/api'
 import { useBlogStore } from '@/stores/blog-store'
+import { useEditorUiStore } from '@/stores/editor-ui-store'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import {
   ImagePlus,
   Link2,
@@ -17,6 +19,7 @@ import {
   Upload,
   Lock,
   Loader2,
+  SquarePen,
 } from 'lucide-react'
 
 interface Props {
@@ -27,6 +30,8 @@ interface Props {
 export default function AdminMenu({ postId, onRefreshPost }: Props) {
   const router = useRouter()
   const { fetchPost } = useBlogStore()
+  const isEditModeEnabled = useEditorUiStore((s) => s.isEditModeEnabled)
+  const setEditMode = useEditorUiStore((s) => s.setEditMode)
 
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -134,6 +139,19 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-3">
             ACTIONS
           </p>
+
+          <div className="mb-3 rounded-sm border border-border bg-secondary/40 px-2.5 py-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="flex items-center gap-1.5 text-[12px] font-semibold text-foreground">
+                  <SquarePen className="h-3.5 w-3.5 text-primary" />
+                  Edit mode
+                </p>
+                <p className="text-[11px] text-muted-foreground">Enable inline element editing</p>
+              </div>
+              <Switch checked={isEditModeEnabled} onCheckedChange={(v) => setEditMode(v === true)} />
+            </div>
+          </div>
 
           <div className="space-y-1">
             {actions.map(({ id, icon: Icon, label, fn }) => (

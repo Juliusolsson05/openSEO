@@ -27,7 +27,7 @@ export function InlineText({
   onBlur,
 }: InlineTextProps) {
   const Tag = as
-  const { startEditing, stopEditing, isEditing } = useInlineEdit()
+  const { isEditModeEnabled, startEditing, stopEditing, isEditing } = useInlineEdit()
   const active = elementId ? isEditing(elementId) : false
   const [draft, setDraft] = useState(value)
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null)
@@ -58,11 +58,15 @@ export function InlineText({
   if (!active) {
     return (
       <Tag
-        className={cn('group/inline relative cursor-text rounded-sm transition hover:border-dashed hover:border-border', className)}
-        onClick={() => elementId && startEditing(elementId)}
+        className={cn(
+          'group/inline relative rounded-sm transition',
+          isEditModeEnabled && 'cursor-text hover:border-dashed hover:border-border',
+          className,
+        )}
+        onClick={() => isEditModeEnabled && elementId && startEditing(elementId)}
       >
         {value || <span className="text-muted-foreground">{placeholder ?? 'Click to edit...'}</span>}
-        <Pencil className="ml-1 inline h-3 w-3 opacity-0 transition group-hover/inline:opacity-40" />
+        {isEditModeEnabled ? <Pencil className="ml-1 inline h-3 w-3 opacity-0 transition group-hover/inline:opacity-40" /> : null}
       </Tag>
     )
   }
