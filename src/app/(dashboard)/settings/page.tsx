@@ -27,6 +27,9 @@ export default function SettingsPage() {
   const [publishingEndpoint, setPublishingEndpoint] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [inboundKeys, setInboundKeys] = useState<Array<{ id: number; name: string; key_prefix: string; is_active: boolean; last_used_at?: string | null }>>([])
+  const [newInboundKeyName, setNewInboundKeyName] = useState('')
+  const [newInboundKeyValue, setNewInboundKeyValue] = useState<string | null>(null)
 
   const hasCompanyData = Boolean(
     companyData?.business_description?.trim() || companyData?.industry_description?.trim()
@@ -52,6 +55,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetchCompanyMetadata()
+    fetchInboundKeys()
   }, [])
 
   const submitUrl = async (e: FormEvent) => {
@@ -93,6 +97,39 @@ export default function SettingsPage() {
     }
 
     setIsSavingApi(false)
+  }
+
+  const fetchInboundKeys = async () => {
+    const { data, error } = await api<any>('/api/v1/publishing/api-keys')
+    if (error) return
+    const items = Array.isArray(data) ? data : (data?.data ?? [])
+    setInboundKeys(items)
+  }
+
+  const createInboundKey = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!newInboundKeyName.trim()) return
+
+    const { data, error } = await apiPost<any>('/api/v1/publishing/api-keys', { name: newInboundKeyName.trim() })
+    if (error) {
+      setStatus({ type: 'error', message: error.message || 'Failed to create inbound key.' })
+      return
+    }
+
+    const payload = data?.data ?? data
+    setNewInboundKeyValue(payload?.key ?? null)
+    setNewInboundKeyName('')
+    setStatus({ type: 'success', message: 'Inbound key created. Copy it now.' })
+    await fetchInboundKeys()
+  }
+
+  const revokeInboundKey = async (id: number) => {
+    const { error } = await apiPost(`/api/v1/publishing/api-keys/${id}/revoke`, {})
+    if (error) {
+      setStatus({ type: 'error', message: error.message || 'Failed to revoke key.' })
+      return
+    }
+    await fetchInboundKeys()
   }
 
   return (
@@ -191,6 +228,46 @@ export default function SettingsPage() {
                   </Link>
                 </div>
               </form>
+            </div>
+          </details>
+
+          <details className="rounded-sm border border-border">
+            <summary className="cursor-pointer bg-background px-3 py-2 text-[11px] uppercase tracking-wide">
+              Inbound API Keys (client → Aurora)
+            </summary>
+            <div className="border-t border-border p-3 space-y-3">
+              <form onSubmit={createInboundKey} className="flex flex-wrap items-center gap-2">
+                <Input
+                  value={newInboundKeyName}
+                  onChange={(e) => setNewInboundKeyName(e.target.value)}
+                  placeholder="Key name (e.g. production-webhook)"
+                  className="max-w-sm"
+                />
+                <Button type="submit">Create inbound key</Button>
+              </form>
+
+              {newInboundKeyValue ? (
+                <div className="rounded-sm border border-border bg-secondary/30 p-3 text-sm">
+                  <p className="font-medium">Copy now (shown once)</p>
+                  <code className="mt-1 block break-all">{newInboundKeyValue}</code>
+                </div>
+              ) : null}
+
+              <div className="space-y-2">
+                {inboundKeys.map((key) => (
+                  <div key={key.id} className="flex items-center justify-between rounded-sm border border-border p-2 text-sm">
+                    <div>
+                      <p className="font-medium">{key.name}</p>
+                      <p className="text-muted-foreground">{key.key_prefix}… {key.is_active ? 'active' : 'revoked'}</p>
+                    </div>
+                    {key.is_active ? (
+                      <Button variant="outline" className="h-8" onClick={() => revokeInboundKey(key.id)}>Revoke</Button>
+                    ) : (
+                      <Badge variant="outline">Revoked</Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </details>
 

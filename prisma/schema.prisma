@@ -138,6 +138,11 @@ model Company {
   bulk_schedules           BulkSchedule[]
   titles                   Title[]
   blog_posts               BlogPost[]
+  publishing_api_keys      PublishingApiKey[]
+  sync_jobs                SyncJob[]
+  sync_deliveries          SyncDelivery[]
+  sync_conflicts           SyncConflict[]
+  inbound_events           InboundEvent[]
 }
 
 /// --- Blog ---
@@ -538,4 +543,122 @@ model CTA {
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@index([campaignId])
+}
+
+enum SyncJobType {
+  POSTS_PUSH_ALL
+  POSTS_PUSH_ONE
+  DICTIONARY_PUSH_ALL
+  DICTIONARY_PUSH_ONE
+  POSTS_PULL
+  DICTIONARY_PULL
+}
+
+enum SyncJobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum SyncEntityType {
+  POST
+  DICTIONARY
+  TERM
+}
+
+model PublishingApiKey {
+  id          Int      @id @default(autoincrement())
+  companyId   Int
+  name        String
+  key_prefix  String
+  key_hash    String
+  is_active   Boolean  @default(true)
+  last_used_at DateTime?
+  created_at  DateTime @default(now())
+  revoked_at  DateTime?
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([is_active])
+}
+
+model SyncJob {
+  id          String       @id @default(cuid())
+  companyId   Int
+  type        SyncJobType
+  status      SyncJobStatus @default(QUEUED)
+  payload     Json         @default("{}")
+  summary     Json         @default("{}")
+  error       String?
+  created_at  DateTime     @default(now())
+  started_at  DateTime?
+  finished_at DateTime?
+
+  company    Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  deliveries SyncDelivery[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([type])
+}
+
+model SyncDelivery {
+  id            String         @id @default(cuid())
+  companyId     Int
+  syncJobId     String?
+  entity_type   SyncEntityType
+  entity_id     String
+  event_type    String
+  event_id      String         @unique
+  endpoint      String
+  request_body  Json
+  response_body Json?
+  status_code   Int?
+  success       Boolean        @default(false)
+  attempts      Int            @default(0)
+  created_at    DateTime       @default(now())
+  delivered_at  DateTime?
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  syncJob SyncJob? @relation(fields: [syncJobId], references: [id], onDelete: SetNull)
+
+  @@index([companyId])
+  @@index([syncJobId])
+  @@index([event_type])
+}
+
+model SyncConflict {
+  id              String         @id @default(cuid())
+  companyId       Int
+  entity_type     SyncEntityType
+  local_entity_id String
+  remote_entity_id String?
+  local_snapshot  Json
+  remote_snapshot Json
+  resolution      String?
+  resolved_at     DateTime?
+  created_at      DateTime       @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([entity_type])
+}
+
+model InboundEvent {
+  id          String   @id @default(cuid())
+  companyId   Int
+  event_id    String
+  event_type  String
+  payload     Json
+  processed   Boolean  @default(false)
+  created_at  DateTime @default(now())
+  processed_at DateTime?
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, event_id])
+  @@index([companyId])
 }

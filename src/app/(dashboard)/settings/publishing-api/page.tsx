@@ -77,11 +77,27 @@ export default function PublishingApiDocsPage() {
 
       <Card className="rounded-sm border-border bg-white">
         <CardHeader>
+          <CardTitle>Inbound sync security</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>Create an inbound API key in Aurora and send it as one of:</p>
+          <ul className="list-disc space-y-1 pl-5">
+            <li><code>Authorization: Bearer {'<aurora_inbound_key>'}</code></li>
+            <li><code>X-Aurora-Inbound-Key: {'<aurora_inbound_key>'}</code></li>
+          </ul>
+          <p>Inbound endpoint currently available:</p>
+          <p><code>POST /api/v1/publishing/inbound/post/upsert</code></p>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-sm border-border bg-white">
+        <CardHeader>
           <CardTitle>Events</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           <p><Badge variant="outline">blog.post.upload</Badge> Sent when upload/export-to-endpoint is executed.</p>
           <p><Badge variant="outline">blog.post.export</Badge> Sent for third-party export endpoints.</p>
+          <p><Badge variant="outline">post.upsert</Badge> Recommended inbound event for client → Aurora sync.</p>
         </CardContent>
       </Card>
     </div>
