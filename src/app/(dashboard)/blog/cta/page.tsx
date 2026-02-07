@@ -18,7 +18,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   Plus,
   Pencil,
@@ -83,9 +83,10 @@ export default function BlogCtaPage() {
     setModal({ type: null })
   }
 
+  const [pendingDelete, setPendingDelete] = useState<{ type: 'campaign' | 'cta'; id: number } | null>(null)
+
   const handleDeleteCampaign = async (id: number) => {
-    if (!confirm('Delete this campaign and all its CTAs?')) return
-    await store.deleteCampaign(id)
+    setPendingDelete({ type: 'campaign', id })
   }
 
   const handleCreateCTA = async () => {
@@ -116,8 +117,7 @@ export default function BlogCtaPage() {
   }
 
   const handleDeleteCTA = async (id: number) => {
-    if (!confirm('Delete this CTA?')) return
-    await store.deleteCTA(id)
+    setPendingDelete({ type: 'cta', id })
   }
 
   const resetCtaForm = () => {
@@ -377,6 +377,36 @@ export default function BlogCtaPage() {
               )}
             </CardContent>
           </Card>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirm */}
+      <Dialog open={pendingDelete !== null} onOpenChange={(open) => { if (!open) setPendingDelete(null) }}>
+        <DialogContent className="w-full max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {pendingDelete?.type === 'campaign' ? 'Delete Campaign' : 'Delete CTA'}
+            </DialogTitle>
+            <DialogDescription>
+              {pendingDelete?.type === 'campaign'
+                ? 'This will delete the campaign and all its CTAs. This cannot be undone.'
+                : 'Are you sure you want to delete this CTA? This cannot be undone.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingDelete(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (!pendingDelete) return
+                if (pendingDelete.type === 'campaign') await store.deleteCampaign(pendingDelete.id)
+                else await store.deleteCTA(pendingDelete.id)
+                setPendingDelete(null)
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

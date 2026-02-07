@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   Search,
   Sparkles,
@@ -128,9 +129,10 @@ export default function BlogTitlesPage() {
     }
   }
 
-  const handleBulkDelete = async () => {
-    if (!confirm(`Delete ${selected.size} titles?`)) return
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
 
+  const handleBulkDelete = async () => {
+    setBulkDeleteOpen(false)
     const total = selected.size
     if (total === 0) return
 
@@ -309,7 +311,7 @@ export default function BlogTitlesPage() {
         {/* Bulk actions */}
         {selected.size > 0 && (
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5 text-destructive" onClick={handleBulkDelete} disabled={bulkGenerating || generatingAll}>
+            <Button variant="outline" size="sm" className="gap-1.5 text-destructive" onClick={() => setBulkDeleteOpen(true)} disabled={bulkGenerating || generatingAll}>
               <Trash2 className="h-3 w-3" /> Delete ({selected.size})
             </Button>
             <Button size="sm" className="gap-1.5" onClick={handleBulkGenerate} disabled={bulkGenerating || generatingAll}>
@@ -504,6 +506,21 @@ export default function BlogTitlesPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <DialogContent className="w-full max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete Titles</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selected.size} title{selected.size !== 1 ? 's' : ''}? This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkDeleteOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleBulkDelete}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
