@@ -1,12 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
+import { Plus, Trash2 } from 'lucide-react'
 import { BaseElement } from '../BaseElement'
 import { renderMarkdownInline } from '@/lib/markdown'
 import type { ElementComponentProps } from '../registry'
 import { useElementsStore } from '@/stores/elements-store'
-import { useAutoSave } from '@/hooks/use-auto-save'
-import { InlineList, InlineText, SaveIndicator, useInlineEdit } from '../inline'
+import { useInlineEdit } from '../inline/InlineEditProvider'
+import { InlineEditorShell } from '../inline/InlineEditorShell'
+import { useElementDraft } from '@/hooks/use-element-draft'
+import { useElementSave } from '@/hooks/use-element-save'
+import { Input } from '@/components/ui/input'
 
 interface ProsAndConsContent {
   title?: string
@@ -15,61 +19,151 @@ interface ProsAndConsContent {
 }
 
 export function ProsAndCons({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
-  const [localContent, setLocalContent] = useState<ProsAndConsContent>((content ?? {}) as ProsAndConsContent)
   const updateElement = useElementsStore((s) => s.updateElement)
-  const { isEditing, startEditing } = useInlineEdit()
+  const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
 
-  useEffect(() => setLocalContent((content ?? {}) as ProsAndConsContent), [content])
+  const initial = (content ?? { title: '', pros: [], cons: [] }) as ProsAndConsContent
+  const { draft, patch, reset, commit, rebase, isDirty } = useElementDraft<ProsAndConsContent>(initial)
 
-  const { save, flush, status } = useAutoSave(async (next) => {
-    const result = await updateElement(elementId, next, blogId)
-    if (result.success) onContentUpdated?.(next)
-    return result.success
-  })
+  useEffect(() => { rebase((content ?? { title: '', pros: [], cons: [] }) as ProsAndConsContent) }, [content])
 
-  const handleChange = (next: ProsAndConsContent) => {
-    setLocalContent(next)
-    void save(next)
+  const saveFn = useCallback(async (data: ProsAndConsContent) => {
+    const result = await updateElement(elementId, data, blogId)
+    if (result.success) onContentUpdated?.(data)
+    return result
+  }, [updateElement, elementId, blogId, onContentUpdated])
+
+  const { save, status, error } = useElementSave(saveFn)
+
+  const handleSave = async () => {
+    if (!isDirty) return
+    const ok = await save(draft)
+    if (ok) {
+      commit()
+      stopEditing()
+    }
   }
 
-  const pros = Array.isArray(localContent.pros) ? localContent.pros : []
-  const cons = Array.isArray(localContent.cons) ? localContent.cons : []
+  const handleCancel = () => {
+    reset()
+    stopEditing()
+  }
+
+  const pros = Array.isArray(draft.pros) ? draft.pros : []
+  const cons = Array.isArray(draft.cons) ? draft.cons : []
+
+  const updatePro = (index: number, value: string) => {
+    const next = [...pros]
+    next[index] = value
+    patch({ pros: next })
+  }
+
+  const addPro = () => patch({ pros: [...pros, ''] })
+  const removePro = (index: number) => patch({ pros: pros.filter((_, i) => i !== index) })
+
+  const updateCon = (index: number, value: string) => {
+    const next = [...cons]
+    next[index] = value
+    patch({ cons: next })
+  }
+
+  const addCon = () => patch({ cons: [...cons, ''] })
+  const removeCon = (index: number) => patch({ cons: cons.filter((_, i) => i !== index) })
+
+  const viewPros = Array.isArray((content as ProsAndConsContent)?.pros) ? (content as ProsAndConsContent).pros! : []
+  const viewCons = Array.isArray((content as ProsAndConsContent)?.cons) ? (content as ProsAndConsContent).cons! : []
 
   return (
-    <BaseElement content={localContent} blogId={blogId} elementId={elementId} allowEdit={false} onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
-      <div className="space-y-3">
-        {editing ? (
-          <>
-            <InlineText elementId={elementId} value={localContent.title ?? ''} onChange={(title) => handleChange({ ...localContent, title })} onBlur={() => void flush()} as="h3" className="mb-6 text-2xl font-semibold" placeholder="Pros and cons title" />
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+    <BaseElement content={content} blogId={blogId} elementId={elementId} allowEdit onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
+      {editing ? (
+        <InlineEditorShell
+          title="Pros & Cons"
+          isDirty={isDirty}
+          status={status}
+          error={error}
+          onSave={handleSave}
+          onCancel={handleCancel}
+        >
+          <div data-inline-edit-root="true" className="space-y-4">
+            <Input
+              value={draft.title ?? ''}
+              onChange={(e) => patch({ title: e.target.value })}
+              placeholder="Title"
+              className="text-lg font-semibold"
+            />
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {/* Pros */}
               <div>
-                <h4 className="mb-3 border-b-2 border-emerald-600 pb-2 text-xl font-semibold text-emerald-600">Pros</h4>
-                <InlineList items={pros} onChange={(nextPros) => handleChange({ ...localContent, pros: nextPros })} placeholder="Pro item" />
+                <h4 className="mb-2 border-b-2 border-emerald-600 pb-1.5 text-sm font-semibold text-emerald-600">Pros</h4>
+                <div className="space-y-1.5">
+                  {pros.map((pro, index) => (
+                    <div key={index} className="flex items-center gap-1.5">
+                      <span className="text-emerald-600 shrink-0">✓</span>
+                      <Input
+                        value={pro}
+                        onChange={(e) => updatePro(index, e.target.value)}
+                        placeholder="Pro item"
+                        className="h-8 text-sm"
+                      />
+                      <button type="button" onClick={() => removePro(index)} className="shrink-0 rounded p-1 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={addPro} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                    <Plus className="h-3.5 w-3.5" /> Add pro
+                  </button>
+                </div>
               </div>
+
+              {/* Cons */}
               <div>
-                <h4 className="mb-3 border-b-2 border-rose-600 pb-2 text-xl font-semibold text-rose-600">Cons</h4>
-                <InlineList items={cons} onChange={(nextCons) => handleChange({ ...localContent, cons: nextCons })} placeholder="Con item" />
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="cursor-text" onClick={() => startEditing(elementId)}>
-            {localContent.title ? <h3 className="mb-6 text-2xl font-semibold" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(localContent.title) }} /> : null}
-            <div className="my-8 grid grid-cols-1 gap-8 md:grid-cols-2">
-              <div>
-                <h4 className="mb-3 border-b-2 border-emerald-600 pb-2 text-xl font-semibold text-emerald-600">Pros</h4>
-                <ul className="space-y-3">{pros.map((pro, index) => <li key={index}>✓ <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(pro) }} /></li>)}</ul>
-              </div>
-              <div>
-                <h4 className="mb-3 border-b-2 border-rose-600 pb-2 text-xl font-semibold text-rose-600">Cons</h4>
-                <ul className="space-y-3">{cons.map((con, index) => <li key={index}>✕ <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(con) }} /></li>)}</ul>
+                <h4 className="mb-2 border-b-2 border-rose-600 pb-1.5 text-sm font-semibold text-rose-600">Cons</h4>
+                <div className="space-y-1.5">
+                  {cons.map((con, index) => (
+                    <div key={index} className="flex items-center gap-1.5">
+                      <span className="text-rose-600 shrink-0">✕</span>
+                      <Input
+                        value={con}
+                        onChange={(e) => updateCon(index, e.target.value)}
+                        placeholder="Con item"
+                        className="h-8 text-sm"
+                      />
+                      <button type="button" onClick={() => removeCon(index)} className="shrink-0 rounded p-1 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={addCon} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                    <Plus className="h-3.5 w-3.5" /> Add con
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        )}
-        <SaveIndicator status={status} />
-      </div>
+        </InlineEditorShell>
+      ) : (
+        <div
+          className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
+          onClick={() => isEditModeEnabled && startEditing(elementId)}
+        >
+          {(content as ProsAndConsContent)?.title ? (
+            <h3 className="mb-6 text-2xl font-semibold" dangerouslySetInnerHTML={{ __html: renderMarkdownInline((content as ProsAndConsContent).title!) }} />
+          ) : null}
+          <div className="my-8 grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div>
+              <h4 className="mb-3 border-b-2 border-emerald-600 pb-2 text-xl font-semibold text-emerald-600">Pros</h4>
+              <ul className="space-y-3">{viewPros.map((pro, index) => <li key={index}>✓ <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(pro) }} /></li>)}</ul>
+            </div>
+            <div>
+              <h4 className="mb-3 border-b-2 border-rose-600 pb-2 text-xl font-semibold text-rose-600">Cons</h4>
+              <ul className="space-y-3">{viewCons.map((con, index) => <li key={index}>✕ <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(con) }} /></li>)}</ul>
+            </div>
+          </div>
+        </div>
+      )}
     </BaseElement>
   )
 }
