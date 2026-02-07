@@ -33,6 +33,33 @@ export function InlineEditProvider({ children }: { children: ReactNode }) {
   }, [isEditModeEnabled])
 
   const stopEditing = useCallback(() => setActiveElementId(null), [])
+
+  useEffect(() => {
+    if (!isEditModeEnabled || activeElementId == null) return
+
+    const onPointerDown = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as HTMLElement | null
+      if (!target) return
+      const insideInlineEditor = target.closest('[data-inline-edit-root="true"]')
+      if (!insideInlineEditor) {
+        setActiveElementId(null)
+      }
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setActiveElementId(null)
+    }
+
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('touchstart', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('touchstart', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [isEditModeEnabled, activeElementId])
   const isEditing = useCallback((id: number) => isEditModeEnabled && activeElementId === id, [activeElementId, isEditModeEnabled])
 
   return (

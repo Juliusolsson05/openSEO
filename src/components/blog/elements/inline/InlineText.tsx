@@ -73,6 +73,7 @@ export function InlineText({
 
   if (multiline) {
     return (
+      <div data-inline-edit-root="true">
       <textarea
         ref={(el) => {
           inputRef.current = el
@@ -104,10 +105,12 @@ export function InlineText({
         className={cn('w-full resize-none rounded-md border border-border bg-background px-2 py-1 outline-none ring-ring focus:ring-1', className)}
         rows={1}
       />
+      </div>
     )
   }
 
   return (
+    <div data-inline-edit-root="true">
     <input
       ref={(el) => {
         inputRef.current = el
@@ -130,5 +133,6 @@ export function InlineText({
       }}
       className={cn('w-full rounded-md border border-border bg-background px-2 py-1 outline-none ring-ring focus:ring-1', className)}
     />
+    </div>
   )
 }

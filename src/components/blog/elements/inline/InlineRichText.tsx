@@ -89,7 +89,7 @@ export function InlineRichText({ value, onChange, className, placeholder, elemen
   if (!editor) return null
 
   return (
-    <div className={cn('relative', className)}>
+    <div data-inline-edit-root="true" className={cn('relative', className)}>
       <FloatingToolbar editor={editor} />
       <EditorContent editor={editor} />
     </div>
