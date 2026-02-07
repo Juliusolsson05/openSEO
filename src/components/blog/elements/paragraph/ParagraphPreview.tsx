@@ -22,7 +22,7 @@ export function ParagraphPreview({ content }: PreviewComponentProps) {
         dangerouslySetInnerHTML={{ __html: formattedTitle }}
       />
       <p
-        className="my-[15px] text-[1.125rem] font-light leading-[1.77778] text-[#213343] custom-content"
+        className="my-[15px] text-[1.125rem] font-light leading-[1.77778] text-foreground custom-content"
         dangerouslySetInnerHTML={{ __html: formattedText }}
       />
     </BasePreview>

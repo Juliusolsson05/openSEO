@@ -39,24 +39,24 @@ function CategoryFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-[4px] border border-[#E1E1E1] bg-white p-4 shadow-none">
-        <h3 className="text-[13px] font-semibold text-[#1F1F1F]">{title}</h3>
+      <div className="w-full max-w-md rounded border border-border bg-white p-4 shadow-none">
+        <h3 className="text-[13px] font-semibold text-foreground">{title}</h3>
         <div className="mt-3">
-          <label className="mb-1 block text-[11px] uppercase tracking-[0.08em] text-[#616161]">Category name</label>
+          <label className="mb-1 block text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Category name</label>
           <Input
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="h-8 rounded-[3px] border-[#E1E1E1] text-[13px]"
+            className="h-8 rounded-sm border-border text-[13px]"
           />
         </div>
         <div className="mt-4 flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose} disabled={loading} className="h-8 rounded-[3px] text-[12px]">
+          <Button variant="outline" onClick={onClose} disabled={loading} className="h-8 rounded-sm text-[12px]">
             Cancel
           </Button>
           <Button
             onClick={onSubmit}
             disabled={loading || !value.trim()}
-            className="h-8 rounded-[3px] bg-[#0078D4] text-[12px] hover:bg-[#106EBE]"
+            className="h-8 rounded-sm bg-primary text-[12px] hover:bg-primary-hover"
           >
             {loading ? 'Saving...' : submitLabel}
           </Button>
@@ -185,25 +185,25 @@ export default function BlogCategoriesTable() {
   }
 
   return (
-    <Card className="rounded-[4px] border-[#E1E1E1] bg-white shadow-none" style={{ fontFamily: 'Segoe UI, sans-serif' }}>
+    <Card className="rounded border-border bg-white shadow-none" style={{ fontFamily: 'Segoe UI, sans-serif' }}>
       <CardHeader className="pb-3">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <CardTitle className="text-[15px] font-semibold">Categories</CardTitle>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={runGenerate} disabled={actionLoading.generate} className="h-8 rounded-[3px] bg-[#0078D4] text-[12px] hover:bg-[#106EBE]">
+            <Button onClick={runGenerate} disabled={actionLoading.generate} className="h-8 rounded-sm bg-primary text-[12px] hover:bg-primary-hover">
               {actionLoading.generate ? 'Generating...' : categories.length ? 'Generate More' : 'Generate'}
             </Button>
-            <Button onClick={runCategorize} disabled={actionLoading.categorize} className="h-8 rounded-[3px] bg-[#0078D4] text-[12px] hover:bg-[#106EBE]">
+            <Button onClick={runCategorize} disabled={actionLoading.categorize} className="h-8 rounded-sm bg-primary text-[12px] hover:bg-primary-hover">
               {actionLoading.categorize ? 'Categorizing...' : 'Categorize'}
             </Button>
-            <Button onClick={() => setAddOpen(true)} className="h-8 rounded-[3px] bg-[#0078D4] text-[12px] hover:bg-[#106EBE]">
+            <Button onClick={() => setAddOpen(true)} className="h-8 rounded-sm bg-primary text-[12px] hover:bg-primary-hover">
               Add Category
             </Button>
             <Button
               variant="destructive"
               onClick={deleteSelected}
               disabled={selectedIds.length === 0 || actionLoading.deleteSelected}
-              className="h-8 rounded-[3px] text-[12px]"
+              className="h-8 rounded-sm text-[12px]"
             >
               {actionLoading.deleteSelected ? 'Deleting...' : 'Delete Selected'}
             </Button>
@@ -213,20 +213,20 @@ export default function BlogCategoriesTable() {
       <CardContent>
         {loading ? (
           <div className="space-y-2">
-            <Skeleton className="h-9 w-full rounded-[3px]" />
-            <Skeleton className="h-9 w-full rounded-[3px]" />
-            <Skeleton className="h-9 w-full rounded-[3px]" />
+            <Skeleton className="h-9 w-full rounded-sm" />
+            <Skeleton className="h-9 w-full rounded-sm" />
+            <Skeleton className="h-9 w-full rounded-sm" />
           </div>
         ) : categories.length === 0 ? (
-          <div className="rounded-[3px] border border-[#E1E1E1] bg-[#F2F2F2] p-3 text-[13px] text-[#555]">
+          <div className="rounded-sm border border-border bg-background p-3 text-[13px] text-muted-foreground">
             No categories found. Click <span className="font-semibold">Generate</span> to create categories.
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-[3px] border border-[#E1E1E1]">
+          <div className="overflow-x-auto rounded-sm border border-border">
             <table className="w-full border-collapse text-left text-[13px]">
-              <thead className="bg-[#F2F2F2]">
+              <thead className="bg-background">
                 <tr>
-                  <th className="w-10 border-b border-[#E1E1E1] px-3 py-2">
+                  <th className="w-10 border-b border-border px-3 py-2">
                     <input
                       type="checkbox"
                       checked={allSelected}
@@ -236,39 +236,39 @@ export default function BlogCategoriesTable() {
                       onChange={toggleSelectAll}
                     />
                   </th>
-                  <th className="border-b border-[#E1E1E1] px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-[#666]">Name</th>
-                  <th className="border-b border-[#E1E1E1] px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-[#666]">Post Count</th>
-                  <th className="border-b border-[#E1E1E1] px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-[#666]">Actions</th>
+                  <th className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Name</th>
+                  <th className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Post Count</th>
+                  <th className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {categories.map((category) => (
-                  <tr key={category.id} className="odd:bg-white even:bg-[#FCFCFC]">
-                    <td className="border-b border-[#EDEDED] px-3 py-2">
+                  <tr key={category.id} className="odd:bg-white even:bg-background">
+                    <td className="border-b border-border px-3 py-2">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(category.id)}
                         onChange={() => toggleSelect(category.id)}
                       />
                     </td>
-                    <td className="border-b border-[#EDEDED] px-3 py-2">{category.name}</td>
-                    <td className="border-b border-[#EDEDED] px-3 py-2">
-                      <Badge className="rounded-[3px] bg-[#F2F2F2] text-[#444] hover:bg-[#F2F2F2]">
+                    <td className="border-b border-border px-3 py-2">{category.name}</td>
+                    <td className="border-b border-border px-3 py-2">
+                      <Badge className="rounded-sm bg-background text-muted-foreground hover:bg-background">
                         {category.post_count}
                       </Badge>
                     </td>
-                    <td className="border-b border-[#EDEDED] px-3 py-2">
+                    <td className="border-b border-border px-3 py-2">
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
-                          className="h-7 rounded-[3px] border-[#E1E1E1] px-2 text-[12px]"
+                          className="h-7 rounded-sm border-border px-2 text-[12px]"
                           onClick={() => openEdit(category)}
                         >
                           Edit
                         </Button>
                         <Button
                           variant="destructive"
-                          className="h-7 rounded-[3px] px-2 text-[12px]"
+                          className="h-7 rounded-sm px-2 text-[12px]"
                           onClick={() => deleteOne(category.id)}
                           disabled={actionLoading.deleteOneId === category.id}
                         >

@@ -33,7 +33,7 @@ export function ProductRecommendationsPreview({ content }: PreviewComponentProps
       />
 
       <p
-        className="mb-6 text-[1.125rem] font-light leading-[1.77778] text-[#213343] custom-content"
+        className="mb-6 text-[1.125rem] font-light leading-[1.77778] text-foreground custom-content"
         dangerouslySetInnerHTML={{ __html: renderMarkdown(typedContent?.introduction ?? '') }}
       />
 

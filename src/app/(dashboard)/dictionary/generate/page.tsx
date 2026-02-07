@@ -22,7 +22,7 @@ export default function DictionaryGeneratePage() {
   }
 
   return (
-    <Card className="rounded-sm border-[#E1E1E1] bg-white" style={{ fontSize: 13 }}>
+    <Card className="rounded-sm border-border bg-white" style={{ fontSize: 13 }}>
       <CardHeader>
         <CardTitle className="text-[20px]">Generate New Dictionary</CardTitle>
         <p className="text-muted-foreground">Create a new dictionary by configuring its basic settings</p>
@@ -37,7 +37,7 @@ export default function DictionaryGeneratePage() {
           <div className="space-y-1">
             <label className="text-[11px] uppercase tracking-wide">Subject</label>
             <textarea
-              className="w-full min-h-24 rounded-sm border border-[#E1E1E1] px-3 py-2"
+              className="w-full min-h-24 rounded-sm border border-border px-3 py-2"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               required
@@ -47,7 +47,7 @@ export default function DictionaryGeneratePage() {
           <div className="space-y-1">
             <label className="text-[11px] uppercase tracking-wide">Language</label>
             <select
-              className="w-full rounded-sm border border-[#E1E1E1] px-3 py-2 bg-white"
+              className="w-full rounded-sm border border-border px-3 py-2 bg-white"
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
             >
@@ -72,7 +72,7 @@ export default function DictionaryGeneratePage() {
           </div>
 
           <div className="flex gap-2">
-            <Button type="submit" disabled={isGenerating} className="rounded-sm bg-[#0078D4] hover:bg-[#106ebe]">
+            <Button type="submit" disabled={isGenerating} className="rounded-sm bg-primary hover:bg-primary-hover">
               {isGenerating ? 'Starting...' : 'Start Generation'}
             </Button>
             <Button type="button" variant="outline" className="rounded-sm" onClick={() => router.push('/dictionary')}>

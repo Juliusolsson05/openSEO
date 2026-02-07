@@ -63,7 +63,7 @@ export default function DictionaryPage() {
 
   return (
     <div className="space-y-4" style={{ fontSize: 13 }}>
-      <Card className="border-[#E1E1E1] rounded-sm bg-white">
+      <Card className="border-border rounded-sm bg-white">
         <CardHeader>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
@@ -71,7 +71,7 @@ export default function DictionaryPage() {
               <p className="text-muted-foreground">Total {totalDictionaries} dictionaries</p>
             </div>
             <Link href="/dictionary/generate">
-              <Button className="rounded-sm bg-[#0078D4] hover:bg-[#106ebe]">Create New Dictionary</Button>
+              <Button className="rounded-sm bg-primary hover:bg-primary-hover">Create New Dictionary</Button>
             </Link>
           </div>
         </CardHeader>
@@ -84,7 +84,7 @@ export default function DictionaryPage() {
                 setPage(1)
                 setSearchQuery(e.target.value)
               }}
-              className="rounded-sm border-[#E1E1E1]"
+              className="rounded-sm border-border"
             />
           </div>
 
@@ -97,7 +97,7 @@ export default function DictionaryPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {cards.map((dictionary) => (
-                <Card key={dictionary.id} className="border rounded-sm bg-white" style={{ borderColor: isIncomplete(dictionary) ? '#f59e0b' : '#E1E1E1' }}>
+                <Card key={dictionary.id} className={`border rounded-sm bg-white ${isIncomplete(dictionary) ? 'border-warning' : 'border-border'}`}>
                   <CardContent className="pt-5 space-y-3">
                     <div className="flex items-center justify-between gap-2">
                       <Link href={`/dictionary/${dictionary.id}`} className="font-semibold hover:underline">
@@ -123,7 +123,7 @@ export default function DictionaryPage() {
                       <Button variant="outline" className="rounded-sm" onClick={() => handleDelete(dictionary.id)}>Delete</Button>
                       {isIncomplete(dictionary) && (
                         <Link href="/dictionary/generate/keywords">
-                          <Button className="rounded-sm bg-[#0078D4] hover:bg-[#106ebe]">Resume</Button>
+                          <Button className="rounded-sm bg-primary hover:bg-primary-hover">Resume</Button>
                         </Link>
                       )}
                     </div>

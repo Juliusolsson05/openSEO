@@ -220,33 +220,33 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
   }
 
   const modalShell = 'fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4'
-  const modalCard = 'w-full max-w-xl rounded-[4px] border border-[#E1E1E1] bg-white p-4 text-[13px]'
+  const modalCard = 'w-full max-w-xl rounded border border-border bg-white p-4 text-[13px]'
 
   return (
-    <Card className="mb-4 rounded-[4px] border-[#E1E1E1] bg-white">
+    <Card className="mb-4 rounded border-border bg-white">
       <CardHeader>
         <CardTitle>Admin Actions</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 bg-[#F2F2F2] text-[13px]">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#616161]">Actions</p>
+      <CardContent className="space-y-2 bg-background text-[13px]">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Actions</p>
         {adminActions.map((action) => (
           <button
             key={action.action}
             onClick={() => openModal(action)}
             disabled={!!action.blocked}
-            className="flex w-full items-center justify-between rounded-[3px] border border-[#E1E1E1] bg-white px-3 py-2 text-left disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex w-full items-center justify-between rounded-sm border border-border bg-white px-3 py-2 text-left disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span>{action.label}</span>
             {action.blocked ? <Badge variant="warning">BLOCKED</Badge> : null}
           </button>
         ))}
 
-        <div className="my-3 border-t border-[#E1E1E1]" />
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#616161]">Post Actions</p>
-        <Button variant="outline" className="w-full justify-start rounded-[3px]" onClick={() => setShowRegenerateModal(true)}>Regenerate Post</Button>
-        <Button variant="outline" className="w-full justify-start rounded-[3px]" onClick={() => setShowDeleteModal(true)}>Delete Post</Button>
+        <div className="my-3 border-t border-border" />
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Post Actions</p>
+        <Button variant="outline" className="w-full justify-start rounded-sm" onClick={() => setShowRegenerateModal(true)}>Regenerate Post</Button>
+        <Button variant="outline" className="w-full justify-start rounded-sm" onClick={() => setShowDeleteModal(true)}>Delete Post</Button>
 
-        <Button className="mt-4 w-full bg-[#0078D4] hover:bg-[#106EBE]" onClick={() => router.push(`/blog/${postId}/preview`)}>Preview</Button>
+        <Button className="mt-4 w-full bg-primary hover:bg-primary-hover" onClick={() => router.push(`/blog/${postId}/preview`)}>Preview</Button>
         <Button className="w-full" onClick={() => setShowPublishConfirmation(true)}>Publish</Button>
 
         {message ? <p className={`text-[12px] ${message.type === 'success' ? 'text-green-700' : message.type === 'warning' ? 'text-amber-700' : 'text-red-700'}`}>{message.text}</p> : null}
@@ -256,19 +256,19 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
         <div className={modalShell}>
           <div className={modalCard}>
             <h3 className="mb-2 text-[14px] font-semibold">{selectedAction.label}</h3>
-            <p className="mb-3 text-[13px] text-[#616161]">{selectedAction.longDescription}</p>
+            <p className="mb-3 text-[13px] text-muted-foreground">{selectedAction.longDescription}</p>
             <div className="space-y-3">
               {selectedAction.inputs.filter((i) => i.type !== 'hidden').map((input) => (
                 <div key={input.key}>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase text-[#616161]">{input.label}</label>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">{input.label}</label>
                   {input.type === 'select' ? (
-                    <select className="h-8 w-full rounded-[3px] border border-[#E1E1E1] bg-white px-2 text-[13px]" value={formData[input.key] ?? ''} onChange={(e) => setFormData((p) => ({ ...p, [input.key]: e.target.value }))}>
+                    <select className="h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]" value={formData[input.key] ?? ''} onChange={(e) => setFormData((p) => ({ ...p, [input.key]: e.target.value }))}>
                       {(input.options ?? []).map((o) => <option key={String(o.value)} value={o.value}>{o.title}</option>)}
                     </select>
                   ) : input.type === 'switch' ? (
                     <input type="checkbox" checked={!!formData[input.key]} onChange={(e) => setFormData((p) => ({ ...p, [input.key]: e.target.checked }))} />
                   ) : (
-                    <Input type={input.type === 'number' ? 'number' : 'text'} value={formData[input.key] ?? ''} onChange={(e) => setFormData((p) => ({ ...p, [input.key]: e.target.value }))} className="rounded-[3px] border-[#E1E1E1]" />
+                    <Input type={input.type === 'number' ? 'number' : 'text'} value={formData[input.key] ?? ''} onChange={(e) => setFormData((p) => ({ ...p, [input.key]: e.target.value }))} className="rounded-sm border-border" />
                   )}
                 </div>
               ))}
@@ -289,13 +289,13 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
         <div className={modalShell}>
           <div className={modalCard}>
             <h3 className="mb-2 text-[14px] font-semibold">Publish Details</h3>
-            <label className="mb-1 block text-[11px] font-semibold uppercase text-[#616161]">Select Dictionary</label>
-            <select className="mb-3 h-8 w-full rounded-[3px] border border-[#E1E1E1] bg-white px-2 text-[13px]" value={publishDetails.dictionaryId} onChange={(e) => setPublishDetails((p) => ({ ...p, dictionaryId: e.target.value }))} disabled={loadingDictionaries}>
+            <label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">Select Dictionary</label>
+            <select className="mb-3 h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]" value={publishDetails.dictionaryId} onChange={(e) => setPublishDetails((p) => ({ ...p, dictionaryId: e.target.value }))} disabled={loadingDictionaries}>
               <option value="">Select</option>
               {availableDictionaries.map((d: any) => <option key={d.id} value={d.id}>{d.title}</option>)}
             </select>
-            <label className="mb-1 block text-[11px] font-semibold uppercase text-[#616161]">Export Method</label>
-            <select className="h-8 w-full rounded-[3px] border border-[#E1E1E1] bg-white px-2 text-[13px]" value={publishDetails.exportMethod} onChange={(e) => setPublishDetails((p) => ({ ...p, exportMethod: e.target.value }))}>
+            <label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">Export Method</label>
+            <select className="h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]" value={publishDetails.exportMethod} onChange={(e) => setPublishDetails((p) => ({ ...p, exportMethod: e.target.value }))}>
               <option value="elementor">Elementor</option>
             </select>
             <div className="mt-4 flex justify-end gap-2"><Button variant="outline" onClick={() => setShowPublishDetailsDialog(false)}>Cancel</Button><Button onClick={handlePublish} disabled={!isPublishDetailsValid || loadingDictionaries}>Publish</Button></div>

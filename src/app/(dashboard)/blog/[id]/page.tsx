@@ -25,6 +25,10 @@ import { ElementRenderer } from '@/components/blog/elements/ElementRenderer'
 import QuilloChat from '@/components/blog/QuilloChat'
 import QuilloAutopilot from '@/components/blog/QuilloAutopilot'
 import { ImageStudio } from '@/components/blog/ImageStudio'
+import RelatedPosts from '@/components/blog/RelatedPosts'
+import BlogGlossary from '@/components/blog/BlogGlossary'
+import AdminMenu from '@/components/blog/AdminMenu'
+import PostInfoSidepanel from '@/components/blog/PostInfoSidepanel'
 
 export default function BlogPostPage() {
   const params = useParams()
@@ -122,6 +126,8 @@ export default function BlogPostPage() {
                   <ElementRenderer key={element.id} element={element} blogId={post.id} editable={true} />
                 ))}
               </div>
+
+              <RelatedPosts posts={post.linked_posts ?? []} variant="grid" />
 
               {post.elements.length === 0 && (
                 <div className="text-center py-16">
@@ -221,6 +227,8 @@ export default function BlogPostPage() {
             </Card>
           )}
 
+          <BlogGlossary elements={post.elements} />
+
           {/* Categories */}
           {post.categories && post.categories.length > 0 && (
             <Card>
@@ -236,6 +244,8 @@ export default function BlogPostPage() {
               </CardContent>
             </Card>
           )}
+
+          <RelatedPosts posts={post.linked_posts ?? []} variant="sidebar" />
         </div>
       </div>
 

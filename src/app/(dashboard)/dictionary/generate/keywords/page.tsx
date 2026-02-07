@@ -49,7 +49,7 @@ export default function DictionaryGenerateKeywordsPage() {
 
   return (
     <div className="space-y-4" style={{ fontSize: 13 }}>
-      <Card className="rounded-sm border-[#E1E1E1] bg-white">
+      <Card className="rounded-sm border-border bg-white">
         <CardHeader>
           <CardTitle className="text-[20px]">Review Keywords</CardTitle>
           <p className="text-muted-foreground">Review and approve generated keywords for each letter</p>
@@ -68,7 +68,7 @@ export default function DictionaryGenerateKeywordsPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button onClick={handleAccept} disabled={isGenerating || keywordEntries.length === 0} className="rounded-sm bg-[#0078D4] hover:bg-[#106ebe]">
+            <Button onClick={handleAccept} disabled={isGenerating || keywordEntries.length === 0} className="rounded-sm bg-primary hover:bg-primary-hover">
               Accept & Continue
             </Button>
             <Button onClick={rejectCurrentLetterKeywords} disabled={isGenerating || keywordEntries.length === 0} variant="outline" className="rounded-sm">
@@ -82,7 +82,7 @@ export default function DictionaryGenerateKeywordsPage() {
               const i = parseIndex(key)
               const removed = removedKeywords.includes(i)
               return (
-                <Card key={key} className="rounded-sm border-[#E1E1E1]">
+                <Card key={key} className="rounded-sm border-border">
                   <CardContent className="pt-4 space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <h3 className={removed ? 'line-through opacity-50 font-semibold' : 'font-semibold'}>{item.keyword}</h3>

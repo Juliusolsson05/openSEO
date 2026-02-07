@@ -60,7 +60,7 @@ export function ImageElement({ content, blogId, elementId, onContentUpdated, onE
       onElementDeleted={onElementDeleted}
       onElementAdded={onElementAdded}
     >
-      <button type="button" className="group relative my-8 block h-[400px] w-full overflow-hidden rounded-[4px] border border-[#E1E1E1]" onClick={() => setStudioOpen(true)}>
+      <button type="button" className="group relative my-8 block h-[400px] w-full overflow-hidden rounded border border-border" onClick={() => setStudioOpen(true)}>
         <img src={src} alt={alt} className="h-full w-full object-cover" />
         <div className="absolute inset-0 flex items-center justify-center bg-black/0 text-sm font-medium text-white opacity-0 transition group-hover:bg-black/35 group-hover:opacity-100">
           ✏️ Edit in Studio

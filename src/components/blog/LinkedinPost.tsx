@@ -17,7 +17,7 @@ export default function LinkedinPost({ content }: LinkedinPostProps) {
   const elements = content?.elements ?? []
 
   return (
-    <div className="max-w-full overflow-x-hidden text-[#292929]" style={{ fontFamily: "-apple-system,system-ui,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue','Fira Sans',Ubuntu,Oxygen,'Oxygen Sans',Cantarell,'Droid Sans','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol','Lucida Grande',Helvetica,Arial,sans-serif", lineHeight: 1.5 }}>
+    <div className="max-w-full overflow-x-hidden text-foreground" style={{ fontFamily: "-apple-system,system-ui,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue','Fira Sans',Ubuntu,Oxygen,'Oxygen Sans',Cantarell,'Droid Sans','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol','Lucida Grande',Helvetica,Arial,sans-serif", lineHeight: 1.5 }}>
       {elements.map((element, index) => {
         const key = getElementKey(element)
         const data = element?.[key]?.data ?? {}
@@ -38,7 +38,7 @@ export default function LinkedinPost({ content }: LinkedinPostProps) {
           return (
             <div key={index} className="mb-4">
               <img src={data.url} alt={data.alt || ''} className="h-auto max-w-full" />
-              {data.caption ? <p className="mt-2 text-[12px] text-[#666]">{data.caption}</p> : null}
+              {data.caption ? <p className="mt-2 text-[12px] text-muted-foreground">{data.caption}</p> : null}
             </div>
           )
         }
@@ -65,7 +65,7 @@ export default function LinkedinPost({ content }: LinkedinPostProps) {
               href={data.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[13px] text-[#0077B5] hover:underline"
+              className="text-[13px] text-primary hover:underline"
             >
               {data.text}
             </a>

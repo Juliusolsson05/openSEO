@@ -12,7 +12,7 @@ interface KeywordsOverviewProps {
   linkedWords: LinkedWord[]
 }
 
-const COLORS = ['#E7F7E7', '#CCEECC', '#9DDC9D', '#69C369', '#2FA82F', '#107C10']
+const COLORS = ['#E7F7E7', '#CCEECC', '#9DDC9D', '#69C369', '#2FA82F', '#107C10'] // theme: success scale
 
 export function KeywordsOverview({ linkedWords }: KeywordsOverviewProps) {
   const data = linkedWords.map((w) => ({ name: w.word, size: w.link_count || 1, value: w.link_count || 0 }))

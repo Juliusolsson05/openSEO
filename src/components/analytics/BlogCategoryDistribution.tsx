@@ -12,7 +12,7 @@ interface BlogCategoryDistributionProps {
   blogTitles: BlogTitleItem[]
 }
 
-const COLORS = ['#0078D4', '#2899F5', '#50B0F9', '#7DCBF7', '#A6D8FF', '#0F6CBD', '#5C2D91']
+const COLORS = ['#0078D4', '#2899F5', '#50B0F9', '#7DCBF7', '#A6D8FF', '#0F6CBD', '#5C2D91'] // theme: primary scale
 
 export function BlogCategoryDistribution({ blogTitles }: BlogCategoryDistributionProps) {
   const data = useMemo(() => {

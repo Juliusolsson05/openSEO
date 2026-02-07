@@ -96,16 +96,16 @@ export default function SettingsPage() {
     <div className="space-y-4" style={{ fontSize: 13 }}>
       <h1 className="text-xl font-semibold">Settings</h1>
 
-      <Card className="rounded-sm border-[#E1E1E1] bg-white">
+      <Card className="rounded-sm border-border bg-white">
         <CardHeader>
           <CardTitle>Settings Panels</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <details className="rounded-sm border border-[#E1E1E1]" open>
-            <summary className="cursor-pointer bg-[#F2F2F2] px-3 py-2 text-[11px] uppercase tracking-wide">
+          <details className="rounded-sm border border-border" open>
+            <summary className="cursor-pointer bg-background px-3 py-2 text-[11px] uppercase tracking-wide">
               Company Profile
             </summary>
-            <div className="space-y-3 border-t border-[#E1E1E1] p-3">
+            <div className="space-y-3 border-t border-border p-3">
               {isLoading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-8 w-40" />
@@ -114,20 +114,20 @@ export default function SettingsPage() {
                 </div>
               ) : hasCompanyData ? (
                 <div className="space-y-2">
-                  <details className="rounded-sm border border-[#E1E1E1] bg-[#F2F2F2]/30">
+                  <details className="rounded-sm border border-border bg-background/30">
                     <summary className="cursor-pointer px-3 py-2 text-[11px] uppercase tracking-wide">
                       Business Description
                     </summary>
-                    <div className="border-t border-[#E1E1E1] bg-white px-3 py-2 whitespace-pre-wrap">
+                    <div className="border-t border-border bg-white px-3 py-2 whitespace-pre-wrap">
                       {companyData?.business_description || 'No business description available.'}
                     </div>
                   </details>
 
-                  <details className="rounded-sm border border-[#E1E1E1] bg-[#F2F2F2]/30">
+                  <details className="rounded-sm border border-border bg-background/30">
                     <summary className="cursor-pointer px-3 py-2 text-[11px] uppercase tracking-wide">
                       Industry Description
                     </summary>
-                    <div className="border-t border-[#E1E1E1] bg-white px-3 py-2 whitespace-pre-wrap">
+                    <div className="border-t border-border bg-white px-3 py-2 whitespace-pre-wrap">
                       {companyData?.industry_description || 'No industry description available.'}
                     </div>
                   </details>
@@ -150,11 +150,11 @@ export default function SettingsPage() {
             </div>
           </details>
 
-          <details className="rounded-sm border border-[#E1E1E1]">
-            <summary className="cursor-pointer bg-[#F2F2F2] px-3 py-2 text-[11px] uppercase tracking-wide">
+          <details className="rounded-sm border border-border">
+            <summary className="cursor-pointer bg-background px-3 py-2 text-[11px] uppercase tracking-wide">
               API Configuration
             </summary>
-            <div className="border-t border-[#E1E1E1] p-3">
+            <div className="border-t border-border p-3">
               <form onSubmit={submitApiForm} className="space-y-3">
                 <div className="space-y-1.5">
                   <label className="text-[11px] uppercase tracking-wide text-muted-foreground">

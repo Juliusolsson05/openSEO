@@ -27,7 +27,7 @@ export function ConclusionPreview({ content }: PreviewComponentProps) {
         dangerouslySetInnerHTML={{ __html: titleHtml }}
       />
       <div
-        className="custom-content my-[15px] text-lg font-light leading-[1.77778] text-[#213343]"
+        className="custom-content my-[15px] text-lg font-light leading-[1.77778] text-foreground"
         dangerouslySetInnerHTML={{ __html: bodyHtml }}
       />
     </BasePreview>

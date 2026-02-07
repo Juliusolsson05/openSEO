@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           {message && <p className="text-[12px] text-success bg-success-light border border-success/20 rounded-sm px-3 py-2">{message}</p>}
-          {error && <p className="text-[12px] text-destructive bg-[#FDE7E9] border border-destructive/20 rounded-sm px-3 py-2">{error}</p>}
+          {error && <p className="text-[12px] text-destructive bg-destructive/10 border border-destructive/20 rounded-sm px-3 py-2">{error}</p>}
 
           <Button type="submit" className="w-full h-9" disabled={loading}>
             {loading ? 'Sending...' : <>Send reset link <ArrowRight className="h-3.5 w-3.5" /></>}

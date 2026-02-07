@@ -28,11 +28,11 @@ export function ListParagraph({ content }: ElementComponentProps) {
       />
 
       <div
-        className="my-4 text-lg font-light leading-8 text-[#213343] [&_a]:border-b [&_a]:border-dotted [&_a]:border-current [&_a]:text-blue-500 [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full"
+        className="my-4 text-lg font-light leading-8 text-foreground [&_a]:border-b [&_a]:border-dotted [&_a]:border-current [&_a]:text-blue-500 [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full"
         dangerouslySetInnerHTML={{ __html: renderMarkdown(data.text_before_list) }}
       />
 
-      <ul className="my-4 list-disc space-y-1 pl-5 text-lg font-light leading-8 text-[#213343]">
+      <ul className="my-4 list-disc space-y-1 pl-5 text-lg font-light leading-8 text-foreground">
         {items.map((item, index) => (
           <li key={index}>
             {isColonSeparated(item) ? (
@@ -48,7 +48,7 @@ export function ListParagraph({ content }: ElementComponentProps) {
       </ul>
 
       <div
-        className="my-4 text-lg font-light leading-8 text-[#213343] [&_a]:border-b [&_a]:border-dotted [&_a]:border-current [&_a]:text-blue-500 [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full"
+        className="my-4 text-lg font-light leading-8 text-foreground [&_a]:border-b [&_a]:border-dotted [&_a]:border-current [&_a]:text-blue-500 [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full"
         dangerouslySetInnerHTML={{ __html: renderMarkdown(data.text_after_list) }}
       />
     </>

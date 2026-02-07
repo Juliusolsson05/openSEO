@@ -23,7 +23,7 @@ function Ring({ value, color }: { value: number; color: string }) {
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="#E1E1E1" strokeWidth={stroke} fill="none" />
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="#E1E1E1" /* theme: border */ strokeWidth={stroke} fill="none" />
         <circle cx={size / 2} cy={size / 2} r={r} stroke={color} strokeWidth={stroke} fill="none" strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" />
       </svg>
       <div className="absolute inset-0 grid place-items-center text-[12px] font-semibold">{v.toFixed(1)}%</div>
@@ -38,7 +38,7 @@ export function DictionaryOverview({ dictionaryData }: DictionaryOverviewProps) 
 
   const coverage = totalWords > 0 ? (defs / totalWords) * 100 : 0
   const isolation = totalWords > 0 ? (isolated / totalWords) * 100 : 0
-  const isolationColor = isolation < 30 ? '#107C10' : isolation < 70 ? '#FFB900' : '#D13438'
+  const isolationColor = isolation < 30 ? '#107C10' : isolation < 70 ? '#FFB900' : '#D13438' // theme: success/warning/destructive
 
   return (
     <Card className="h-full rounded-sm">
@@ -52,7 +52,7 @@ export function DictionaryOverview({ dictionaryData }: DictionaryOverviewProps) 
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div className="flex flex-col items-center rounded-sm border border-border p-3">
-            <Ring value={coverage} color="#0078D4" />
+            <Ring value={coverage} color="#0078D4" /* theme: primary */ />
             <p className="mt-2 text-[11px] text-muted-foreground">Definition Coverage</p>
           </div>
           <div className="flex flex-col items-center rounded-sm border border-border p-3">

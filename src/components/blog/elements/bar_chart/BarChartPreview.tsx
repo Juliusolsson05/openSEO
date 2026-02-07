@@ -38,15 +38,15 @@ export function BarChartPreview({ content }: BarChartPreviewProps) {
 
   return (
     <BasePreview content={content}>
-      <div className="rounded-lg bg-[#f5f5f5] p-8">
+      <div className="rounded-lg bg-secondary p-8">
         <h2
-          className="mb-6 text-2xl font-semibold leading-[1.5] text-[#213343]"
+          className="mb-6 text-2xl font-semibold leading-[1.5] text-foreground"
           dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content.title) }}
         />
 
         {content.text_before ? (
           <p
-            className="mb-6 text-[1.125rem] leading-[1.77] text-[#213343]"
+            className="mb-6 text-[1.125rem] leading-[1.77] text-foreground"
             dangerouslySetInnerHTML={{ __html: renderMarkdown(content.text_before) }}
           />
         ) : null}
@@ -61,30 +61,30 @@ export function BarChartPreview({ content }: BarChartPreviewProps) {
                 textAnchor="end"
                 interval={0}
                 height={100}
-                tick={{ fill: '#213343', fontWeight: 700, fontSize: 12 }}
-                axisLine={{ stroke: '#e2e8f0' }}
+                tick={{ fill: '#213343' /* theme: foreground */, fontWeight: 700, fontSize: 12 }}
+                axisLine={{ stroke: '#e2e8f0' /* theme: border */ }}
                 tickLine={false}
               />
               <YAxis
                 ticks={yTicks}
                 domain={[startValue, roundedMax]}
-                tick={{ fill: '#213343', fontWeight: 700, fontSize: 14 }}
-                axisLine={{ stroke: '#e2e8f0' }}
+                tick={{ fill: '#213343' /* theme: foreground */, fontWeight: 700, fontSize: 14 }}
+                axisLine={{ stroke: '#e2e8f0' /* theme: border */ }}
                 tickLine={false}
               />
-              <Bar dataKey="value" fill="#4b5563" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="value" fill="#4b5563" radius={[4, 4, 0, 0]} /> {/* theme: secondary-foreground */}
             </RechartsBarChart>
           </ResponsiveContainer>
         </div>
 
         {content.text_after ? (
           <p
-            className="mt-6 text-[1.125rem] leading-[1.77] text-[#213343]"
+            className="mt-6 text-[1.125rem] leading-[1.77] text-foreground"
             dangerouslySetInnerHTML={{ __html: renderMarkdown(content.text_after) }}
           />
         ) : null}
 
-        <span className="block w-full text-center text-[1.125rem] font-bold leading-[1.77] text-[#213343]">(Max 100%)</span>
+        <span className="block w-full text-center text-[1.125rem] font-bold leading-[1.77] text-foreground">(Max 100%)</span>
       </div>
     </BasePreview>
   )

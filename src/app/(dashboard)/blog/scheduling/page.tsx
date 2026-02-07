@@ -158,7 +158,7 @@ export default function BlogSchedulingPage() {
                       const isCurrent = day.getMonth() === month
                       const isToday = day.getTime() === today.getTime()
                       return (
-                        <td key={di} className={`border border-border/60 p-1 align-top h-20 ${!isCurrent ? 'bg-secondary/30' : ''} ${isToday ? 'bg-[#EBF3FC]' : ''}`}>
+                        <td key={di} className={`border border-border/60 p-1 align-top h-20 ${!isCurrent ? 'bg-secondary/30' : ''} ${isToday ? 'bg-info-light' : ''}`}>
                           <span className={`text-[11px] font-semibold ${isToday ? 'text-primary' : isCurrent ? 'text-foreground' : 'text-muted-foreground/40'}`}>
                             {day.getDate()}
                           </span>
@@ -211,7 +211,7 @@ export default function BlogSchedulingPage() {
             ) : (
               <div className="divide-y divide-border/60 max-h-80 overflow-y-auto">
                 {unscheduled.map((p) => (
-                  <div key={p.id} className="flex items-center gap-2.5 px-4 py-2 hover:bg-[#F8F8F8]">
+                  <div key={p.id} className="flex items-center gap-2.5 px-4 py-2 hover:bg-muted">
                     <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} className="accent-primary" />
                     <span className="text-[13px] truncate flex-1">{p.title_text}</span>
                     {p.categories?.[0] && <Badge variant="outline" className="text-[10px] shrink-0">{p.categories[0].name}</Badge>}
@@ -235,7 +235,7 @@ export default function BlogSchedulingPage() {
             ) : (
               <div className="divide-y divide-border/60 max-h-80 overflow-y-auto">
                 {scheduled.map((p) => (
-                  <div key={p.id} className="flex items-center gap-2.5 px-4 py-2 hover:bg-[#F8F8F8]">
+                  <div key={p.id} className="flex items-center gap-2.5 px-4 py-2 hover:bg-muted">
                     <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <span className="text-[13px] truncate flex-1">{p.title_text}</span>
                     {p.bulk_schedule && <Badge variant="success" className="text-[10px] shrink-0">{p.bulk_schedule.name}</Badge>}

@@ -19,18 +19,18 @@ type SharedPost = {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#F8F9FB] text-[#1B1A19]" style={{ fontFamily: 'Segoe UI, Arial, sans-serif' }}>
-      <header className="border-b border-[#E1E1E1] bg-white">
+    <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: 'Segoe UI, Arial, sans-serif' }}>
+      <header className="border-b border-border bg-white">
         <div className="mx-auto flex max-w-[720px] items-center justify-between px-4 py-3">
-          <div className="text-[18px] font-semibold text-[#0078D4]">Aurora</div>
-          <span className="rounded-[4px] border border-[#C7E0F4] bg-[#EFF6FC] px-2 py-1 text-[11px] font-semibold text-[#0078D4]">
+          <div className="text-[18px] font-semibold text-primary">Aurora</div>
+          <span className="rounded border border-info-light bg-info-light px-2 py-1 text-[11px] font-semibold text-primary">
             Shared preview
           </span>
         </div>
       </header>
       <main className="mx-auto max-w-[720px] px-4 py-8">{children}</main>
-      <footer className="mt-10 border-t border-[#E1E1E1] bg-white">
-        <div className="mx-auto max-w-[720px] px-4 py-4 text-[12px] text-[#605E5C]">
+      <footer className="mt-10 border-t border-border bg-white">
+        <div className="mx-auto max-w-[720px] px-4 py-4 text-[12px] text-muted-foreground">
           Powered by Aurora — Nordtools
         </div>
       </footer>
@@ -41,7 +41,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 function Message({ text }: { text: string }) {
   return (
     <Shell>
-      <div className="rounded-[4px] border border-[#E1E1E1] bg-white p-5 text-[14px]">{text}</div>
+      <div className="rounded border border-border bg-white p-5 text-[14px]">{text}</div>
     </Shell>
   )
 }
@@ -96,11 +96,11 @@ export default async function SharedBlogPage({ params }: { params: Promise<{ tok
 
   return (
     <Shell>
-      <article className="rounded-[4px] border border-[#E1E1E1] bg-white p-6">
+      <article className="rounded border border-border bg-white p-6">
         <h1 className="mb-6 text-[32px] font-semibold leading-tight">{post.title_text}</h1>
 
         {post.cover_image?.url ? (
-          <div className="mb-8 overflow-hidden rounded-[4px] border border-[#E1E1E1]">
+          <div className="mb-8 overflow-hidden rounded border border-border">
             <img
               src={post.cover_image.url}
               alt={post.cover_image.description || post.title_text}

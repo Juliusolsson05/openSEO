@@ -77,7 +77,7 @@ export default function CompanyProfilePage() {
     <div className="space-y-4" style={{ fontSize: 13 }}>
       <h1 className="text-xl font-semibold">Company Profile</h1>
 
-      <Card className="rounded-sm border-[#E1E1E1] bg-white">
+      <Card className="rounded-sm border-border bg-white">
         <CardHeader>
           <CardTitle>Company Metadata</CardTitle>
         </CardHeader>
@@ -90,20 +90,20 @@ export default function CompanyProfilePage() {
             </div>
           ) : hasCompanyData ? (
             <div className="space-y-3">
-              <details className="rounded-sm border border-[#E1E1E1] bg-[#F2F2F2]/30">
+              <details className="rounded-sm border border-border bg-background/30">
                 <summary className="cursor-pointer px-3 py-2 text-[11px] uppercase tracking-wide">
                   Business Description
                 </summary>
-                <div className="border-t border-[#E1E1E1] bg-white px-3 py-2 whitespace-pre-wrap">
+                <div className="border-t border-border bg-white px-3 py-2 whitespace-pre-wrap">
                   {companyData?.business_description || 'No business description available.'}
                 </div>
               </details>
 
-              <details className="rounded-sm border border-[#E1E1E1] bg-[#F2F2F2]/30">
+              <details className="rounded-sm border border-border bg-background/30">
                 <summary className="cursor-pointer px-3 py-2 text-[11px] uppercase tracking-wide">
                   Industry Description
                 </summary>
-                <div className="border-t border-[#E1E1E1] bg-white px-3 py-2 whitespace-pre-wrap">
+                <div className="border-t border-border bg-white px-3 py-2 whitespace-pre-wrap">
                   {companyData?.industry_description || 'No industry description available.'}
                 </div>
               </details>

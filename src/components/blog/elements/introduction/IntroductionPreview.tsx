@@ -17,12 +17,12 @@ export function IntroductionPreview({ content }: PreviewComponentProps) {
   return (
     <BasePreview content={content}>
       <div>
-        <h2 className="mt-4 mb-3 text-2xl font-semibold tracking-tight text-[#213343] flex items-center gap-2">
+        <h2 className="mt-4 mb-3 text-2xl font-semibold tracking-tight text-foreground flex items-center gap-2">
           <BookOpen className="h-5 w-5 text-sky-600" />
           <span dangerouslySetInnerHTML={{ __html: titleHtml }} />
         </h2>
         <p
-          className="my-[15px] text-lg font-light leading-[1.77778] text-[#213343] [&_em]:font-[450] [&_strong]:font-bold"
+          className="my-[15px] text-lg font-light leading-[1.77778] text-foreground [&_em]:font-[450] [&_strong]:font-bold"
           dangerouslySetInnerHTML={{ __html: formattedText }}
         />
       </div>

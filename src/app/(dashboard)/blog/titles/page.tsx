@@ -303,7 +303,7 @@ export default function BlogTitlesPage() {
                 const isEditing = editingId === title.id
 
                 return (
-                  <div key={title.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-border/60 last:border-0 hover:bg-[#F8F8F8] group">
+                  <div key={title.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-border/60 last:border-0 hover:bg-muted group">
                     <input
                       type="checkbox"
                       checked={selected.has(title.id)}

@@ -107,49 +107,49 @@ export default function ShareDialog({ postId }: ShareDialogProps) {
 
   return (
     <>
-      <Button onClick={openDialog} className="bg-[#0078D4] text-white hover:bg-[#106EBE]">
+      <Button onClick={openDialog} className="bg-primary text-white hover:bg-primary-hover">
         Share
       </Button>
 
       {open ? (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4" onClick={() => setOpen(false)}>
           <div
-            className="w-full max-w-xl rounded-[4px] border border-[#E1E1E1] bg-white p-5"
+            className="w-full max-w-xl rounded border border-border bg-white p-5"
             style={{ fontFamily: 'Segoe UI, Arial, sans-serif' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-[16px] font-semibold text-[#1B1A19]">Share Blog Post</h3>
-              <span className="rounded-[4px] border border-[#C7E0F4] bg-[#EFF6FC] px-2 py-1 text-[11px] font-semibold text-[#0078D4]">
+              <h3 className="text-[16px] font-semibold text-foreground">Share Blog Post</h3>
+              <span className="rounded border border-info-light bg-info-light px-2 py-1 text-[11px] font-semibold text-primary">
                 {statusLabel}
               </span>
             </div>
 
             {status?.share_url ? (
               <div className="space-y-2">
-                <label className="text-[12px] text-[#605E5C]">Share link</label>
+                <label className="text-[12px] text-muted-foreground">Share link</label>
                 <div className="flex gap-2">
-                  <Input value={status.share_url} readOnly className="rounded-[4px] border-[#C8C6C4]" />
-                  <Button variant="outline" onClick={copyLink} className="rounded-[4px] border-[#C8C6C4]">
+                  <Input value={status.share_url} readOnly className="rounded border-border" />
+                  <Button variant="outline" onClick={copyLink} className="rounded border-border">
                     {copied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
               </div>
             ) : (
-              <p className="text-[13px] text-[#605E5C]">No active share link for this post.</p>
+              <p className="text-[13px] text-muted-foreground">No active share link for this post.</p>
             )}
 
             {status?.share_expires_at ? (
-              <p className="mt-2 text-[12px] text-[#605E5C]">
+              <p className="mt-2 text-[12px] text-muted-foreground">
                 Expires: {new Date(status.share_expires_at).toLocaleString()}
               </p>
             ) : null}
 
-            {error ? <p className="mt-3 text-[12px] text-[#A4262C]">{error}</p> : null}
+            {error ? <p className="mt-3 text-[12px] text-destructive">{error}</p> : null}
 
             <div className="mt-5 flex justify-end gap-2">
               {!status?.share_enabled ? (
-                <Button onClick={generateLink} disabled={loading} className="bg-[#0078D4] text-white hover:bg-[#106EBE]">
+                <Button onClick={generateLink} disabled={loading} className="bg-primary text-white hover:bg-primary-hover">
                   {loading ? 'Generating...' : 'Generate Link'}
                 </Button>
               ) : (
@@ -157,12 +157,12 @@ export default function ShareDialog({ postId }: ShareDialogProps) {
                   variant="outline"
                   onClick={revokeLink}
                   disabled={loading}
-                  className="rounded-[4px] border-[#C8C6C4] text-[#A4262C]"
+                  className="rounded border-border text-destructive"
                 >
                   {loading ? 'Revoking...' : 'Revoke Link'}
                 </Button>
               )}
-              <Button variant="outline" onClick={() => setOpen(false)} className="rounded-[4px] border-[#C8C6C4]">
+              <Button variant="outline" onClick={() => setOpen(false)} className="rounded border-border">
                 Close
               </Button>
             </div>

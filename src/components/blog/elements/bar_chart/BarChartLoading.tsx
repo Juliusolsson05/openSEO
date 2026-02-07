@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export function BarChartLoading() {
   return (
-    <div className="relative my-5 rounded-lg bg-[#f5f5f5] p-8">
+    <div className="relative my-5 rounded-lg bg-secondary p-8">
       <div className="mb-4 flex items-center gap-2 text-muted-foreground">
         <BarChart3 className="h-4 w-4" />
         <span className="text-sm">Loading bar chart…</span>

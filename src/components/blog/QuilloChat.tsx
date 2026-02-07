@@ -44,12 +44,12 @@ function ScoreGauge({ score }: { score: number }) {
   const r = 70
   const c = 2 * Math.PI * r
   const offset = c - (score / 100) * c
-  const color = score >= 80 ? '#107C10' : score >= 50 ? '#FFB900' : '#D13438'
+  const color = score >= 80 ? '#107C10' : score >= 50 ? '#FFB900' : '#D13438' // theme: success/warning/destructive
 
   return (
     <div className="relative flex items-center justify-center w-[140px] h-[140px] mx-auto">
       <svg viewBox="0 0 180 180" width={140} height={140} className="-rotate-90">
-        <circle cx={90} cy={90} r={r} strokeWidth={10} fill="none" stroke="#E1E1E1" />
+        <circle cx={90} cy={90} r={r} strokeWidth={10} fill="none" stroke="#E1E1E1" /* theme: border */ />
         <circle cx={90} cy={90} r={r} strokeWidth={10} fill="none" stroke={color}
           strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round"
           className="transition-all duration-700" />
@@ -103,7 +103,7 @@ export default function QuilloChat({ blogPostId }: Props) {
       {!isOpen && (
         <button
           onClick={toggle}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-[#1B1B1F] px-4 py-3 text-white shadow-lg hover:bg-[#2D2D33] transition-colors"
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-sidebar px-4 py-3 text-white shadow-lg hover:bg-sidebar-muted transition-colors"
         >
           <Sparkles className="h-5 w-5 text-primary" />
           <span className="text-[13px] font-semibold">Quillo Assistant</span>
@@ -113,7 +113,7 @@ export default function QuilloChat({ blogPostId }: Props) {
       {/* Analysis panel */}
       {isOpen && (
         <Card className="fixed bottom-6 right-6 z-40 w-[420px] max-h-[70vh] flex flex-col shadow-lg">
-          <CardHeader className="flex-row items-center justify-between bg-[#1B1B1F] text-white rounded-t-sm px-4 py-3 shrink-0">
+          <CardHeader className="flex-row items-center justify-between bg-sidebar text-white rounded-t-sm px-4 py-3 shrink-0">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
               <CardTitle className="text-white text-[14px]">Quillo Analysis</CardTitle>

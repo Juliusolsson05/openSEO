@@ -19,7 +19,7 @@ export function GeneralScore({ generalSeoScore, scoreBreakdown }: GeneralScorePr
   const [open, setOpen] = useState(false)
 
   const score = Math.max(0, Math.min(100, generalSeoScore || 0))
-  const color = score >= 80 ? '#107C10' : score >= 50 ? '#FFB900' : '#D13438'
+  const color = score >= 80 ? '#107C10' : score >= 50 ? '#FFB900' : '#D13438' // theme: success/warning/destructive
 
   const entries = useMemo(() => Object.entries(scoreBreakdown || {}), [scoreBreakdown])
 
@@ -39,7 +39,7 @@ export function GeneralScore({ generalSeoScore, scoreBreakdown }: GeneralScorePr
         <CardContent className="flex flex-col items-center gap-4">
           <div className="relative w-[160px] sm:w-[200px] lg:w-[210px]">
             <svg viewBox={`0 0 ${vbSize} ${vbSize}`} className="w-full">
-              <circle cx={vbSize / 2} cy={vbSize / 2} r={radius} stroke="#E1E1E1" strokeWidth={stroke} fill="none" transform={`rotate(-90 ${vbSize / 2} ${vbSize / 2})`} />
+              <circle cx={vbSize / 2} cy={vbSize / 2} r={radius} stroke="#E1E1E1" /* theme: border */ strokeWidth={stroke} fill="none" transform={`rotate(-90 ${vbSize / 2} ${vbSize / 2})`} />
               <circle
                 cx={vbSize / 2}
                 cy={vbSize / 2}
@@ -72,7 +72,7 @@ export function GeneralScore({ generalSeoScore, scoreBreakdown }: GeneralScorePr
           </div>
           <div className="max-h-[60vh] overflow-auto rounded-sm border border-border">
             <table className="w-full text-left text-[12px]">
-              <thead className="bg-[#F8F8F8]">
+              <thead className="bg-muted">
                 <tr>
                   <th className="border-b border-border px-3 py-2">Metric</th>
                   <th className="border-b border-border px-3 py-2">Score</th>

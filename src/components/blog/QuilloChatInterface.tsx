@@ -123,7 +123,7 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
         <Card className="w-full max-w-3xl h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
-          <CardHeader className="flex-row items-center justify-between bg-[#1B1B1F] text-white rounded-t-sm px-4 py-3 shrink-0">
+          <CardHeader className="flex-row items-center justify-between bg-sidebar text-white rounded-t-sm px-4 py-3 shrink-0">
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
               <CardTitle className="text-white text-[16px]">Chat with Quillo</CardTitle>
@@ -138,7 +138,7 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
             {messages.map((msg, i) => (
               <div key={i} className={`max-w-[80%] ${msg.sender === 'user' ? 'ml-auto' : 'mr-auto'}`}>
                 {msg.sender === 'quillo' && i === 0 ? (
-                  <div className="bg-[#EBF3FC] border-l-[3px] border-primary p-4 rounded-sm">
+                  <div className="bg-info-light border-l-[3px] border-primary p-4 rounded-sm">
                     <p className="text-[14px] font-semibold mb-2">Hello, I'm Quillo! 👋</p>
                     <p className="text-[13px] text-muted-foreground mb-2">I can help you with your content:</p>
                     <ul className="text-[12px] text-muted-foreground space-y-1 list-disc pl-4">
@@ -150,7 +150,7 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
                     </ul>
                   </div>
                 ) : msg.type === 'facebook' ? (
-                  <div className="bg-[#F0F8FF] border-l-[3px] border-[#1877F2] p-4 rounded-sm">
+                  <div className="bg-info-light border-l-[3px] border-primary p-4 rounded-sm">
                     <p className="text-[13px] font-semibold mb-2">Facebook Post 📘</p>
                     <div className="bg-white border border-border rounded-sm p-3 text-[13px] whitespace-pre-wrap">{msg.text}</div>
                     <Button variant="outline" size="sm" className="mt-2 gap-1 text-[11px]" onClick={() => copyText(msg.text)}>
@@ -159,7 +159,7 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
                   </div>
                 ) : (
                   <div className={`rounded-sm p-3 text-[13px] leading-relaxed ${
-                    msg.sender === 'user' ? 'bg-[#EBF3FC] text-foreground' : 'bg-secondary text-foreground'
+                    msg.sender === 'user' ? 'bg-info-light text-foreground' : 'bg-secondary text-foreground'
                   }`}>
                     {msg.text}
                   </div>
@@ -176,14 +176,14 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
             {linkedInLoading && (
               <div className="w-full bg-secondary rounded-sm p-3">
                 <div className="w-full h-[6px] rounded-full bg-border overflow-hidden mb-2">
-                  <div className="h-full bg-[#0077B5] rounded-full transition-all" style={{ width: `${linkedInProgress}%` }} />
+                  <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${linkedInProgress}%` }} />
                 </div>
                 <span className="text-[12px] text-muted-foreground">Converting to LinkedIn post...</span>
               </div>
             )}
 
             {linkedInPost && (
-              <div className="w-full bg-[#E6F2FF] border-l-[3px] border-[#0077B5] p-4 rounded-sm">
+              <div className="w-full bg-info-light border-l-[3px] border-primary p-4 rounded-sm">
                 <p className="text-[13px] font-semibold mb-2">LinkedIn Post 🔗</p>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" className="gap-1 text-[11px]" onClick={() => copyText(linkedInPost.html)}>

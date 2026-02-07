@@ -58,7 +58,7 @@ export default function WordDetailPage() {
   }
 
   return (
-    <Card className="rounded-sm border-[#E1E1E1] bg-white" style={{ fontSize: 13 }}>
+    <Card className="rounded-sm border-border bg-white" style={{ fontSize: 13 }}>
       <CardHeader>
         <CardTitle className="text-[28px]">{word.keyword}</CardTitle>
       </CardHeader>
@@ -78,8 +78,8 @@ export default function WordDetailPage() {
         <section>
           <h3 className="font-semibold mb-2">Synonyms & Antonyms</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Card className="rounded-sm border-[#E1E1E1]"><CardContent className="pt-4">{word.definition.synonyms.join(', ') || '—'}</CardContent></Card>
-            <Card className="rounded-sm border-[#E1E1E1]"><CardContent className="pt-4">{word.definition.antonyms.join(', ') || '—'}</CardContent></Card>
+            <Card className="rounded-sm border-border"><CardContent className="pt-4">{word.definition.synonyms.join(', ') || '—'}</CardContent></Card>
+            <Card className="rounded-sm border-border"><CardContent className="pt-4">{word.definition.antonyms.join(', ') || '—'}</CardContent></Card>
           </div>
         </section>
 
@@ -105,7 +105,7 @@ export default function WordDetailPage() {
           <h3 className="font-semibold mb-2">Frequently Asked Questions</h3>
           <div className="space-y-2">
             {word.definition.faqs.map((faq, i) => (
-              <Card key={i} className="rounded-sm border-[#E1E1E1]">
+              <Card key={i} className="rounded-sm border-border">
                 <CardContent className="pt-4">
                   <p className="font-medium">{faq.question}</p>
                   <p className="text-muted-foreground mt-1">{faq.answer}</p>

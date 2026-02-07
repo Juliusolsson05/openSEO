@@ -67,7 +67,7 @@ export default function RegisterPage() {
             <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="h-9" required />
           </div>
 
-          {error && <p className="text-[12px] text-destructive bg-[#FDE7E9] border border-destructive/20 rounded-sm px-3 py-2">{error}</p>}
+          {error && <p className="text-[12px] text-destructive bg-destructive/10 border border-destructive/20 rounded-sm px-3 py-2">{error}</p>}
 
           <Button type="submit" className="w-full h-9" disabled={loading}>
             {loading ? 'Creating account...' : <>Create account <ArrowRight className="h-3.5 w-3.5" /></>}

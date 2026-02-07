@@ -107,7 +107,7 @@ export default function DictionaryDetailPage() {
 
   return (
     <div className="space-y-4" style={{ fontSize: 13 }}>
-      <Card className="rounded-sm border-[#E1E1E1]">
+      <Card className="rounded-sm border-border">
         <CardHeader>
           <CardTitle className="text-[20px]">{dictionary.title}</CardTitle>
           <div className="flex gap-2 flex-wrap">
@@ -129,9 +129,9 @@ export default function DictionaryDetailPage() {
             .map((letter) => (
               <div key={letter} className="space-y-2">
                 <h3 className="font-semibold">Words starting with “{letter}”</h3>
-                <div className="border border-[#E1E1E1] rounded-sm overflow-x-auto">
+                <div className="border border-border rounded-sm overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-[#F2F2F2] text-left">
+                    <thead className="bg-background text-left">
                       <tr>
                         <th className="p-2">Keyword</th>
                         <th className="p-2">Description</th>
@@ -143,7 +143,7 @@ export default function DictionaryDetailPage() {
                       {grouped[letter].map((word) => {
                         const edit = editing[word.id]
                         return (
-                          <tr key={word.id} className="border-t border-[#E1E1E1]">
+                          <tr key={word.id} className="border-t border-border">
                             <td className="p-2">
                               <Input
                                 className="rounded-sm"

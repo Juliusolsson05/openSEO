@@ -65,10 +65,10 @@ const renderWithHighlightAndOverflow = (
       return (
         <span key={`${idx}-${start}`}>
           {normalPart && (
-            <span className={isKeyword ? 'rounded-[2px] bg-yellow-200 px-0.5' : ''}>{normalPart}</span>
+            <span className={isKeyword ? 'rounded-sm bg-yellow-200 px-0.5' : ''}>{normalPart}</span>
           )}
           {overflowPart && (
-            <span className={isKeyword ? 'rounded-[2px] bg-yellow-200/70 px-0.5 text-red-700' : 'text-red-700'}>{overflowPart}</span>
+            <span className={isKeyword ? 'rounded-sm bg-yellow-200/70 px-0.5 text-red-700' : 'text-red-700'}>{overflowPart}</span>
           )}
         </span>
       )
@@ -78,7 +78,7 @@ const renderWithHighlightAndOverflow = (
       <span
         key={`${idx}-${start}`}
         className={[
-          isKeyword ? 'rounded-[2px] bg-yellow-200 px-0.5' : '',
+          isKeyword ? 'rounded-sm bg-yellow-200 px-0.5' : '',
           inOverflow ? 'text-red-700' : '',
         ]
           .filter(Boolean)
@@ -151,17 +151,17 @@ export default function PostInfoSidepanel({
 
   return (
     <>
-      <Card className="rounded-[4px] border-[#E1E1E1] bg-white shadow-none" style={{ fontFamily: 'Segoe UI, sans-serif' }}>
+      <Card className="rounded border-border bg-white shadow-none" style={{ fontFamily: 'Segoe UI, sans-serif' }}>
         <CardHeader>
           <CardTitle className="text-[15px]">Post Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 text-[13px]">
           <div>
             <div className="mb-1 flex items-center justify-between">
-              <p className="text-[11px] uppercase tracking-[0.08em] text-[#666]">SEO title</p>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">SEO title</p>
               <Button
                 variant="outline"
-                className="h-7 rounded-[3px] border-[#E1E1E1] px-2 text-[12px]"
+                className="h-7 rounded-sm border-border px-2 text-[12px]"
                 onClick={() => {
                   setEditedSeoTitle(post.seo_title || '')
                   setSeoDialogOpen(true)
@@ -170,17 +170,17 @@ export default function PostInfoSidepanel({
                 Edit
               </Button>
             </div>
-            <div className="rounded-[3px] border border-[#E1E1E1] bg-[#F2F2F2] p-2">
+            <div className="rounded-sm border border-border bg-background p-2">
               {renderWithHighlightAndOverflow(post.seo_title || '', TITLE_MAX, post.focus_keyword || '', highlightKeywords)}
             </div>
           </div>
 
           <div>
             <div className="mb-1 flex items-center justify-between">
-              <p className="text-[11px] uppercase tracking-[0.08em] text-[#666]">Meta description</p>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Meta description</p>
               <Button
                 variant="outline"
-                className="h-7 rounded-[3px] border-[#E1E1E1] px-2 text-[12px]"
+                className="h-7 rounded-sm border-border px-2 text-[12px]"
                 onClick={() => {
                   setEditedMetaDescription(post.meta_description || '')
                   setMetaDialogOpen(true)
@@ -189,7 +189,7 @@ export default function PostInfoSidepanel({
                 Edit
               </Button>
             </div>
-            <div className="rounded-[3px] border border-[#E1E1E1] bg-[#F2F2F2] p-2">
+            <div className="rounded-sm border border-border bg-background p-2">
               {renderWithHighlightAndOverflow(
                 post.meta_description || '',
                 META_MAX,
@@ -199,13 +199,13 @@ export default function PostInfoSidepanel({
             </div>
           </div>
 
-          <div className="rounded-[3px] border border-[#E1E1E1] bg-[#F2F2F2] p-2">
-            <p className="text-[11px] uppercase tracking-[0.08em] text-[#666]">Focus keyword</p>
+          <div className="rounded-sm border border-border bg-background p-2">
+            <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Focus keyword</p>
             <p className="mt-1">{post.focus_keyword || '-'}</p>
           </div>
 
-          <div className="rounded-[3px] border border-[#E1E1E1] bg-[#F2F2F2] p-2">
-            <p className="text-[11px] uppercase tracking-[0.08em] text-[#666]">Keyword count</p>
+          <div className="rounded-sm border border-border bg-background p-2">
+            <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Keyword count</p>
             <p className="mt-1">{keywordCount}</p>
           </div>
 
@@ -222,15 +222,15 @@ export default function PostInfoSidepanel({
 
       {seoDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-[4px] border border-[#E1E1E1] bg-white p-4">
+          <div className="w-full max-w-lg rounded border border-border bg-white p-4">
             <h3 className="text-[14px] font-semibold">Edit SEO Title</h3>
             <div className="mt-3 space-y-1">
               <Input
                 value={editedSeoTitle}
                 onChange={(e) => setEditedSeoTitle(e.target.value)}
-                className="h-8 rounded-[3px] border-[#E1E1E1] text-[13px]"
+                className="h-8 rounded-sm border-border text-[13px]"
               />
-              <p className={`text-right text-[12px] ${editedSeoTitle.length > TITLE_MAX ? 'text-red-600' : 'text-[#666]'}`}>
+              <p className={`text-right text-[12px] ${editedSeoTitle.length > TITLE_MAX ? 'text-red-600' : 'text-muted-foreground'}`}>
                 {editedSeoTitle.length}/{TITLE_MAX}
               </p>
             </div>
@@ -239,7 +239,7 @@ export default function PostInfoSidepanel({
               <Button
                 onClick={saveSeoTitle}
                 disabled={saving || editedSeoTitle.length > TITLE_MAX}
-                className="bg-[#0078D4] hover:bg-[#106EBE]"
+                className="bg-primary hover:bg-primary-hover"
               >
                 {saving ? 'Saving...' : 'Save'}
               </Button>
@@ -250,15 +250,15 @@ export default function PostInfoSidepanel({
 
       {metaDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-[4px] border border-[#E1E1E1] bg-white p-4">
+          <div className="w-full max-w-lg rounded border border-border bg-white p-4">
             <h3 className="text-[14px] font-semibold">Edit Meta Description</h3>
             <div className="mt-3 space-y-1">
               <textarea
                 value={editedMetaDescription}
                 onChange={(e) => setEditedMetaDescription(e.target.value)}
-                className="min-h-[120px] w-full rounded-[3px] border border-[#E1E1E1] px-3 py-2 text-[13px] outline-none focus:border-[#0078D4]"
+                className="min-h-[120px] w-full rounded-sm border border-border px-3 py-2 text-[13px] outline-none focus:border-primary"
               />
-              <p className={`text-right text-[12px] ${editedMetaDescription.length > META_MAX ? 'text-red-600' : 'text-[#666]'}`}>
+              <p className={`text-right text-[12px] ${editedMetaDescription.length > META_MAX ? 'text-red-600' : 'text-muted-foreground'}`}>
                 {editedMetaDescription.length}/{META_MAX}
               </p>
             </div>
@@ -267,7 +267,7 @@ export default function PostInfoSidepanel({
               <Button
                 onClick={saveMetaDescription}
                 disabled={saving || editedMetaDescription.length > META_MAX}
-                className="bg-[#0078D4] hover:bg-[#106EBE]"
+                className="bg-primary hover:bg-primary-hover"
               >
                 {saving ? 'Saving...' : 'Save'}
               </Button>

@@ -41,11 +41,11 @@ export default function LoginPage() {
       </p>
 
       {/* Demo credentials */}
-      <div className="mt-6 rounded-sm border border-[#DEECF9] bg-[#F0F6FF] p-3">
+      <div className="mt-6 rounded-sm border border-info-light bg-info-light p-3">
         <p className="text-[11px] font-semibold text-primary uppercase tracking-wide mb-1.5">
           Demo Accounts
         </p>
-        <div className="space-y-0.5 text-[12px] text-[#505050]">
+        <div className="space-y-0.5 text-[12px] text-muted-foreground">
           <p>Admin: <span className="font-semibold text-foreground">admin@demo.com</span> / <span className="font-semibold text-foreground">admin</span></p>
           <p>Client: <span className="font-semibold text-foreground">client@demo.com</span> / <span className="font-semibold text-foreground">client</span></p>
         </div>
@@ -88,7 +88,7 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div className="rounded-sm border border-[#FDE7E9] bg-[#FDE7E9] px-3 py-2">
+          <div className="rounded-sm border border-destructive/20 bg-destructive/10 px-3 py-2">
             <p className="text-[12px] text-destructive">{error}</p>
           </div>
         )}

@@ -6,7 +6,7 @@ interface ContextLoadingProps {
 
 export function ContextLoading({ showQuillo: _showQuillo = true }: ContextLoadingProps) {
   return (
-    <div className="relative mb-6 mt-2 border-l-4 border-[#1976D2] bg-[#f8f9fa] p-6">
+    <div className="relative mb-6 mt-2 border-l-4 border-primary bg-muted p-6">
       <div className="mb-4">
         <Skeleton className="h-8 w-[30%]" />
       </div>

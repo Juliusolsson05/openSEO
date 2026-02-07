@@ -135,13 +135,13 @@ export default function BlogPreviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F2F2F2] text-[#1f1f1f] [font-family:'Segoe_UI',SegoeUI,Segoe_UI_Web,Arial,sans-serif]">
+    <div className="min-h-screen bg-background text-foreground [font-family:'Segoe_UI',SegoeUI,Segoe_UI_Web,Arial,sans-serif]">
       {showHeaderFooter && (
-        <header className="h-20 border-b border-[#d9d9d9] bg-white">
+        <header className="h-20 border-b border-border bg-white">
           <div className="mx-auto flex h-full w-full max-w-[1280px] items-center px-6">
-            <div className="mr-3 h-10 w-10 rounded-[3px] bg-[#0078D4]" />
+            <div className="mr-3 h-10 w-10 rounded-sm bg-primary" />
             <div className="text-xl font-semibold">{companyName} Example Blog</div>
-            <nav className="ml-auto hidden items-center gap-6 text-sm text-[#333] md:flex">
+            <nav className="ml-auto hidden items-center gap-6 text-sm text-foreground md:flex">
               <span>Products</span>
               <span>About Us</span>
               <span>Support</span>
@@ -151,7 +151,7 @@ export default function BlogPreviewPage() {
         </header>
       )}
 
-      <div className="fixed left-4 top-24 z-50 flex flex-col gap-2 rounded-[4px] border border-[#d9d9d9] bg-white p-2">
+      <div className="fixed left-4 top-24 z-50 flex flex-col gap-2 rounded border border-border bg-white p-2">
         <Button variant="ghost" size="icon" onClick={() => router.push(`/blog/${postId}`)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -175,7 +175,7 @@ export default function BlogPreviewPage() {
             )}
 
             {!loading && error && (
-              <div className="mx-auto max-w-[720px] rounded-[4px] border border-[#d9d9d9] bg-white p-8 text-center">
+              <div className="mx-auto max-w-[720px] rounded border border-border bg-white p-8 text-center">
                 Failed to load preview.
                 <div className="mt-4">
                   <Button variant="outline" onClick={() => router.push(`/blog/${postId}`)}>Go back</Button>
@@ -185,7 +185,7 @@ export default function BlogPreviewPage() {
 
             {!loading && !error && post && (
               <article id="post-container" className="mx-auto max-w-[720px]">
-                <div className="mb-4 text-xs text-[#666]">
+                <div className="mb-4 text-xs text-muted-foreground">
                   Home / Blog / {post.title_text.length > 30 ? `${post.title_text.slice(0, 30)}...` : post.title_text}
                 </div>
 
@@ -230,88 +230,88 @@ export default function BlogPreviewPage() {
 
           <aside className="hidden lg:col-span-3 lg:block">
             <div className="sticky top-24 space-y-4">
-              <Card className="rounded-[4px] border-[#d9d9d9] shadow-none">
+              <Card className="rounded border-border shadow-none">
                 <CardHeader>
                   <CardTitle className="text-base">Glossary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {topKeywords.length ? topKeywords.map((kw) => (
-                    <div key={kw.keyword} className="border-b border-[#eee] pb-2 last:border-0">
-                      <p className="text-sm font-semibold text-[#0078D4]">{kw.keyword}</p>
-                      <p className="text-xs text-[#666]">{kw.description}</p>
+                    <div key={kw.keyword} className="border-b border-border pb-2 last:border-0">
+                      <p className="text-sm font-semibold text-primary">{kw.keyword}</p>
+                      <p className="text-xs text-muted-foreground">{kw.description}</p>
                     </div>
-                  )) : <p className="text-sm text-[#666]">No linked keywords</p>}
+                  )) : <p className="text-sm text-muted-foreground">No linked keywords</p>}
                 </CardContent>
               </Card>
 
-              <Card className="rounded-[4px] border-[#d9d9d9] shadow-none">
+              <Card className="rounded border-border shadow-none">
                 <CardHeader>
                   <CardTitle className="text-base">Related Posts</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {post?.linked_posts?.slice(0, 5).map((linked) => (
-                    <Link key={linked.id} href={`/blog/${linked.id}`} className="block rounded-[4px] border border-[#d9d9d9] p-2 hover:border-[#0078D4]">
+                    <Link key={linked.id} href={`/blog/${linked.id}`} className="block rounded border border-border p-2 hover:border-primary">
                       {linked.cover_image?.url && (
-                        <img src={linked.cover_image.url} alt="" className="mb-2 h-24 w-full rounded-[2px] object-cover" />
+                        <img src={linked.cover_image.url} alt="" className="mb-2 h-24 w-full rounded-sm object-cover" />
                       )}
                       <p className="text-sm font-semibold">{linked.title_text}</p>
-                      <p className="mt-1 line-clamp-2 text-xs text-[#666]">{linked.excerpt}</p>
+                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{linked.excerpt}</p>
                     </Link>
                   ))}
                 </CardContent>
               </Card>
 
-              <Card className="rounded-[4px] border-[#d9d9d9] shadow-none">
+              <Card className="rounded border-border shadow-none">
                 <CardContent className="space-y-4 p-4">
                   <div>
                     <p className="mb-2 text-sm font-semibold">Search</p>
                     <div className="relative">
-                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-[#777]" />
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                       <Input className="pl-8" placeholder="Search articles..." />
                     </div>
                   </div>
 
-                  <div className="rounded-[4px] border border-[#d9d9d9] p-3">
-                    <p className="mb-1 flex items-center gap-2 text-sm font-semibold"><Rocket className="h-4 w-4 text-[#0078D4]" /> Product Showcase</p>
-                    <p className="mb-2 text-xs text-[#666]">Read more about our awesome product that does awesome things.</p>
-                    <Button className="h-8 w-full rounded-[3px] bg-[#0078D4] hover:bg-[#006cbd]">Learn More</Button>
+                  <div className="rounded border border-border p-3">
+                    <p className="mb-1 flex items-center gap-2 text-sm font-semibold"><Rocket className="h-4 w-4 text-primary" /> Product Showcase</p>
+                    <p className="mb-2 text-xs text-muted-foreground">Read more about our awesome product that does awesome things.</p>
+                    <Button className="h-8 w-full rounded-sm bg-primary hover:bg-primary-hover">Learn More</Button>
                   </div>
 
                   <div>
                     <p className="mb-2 text-sm font-semibold">Featured Authors</p>
                     <div className="space-y-2">
                       {featuredAuthors.map((author) => (
-                        <div key={author.name} className="rounded-[4px] border border-[#d9d9d9] p-2">
+                        <div key={author.name} className="rounded border border-border p-2">
                           <p className="text-sm font-medium">{author.name}</p>
-                          <p className="text-xs text-[#666]">{author.role}</p>
+                          <p className="text-xs text-muted-foreground">{author.role}</p>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="rounded-[4px] border border-[#d9d9d9] p-3">
-                    <p className="mb-2 flex items-center gap-2 text-sm font-semibold"><Mail className="h-4 w-4 text-[#0078D4]" /> Newsletter</p>
+                  <div className="rounded border border-border p-3">
+                    <p className="mb-2 flex items-center gap-2 text-sm font-semibold"><Mail className="h-4 w-4 text-primary" /> Newsletter</p>
                     <Input placeholder="Enter your email" />
-                    <Button className="mt-2 h-8 w-full rounded-[3px] bg-[#0078D4] hover:bg-[#006cbd]">Subscribe</Button>
+                    <Button className="mt-2 h-8 w-full rounded-sm bg-primary hover:bg-primary-hover">Subscribe</Button>
                   </div>
 
                   <div>
-                    <p className="mb-2 flex items-center gap-2 text-sm font-semibold"><Tag className="h-4 w-4 text-[#0078D4]" /> Trending Topics</p>
+                    <p className="mb-2 flex items-center gap-2 text-sm font-semibold"><Tag className="h-4 w-4 text-primary" /> Trending Topics</p>
                     <div className="flex flex-wrap gap-2">
                       {trendingTopics.map((topic) => (
-                        <span key={topic} className="rounded-[3px] border border-[#d9d9d9] px-2 py-1 text-xs">{topic}</span>
+                        <span key={topic} className="rounded-sm border border-border px-2 py-1 text-xs">{topic}</span>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <p className="mb-2 flex items-center gap-2 text-sm font-semibold"><Calendar className="h-4 w-4 text-[#0078D4]" /> Upcoming Events</p>
+                    <p className="mb-2 flex items-center gap-2 text-sm font-semibold"><Calendar className="h-4 w-4 text-primary" /> Upcoming Events</p>
                     <div className="space-y-2">
                       {upcomingEvents.map((event) => (
-                        <div key={event.title} className="rounded-[4px] border border-[#d9d9d9] p-2">
+                        <div key={event.title} className="rounded border border-border p-2">
                           <p className="text-sm font-medium">{event.title}</p>
-                          <p className="text-xs text-[#666]">{event.date}</p>
-                          <p className="text-xs text-[#888]">{event.location}</p>
+                          <p className="text-xs text-muted-foreground">{event.date}</p>
+                          <p className="text-xs text-muted-foreground">{event.location}</p>
                         </div>
                       ))}
                     </div>
@@ -324,26 +324,26 @@ export default function BlogPreviewPage() {
       </main>
 
       {showHeaderFooter && (
-        <footer className="border-t border-[#d9d9d9] bg-white">
+        <footer className="border-t border-border bg-white">
           <div className="mx-auto grid w-full max-w-[1280px] grid-cols-1 gap-6 px-6 py-8 md:grid-cols-4">
             <div>
               <h3 className="mb-3 text-base font-semibold">{companyName}</h3>
-              <p className="text-sm text-[#666]">A preview-only footer to simulate a real public website around this blog post.</p>
+              <p className="text-sm text-muted-foreground">A preview-only footer to simulate a real public website around this blog post.</p>
             </div>
             <div>
               <h4 className="mb-3 text-sm font-semibold">Quick Links</h4>
-              <ul className="space-y-2 text-sm text-[#666]"><li>Home</li><li>Products</li><li>Services</li></ul>
+              <ul className="space-y-2 text-sm text-muted-foreground"><li>Home</li><li>Products</li><li>Services</li></ul>
             </div>
             <div>
               <h4 className="mb-3 text-sm font-semibold">Resources</h4>
-              <ul className="space-y-2 text-sm text-[#666]"><li>Documentation</li><li>FAQ</li><li>Blog</li></ul>
+              <ul className="space-y-2 text-sm text-muted-foreground"><li>Documentation</li><li>FAQ</li><li>Blog</li></ul>
             </div>
             <div>
               <h4 className="mb-3 text-sm font-semibold">Contact</h4>
-              <ul className="space-y-2 text-sm text-[#666]"><li>123 Preview St.</li><li>fake@example.com</li><li>(555) 123-4567</li></ul>
+              <ul className="space-y-2 text-sm text-muted-foreground"><li>123 Preview St.</li><li>fake@example.com</li><li>(555) 123-4567</li></ul>
             </div>
           </div>
-          <div className="border-t border-[#d9d9d9] py-4 text-center text-xs text-[#777]">
+          <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">
             © {new Date().getFullYear()} {companyName}. All rights reserved. (Preview Mode)
           </div>
         </footer>

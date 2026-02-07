@@ -260,7 +260,7 @@ export default function BlogPage() {
                       className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#EBF3FC] to-[#F2F2F2]">
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-info-light to-background">
                       <FileText className="h-8 w-8 text-muted-foreground/20" />
                     </div>
                   )}
@@ -324,7 +324,7 @@ export default function BlogPage() {
               return (
                 <div
                   key={post.id}
-                  className="flex items-center gap-4 px-4 py-3 border-b border-border/60 last:border-0 hover:bg-[#F8F8F8] cursor-pointer transition-colors group"
+                  className="flex items-center gap-4 px-4 py-3 border-b border-border/60 last:border-0 hover:bg-muted cursor-pointer transition-colors group"
                   onClick={() => router.push(`/blog/${post.id}`)}
                 >
                   <div className="w-16 h-11 rounded-sm overflow-hidden bg-secondary shrink-0 border border-border/60">

@@ -11,7 +11,7 @@ interface BlogPostCalendarProps {
   blogTitles: BlogTitleItem[]
 }
 
-const PURPLE_STEPS = ['#FFFFFF', '#EFE7FF', '#D5C0FF', '#B694FF', '#8B5CF6']
+const PURPLE_STEPS = ['#FFFFFF', '#EFE7FF', '#D5C0FF', '#B694FF', '#8B5CF6'] // theme: visualization palette
 
 function dateKey(d: Date) {
   return d.toISOString().slice(0, 10)
@@ -94,7 +94,7 @@ export function BlogPostCalendar({ blogTitles }: BlogPostCalendarProps) {
                   {week.map((day, di) => (
                     <div
                       key={`${wi}-${di}`}
-                      className="h-[12px] w-[12px] rounded-[2px] border border-[#EAEAEA]"
+                      className="h-[12px] w-[12px] rounded-sm border border-border"
                       style={{ background: colorForCount(day.count) }}
                       title={`${day.date.toDateString()} — ${day.count} post${day.count === 1 ? '' : 's'}`}
                     />

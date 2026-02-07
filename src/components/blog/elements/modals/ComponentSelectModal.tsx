@@ -71,7 +71,7 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
   return (
     <>
       <Modal open={open} onClose={handleClose} zClass="z-[70]">
-        <div className="bg-background rounded-sm border border-[#dbe6f3] w-full max-w-5xl p-5 max-h-[85vh] overflow-y-auto">
+        <div className="bg-background rounded-sm border border-info-light w-full max-w-5xl p-5 max-h-[85vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[16px] font-semibold">Add Element</h2>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleClose}>
@@ -79,7 +79,7 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
             </Button>
           </div>
 
-          <div className="inline-flex rounded-sm border border-[#dbe6f3] p-1 mb-4 bg-[#f7fbff]">
+          <div className="inline-flex rounded-sm border border-info-light p-1 mb-4 bg-info-light">
             <Button
               type="button"
               size="sm"
@@ -107,7 +107,7 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
                   <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
                   <Input className="h-8 pl-8" placeholder="Search elements" value={search} onChange={(e) => setSearch(e.target.value)} />
                 </div>
-                <div className="inline-flex rounded-sm border border-[#dbe6f3] p-0.5 bg-[#f7fbff]">
+                <div className="inline-flex rounded-sm border border-info-light p-0.5 bg-info-light">
                   <Button type="button" size="icon" variant={viewMode === 'grid' ? 'default' : 'ghost'} className="h-7 w-7" onClick={() => setViewMode('grid')}>
                     <LayoutGrid className="h-3.5 w-3.5" />
                   </Button>
@@ -126,7 +126,7 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
                         key={type}
                         role="button"
                         tabIndex={0}
-                        className={`text-left border rounded-sm p-3 transition-all cursor-pointer ${selected === type ? 'border-[#0078D4] bg-[#0078D4]/10 shadow-[0_0_0_1px_#0078D4]' : 'border-[#dbe6f3] hover:border-[#0078D4]/40 hover:bg-[#0078D4]/5'}`}
+                        className={`text-left border rounded-sm p-3 transition-all cursor-pointer ${selected === type ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'border-info-light hover:border-primary/40 hover:bg-primary/5'}`}
                         onClick={() => setSelected(type)}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelected(type) }}
                       >
@@ -140,7 +140,7 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 text-[#0078D4]"
+                              className="h-6 w-6 text-primary"
                               onClick={(e) => {
                                 e.stopPropagation()
                                 setPreviewType(type)
@@ -163,7 +163,7 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
                         key={type}
                         role="button"
                         tabIndex={0}
-                        className={`border rounded-sm px-3 py-2 transition-all cursor-pointer flex items-center justify-between ${selected === type ? 'border-[#0078D4] bg-[#0078D4]/10 shadow-[0_0_0_1px_#0078D4]' : 'border-[#dbe6f3] hover:border-[#0078D4]/40 hover:bg-[#0078D4]/5'}`}
+                        className={`border rounded-sm px-3 py-2 transition-all cursor-pointer flex items-center justify-between ${selected === type ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'border-info-light hover:border-primary/40 hover:bg-primary/5'}`}
                         onClick={() => setSelected(type)}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelected(type) }}
                       >
@@ -175,7 +175,7 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-[#0078D4]"
+                          className="h-7 w-7 text-primary"
                           onClick={(e) => {
                             e.stopPropagation()
                             setPreviewType(type)
@@ -204,7 +204,7 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
                 <button
                   type="button"
                   key={template.id}
-                  className={`w-full text-left border rounded-sm px-3 py-2 transition-all ${selectedTemplate === template.id ? 'border-[#0078D4] bg-[#0078D4]/10 shadow-[0_0_0_1px_#0078D4]' : 'border-[#dbe6f3] hover:border-[#0078D4]/40 hover:bg-[#0078D4]/5'}`}
+                  className={`w-full text-left border rounded-sm px-3 py-2 transition-all ${selectedTemplate === template.id ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'border-info-light hover:border-primary/40 hover:bg-primary/5'}`}
                   onClick={() => setSelectedTemplate(template.id)}
                 >
                   <div className="font-medium text-[13px]">{template.label}</div>

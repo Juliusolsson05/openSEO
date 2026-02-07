@@ -68,7 +68,7 @@ export default function QuilloAutopilot({ postId }: Props) {
           <button
             onClick={handleClick}
             disabled={isRunning}
-            className={`flex items-center justify-center bg-[#1B1B1F] text-white transition-all hover:bg-[#2D2D33] disabled:opacity-60 ${
+            className={`flex items-center justify-center bg-sidebar text-white transition-all hover:bg-sidebar-muted disabled:opacity-60 ${
               collapsed
                 ? 'h-16 w-12 rounded-l-full'
                 : 'h-14 w-14 rounded-full shadow-lg'

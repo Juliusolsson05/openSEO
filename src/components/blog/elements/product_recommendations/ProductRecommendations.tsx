@@ -52,7 +52,7 @@ export function ProductRecommendations({
       />
 
       <p
-        className="text-[1.125rem] font-light leading-[1.77778] text-[#213343] custom-content"
+        className="text-[1.125rem] font-light leading-[1.77778] text-foreground custom-content"
         dangerouslySetInnerHTML={{ __html: renderMarkdown(content?.introduction ?? '') }}
       />
 

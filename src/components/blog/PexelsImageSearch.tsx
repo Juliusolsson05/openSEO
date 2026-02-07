@@ -82,12 +82,12 @@ export default function PexelsImageSearch({ modelValue, initialSearchTerm = '', 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <Card className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-[4px] border-[#E1E1E1] bg-white">
-        <CardHeader className="flex-row items-center justify-between rounded-t-[4px] bg-[#0078D4] py-3 text-white">
+      <Card className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded border-border bg-white">
+        <CardHeader className="flex-row items-center justify-between rounded-t-[4px] bg-primary py-3 text-white">
           <CardTitle className="text-[14px]">Image Search</CardTitle>
           <Button variant="ghost" className="text-white hover:bg-white/20" onClick={() => onOpenChange(false)}>✕</Button>
         </CardHeader>
-        <CardContent className="space-y-4 bg-[#F2F2F2] pt-5 text-[13px]">
+        <CardContent className="space-y-4 bg-background pt-5 text-[13px]">
           {!hasSearched ? <p className="text-center text-[13px]">Search through millions of stock photos, powered by Pexels.</p> : null}
 
           <div className="flex gap-2">
@@ -97,7 +97,7 @@ export default function PexelsImageSearch({ modelValue, initialSearchTerm = '', 
               onKeyDown={(e) => e.key === 'Enter' && searchImages(1)}
               placeholder="Search for images"
               disabled={isLoading}
-              className="rounded-[3px] border-[#E1E1E1] bg-white"
+              className="rounded-sm border-border bg-white"
             />
             <Button onClick={() => searchImages(1)} disabled={isLoading}>Search</Button>
           </div>
@@ -105,8 +105,8 @@ export default function PexelsImageSearch({ modelValue, initialSearchTerm = '', 
           {isLoading ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {Array.from({ length: perPage }).map((_, i) => (
-                <Card key={i} className="rounded-[3px] border-[#E1E1E1] p-2">
-                  <Skeleton className="h-[160px] w-full rounded-[3px]" />
+                <Card key={i} className="rounded-sm border-border p-2">
+                  <Skeleton className="h-[160px] w-full rounded-sm" />
                   <Skeleton className="mt-2 h-4 w-2/3" />
                 </Card>
               ))}
@@ -114,7 +114,7 @@ export default function PexelsImageSearch({ modelValue, initialSearchTerm = '', 
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {images.map((image) => (
-                <Card key={image.id} className="overflow-hidden rounded-[3px] border-[#E1E1E1]">
+                <Card key={image.id} className="overflow-hidden rounded-sm border-border">
                   <img src={image.src.medium} alt={image.photographer} className="h-36 w-full cursor-pointer object-cover" onClick={() => { setSelectedImage(image); setImageDialog(true) }} />
                   <CardContent className="p-2">
                     <p className="truncate text-[12px]">{image.photographer}</p>
@@ -139,7 +139,7 @@ export default function PexelsImageSearch({ modelValue, initialSearchTerm = '', 
 
       {imageDialog && selectedImage ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" onClick={() => setImageDialog(false)}>
-          <Card className="w-full max-w-4xl rounded-[4px]" onClick={(e) => e.stopPropagation()}>
+          <Card className="w-full max-w-4xl rounded" onClick={(e) => e.stopPropagation()}>
             <img src={selectedImage.src.large} alt={selectedImage.photographer} className="max-h-[70vh] w-full object-contain" />
             <CardContent className="flex items-center justify-between p-4">
               <p className="text-[13px]">{selectedImage.photographer}</p>

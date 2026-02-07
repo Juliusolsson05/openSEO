@@ -12,7 +12,7 @@ interface ElementBreakdownProps {
   } | null
 }
 
-const ELEMENT_COLORS: Record<string, string> = {
+const ELEMENT_COLORS: Record<string, string> = { // theme: chart palette
   paragraph: '#0078D4',
   introduction: '#106EBE',
   conclusion: '#005A9E',
@@ -107,7 +107,7 @@ export function ElementBreakdown({ elementBreakdown }: ElementBreakdownProps) {
                 tick={{ fontSize: 11 }}
               />
               <Tooltip
-                contentStyle={{ fontSize: 12, borderRadius: 3, border: '1px solid #E1E1E1' }}
+                contentStyle={{ fontSize: 12, borderRadius: 3, border: '1px solid #E1E1E1' /* theme: border */ }}
                 formatter={(value) => [String(value), 'Count']}
               />
               <Bar dataKey="count" radius={[0, 3, 3, 0]}>
@@ -132,8 +132,8 @@ export function ElementBreakdown({ elementBreakdown }: ElementBreakdownProps) {
                 return (
                   <div
                     key={i}
-                    className="flex h-7 w-7 items-center justify-center rounded-[2px] border border-[#EAEAEA] text-[9px]"
-                    style={{ backgroundColor: `rgba(0, 120, 212, ${Math.max(0.05, intensity / 100)})`, color: intensity > 50 ? '#fff' : '#333' }}
+                    className="flex h-7 w-7 items-center justify-center rounded-sm border border-border text-[9px]"
+                    style={{ backgroundColor: `rgba(0, 120, 212, ${Math.max(0.05, intensity / 100)})`, color: intensity > 50 ? '#fff' : '#333' /* theme: foreground */ }}
                     title={`Post ${i + 1}: ${count} elements`}
                   >
                     {count}

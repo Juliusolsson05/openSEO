@@ -23,11 +23,11 @@ export function ListParagraphPreview({ content }: PreviewComponentProps) {
       />
 
       <div
-        className="my-4 text-lg font-light leading-8 text-[#213343]"
+        className="my-4 text-lg font-light leading-8 text-foreground"
         dangerouslySetInnerHTML={{ __html: renderMarkdown(data.text_before_list) }}
       />
 
-      <ul className="my-4 list-disc space-y-1 pl-5 text-lg font-light leading-8 text-[#213343]">
+      <ul className="my-4 list-disc space-y-1 pl-5 text-lg font-light leading-8 text-foreground">
         {items.map((item, index) => {
           if (item.includes(':')) {
             const [label, ...rest] = item.split(':')
@@ -48,7 +48,7 @@ export function ListParagraphPreview({ content }: PreviewComponentProps) {
       </ul>
 
       <div
-        className="my-4 text-lg font-light leading-8 text-[#213343]"
+        className="my-4 text-lg font-light leading-8 text-foreground"
         dangerouslySetInnerHTML={{ __html: renderMarkdown(data.text_after_list) }}
       />
     </BasePreview>

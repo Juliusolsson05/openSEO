@@ -37,7 +37,7 @@ export default function PublishingPage() {
     <div className="space-y-4" style={{ fontSize: 13 }}>
       <h1 className="text-xl font-semibold">Publishing</h1>
 
-      <Card className="rounded-sm border-[#E1E1E1] bg-white">
+      <Card className="rounded-sm border-border bg-white">
         <CardHeader>
           <CardTitle>API Configuration</CardTitle>
         </CardHeader>

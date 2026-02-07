@@ -6,7 +6,7 @@ interface StatisticLoadingProps {
 
 export function StatisticLoading({ showQuillo: _showQuillo = true }: StatisticLoadingProps) {
   return (
-    <div className="my-5 rounded-lg bg-[#f5f5f5] p-[30px] text-center">
+    <div className="my-5 rounded-lg bg-secondary p-[30px] text-center">
       <div className="mx-auto mb-4">
         <Skeleton className="mx-auto h-7 w-[40%]" />
       </div>

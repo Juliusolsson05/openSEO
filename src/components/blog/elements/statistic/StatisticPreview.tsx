@@ -18,7 +18,7 @@ export function StatisticPreview({ content }: PreviewComponentProps) {
 
   return (
     <BasePreview content={content}>
-      <div className="rounded-lg bg-[#f5f5f5] p-[30px]">
+      <div className="rounded-lg bg-secondary p-[30px]">
         <h3
           className="mb-4 text-center text-2xl font-semibold custom-content"
           dangerouslySetInnerHTML={{ __html: titleHtml }}
@@ -47,7 +47,7 @@ export function StatisticPreview({ content }: PreviewComponentProps) {
         </div>
 
         <p
-          className="mt-4 text-center text-[1.125rem] font-light leading-[1.77778] text-[#213343] custom-content"
+          className="mt-4 text-center text-[1.125rem] font-light leading-[1.77778] text-foreground custom-content"
           dangerouslySetInnerHTML={{ __html: descriptionHtml }}
         />
       </div>

@@ -37,7 +37,7 @@ function DataTable<T extends OversizedSeoTitle | OversizedMetaDescription>({
       <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide">{heading}</p>
       <div className="overflow-x-auto rounded-sm border border-border">
         <table className="w-full text-left text-[12px]">
-          <thead className="bg-[#F8F8F8]">
+          <thead className="bg-muted">
             <tr>
               <th className="border-b border-border px-3 py-2">Post ID</th>
               <th className="border-b border-border px-3 py-2">Title/Description</th>
@@ -49,7 +49,7 @@ function DataTable<T extends OversizedSeoTitle | OversizedMetaDescription>({
             {rows.map((row) => (
               <tr key={`${row.post_id}-${row.extra_chars}`}>
                 <td className="border-b border-border px-3 py-2">{row.post_id}</td>
-                <td className={`border-b border-border px-3 py-2 ${highlight ? 'bg-[#FFECEC]' : ''}`}>
+                <td className={`border-b border-border px-3 py-2 ${highlight ? 'bg-destructive/10' : ''}`}>
                   {getText(row)}
                 </td>
                 <td className="border-b border-border px-3 py-2">{row.focus_keyword}</td>

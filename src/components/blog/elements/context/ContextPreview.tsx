@@ -74,14 +74,14 @@ export function ContextPreview({ content, elements }: ContextPreviewProps) {
 
   return (
     <BasePreview content={content}>
-      <div className="mb-6 mt-2 border-l-4 border-[#1976D2] bg-[#f8f9fa] p-6">
-        <h2 className="mb-4 text-2xl font-semibold text-[#2c3e50]">Table of Contents</h2>
+      <div className="mb-6 mt-2 border-l-4 border-primary bg-muted p-6">
+        <h2 className="mb-4 text-2xl font-semibold text-foreground">Table of Contents</h2>
         <hr className="mb-4 border-border" />
 
-        <ol className="m-0 list-decimal space-y-2 pl-8 marker:font-semibold marker:text-[#1976D2]">
+        <ol className="m-0 list-decimal space-y-2 pl-8 marker:font-semibold marker:text-primary">
           {tableOfContents.map((item, index) => (
             <li key={`${item.id}-${index}`}>
-              <a href={`#section-${item.id}`} className="text-base leading-6 text-[#2c3e50] hover:text-[#1976D2] hover:underline">
+              <a href={`#section-${item.id}`} className="text-base leading-6 text-foreground hover:text-primary hover:underline">
                 <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(item.title) }} />
               </a>
             </li>

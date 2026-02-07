@@ -36,16 +36,16 @@ export default function SelectCTAModal({ modelValue, onOpenChange, onCtaSelected
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <Card className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[4px] border-[#E1E1E1] bg-white">
-        <CardHeader className="flex-row items-center justify-between rounded-t-[4px] bg-[#0078D4] py-3 text-white">
+      <Card className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded border-border bg-white">
+        <CardHeader className="flex-row items-center justify-between rounded-t-[4px] bg-primary py-3 text-white">
           <CardTitle>Choose a CTA</CardTitle>
           <Button variant="ghost" className="text-white hover:bg-white/20" onClick={close}>✕</Button>
         </CardHeader>
-        <CardContent className="bg-[#F2F2F2] pt-5 text-[13px]">
+        <CardContent className="bg-background pt-5 text-[13px]">
           {isLoading ? (
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i} className="rounded-[3px] border-[#E1E1E1] p-3">
+                <Card key={i} className="rounded-sm border-border p-3">
                   <Skeleton className="h-40 w-full" />
                   <Skeleton className="mt-2 h-4 w-1/2" />
                 </Card>
@@ -56,13 +56,13 @@ export default function SelectCTAModal({ modelValue, onOpenChange, onCtaSelected
               {flatCtas.map((cta) => (
                 <Card
                   key={cta.id}
-                  className={`cursor-pointer overflow-hidden rounded-[3px] border-2 ${selectedCTA === cta.id ? 'border-[#0078D4]' : 'border-[#E1E1E1]'}`}
+                  className={`cursor-pointer overflow-hidden rounded-sm border-2 ${selectedCTA === cta.id ? 'border-primary' : 'border-border'}`}
                   onClick={() => setSelectedCTA(cta.id)}
                 >
                   <img src={fullImage(cta.image)} alt={cta.title} className="h-44 w-full object-cover" />
                   <CardContent className="p-3">
                     <p className="text-[13px] font-semibold">{cta.title}</p>
-                    <p className="line-clamp-2 text-[12px] text-[#616161]">{cta.description}</p>
+                    <p className="line-clamp-2 text-[12px] text-muted-foreground">{cta.description}</p>
                   </CardContent>
                 </Card>
               ))}
