@@ -28,6 +28,7 @@ const extractDomain = (url: string): string => {
 export function ToolRecommendation({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ToolRecommendationProps) {
   const features = Array.isArray(content?.features) ? content.features : []
   const websiteUrl = content?.companyUrl || content?.companyWebsite || ''
+  const brandColor = content?.headerColor && /^#[0-9a-fA-F]{6}$/.test(content.headerColor) ? content.headerColor : null
 
   return (
     <BaseElement
@@ -37,9 +38,9 @@ export function ToolRecommendation({ content, blogId, elementId, onContentUpdate
       onContentUpdated={onContentUpdated}
       onElementDeleted={onElementDeleted}
     >
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="overflow-hidden rounded-xl border bg-card shadow-sm" style={{ borderColor: brandColor || undefined }}>
         {/* Header */}
-        <div className="flex items-center gap-5 border-b border-border px-6 py-5">
+        <div className="flex items-center gap-5 border-b px-6 py-5" style={{ borderColor: brandColor || undefined, backgroundColor: brandColor ? `${brandColor}08` : undefined }}>
           <img
             src={`https://img.logo.dev/${extractDomain(websiteUrl)}?token=pk_PJnue9akRVmT-qo6GmYjhA`}
             alt={`${content?.title || 'Tool'} Logo`}
@@ -63,7 +64,8 @@ export function ToolRecommendation({ content, blogId, elementId, onContentUpdate
               href={websiteUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex shrink-0 items-center gap-1.5 rounded-md border border-primary bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              className="flex shrink-0 items-center gap-1.5 rounded-md px-4 py-2 text-[13px] font-medium text-white transition-colors"
+              style={{ backgroundColor: brandColor || '#0078D4' }}
             >
               Visit Site
               <ExternalLink className="h-3.5 w-3.5" />
