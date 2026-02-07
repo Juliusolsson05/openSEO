@@ -61,5 +61,16 @@ ${JSON.stringify(schema, null, 2)}`;
     messages.push({ role: 'assistant', content: [{ type: 'text', text: current }] });
   }
 
-  return JSON.parse(current);
+  // Strip markdown code fences if present (```json ... ```)
+  let cleaned = current.trim()
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
+  }
+
+  try {
+    return JSON.parse(cleaned)
+  } catch (e) {
+    console.error('[improveLanguage] Failed to parse AI response as JSON:', cleaned.slice(0, 500))
+    throw new Error(`AI returned invalid JSON: ${e instanceof Error ? e.message : String(e)}`)
+  }
 }
