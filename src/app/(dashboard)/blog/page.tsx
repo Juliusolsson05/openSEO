@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -39,9 +39,12 @@ interface BlogPostSummary {
   excerpt: string
 }
 
-function unwrapList<T>(raw: any): T[] {
-  if (Array.isArray(raw)) return raw
-  return raw?.data ?? raw?.results ?? raw?.items ?? []
+function unwrapList<T>(raw: unknown): T[] {
+  if (Array.isArray(raw)) return raw as T[]
+  if (!raw || typeof raw !== 'object') return []
+  const obj = raw as Record<string, unknown>
+  const nested = obj.data ?? obj.results ?? obj.items
+  return Array.isArray(nested) ? (nested as T[]) : []
 }
 
 const statusConfig = (status: number | string, published: boolean) => {
@@ -63,12 +66,14 @@ export default function BlogPage() {
   const [view, setView] = useState<'list' | 'grid'>('list')
   const [searchQuery, setSearchQuery] = useState('')
   const [posts, setPosts] = useState<BlogPostSummary[]>([])
-  const [filteredPosts, setFilteredPosts] = useState<BlogPostSummary[]>([])
   const [titles, setTitles] = useState<BlogTitle[]>([])
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
 
-  const postsLeftToGenerate = titles.filter((t) => t.status === 1 || t.status === 'TO_BE_GENERATED' || (t as any).status === 'to_be_generated').length
+  const postsLeftToGenerate = titles.filter((t) => {
+    const status = typeof t.status === 'string' ? t.status.toUpperCase() : t.status
+    return status === 1 || status === 'TO_BE_GENERATED'
+  }).length
   const publishedCount = posts.filter((p) => p.is_published).length
   const draftCount = posts.filter((p) => !p.is_published).length
 
@@ -76,8 +81,8 @@ export default function BlogPage() {
     setLoading(true)
     try {
       const [postsRes, titlesRes] = await Promise.all([
-        api<any>('/api/aurora/blog/posts/'),
-        api<any>('/api/aurora/blog/titles/'),
+        api<unknown>('/api/aurora/blog/posts/'),
+        api<unknown>('/api/aurora/blog/titles/'),
       ])
       if (postsRes.data) setPosts(unwrapList<BlogPostSummary>(postsRes.data))
       if (titlesRes.data) setTitles(unwrapList<BlogTitle>(titlesRes.data))
@@ -87,27 +92,25 @@ export default function BlogPage() {
     setLoading(false)
   }, [])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchData() }, [fetchData])
 
   useEffect(() => {
     const fromQuery = searchParams.get('search')
-    if (fromQuery) setSearchQuery(fromQuery)
-  }, [searchParams])
-
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredPosts(posts)
-    } else {
-      const q = searchQuery.toLowerCase()
-      setFilteredPosts(
-        posts.filter(
-          (p) =>
-            p.title_text.toLowerCase().includes(q) ||
-            p.focus_keyword?.toLowerCase().includes(q) ||
-            p.excerpt?.toLowerCase().includes(q)
-        )
-      )
+    if (fromQuery && fromQuery !== searchQuery) {
+      queueMicrotask(() => setSearchQuery(fromQuery))
     }
+  }, [searchParams, searchQuery])
+
+  const filteredPosts = useMemo(() => {
+    if (!searchQuery.trim()) return posts
+    const q = searchQuery.toLowerCase()
+    return posts.filter(
+      (p) =>
+        p.title_text.toLowerCase().includes(q) ||
+        p.focus_keyword?.toLowerCase().includes(q) ||
+        p.excerpt?.toLowerCase().includes(q),
+    )
   }, [searchQuery, posts])
 
   const generateNext = async () => {

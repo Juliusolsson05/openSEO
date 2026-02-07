@@ -4,6 +4,7 @@ import type { Session } from 'next-auth'
 import { auth } from '@/lib/auth'
 import { AppError, ForbiddenError, UnauthorizedError } from '@/server/api/errors'
 import { error as errorResponse } from '@/server/api/response'
+import { createRequestId } from '@/server/api/request-id'
 
 export type SessionUser = NonNullable<Session['user']>
 
@@ -13,6 +14,7 @@ export type HandlerContext = {
   body: unknown
   params: Record<string, string | string[]>
   searchParams: URLSearchParams
+  requestId: string
 }
 
 type RouteHandler = (
@@ -34,6 +36,8 @@ export function apiHandler(handler: RouteHandler, options: ApiHandlerOptions = {
     req: NextRequest,
     context: { params: Promise<Record<string, string | string[]>> },
   ): Promise<NextResponse> => {
+    const requestId = req.headers.get('x-request-id') || createRequestId()
+
     try {
       const requireAuth = options.auth !== false
 
@@ -77,23 +81,37 @@ export function apiHandler(handler: RouteHandler, options: ApiHandlerOptions = {
         }
       }
 
-      return await handler(
+      const response = await handler(
         {
           user,
           companyId,
           body,
           params,
           searchParams,
+          requestId,
         },
         req,
       )
+
+      response.headers.set('x-request-id', requestId)
+      return response
     } catch (err) {
       if (err instanceof AppError) {
-        return errorResponse(err.message, err.statusCode, err.details)
+        const response = errorResponse(err.message, err.statusCode, err.details, {
+          code: err.code,
+          requestId,
+        })
+        response.headers.set('x-request-id', requestId)
+        return response
       }
 
-      console.error('Unhandled API error', err)
-      return errorResponse('Internal server error', 500)
+      console.error('Unhandled API error', { requestId, err })
+      const response = errorResponse('Internal server error', 500, undefined, {
+        code: 'INTERNAL_ERROR',
+        requestId,
+      })
+      response.headers.set('x-request-id', requestId)
+      return response
     }
   }
 }
