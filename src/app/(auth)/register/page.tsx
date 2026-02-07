@@ -17,6 +17,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [companyName, setCompanyName] = useState('')
+  const [companyUrl, setCompanyUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -34,14 +36,17 @@ export default function RegisterPage() {
       email,
       password,
       password_confirm: confirm,
+      company_name: companyName,
+      company_url: companyUrl,
     })
 
     if (error) {
-      setError('Could not create account. Please try again.')
+      setError(error.message || 'Could not create account. Please try again.')
       setLoading(false)
       return
     }
 
+    localStorage.setItem('aurora:show-welcome-tour', '1')
     router.push('/login')
   }
 
@@ -67,6 +72,20 @@ export default function RegisterPage() {
           <div>
             <Label className="text-[13px] font-semibold mb-1 block">Confirm password</Label>
             <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="h-9" required />
+          </div>
+
+          <div className="pt-2 border-t border-border">
+            <p className="text-xs text-muted-foreground mb-2">Onboarding</p>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-[13px] font-semibold mb-1 block">Company name</Label>
+                <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="h-9" required />
+              </div>
+              <div>
+                <Label className="text-[13px] font-semibold mb-1 block">Company URL</Label>
+                <Input value={companyUrl} onChange={(e) => setCompanyUrl(e.target.value)} placeholder="https://example.com" className="h-9" required />
+              </div>
+            </div>
           </div>
 
           {error && <p className="text-[12px] text-destructive bg-destructive/10 border border-destructive/20 rounded-sm px-3 py-2">{error}</p>}
