@@ -467,6 +467,67 @@ async function handleAurora(ctx: {
       humanized_element: updated.content,
     })
   }
+  if (path === 'blog/cta/add-cta') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const blogPostId = Number(body.blog_post_id ?? body.blogPostId)
+    const elementId = Number(body.element_id ?? body.elementId)
+    const ctaId = Number(body.cta_id ?? body.ctaId)
+
+    if (!blogPostId || !elementId || !ctaId) {
+      throw new ValidationError('blog_post_id, element_id, and cta_id are required')
+    }
+
+    const blogPost = await prisma.blogPost.findFirst({
+      where: { id: blogPostId, companyId: ctx.companyId },
+      select: { id: true },
+    })
+    if (!blogPost) throw new NotFoundError('Blog post not found')
+
+    const targetElement = await prisma.blogPostElement.findFirst({
+      where: { id: elementId, blogPostId },
+      select: { id: true, blogPostId: true, order: true },
+    })
+    if (!targetElement) throw new NotFoundError('Target element not found')
+
+    const cta = await prisma.cTA.findFirst({
+      where: {
+        id: ctaId,
+        campaign: { companyId: ctx.companyId },
+      },
+      select: { id: true, title: true, description: true, image: true, link: true },
+    })
+    if (!cta) throw new NotFoundError('CTA not found')
+
+    const created = await prisma.$transaction(async (tx) => {
+      await tx.blogPostElement.updateMany({
+        where: {
+          blogPostId,
+          order: { gt: targetElement.order },
+        },
+        data: {
+          order: { increment: 1 },
+        },
+      })
+
+      return tx.blogPostElement.create({
+        data: {
+          blogPostId,
+          element_type: 'CTA' as any,
+          order: targetElement.order + 1,
+          content: {
+            cta_id: cta.id,
+            title: cta.title,
+            description: cta.description,
+            image: cta.image,
+            link: cta.link,
+          },
+        },
+      })
+    })
+
+    return raw(created, 201)
+  }
+
   if (path === 'blog/posts/elements/add-cta') return notImplementedYet()
 
   // TITLES
