@@ -53,14 +53,14 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
     }
   }, [toast])
 
-  const run = async (action: string, fn: () => Promise<void>) => {
-    setLoadingAction(action)
+  const run = async (id: string, label: string, fn: () => Promise<void>) => {
+    setLoadingAction(id)
     try {
       await fn()
-      setToast({ type: 'success', text: `${action} completed` })
+      setToast({ type: 'success', text: `${label} completed` })
       onRefreshPost?.()
     } catch (e: any) {
-      setToast({ type: 'error', text: e?.message || `${action} failed` })
+      setToast({ type: 'error', text: e?.message || `${label} failed` })
     } finally {
       setLoadingAction(null)
     }
@@ -71,7 +71,7 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
       id: 'images',
       icon: ImagePlus,
       label: 'Generate Images',
-      fn: () => run('Generate Images', async () => {
+      fn: () => run('images', 'Generate Images', async () => {
         const { error } = await apiPost('/api/aurora/blog/images/generate/', { post_id: Number(postId), version: 2, magic_prompt: true, gpt_prompt: true })
         if (error) throw error
       }),
@@ -80,7 +80,7 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
       id: 'sync-posts',
       icon: Link2,
       label: 'Sync Related Posts',
-      fn: () => run('Sync Posts', async () => {
+      fn: () => run('sync-posts', 'Sync Posts', async () => {
         const { error } = await apiPost('/api/aurora/blog/posts/sync/recommended/', { post_id: Number(postId) })
         if (error) throw error
       }),
@@ -89,7 +89,7 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
       id: 'sync-keywords',
       icon: KeyRound,
       label: 'Sync Keywords',
-      fn: () => run('Sync Keywords', async () => {
+      fn: () => run('sync-keywords', 'Sync Keywords', async () => {
         const { error } = await apiPost('/api/aurora/blog/posts/sync/keywords/', { post_id: Number(postId), dictionary_id: 1 })
         if (error) throw error
       }),
