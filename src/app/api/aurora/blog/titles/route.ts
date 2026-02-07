@@ -1,8 +1,27 @@
+import { TitleStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { apiHandler } from '@/server/api/handler'
 import { raw } from '@/server/api/response'
 import { validate } from '@/server/api/validate'
 import { listTitlesQuerySchema } from '@/server/validators/title.validators'
+
+const STATUS_TO_NUMBER: Record<TitleStatus, number> = {
+  TO_BE_GENERATED: 1,
+  GENERATED: 2,
+  APPROVED: 3,
+  REJECTED: 4,
+}
+
+function serializeTitle(t: Record<string, unknown>) {
+  return {
+    ...t,
+    status: STATUS_TO_NUMBER[(t.status as TitleStatus)] ?? 1,
+    dateCreated: t.created_at,
+    generatedDate: t.generated_date,
+    scheduledDate: t.scheduled_date,
+    company: t.companyId,
+  }
+}
 
 const handler = apiHandler(async (ctx) => {
   const categoryIds = ctx.searchParams.getAll('category_ids').flatMap((value) =>
@@ -53,7 +72,7 @@ const handler = apiHandler(async (ctx) => {
     prisma.title.count({ where }),
   ])
 
-  return raw({ data, total, page: query.page, pageSize: query.pageSize })
+  return raw({ data: data.map((t) => serializeTitle(t as unknown as Record<string, unknown>)), total, page: query.page, pageSize: query.pageSize })
 })
 
 export const GET = handler
