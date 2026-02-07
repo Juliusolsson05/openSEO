@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import BlogCategoriesTable from '@/components/blog/BlogCategoriesTable'
 import {
   Search,
   FileText,
@@ -386,6 +387,8 @@ export default function BlogPage() {
           </CardContent>
         </Card>
       )}
+      {/* Categories Management */}
+      <BlogCategoriesTable />
     </div>
   )
 }
