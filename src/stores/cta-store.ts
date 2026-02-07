@@ -71,13 +71,11 @@ export const useCtaStore = create<CtaState>((set, get) => ({
       const campaigns: Campaign[] = (data ?? []).map((campaign: any) => ({
         id: campaign.id,
         name: campaign.name,
-        ctas: campaign.ctas.map((cta: any) => ({
+        ctas: (campaign.ctas ?? []).map((cta: any) => ({
           id: cta.id,
           title: cta.title,
           description: cta.description,
-          image: cta.image_url.startsWith('http')
-            ? cta.image_url
-            : cta.image_url,
+          image: cta.image_url ?? cta.image ?? '',
           link: cta.link,
         })),
       }))
@@ -161,6 +159,7 @@ export const useCtaStore = create<CtaState>((set, get) => ({
       formData.append('description', description.trim())
       formData.append('link', ensureLeadingSlash(link.trim()))
       if (!generateImage && image) formData.append('image', image)
+      formData.append('generate_image', String(generateImage))
 
       await apiPostForm('/api/aurora/blog/cta/create/', formData)
       await get().fetchCTAs()
@@ -177,12 +176,6 @@ export const useCtaStore = create<CtaState>((set, get) => ({
       set({ errorMessage: 'Please fill in all required fields.' })
       return
     }
-    if (!generateImage && !image) {
-      set({
-        errorMessage: 'Please upload a new image or enable "Generate Image".',
-      })
-      return
-    }
 
     set({ isLoading: true, errorMessage: null })
     try {
@@ -191,6 +184,7 @@ export const useCtaStore = create<CtaState>((set, get) => ({
       formData.append('description', description.trim())
       formData.append('link', ensureLeadingSlash(link.trim()))
       if (!generateImage && image) formData.append('image', image)
+      formData.append('generate_image', String(generateImage))
 
       // apiPostForm uses POST — the backend edit endpoint uses PUT with FormData
       // We need a raw fetch for PUT + FormData

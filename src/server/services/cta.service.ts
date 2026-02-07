@@ -1,4 +1,6 @@
 import { prisma } from '@/lib/prisma'
+import { generateIdeogramImage } from '@/server/ai/image/generate-image'
+import { uploadBinaryToCloudinary, uploadUrlToCloudinary } from '@/server/utils/cloudinary'
 import { NotFoundError, ValidationError } from '@/server/api/errors'
 import * as ctaRepository from '@/server/repositories/cta.repository'
 import { serializeElement } from '@/server/utils/element-type'
@@ -37,19 +39,81 @@ export class CtaService {
   }
 
   async listCtas(companyId: number) {
-    return ctaRepository.findCTAs(companyId)
+    // Legacy parity: this endpoint returns campaigns with nested CTAs.
+    return ctaRepository.findCampaigns(companyId)
   }
 
-  async createCta(companyId: number, payload: CreateCtaInput) {
+  private async resolveCtaImage(options: {
+    imageFile?: File | null
+    imageUrl?: string | null
+    generateImage?: boolean
+    title: string
+    description: string
+    existingImage?: string | null
+  }) {
+    if (options.imageFile) {
+      const uploaded = await uploadBinaryToCloudinary(options.imageFile, 'cta_images')
+      if (!uploaded) throw new ValidationError('Failed to upload CTA image')
+      return uploaded
+    }
+
+    if (options.imageUrl) {
+      const uploaded = await uploadUrlToCloudinary(options.imageUrl, 'cta_images')
+      if (!uploaded) throw new ValidationError('Failed to upload CTA image URL')
+      return uploaded
+    }
+
+    if (options.generateImage) {
+      const prompt = `Create a conversion-focused call-to-action visual. Title: ${options.title}. Description: ${options.description}. Clean modern UI-style marketing image.`
+      const generated = await generateIdeogramImage(prompt, 2, true)
+      const generatedUrl = (generated as any)?.url as string | undefined
+      if (!generatedUrl) throw new ValidationError('Failed to generate CTA image')
+      const uploaded = await uploadUrlToCloudinary(generatedUrl, 'cta_images')
+      if (!uploaded) throw new ValidationError('Failed to upload generated CTA image')
+      return uploaded
+    }
+
+    return options.existingImage ?? null
+  }
+
+  async createCta(
+    companyId: number,
+    payload: CreateCtaInput,
+    options?: { imageFile?: File | null; imageUrl?: string | null },
+  ) {
     const campaign = await ctaRepository.findCampaignById(payload.campaignId)
     if (!campaign || campaign.companyId !== companyId) {
       throw new NotFoundError('Campaign not found')
     }
 
-    return ctaRepository.createCTA(payload)
+    const image = await this.resolveCtaImage({
+      imageFile: options?.imageFile,
+      imageUrl: options?.imageUrl,
+      generateImage: payload.generateImage,
+      title: payload.title,
+      description: payload.description,
+      existingImage: payload.image ?? null,
+    })
+
+    if (!image) {
+      throw new ValidationError('CTA image is required (upload one or enable generate image).')
+    }
+
+    return ctaRepository.createCTA({
+      campaignId: payload.campaignId,
+      title: payload.title,
+      description: payload.description,
+      link: payload.link,
+      image,
+    })
   }
 
-  async updateCta(companyId: number, ctaId: number, payload: UpdateCtaInput) {
+  async updateCta(
+    companyId: number,
+    ctaId: number,
+    payload: UpdateCtaInput,
+    options?: { imageFile?: File | null; imageUrl?: string | null },
+  ) {
     const cta = await ctaRepository.findCTAById(ctaId)
     if (!cta || cta.campaign.companyId !== companyId) {
       throw new NotFoundError('CTA not found')
@@ -62,7 +126,24 @@ export class CtaService {
       }
     }
 
-    return ctaRepository.updateCTA(ctaId, payload)
+    const nextTitle = payload.title ?? cta.title
+    const nextDescription = payload.description ?? cta.description
+
+    const image = await this.resolveCtaImage({
+      imageFile: options?.imageFile,
+      imageUrl: options?.imageUrl,
+      generateImage: payload.generateImage,
+      title: nextTitle,
+      description: nextDescription,
+      existingImage: payload.image ?? cta.image,
+    })
+
+    const updatePayload: UpdateCtaInput = {
+      ...payload,
+      ...(image ? { image } : {}),
+    }
+
+    return ctaRepository.updateCTA(ctaId, updatePayload)
   }
 
   async deleteCta(companyId: number, ctaId: number) {
@@ -120,6 +201,9 @@ export class CtaService {
             cta_id: cta.id,
             title: cta.title,
             description: cta.description,
+            image_url: cta.image,
+            target_url: cta.link,
+            // Backward compatibility aliases
             image: cta.image,
             link: cta.link,
           },

@@ -10,6 +10,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 type CallToActionContent = {
   image_url?: string
   target_url?: string
+  // Backward compatibility
+  image?: string
+  link?: string
   title?: string
 }
 
@@ -27,7 +30,10 @@ export function CallToAction({ content, blogId, elementId, onContentUpdated, onE
   const [openModal, setOpenModal] = useState(false)
   const parsedContent = (content ?? {}) as CallToActionContent
 
-  const fullUrl = useMemo(() => resolveImageUrl(parsedContent.image_url), [parsedContent.image_url])
+  const fullUrl = useMemo(
+    () => resolveImageUrl(parsedContent.image_url ?? parsedContent.image),
+    [parsedContent.image_url, parsedContent.image],
+  )
 
   return (
     <BaseElement
@@ -60,7 +66,7 @@ export function CallToAction({ content, blogId, elementId, onContentUpdated, onE
             </DialogHeader>
             <p className="text-sm text-foreground">
               <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline('This Call to Action leads to ') }} />
-              <strong dangerouslySetInnerHTML={{ __html: renderMarkdownInline(parsedContent.target_url || '') }} />
+              <strong dangerouslySetInnerHTML={{ __html: renderMarkdownInline(parsedContent.target_url || parsedContent.link || '') }} />
             </p>
             <DialogFooter>
               <Button onClick={() => setOpenModal(false)}>Close</Button>

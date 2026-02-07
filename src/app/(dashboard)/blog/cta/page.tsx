@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
  */
 
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { useCtaStore } from '@/stores/cta-store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -27,6 +28,7 @@ import {
   X,
   Target,
   Info,
+  Loader2,
 } from 'lucide-react'
 
 interface ModalState {
@@ -45,13 +47,27 @@ export default function BlogCtaPage() {
     title: '',
     description: '',
     link: '',
-    generateImage: true,
+    generateImage: false,
     image: null as File | null,
   })
 
   useEffect(() => {
     store.fetchCTAs()
   }, [])
+
+  useEffect(() => {
+    if (store.successMessage) {
+      toast.success(store.successMessage)
+      store.clearMessages()
+    }
+  }, [store.successMessage])
+
+  useEffect(() => {
+    if (store.errorMessage) {
+      toast.error(store.errorMessage)
+      store.clearMessages()
+    }
+  }, [store.errorMessage])
 
   const handleCreateCampaign = async () => {
     if (!campaignName.trim()) return
@@ -92,7 +108,7 @@ export default function BlogCtaPage() {
       title: ctaForm.title,
       description: ctaForm.description,
       link: ctaForm.link,
-      generateImage: false,
+      generateImage: ctaForm.generateImage,
       image: ctaForm.image,
     })
     resetCtaForm()
@@ -105,7 +121,7 @@ export default function BlogCtaPage() {
   }
 
   const resetCtaForm = () => {
-    setCtaForm({ campaignId: 0, title: '', description: '', link: '', generateImage: true, image: null })
+    setCtaForm({ campaignId: 0, title: '', description: '', link: '', generateImage: false, image: null })
   }
 
   const openEditCampaign = (campaign: any) => {
@@ -230,10 +246,10 @@ export default function BlogCtaPage() {
               <CardTitle>Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button className="w-full gap-1.5" size="sm" onClick={() => { setCampaignName(''); setModal({ type: 'campaign-create' }) }}>
+              <Button className="w-full gap-1.5" size="sm" onClick={() => { setCampaignName(''); setModal({ type: 'campaign-create' }) }} disabled={store.isLoading}>
                 <Plus className="h-3 w-3" /> New Campaign
               </Button>
-              <Button variant="outline" className="w-full gap-1.5" size="sm" onClick={openCreateCTA} disabled={store.campaigns.length === 0}>
+              <Button variant="outline" className="w-full gap-1.5" size="sm" onClick={openCreateCTA} disabled={store.campaigns.length === 0 || store.isLoading}>
                 <Plus className="h-3 w-3" /> New CTA
               </Button>
             </CardContent>
@@ -270,9 +286,9 @@ export default function BlogCtaPage() {
                     <Input value={campaignName} onChange={(e) => setCampaignName(e.target.value)} placeholder="e.g. Summer Sale" className="h-9" />
                   </div>
                   <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setModal({ type: null })}>Cancel</Button>
-                    <Button onClick={modal.type === 'campaign-create' ? handleCreateCampaign : handleEditCampaign}>
-                      {modal.type === 'campaign-create' ? 'Create' : 'Save'}
+                    <Button variant="outline" onClick={() => setModal({ type: null })} disabled={store.isLoading}>Cancel</Button>
+                    <Button onClick={modal.type === 'campaign-create' ? handleCreateCampaign : handleEditCampaign} disabled={store.isLoading}>
+                      {store.isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : modal.type === 'campaign-create' ? 'Create' : 'Save'}
                     </Button>
                   </div>
                 </>
@@ -313,15 +329,13 @@ export default function BlogCtaPage() {
                     <Label className="text-[13px] font-semibold mb-1 block">Link URL</Label>
                     <Input value={ctaForm.link} onChange={(e) => setCtaForm((f) => ({ ...f, link: e.target.value }))} placeholder="https://..." className="h-9" />
                   </div>
-                  {modal.type === 'cta-create' && (
-                    <Label className="flex items-center gap-2 text-[13px]">
-                      <Checkbox
-                        checked={ctaForm.generateImage}
-                        onCheckedChange={(checked) => setCtaForm((f) => ({ ...f, generateImage: checked === true }))}
-                      />
-                      Generate image with AI
-                    </Label>
-                  )}
+                  <Label className="flex items-center gap-2 text-[13px]">
+                    <Checkbox
+                      checked={ctaForm.generateImage}
+                      onCheckedChange={(checked) => setCtaForm((f) => ({ ...f, generateImage: checked === true }))}
+                    />
+                    {modal.type === 'cta-edit' ? 'Generate a new image with AI' : 'Generate image with AI'}
+                  </Label>
                   {!ctaForm.generateImage && (
                     <div>
                       <Label className="text-[13px] font-semibold mb-1 block">Upload Image</Label>
@@ -334,9 +348,9 @@ export default function BlogCtaPage() {
                     </div>
                   )}
                   <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setModal({ type: null })}>Cancel</Button>
-                    <Button onClick={modal.type === 'cta-create' ? handleCreateCTA : handleEditCTA}>
-                      {modal.type === 'cta-create' ? 'Create' : 'Save'}
+                    <Button variant="outline" onClick={() => setModal({ type: null })} disabled={store.isLoading}>Cancel</Button>
+                    <Button onClick={modal.type === 'cta-create' ? handleCreateCTA : handleEditCTA} disabled={store.isLoading}>
+                      {store.isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : modal.type === 'cta-create' ? 'Create' : 'Save'}
                     </Button>
                   </div>
                 </>
