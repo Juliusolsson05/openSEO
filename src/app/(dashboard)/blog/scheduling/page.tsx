@@ -96,10 +96,19 @@ export default function BlogSchedulingPage() {
 
   const fetchPosts = useCallback(async () => {
     setLoading(true)
-    const { data } = await api<BlogTitle[] | { data?: BlogTitle[]; results?: BlogTitle[] }>('/api/aurora/blog/titles/?pageSize=500')
+    const { data, error } = await api<BlogTitle[] | { data?: BlogTitle[]; results?: BlogTitle[] }>('/api/aurora/blog/titles/?pageSize=500')
 
-    const items = Array.isArray(data) ? data : data?.data ?? data?.results ?? []
-    const filtered = items.filter((post) => post.status === 'GENERATED' || post.status === 4 || Boolean(post.scheduled_date))
+    if (error) {
+      console.error('[Scheduling] Failed to fetch titles:', error)
+      setLoading(false)
+      return
+    }
+
+    console.log('[Scheduling] Raw API response:', data)
+    const items = Array.isArray(data) ? data : (data as any)?.data ?? (data as any)?.results ?? []
+    console.log('[Scheduling] Parsed items:', items.length, 'first:', items[0])
+    const filtered = items.filter((post: any) => post.status === 'GENERATED' || post.status === 4 || Boolean(post.scheduled_date))
+    console.log('[Scheduling] Filtered:', filtered.length)
 
     setPosts(filtered)
     setLoading(false)
