@@ -3,6 +3,7 @@
 import { Label } from '@/components/ui/label'
 
 import { FormEvent, useState } from 'react'
+import Link from 'next/link'
 import { apiPost } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -70,9 +71,14 @@ export default function PublishingPage() {
               />
             </div>
 
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Update API Settings'}
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Update API Settings'}
+              </Button>
+              <Link href="/settings/publishing-api" className="text-sm text-primary hover:underline">
+                View JSON contract docs
+              </Link>
+            </div>
           </form>
 
           {status && (

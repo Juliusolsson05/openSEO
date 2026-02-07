@@ -3,6 +3,7 @@
 import { Label } from '@/components/ui/label'
 
 import { FormEvent, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { api, apiPost } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -181,9 +182,14 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                <Button type="submit" disabled={isSavingApi}>
-                  {isSavingApi ? 'Saving...' : 'Update API Settings'}
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Button type="submit" disabled={isSavingApi}>
+                    {isSavingApi ? 'Saving...' : 'Update API Settings'}
+                  </Button>
+                  <Link href="/settings/publishing-api" className="text-sm text-primary hover:underline">
+                    View publishing JSON docs
+                  </Link>
+                </div>
               </form>
             </div>
           </details>

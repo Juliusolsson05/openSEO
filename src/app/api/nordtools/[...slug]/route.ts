@@ -239,17 +239,18 @@ const routeHandler = apiHandler(async (ctx) => {
   }
 
   if (path === 'company/credentials/update') {
-    const apiKey = ctx.searchParams.get('api_key')
-    const apiEndpoint = ctx.searchParams.get('api_endpoint')
+    const body = asObject(ctx.body)
+    const apiKey = String(body.api_key ?? ctx.searchParams.get('api_key') ?? '').trim()
+    const apiEndpoint = String(body.api_endpoint ?? ctx.searchParams.get('api_endpoint') ?? '').trim()
 
-    if (!apiKey || !apiEndpoint) {
-      throw new ValidationError('Missing required query parameters: api_key and api_endpoint')
+    if (!apiEndpoint) {
+      throw new ValidationError('api_endpoint is required')
     }
 
     await prisma.company.update({
       where: { id: ctx.companyId },
       data: {
-        api_key: apiKey,
+        api_key: apiKey || null,
         api_endpoint: apiEndpoint,
       },
       select: { id: true },

@@ -9,6 +9,7 @@ import { processHyperlinks } from '@/server/ai/keyword-linking/process-hyperlink
 import { ELEMENT_PROCESSING_MAP } from '@/server/ai/keyword-matching/find-matched-keywords'
 import * as blogRepository from '@/server/repositories/blog.repository'
 import { toDbElementType } from '@/server/utils/element-type'
+import { sendJsonWebhook } from '@/server/services/webhook-delivery.service'
 import type {
   CreateBlogPostInput,
   ListBlogPostsQueryInput,
@@ -531,11 +532,35 @@ export class BlogService {
   }
 
   async uploadPost(companyId: number, postId: number, dictionaryId: number, exportMethod: string) {
-    if (exportMethod !== 'elementor') throw new ValidationError('Currently only Elementor export method is supported')
+    if (!['elementor', 'json_webhook', 'json'].includes(exportMethod)) {
+      throw new ValidationError('Supported export methods: elementor, json_webhook, json')
+    }
     if (!dictionaryId) throw new NotFoundError('Dictionary not found')
 
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { api_endpoint: true, api_key: true },
+    })
+
+    if (!company?.api_endpoint) {
+      throw new ValidationError('Publishing endpoint is not configured. Set it in Settings/API Configuration.')
+    }
+
+    const payload = await this.exportPost(companyId, postId, dictionaryId)
     const post = await this.getPost(postId, companyId)
-    const remoteId = `stub-${postId}-${Date.now()}`
+
+    const delivery = await sendJsonWebhook({
+      endpoint: company.api_endpoint,
+      apiKey: company.api_key,
+      eventType: 'blog.post.upload',
+      payload,
+    })
+
+    if (!delivery.ok) {
+      throw new ValidationError(`Publishing endpoint returned HTTP ${delivery.status}`)
+    }
+
+    const remoteId = delivery.deliveryId
     const existingPublish = await prisma.blogPublish.findFirst({ where: { blogPostId: postId } })
     if (existingPublish) {
       await prisma.blogPublish.update({ where: { id: existingPublish.id }, data: { remote_id: remoteId } })
@@ -544,27 +569,55 @@ export class BlogService {
     }
 
     return {
-      status: `Successfully sent processed post data for title: ${post.title_text} to WordPress`,
-      wordpress_response: { wp_post_id: remoteId, stub: true },
+      status: `Successfully delivered post payload for title: ${post.title_text}`,
+      delivery: {
+        remote_id: remoteId,
+        endpoint_status: delivery.status,
+        endpoint_response: delivery.response,
+      },
     }
   }
 
   async uploadAllPosts(companyId: number, dictionaryId: number, exportMethod: string) {
-    if (exportMethod !== 'elementor') throw new ValidationError('Currently only Elementor export method is supported')
+    if (!['elementor', 'json_webhook', 'json'].includes(exportMethod)) {
+      throw new ValidationError('Supported export methods: elementor, json_webhook, json')
+    }
     if (!dictionaryId) throw new NotFoundError('Dictionary not found')
 
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { api_endpoint: true, api_key: true },
+    })
+
+    if (!company?.api_endpoint) {
+      throw new ValidationError('Publishing endpoint is not configured. Set it in Settings/API Configuration.')
+    }
+
     const posts = await prisma.blogPost.findMany({ where: { companyId, status: 'GENERATED' }, select: { id: true, title_text: true } })
-    const uploaded = [] as Array<{ post_id: number; wordpress_response: { wp_post_id: string; stub: boolean } }>
+    const uploaded = [] as Array<{ post_id: number; remote_id: string; endpoint_status: number }>
 
     for (const post of posts) {
-      const remoteId = `stub-${post.id}-${Date.now()}`
+      const payload = await this.exportPost(companyId, post.id, dictionaryId)
+      const delivery = await sendJsonWebhook({
+        endpoint: company.api_endpoint,
+        apiKey: company.api_key,
+        eventType: 'blog.post.upload',
+        payload,
+      })
+
+      if (!delivery.ok) {
+        throw new ValidationError(`Publishing endpoint returned HTTP ${delivery.status} while uploading post ${post.id}`)
+      }
+
+      const remoteId = delivery.deliveryId
       const existingPublish = await prisma.blogPublish.findFirst({ where: { blogPostId: post.id } })
       if (existingPublish) {
         await prisma.blogPublish.update({ where: { id: existingPublish.id }, data: { remote_id: remoteId } })
       } else {
         await prisma.blogPublish.create({ data: { blogPostId: post.id, remote_id: remoteId } })
       }
-      uploaded.push({ post_id: post.id, wordpress_response: { wp_post_id: remoteId, stub: true } })
+
+      uploaded.push({ post_id: post.id, remote_id: remoteId, endpoint_status: delivery.status })
     }
 
     return { status: 'Upload completed', uploaded }
@@ -628,19 +681,42 @@ export class BlogService {
     const post = await prisma.blogPost.findFirst({ where: { id: postId, companyId, status: 'GENERATED' }, select: { id: true } })
     if (!post) throw new NotFoundError('Not found.')
 
-    await prisma.blogPublish.create({ data: { blogPostId: post.id, remote_id: `stub-${post.id}-${Date.now()}` } })
-    return { status: 'success', message: 'Successfully initiated export for 1 blog posts' }
+    const payload = await this.getPost(post.id, companyId)
+    const delivery = await sendJsonWebhook({
+      endpoint: endpointUrl,
+      eventType: 'blog.post.export',
+      payload,
+    })
+
+    if (!delivery.ok) {
+      throw new ValidationError(`Endpoint responded with HTTP ${delivery.status}`)
+    }
+
+    await prisma.blogPublish.create({ data: { blogPostId: post.id, remote_id: delivery.deliveryId } })
+    return { status: 'success', message: 'Successfully exported 1 blog post', delivery }
   }
 
   async exportThirdPartyAll(companyId: number, endpointUrl: string) {
     if (!endpointUrl) throw new ValidationError('endpoint_url is required')
 
     const posts = await prisma.blogPost.findMany({ where: { companyId, status: 'GENERATED' }, select: { id: true } })
+
     for (const post of posts) {
-      await prisma.blogPublish.create({ data: { blogPostId: post.id, remote_id: `stub-${post.id}-${Date.now()}` } })
+      const payload = await this.getPost(post.id, companyId)
+      const delivery = await sendJsonWebhook({
+        endpoint: endpointUrl,
+        eventType: 'blog.post.export',
+        payload,
+      })
+
+      if (!delivery.ok) {
+        throw new ValidationError(`Endpoint responded with HTTP ${delivery.status} while exporting post ${post.id}`)
+      }
+
+      await prisma.blogPublish.create({ data: { blogPostId: post.id, remote_id: delivery.deliveryId } })
     }
 
-    return { status: 'success', message: `Successfully initiated export for ${posts.length} blog posts` }
+    return { status: 'success', message: `Successfully exported ${posts.length} blog posts` }
   }
 
   async getCodeClusterBlogPosts(companyId: number) {
