@@ -3,6 +3,7 @@
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
 import { renderMarkdownInline } from '@/lib/markdown'
+import { Separator } from '@/components/ui/separator'
 
 type BlogElement = {
   id: number
@@ -95,7 +96,7 @@ export function Context({
     >
       <div className="mb-6 mt-2 border-l-4 border-primary bg-muted p-6">
         <h2 className="mb-4 text-2xl font-semibold text-foreground">Table of Contents</h2>
-        <hr className="mb-4 border-border" />
+        <Separator className="mb-4" />
 
         <ol className="m-0 list-decimal space-y-2 pl-8 marker:font-semibold marker:text-primary">
           {tableOfContents.map((item, index) => (
