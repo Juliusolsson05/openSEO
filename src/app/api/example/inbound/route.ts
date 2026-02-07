@@ -1,26 +1,24 @@
 /**
- * Example site inbound webhook endpoint.
+ * POST /api/example/inbound
  *
- * This is the endpoint you configure as your company's `api_endpoint` in
- * Aurora settings. When you hit "Sync All Posts" or "Sync All Dictionaries"
- * in the Aurora dashboard, it pushes each item here via webhook.
+ * Inbound webhook endpoint for the example/customer site.
  *
- * Envelope format (sent by Aurora's webhook-delivery.service):
+ * Configure Aurora's company `api_endpoint` to point here. When you sync
+ * posts or dictionaries from Aurora, each item is pushed via webhook and
+ * stored in the example_posts / example_dictionaries tables.
+ *
+ * Auth: Bearer token validated against EXAMPLE_INBOUND_KEY env var.
+ *       This is REQUIRED — requests without a valid token are rejected.
+ *
+ * Envelope format (from Aurora's webhook-delivery.service):
  * {
  *   event: "post.upsert" | "post.delete" | "dictionary.upsert" | "dictionary.delete",
- *   timestamp: "ISO-8601",
+ *   timestamp: string,
  *   payload: {
  *     contract_version, event, event_id, sent_at,
  *     payload: { post, processed_content } | { dictionary, terms }
  *   }
  * }
- *
- * Auth: Bearer token validated against EXAMPLE_INBOUND_KEY env var.
- * If EXAMPLE_INBOUND_KEY is not set, all requests are accepted (dev mode).
- *
- * Storage: SQLite database via Prisma (prisma/example/schema.prisma).
- * Customers: copy this file + _lib/store.ts + _lib/prisma.ts into your
- * own Next.js project and swap SQLite for your production database.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -38,13 +36,24 @@ function json(data: unknown, status = 200) {
 
 function authenticate(req: NextRequest): boolean {
   const expected = process.env.EXAMPLE_INBOUND_KEY
-  if (!expected) return true // dev mode — accept everything
+  if (!expected) {
+    console.error('[example/inbound] EXAMPLE_INBOUND_KEY is not set — rejecting request')
+    return false
+  }
 
   const auth = req.headers.get('authorization') ?? ''
   if (auth.toLowerCase().startsWith('bearer ')) {
     return auth.slice(7).trim() === expected
   }
   return false
+}
+
+/**
+ * Resolve the companyId for the inbound request.
+ * Uses EXAMPLE_COMPANY_ID env var. Must match the Aurora company pushing content.
+ */
+function getCompanyId(): number {
+  return parseInt(process.env.EXAMPLE_COMPANY_ID ?? '1', 10)
 }
 
 // ─── Transform Aurora envelope → ExamplePost ────────────────────────
@@ -59,7 +68,6 @@ type AuroraPostPayload = {
     excerpt?: string
     meta_description?: string
     status?: string
-    categories?: string[]
   }
   processed_content?: {
     id?: number
@@ -104,18 +112,13 @@ type AuroraDictPayload = {
     title?: string
     subject?: string
     language?: string
-    status?: string
-    num_words?: number
   }
   terms?: {
     id: number | string
-    letter?: string
     keyword: string
     description?: string
-    focus_keyword?: string
     definition?: {
       featured_google_snippet?: string
-      meta_description?: string
       synonyms?: unknown
       antonyms?: unknown
       usage_examples?: unknown
@@ -137,11 +140,11 @@ function toExampleDictionary(payload: AuroraDictPayload): { dict: ExampleDiction
       paragraph_1: '',
       paragraph_2: '',
       paragraph_3: '',
-      synonyms: Array.isArray(t.definition?.synonyms) ? t.definition.synonyms as string[] : [],
-      antonyms: Array.isArray(t.definition?.antonyms) ? t.definition.antonyms as string[] : [],
-      usage_examples: Array.isArray(t.definition?.usage_examples) ? t.definition.usage_examples as string[] : [],
-      related_keywords: Array.isArray(t.definition?.related_keywords) ? t.definition.related_keywords as string[] : [],
-      faqs: Array.isArray(t.definition?.faqs) ? t.definition.faqs as { question: string; answer: string }[] : [],
+      synonyms: Array.isArray(t.definition?.synonyms) ? (t.definition.synonyms as string[]) : [],
+      antonyms: Array.isArray(t.definition?.antonyms) ? (t.definition.antonyms as string[]) : [],
+      usage_examples: Array.isArray(t.definition?.usage_examples) ? (t.definition.usage_examples as string[]) : [],
+      related_keywords: Array.isArray(t.definition?.related_keywords) ? (t.definition.related_keywords as string[]) : [],
+      faqs: Array.isArray(t.definition?.faqs) ? (t.definition.faqs as { question: string; answer: string }[]) : [],
     },
   }))
 
@@ -164,6 +167,8 @@ export async function POST(req: NextRequest) {
     return json({ error: 'Unauthorized' }, 401)
   }
 
+  const companyId = getCompanyId()
+
   let body: Record<string, unknown>
   try {
     body = await req.json()
@@ -172,7 +177,6 @@ export async function POST(req: NextRequest) {
   }
 
   const event = (body.event as string) ?? ''
-  // The inner payload is wrapped: body.payload is the envelope, body.payload.payload is the actual data
   const envelope = (body.payload ?? body) as Record<string, unknown>
   const innerPayload = (envelope.payload ?? envelope) as Record<string, unknown>
   const eventId = (envelope.event_id as string) ?? `${Date.now()}`
@@ -181,28 +185,28 @@ export async function POST(req: NextRequest) {
     case 'post.upsert': {
       const result = toExamplePost(innerPayload as AuroraPostPayload)
       if (!result) return json({ error: 'Invalid post payload — slug and title_text required' }, 400)
-      await upsertSyncedPost(result.post, result.auroraId)
+      await upsertSyncedPost(companyId, result.post, result.auroraId)
       return json({ status: 'ok', delivery_id: eventId, post_slug: result.post.slug })
     }
 
     case 'post.delete': {
       const slug = (innerPayload as { post?: { slug?: string } }).post?.slug
       if (!slug) return json({ error: 'Missing post.slug' }, 400)
-      const deleted = await deleteSyncedPost(slug)
+      const deleted = await deleteSyncedPost(companyId, slug)
       return json({ status: deleted ? 'deleted' : 'not_found', delivery_id: eventId })
     }
 
     case 'dictionary.upsert': {
       const result = toExampleDictionary(innerPayload as AuroraDictPayload)
       if (!result) return json({ error: 'Invalid dictionary payload' }, 400)
-      await upsertSyncedDictionary(result.dict, result.auroraId)
+      await upsertSyncedDictionary(companyId, result.dict, result.auroraId)
       return json({ status: 'ok', delivery_id: eventId, dictionary_id: result.dict.id })
     }
 
     case 'dictionary.delete': {
       const dictId = (innerPayload as { dictionary?: { id?: number } }).dictionary?.id
       if (!dictId) return json({ error: 'Missing dictionary.id' }, 400)
-      const deleted = await deleteSyncedDictionary(`synced-${dictId}`)
+      const deleted = await deleteSyncedDictionary(companyId, dictId)
       return json({ status: deleted ? 'deleted' : 'not_found', delivery_id: eventId })
     }
 

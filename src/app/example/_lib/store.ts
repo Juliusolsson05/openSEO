@@ -1,20 +1,20 @@
 /**
- * Database store for synced content (SQLite via Prisma).
+ * Database store for synced content (PostgreSQL via main Prisma client).
  *
- * Synced posts and dictionaries are persisted to a separate SQLite database.
- * The example site reads from both this store and the static fixtures —
- * synced data takes priority (by slug/id).
+ * Uses the same database as Aurora with dedicated tables (example_posts,
+ * example_elements, example_dictionaries, example_words). Content is scoped
+ * by companyId so each company's published site is isolated.
  *
- * Customers would replace this with their own PostgreSQL/MySQL database.
- * The Prisma schema is at prisma/example/schema.prisma.
+ * Customers would adapt this to their own database and ORM.
  */
-import { exampleDb } from './prisma'
+import { prisma } from '@/lib/prisma'
 import type { ExampleDictionary, ExamplePost, ExampleWord } from './types'
 
 // ─── Posts ──────────────────────────────────────────────────────────
 
-export async function getSyncedPosts(): Promise<ExamplePost[]> {
-  const posts = await exampleDb.post.findMany({
+export async function getSyncedPosts(companyId: number): Promise<ExamplePost[]> {
+  const posts = await prisma.examplePost.findMany({
+    where: { companyId },
     include: { elements: { orderBy: { order: 'asc' } } },
     orderBy: { publishedAt: 'desc' },
   })
@@ -30,74 +30,64 @@ export async function getSyncedPosts(): Promise<ExamplePost[]> {
       id: el.id,
       order: el.order,
       element_type: el.elementType,
-      content: JSON.parse(el.content) as Record<string, unknown>,
+      content: el.content as Record<string, unknown>,
     })),
   }))
 }
 
-export async function upsertSyncedPost(post: ExamplePost, auroraId?: number): Promise<ExamplePost> {
-  const existing = await exampleDb.post.findFirst({
-    where: { OR: [{ slug: post.slug }, ...(auroraId ? [{ auroraId }] : [])] },
-  })
+export async function upsertSyncedPost(
+  companyId: number,
+  post: ExamplePost,
+  auroraId?: number,
+): Promise<ExamplePost> {
+  const existing = auroraId
+    ? await prisma.examplePost.findUnique({ where: { companyId_auroraId: { companyId, auroraId } } })
+    : await prisma.examplePost.findUnique({ where: { companyId_slug: { companyId, slug: post.slug } } })
 
   const postData = {
+    companyId,
     slug: post.slug,
     title: post.title,
     excerpt: post.excerpt,
     coverImage: post.cover_image_url,
     publishedAt: post.published_at,
-    auroraId: auroraId ?? undefined,
+    auroraId: auroraId ?? null,
   }
 
-  let savedPost
+  const elementsCreate = post.elements.map((el) => ({
+    auroraId: el.id,
+    order: el.order,
+    elementType: el.element_type,
+    content: el.content,
+  }))
 
   if (existing) {
-    // Delete old elements and replace
-    await exampleDb.element.deleteMany({ where: { postId: existing.id } })
-    savedPost = await exampleDb.post.update({
+    await prisma.exampleElement.deleteMany({ where: { postId: existing.id } })
+    const saved = await prisma.examplePost.update({
       where: { id: existing.id },
-      data: {
-        ...postData,
-        elements: {
-          create: post.elements.map((el) => ({
-            auroraId: el.id,
-            order: el.order,
-            elementType: el.element_type,
-            content: JSON.stringify(el.content),
-          })),
-        },
-      },
+      data: { ...postData, elements: { create: elementsCreate } },
     })
-  } else {
-    savedPost = await exampleDb.post.create({
-      data: {
-        ...postData,
-        elements: {
-          create: post.elements.map((el) => ({
-            auroraId: el.id,
-            order: el.order,
-            elementType: el.element_type,
-            content: JSON.stringify(el.content),
-          })),
-        },
-      },
-    })
+    return { ...post, id: saved.id }
   }
 
-  return { ...post, id: savedPost.id }
+  const saved = await prisma.examplePost.create({
+    data: { ...postData, elements: { create: elementsCreate } },
+  })
+  return { ...post, id: saved.id }
 }
 
-export async function deleteSyncedPost(slug: string): Promise<boolean> {
-  const post = await exampleDb.post.findUnique({ where: { slug } })
+export async function deleteSyncedPost(companyId: number, slug: string): Promise<boolean> {
+  const post = await prisma.examplePost.findUnique({ where: { companyId_slug: { companyId, slug } } })
   if (!post) return false
-  await exampleDb.post.delete({ where: { id: post.id } })
+  await prisma.examplePost.delete({ where: { id: post.id } })
   return true
 }
 
 // ─── Dictionaries ───────────────────────────────────────────────────
 
-export async function getSyncedDictionaries(): Promise<ExampleDictionary[]> {
-  const dicts = await exampleDb.dictionary.findMany({
+export async function getSyncedDictionaries(companyId: number): Promise<ExampleDictionary[]> {
+  const dicts = await prisma.exampleDictionary.findMany({
+    where: { companyId },
     include: { words: { orderBy: { keyword: 'asc' } } },
   })
 
@@ -109,63 +99,54 @@ export async function getSyncedDictionaries(): Promise<ExampleDictionary[]> {
     words: d.words.map((w): ExampleWord => ({
       id: w.id,
       keyword: w.keyword,
-      definition: JSON.parse(w.definition) as ExampleWord['definition'],
+      definition: w.definition as ExampleWord['definition'],
     })),
   }))
 }
 
-export async function upsertSyncedDictionary(dict: ExampleDictionary, auroraId?: number): Promise<ExampleDictionary> {
-  const existing = await exampleDb.dictionary.findFirst({
-    where: { OR: [{ id: dict.id }, ...(auroraId ? [{ auroraId }] : [])] },
-  })
+export async function upsertSyncedDictionary(
+  companyId: number,
+  dict: ExampleDictionary,
+  auroraId?: number,
+): Promise<ExampleDictionary> {
+  const existing = auroraId
+    ? await prisma.exampleDictionary.findUnique({ where: { companyId_auroraId: { companyId, auroraId } } })
+    : null
 
   const dictData = {
+    companyId,
     name: dict.name,
     description: dict.description,
-    auroraId: auroraId ?? undefined,
+    auroraId: auroraId ?? null,
   }
 
+  const wordsCreate = dict.words.map((w) => ({
+    auroraId: w.id,
+    keyword: w.keyword,
+    letter: w.keyword[0]?.toUpperCase() ?? '',
+    definition: w.definition as object,
+  }))
+
   if (existing) {
-    await exampleDb.word.deleteMany({ where: { dictionaryId: existing.id } })
-    await exampleDb.dictionary.update({
+    await prisma.exampleWord.deleteMany({ where: { dictionaryId: existing.id } })
+    await prisma.exampleDictionary.update({
       where: { id: existing.id },
-      data: {
-        ...dictData,
-        words: {
-          create: dict.words.map((w) => ({
-            auroraId: w.id,
-            keyword: w.keyword,
-            letter: w.keyword[0]?.toUpperCase() ?? '',
-            definition: JSON.stringify(w.definition),
-          })),
-        },
-      },
+      data: { ...dictData, words: { create: wordsCreate } },
     })
     return { ...dict, id: existing.id }
   }
 
-  const saved = await exampleDb.dictionary.create({
-    data: {
-      ...dictData,
-      words: {
-        create: dict.words.map((w) => ({
-          auroraId: w.id,
-          keyword: w.keyword,
-          letter: w.keyword[0]?.toUpperCase() ?? '',
-          definition: JSON.stringify(w.definition),
-        })),
-      },
-    },
+  const saved = await prisma.exampleDictionary.create({
+    data: { ...dictData, words: { create: wordsCreate } },
   })
-
   return { ...dict, id: saved.id }
 }
 
-export async function deleteSyncedDictionary(id: string): Promise<boolean> {
-  const dict = await exampleDb.dictionary.findFirst({
-    where: { OR: [{ id }, { auroraId: parseInt(id.replace('synced-', ''), 10) || -1 }] },
+export async function deleteSyncedDictionary(companyId: number, auroraId: number): Promise<boolean> {
+  const dict = await prisma.exampleDictionary.findUnique({
+    where: { companyId_auroraId: { companyId, auroraId } },
   })
   if (!dict) return false
-  await exampleDb.dictionary.delete({ where: { id: dict.id } })
+  await prisma.exampleDictionary.delete({ where: { id: dict.id } })
   return true
 }

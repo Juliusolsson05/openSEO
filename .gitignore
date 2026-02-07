@@ -3,7 +3,5 @@ node_modules
 .env.local
 
 # Example site synced data
-.example-store/
 
 # Generated Prisma client for example site
-src/generated/

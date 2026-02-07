@@ -662,3 +662,80 @@ model InboundEvent {
   @@unique([companyId, event_id])
   @@index([companyId])
 }
+
+/// --- Example / Customer Site (published content) ---
+/// These tables store content synced from Aurora to the customer-facing site.
+/// Scoped by companyId so each company's published content is isolated.
+
+model ExamplePost {
+  id          String   @id @default(cuid())
+  companyId   Int
+  auroraId    Int?
+  slug        String
+  title       String
+  excerpt     String   @default("")
+  coverImage  String   @default("")
+  publishedAt String
+  seoTitle    String?
+  focusKeyword String?
+  metaDescription String?
+  status      String   @default("published")
+  syncedAt    DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  elements ExampleElement[]
+
+  @@unique([companyId, slug])
+  @@unique([companyId, auroraId])
+  @@index([companyId])
+  @@map("example_posts")
+}
+
+model ExampleElement {
+  id          String @id @default(cuid())
+  auroraId    String?
+  postId      String
+  order       Int
+  elementType String
+  content     Json
+
+  post ExamplePost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("example_elements")
+}
+
+model ExampleDictionary {
+  id          String   @id @default(cuid())
+  companyId   Int
+  auroraId    Int?
+  name        String
+  description String   @default("")
+  subject     String?
+  language    String?
+  syncedAt    DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  words ExampleWord[]
+
+  @@unique([companyId, auroraId])
+  @@index([companyId])
+  @@map("example_dictionaries")
+}
+
+model ExampleWord {
+  id           String  @id @default(cuid())
+  auroraId     String?
+  dictionaryId String
+  keyword      String
+  letter       String?
+  description  String?
+  focusKeyword String?
+  definition   Json    @default("{}")
+
+  dictionary ExampleDictionary @relation(fields: [dictionaryId], references: [id], onDelete: Cascade)
+
+  @@unique([dictionaryId, keyword])
+  @@index([dictionaryId])
+  @@map("example_words")
+}
