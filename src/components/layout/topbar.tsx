@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { Search, Bell } from 'lucide-react'
+import { Search, Bell, FileText, Tags, BookOpen, Package } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { api } from '@/lib/api'
@@ -58,6 +58,20 @@ function relativeTime(value: string) {
   return `${days}d ago`
 }
 
+function resultTypeLabel(type: GlobalSearchItem['type']) {
+  if (type === 'post') return 'Posts'
+  if (type === 'title') return 'Titles'
+  if (type === 'dictionary') return 'Dictionaries'
+  return 'Products'
+}
+
+function resultTypeIcon(type: GlobalSearchItem['type']) {
+  if (type === 'post') return FileText
+  if (type === 'title') return Tags
+  if (type === 'dictionary') return BookOpen
+  return Package
+}
+
 const LAST_SEEN_KEY = 'aurora:notifications:lastSeenAt'
 
 export function Topbar() {
@@ -69,6 +83,7 @@ export function Topbar() {
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState<GlobalSearchItem[]>([])
   const [searchOpen, setSearchOpen] = useState(false)
+  const [activeResultIndex, setActiveResultIndex] = useState(0)
 
   const [notifications, setNotifications] = useState<NotificationFeedItem[]>([])
   const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -95,6 +110,7 @@ export function Topbar() {
       const trimmed = query.trim()
       if (!trimmed) {
         setSearchResults([])
+        setActiveResultIndex(0)
         return
       }
 
@@ -103,6 +119,7 @@ export function Topbar() {
       })
       const items = Array.isArray(data) ? data : (data?.data ?? [])
       setSearchResults(items)
+      setActiveResultIndex(0)
     }
 
     const timeout = setTimeout(run, 180)
@@ -134,6 +151,17 @@ export function Topbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  const groupedSearchResults = useMemo(() => {
+    return searchResults.reduce<Record<string, GlobalSearchItem[]>>((acc, item) => {
+      const key = resultTypeLabel(item.type)
+      if (!acc[key]) acc[key] = []
+      acc[key].push(item)
+      return acc
+    }, {})
+  }, [searchResults])
+
+  const flatSearchResults = useMemo(() => Object.values(groupedSearchResults).flat(), [groupedSearchResults])
+
   const unreadCount = useMemo(() => {
     const lastSeenAtRaw = typeof window !== 'undefined' ? localStorage.getItem(LAST_SEEN_KEY) : null
     const lastSeenAt = lastSeenAtRaw ? new Date(lastSeenAtRaw).getTime() : 0
@@ -144,11 +172,12 @@ export function Topbar() {
     const trimmed = query.trim()
     if (!trimmed) return
 
-    const first = searchResults[0]
-    if (first) {
-      router.push(first.url)
+    const selected = flatSearchResults[activeResultIndex] ?? flatSearchResults[0]
+    if (selected) {
+      router.push(selected.url)
       setSearchOpen(false)
       setQuery('')
+      setActiveResultIndex(0)
       return
     }
 
@@ -190,38 +219,74 @@ export function Topbar() {
             if (e.key === 'Enter') {
               e.preventDefault()
               handleSearchEnter()
+              return
+            }
+            if (e.key === 'ArrowDown') {
+              e.preventDefault()
+              if (flatSearchResults.length > 0) {
+                setActiveResultIndex((prev) => (prev + 1) % flatSearchResults.length)
+              }
+              return
+            }
+            if (e.key === 'ArrowUp') {
+              e.preventDefault()
+              if (flatSearchResults.length > 0) {
+                setActiveResultIndex((prev) => (prev - 1 + flatSearchResults.length) % flatSearchResults.length)
+              }
+              return
+            }
+            if (e.key === 'Escape') {
+              e.preventDefault()
+              setSearchOpen(false)
             }
           }}
         />
 
         {searchOpen && query.trim() ? (
-          <div className="absolute right-0 top-10 z-50 w-[30rem] rounded-md border border-border bg-white p-2 shadow-lg">
-            {searchResults.length === 0 ? (
-              <p className="px-2 py-1 text-xs text-muted-foreground">No results yet.</p>
+          <div className="absolute right-0 top-10 z-50 w-[34rem] overflow-hidden rounded-lg border border-border bg-white shadow-xl">
+            <div className="border-b border-border bg-secondary/40 px-3 py-2">
+              <p className="text-[11px] font-medium text-muted-foreground">Global Search</p>
+            </div>
+
+            {flatSearchResults.length === 0 ? (
+              <p className="px-3 py-4 text-xs text-muted-foreground">No matches for “{query.trim()}”.</p>
             ) : (
-              <div className="max-h-80 overflow-auto">
-                {searchResults.map((result) => (
-                  <Button
-                    key={result.id}
-                    type="button"
-                    variant="ghost"
-                    className="flex h-auto w-full items-start justify-between rounded-sm px-2 py-2 text-left"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      router.push(result.url)
-                      setSearchOpen(false)
-                      setQuery('')
-                    }}
-                  >
-                    <div>
-                      <p className="text-xs font-semibold text-foreground">{result.title}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {result.type.toUpperCase()}
-                        {result.subtitle ? ` · ${result.subtitle}` : ''}
-                      </p>
-                    </div>
-                    <span className="text-[11px] text-muted-foreground">{relativeTime(result.updatedAt)}</span>
-                  </Button>
+              <div className="max-h-96 overflow-auto p-2">
+                {Object.entries(groupedSearchResults).map(([group, items]) => (
+                  <div key={group} className="mb-2 last:mb-0">
+                    <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{group}</p>
+                    {items.map((result) => {
+                      const idx = flatSearchResults.findIndex((r) => r.id === result.id)
+                      const isActive = idx === activeResultIndex
+                      const TypeIcon = resultTypeIcon(result.type)
+
+                      return (
+                        <Button
+                          key={result.id}
+                          type="button"
+                          variant="ghost"
+                          className={`mb-1 flex h-auto w-full items-start justify-between rounded-md px-2 py-2 text-left ${isActive ? 'bg-secondary' : ''}`}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onMouseEnter={() => setActiveResultIndex(idx)}
+                          onClick={() => {
+                            router.push(result.url)
+                            setSearchOpen(false)
+                            setQuery('')
+                            setActiveResultIndex(0)
+                          }}
+                        >
+                          <div className="flex min-w-0 items-start gap-2">
+                            <TypeIcon className="mt-0.5 h-3.5 w-3.5 text-muted-foreground" />
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-semibold text-foreground">{result.title}</p>
+                              <p className="truncate text-[11px] text-muted-foreground">{result.subtitle || result.type}</p>
+                            </div>
+                          </div>
+                          <span className="ml-3 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">{relativeTime(result.updatedAt)}</span>
+                        </Button>
+                      )
+                    })}
+                  </div>
                 ))}
               </div>
             )}
