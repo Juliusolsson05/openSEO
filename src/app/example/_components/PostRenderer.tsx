@@ -2,16 +2,27 @@ import type { ReactNode } from 'react'
 
 import type { ExampleElement } from '../_lib/types'
 import { CallToAction } from './elements/CallToAction'
+import { CaseStudy } from './elements/CaseStudy'
+import { Checklist } from './elements/Checklist'
 import { CodeBlock } from './elements/CodeBlock'
 import { Conclusion } from './elements/Conclusion'
 import { Fallback } from './elements/Fallback'
 import { Faq } from './elements/Faq'
+import { Glossary } from './elements/Glossary'
 import { ImageElement } from './elements/Image'
 import { Introduction } from './elements/Introduction'
 import { ListParagraph } from './elements/ListParagraph'
+import { NumberedList } from './elements/NumberedList'
 import { Paragraph } from './elements/Paragraph'
+import { ProductRecommendations } from './elements/ProductRecommendations'
+import { ProsAndCons } from './elements/ProsAndCons'
 import { Quote } from './elements/Quote'
+import { SnippetBlock } from './elements/SnippetBlock'
+import { Statistic } from './elements/Statistic'
 import { Table } from './elements/Table'
+import { Timeline } from './elements/Timeline'
+import { ToolRecommendation } from './elements/ToolRecommendation'
+import { Versus } from './elements/Versus'
 
 type PostRendererProps = {
   elements: ExampleElement[]
@@ -24,47 +35,75 @@ export function PostRenderer({ elements }: PostRendererProps) {
     <div className="space-y-8">
       {ordered.map((element) => {
         const key = element.id
-        const content = element.content
+        const c = element.content
 
         let rendered: ReactNode
 
         switch (element.element_type) {
           case 'paragraph':
-            rendered = <Paragraph title={content.title} text={content.text} />
+            rendered = <Paragraph title={c.title} text={c.text} />
             break
           case 'introduction':
-            rendered = <Introduction title={content.title} text={content.text} />
+            rendered = <Introduction title={c.title} text={c.text} />
             break
           case 'conclusion':
-            rendered = <Conclusion title={content.title} text={content.text} />
+            rendered = <Conclusion title={c.title} text={c.text} />
             break
           case 'faq':
-            rendered = <Faq title={content.title} items={content.items || []} />
+            rendered = <Faq title={c.title} items={c.items || []} />
             break
           case 'table':
-            rendered = <Table title={content.title} headers={content.headers || []} rows={content.rows || []} />
+            rendered = <Table title={c.title} headers={c.headers || []} rows={c.rows || []} />
             break
           case 'list_paragraph':
-            rendered = <ListParagraph title={content.title} items={content.items || []} />
+            rendered = <ListParagraph title={c.title} items={c.items || []} />
+            break
+          case 'numbered_list_paragraph':
+            rendered = <NumberedList title={c.title} items={c.items || []} />
             break
           case 'image':
-            rendered = <ImageElement alt={content.alt} caption={content.caption} />
+            rendered = <ImageElement alt={c.alt} caption={c.caption} url={c.url} />
             break
           case 'quote':
-            rendered = <Quote text={content.text} attribution={content.attribution} />
+            rendered = <Quote text={c.text} attribution={c.attribution} />
             break
           case 'code_cluster':
-            rendered = <CodeBlock title={content.title} code={content.code} language={content.language} />
+            rendered = <CodeBlock title={c.title} code={c.code} language={c.language} />
             break
           case 'call_to_action':
-            rendered = (
-              <CallToAction
-                title={content.title}
-                text={content.text}
-                button_label={content.button_label}
-                button_href={content.button_href}
-              />
-            )
+            rendered = <CallToAction title={c.title} text={c.text} button_label={c.button_label || c.button_text} button_href={c.button_href || c.button_url} />
+            break
+          case 'statistic':
+            rendered = <Statistic value={c.value} label={c.label} description={c.description} />
+            break
+          case 'pros_and_cons':
+            rendered = <ProsAndCons title={c.title} pros={c.pros || []} cons={c.cons || []} />
+            break
+          case 'timeline':
+            rendered = <Timeline title={c.title} items={c.items || []} />
+            break
+          case 'checklist':
+            rendered = <Checklist title={c.title} introduction={c.introduction} items={c.items || []} />
+            break
+          case 'case_study':
+            rendered = <CaseStudy title={c.title} problem={c.problem} solution={c.solution} result={c.result} />
+            break
+          case 'snippet_block':
+          case 'list_snippet_block':
+            rendered = <SnippetBlock title={c.title} text={c.text} />
+            break
+          case 'versus':
+            rendered = <Versus title={c.title} option_a={c.option_a} option_b={c.option_b} />
+            break
+          case 'product_recommendations':
+          case 'affiliate_recommendations':
+            rendered = <ProductRecommendations title={c.title} introduction={c.introduction} products={c.products || []} />
+            break
+          case 'tool_recommendation':
+            rendered = <ToolRecommendation name={c.name} description={c.description} use_case={c.use_case} url={c.url} />
+            break
+          case 'glossary':
+            rendered = <Glossary title={c.title} items={c.items || []} />
             break
           default:
             rendered = <Fallback elementType={element.element_type} />

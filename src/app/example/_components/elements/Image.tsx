@@ -3,9 +3,10 @@ import { ImageIcon } from 'lucide-react'
 type ImageElementProps = {
   alt?: string
   caption?: string
+  url?: string
 }
 
-export function ImageElement({ alt = 'Post image', caption }: ImageElementProps) {
+export function ImageElement({ alt = 'Post image', caption, url }: ImageElementProps) {
   return (
     <figure className="space-y-2">
       <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-neutral-200 bg-neutral-100">
