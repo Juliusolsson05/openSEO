@@ -113,12 +113,12 @@ export default function BlogPostPage() {
               <h1 className="text-[22px] font-semibold leading-tight mb-5">{post.title_text}</h1>
 
               {post.cover_image && (
-                <button type="button" className="group relative mb-6 block w-full overflow-hidden rounded-sm border border-border text-left" onClick={() => setCoverStudioOpen(true)}>
+                <Button type="button" variant="outline" className="group relative mb-6 block h-auto w-full overflow-hidden p-0 text-left" onClick={() => setCoverStudioOpen(true)}>
                   <img src={post.cover_image.url} alt={post.cover_image.description} className="h-auto w-full" />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/0 text-sm font-medium text-white opacity-0 transition group-hover:bg-black/35 group-hover:opacity-100">
                     ✏️ Edit in Studio
                   </div>
-                </button>
+                </Button>
               )}
 
               <div className="space-y-2">

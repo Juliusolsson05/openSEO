@@ -1,5 +1,7 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,6 +19,7 @@ import {
   Search,
 } from 'lucide-react'
 import { api, apiPost, apiPut } from '@/lib/api'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface ScheduledPost {
   id: number
@@ -252,24 +255,26 @@ export default function BlogSchedulingPage() {
       </div>
 
       {/* Bulk schedule modal */}
-      {showBulk && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setShowBulk(false)}>
-          <Card className="w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+      <Dialog open={showBulk} onOpenChange={setShowBulk}>
+        <DialogContent className="w-full max-w-sm p-0">
+          <Card className="border-0 shadow-none">
             <CardHeader className="flex-row items-center justify-between">
-              <CardTitle>Bulk Schedule</CardTitle>
+              <DialogHeader className="p-0">
+                <DialogTitle asChild><CardTitle>Bulk Schedule</CardTitle></DialogTitle>
+              </DialogHeader>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowBulk(false)}><X className="h-4 w-4" /></Button>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <label className="text-[13px] font-semibold mb-1 block">Name</label>
+                <Label className="text-[13px] font-semibold mb-1 block">Name</Label>
                 <Input value={bulkName} onChange={(e) => setBulkName(e.target.value)} placeholder="e.g. Weekly Content" className="h-8" />
               </div>
               <div>
-                <label className="text-[13px] font-semibold mb-1 block">Interval (days)</label>
+                <Label className="text-[13px] font-semibold mb-1 block">Interval (days)</Label>
                 <Input type="number" value={bulkInterval} onChange={(e) => setBulkInterval(e.target.value)} className="h-8" />
               </div>
               <div>
-                <label className="text-[13px] font-semibold mb-1 block">Start Date</label>
+                <Label className="text-[13px] font-semibold mb-1 block">Start Date</Label>
                 <Input type="date" value={bulkStart} onChange={(e) => setBulkStart(e.target.value)} className="h-8" />
               </div>
               <div className="flex gap-2 justify-end pt-1">
@@ -278,8 +283,8 @@ export default function BlogSchedulingPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

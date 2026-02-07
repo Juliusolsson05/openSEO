@@ -1,10 +1,13 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import { useEffect, useMemo, useState } from 'react'
 import { apiPut } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
 interface PostInfo {
   id: number
@@ -209,72 +212,72 @@ export default function PostInfoSidepanel({
             <p className="mt-1">{keywordCount}</p>
           </div>
 
-          <label className="flex cursor-pointer items-center gap-2">
+          <Label className="flex cursor-pointer items-center gap-2">
             <input
               type="checkbox"
               checked={highlightKeywords}
               onChange={(e) => toggleHighlight(e.target.checked)}
             />
             <span className="text-[13px]">Highlight focus keywords</span>
-          </label>
+          </Label>
         </CardContent>
       </Card>
 
-      {seoDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded border border-border bg-white p-4">
-            <h3 className="text-[14px] font-semibold">Edit SEO Title</h3>
-            <div className="mt-3 space-y-1">
-              <Input
-                value={editedSeoTitle}
-                onChange={(e) => setEditedSeoTitle(e.target.value)}
-                className="h-8 rounded-sm border-border text-[13px]"
-              />
-              <p className={`text-right text-[12px] ${editedSeoTitle.length > TITLE_MAX ? 'text-red-600' : 'text-muted-foreground'}`}>
-                {editedSeoTitle.length}/{TITLE_MAX}
-              </p>
-            </div>
-            <div className="mt-4 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setSeoDialogOpen(false)} disabled={saving}>Cancel</Button>
-              <Button
-                onClick={saveSeoTitle}
-                disabled={saving || editedSeoTitle.length > TITLE_MAX}
-                className="bg-primary hover:bg-primary-hover"
-              >
-                {saving ? 'Saving...' : 'Save'}
-              </Button>
-            </div>
+      <Sheet open={seoDialogOpen} onOpenChange={setSeoDialogOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Edit SEO Title</SheetTitle>
+          </SheetHeader>
+          <div className="mt-3 space-y-1">
+            <Input
+              value={editedSeoTitle}
+              onChange={(e) => setEditedSeoTitle(e.target.value)}
+              className="h-8 rounded-sm border-border text-[13px]"
+            />
+            <p className={`text-right text-[12px] ${editedSeoTitle.length > TITLE_MAX ? 'text-red-600' : 'text-muted-foreground'}`}>
+              {editedSeoTitle.length}/{TITLE_MAX}
+            </p>
           </div>
-        </div>
-      )}
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setSeoDialogOpen(false)} disabled={saving}>Cancel</Button>
+            <Button
+              onClick={saveSeoTitle}
+              disabled={saving || editedSeoTitle.length > TITLE_MAX}
+              className="bg-primary hover:bg-primary-hover"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
-      {metaDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded border border-border bg-white p-4">
-            <h3 className="text-[14px] font-semibold">Edit Meta Description</h3>
-            <div className="mt-3 space-y-1">
-              <textarea
-                value={editedMetaDescription}
-                onChange={(e) => setEditedMetaDescription(e.target.value)}
-                className="min-h-[120px] w-full rounded-sm border border-border px-3 py-2 text-[13px] outline-none focus:border-primary"
-              />
-              <p className={`text-right text-[12px] ${editedMetaDescription.length > META_MAX ? 'text-red-600' : 'text-muted-foreground'}`}>
-                {editedMetaDescription.length}/{META_MAX}
-              </p>
-            </div>
-            <div className="mt-4 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setMetaDialogOpen(false)} disabled={saving}>Cancel</Button>
-              <Button
-                onClick={saveMetaDescription}
-                disabled={saving || editedMetaDescription.length > META_MAX}
-                className="bg-primary hover:bg-primary-hover"
-              >
-                {saving ? 'Saving...' : 'Save'}
-              </Button>
-            </div>
+      <Sheet open={metaDialogOpen} onOpenChange={setMetaDialogOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Edit Meta Description</SheetTitle>
+          </SheetHeader>
+          <div className="mt-3 space-y-1">
+            <textarea
+              value={editedMetaDescription}
+              onChange={(e) => setEditedMetaDescription(e.target.value)}
+              className="min-h-[120px] w-full rounded-sm border border-border px-3 py-2 text-[13px] outline-none focus:border-primary"
+            />
+            <p className={`text-right text-[12px] ${editedMetaDescription.length > META_MAX ? 'text-red-600' : 'text-muted-foreground'}`}>
+              {editedMetaDescription.length}/{META_MAX}
+            </p>
           </div>
-        </div>
-      )}
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setMetaDialogOpen(false)} disabled={saving}>Cancel</Button>
+            <Button
+              onClick={saveMetaDescription}
+              disabled={saving || editedMetaDescription.length > META_MAX}
+              className="bg-primary hover:bg-primary-hover"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   )
 }

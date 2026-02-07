@@ -1,5 +1,7 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import { Input } from '@/components/ui/input'
 import type { EditField } from '../../types'
 
@@ -12,7 +14,7 @@ interface Props {
 export function UrlFieldInput({ field, value, onChange }: Props) {
   return (
     <div>
-      <label className="text-sm font-medium text-muted-foreground">{field.label}</label>
+      <Label className="text-sm font-medium text-muted-foreground">{field.label}</Label>
       <Input
         className="mt-1"
         type="url"

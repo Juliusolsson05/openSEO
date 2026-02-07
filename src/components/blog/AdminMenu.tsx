@@ -1,5 +1,7 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { api, apiPost, apiDelete } from '@/lib/api'
@@ -230,15 +232,17 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
       <CardContent className="space-y-2 bg-background text-[13px]">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Actions</p>
         {adminActions.map((action) => (
-          <button
+          <Button
             key={action.action}
+            type="button"
+            variant="outline"
             onClick={() => openModal(action)}
             disabled={!!action.blocked}
-            className="flex w-full items-center justify-between rounded-sm border border-border bg-white px-3 py-2 text-left disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-auto w-full items-center justify-between rounded-sm bg-white px-3 py-2 text-left font-normal disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span>{action.label}</span>
             {action.blocked ? <Badge variant="warning">BLOCKED</Badge> : null}
-          </button>
+          </Button>
         ))}
 
         <div className="my-3 border-t border-border" />
@@ -260,7 +264,7 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
             <div className="space-y-3">
               {selectedAction.inputs.filter((i) => i.type !== 'hidden').map((input) => (
                 <div key={input.key}>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">{input.label}</label>
+                  <Label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">{input.label}</Label>
                   {input.type === 'select' ? (
                     <select className="h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]" value={formData[input.key] ?? ''} onChange={(e) => setFormData((p) => ({ ...p, [input.key]: e.target.value }))}>
                       {(input.options ?? []).map((o) => <option key={String(o.value)} value={o.value}>{o.title}</option>)}
@@ -289,12 +293,12 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
         <div className={modalShell}>
           <div className={modalCard}>
             <h3 className="mb-2 text-[14px] font-semibold">Publish Details</h3>
-            <label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">Select Dictionary</label>
+            <Label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">Select Dictionary</Label>
             <select className="mb-3 h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]" value={publishDetails.dictionaryId} onChange={(e) => setPublishDetails((p) => ({ ...p, dictionaryId: e.target.value }))} disabled={loadingDictionaries}>
               <option value="">Select</option>
               {availableDictionaries.map((d: any) => <option key={d.id} value={d.id}>{d.title}</option>)}
             </select>
-            <label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">Export Method</label>
+            <Label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">Export Method</Label>
             <select className="h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]" value={publishDetails.exportMethod} onChange={(e) => setPublishDetails((p) => ({ ...p, exportMethod: e.target.value }))}>
               <option value="elementor">Elementor</option>
             </select>

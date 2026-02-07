@@ -1,5 +1,9 @@
 'use client'
 
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+
 interface Props {
   prompt: string
   setPrompt: (value: string) => void
@@ -14,7 +18,7 @@ interface Props {
 export function IdeogramControls({ prompt, setPrompt, quality, setQuality, magicPrompt, setMagicPrompt, onGenerate, isGenerating }: Props) {
   return (
     <div className="space-y-3">
-      <textarea
+      <Textarea
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         rows={5}
@@ -39,10 +43,10 @@ export function IdeogramControls({ prompt, setPrompt, quality, setQuality, magic
         ))}
       </div>
 
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={magicPrompt} onChange={(e) => setMagicPrompt(e.target.checked)} />
+      <Label className="flex items-center gap-2 text-sm">
+        <Checkbox checked={magicPrompt} onCheckedChange={(checked) => setMagicPrompt(checked === true)} />
         Magic Prompt
-      </label>
+      </Label>
 
       <button
         type="button"

@@ -24,7 +24,7 @@ export function StockPhotoControls({ onSelect, initialQuery = '' }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <input value={query} onChange={(e) => setQuery(e.target.value)} className="w-full rounded border border-border px-2 py-1 text-sm" placeholder="Search photos" />
+        <Input value={query} onChange={(e) => setQuery(e.target.value)} className="w-full rounded border border-border px-2 py-1 text-sm" placeholder="Search photos" />
         <button type="button" onClick={onSearch} className="rounded bg-primary px-3 py-1 text-white text-sm">Search</button>
       </div>
       {loading ? <div className="text-sm text-muted-foreground">Loading...</div> : null}

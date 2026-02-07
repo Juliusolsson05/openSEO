@@ -152,22 +152,22 @@ export default function BlogPage() {
 
         {/* View toggle */}
         <div className="flex border border-border rounded-sm overflow-hidden">
-          <button
+          <Button
+            size="icon"
+            variant={view === 'list' ? 'default' : 'ghost'}
             onClick={() => setView('list')}
-            className={`flex items-center justify-center h-7 w-8 transition-colors ${
-              view === 'list' ? 'bg-primary text-white' : 'bg-white text-muted-foreground hover:bg-secondary'
-            }`}
+            className="h-7 w-8 rounded-none"
           >
             <LayoutList className="h-3.5 w-3.5" />
-          </button>
-          <button
+          </Button>
+          <Button
+            size="icon"
+            variant={view === 'grid' ? 'default' : 'ghost'}
             onClick={() => setView('grid')}
-            className={`flex items-center justify-center h-7 w-8 border-l border-border transition-colors ${
-              view === 'grid' ? 'bg-primary text-white' : 'bg-white text-muted-foreground hover:bg-secondary'
-            }`}
+            className="h-7 w-8 rounded-none border-l border-border"
           >
             <LayoutGrid className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
 
         <div className="flex-1" />

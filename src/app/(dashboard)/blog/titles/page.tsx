@@ -1,5 +1,7 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import { useEffect, useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -170,22 +172,30 @@ export default function BlogTitlesPage() {
 
         {/* Status filter */}
         <div className="flex border border-border rounded-sm overflow-hidden text-[12px]">
-          <button
+          <Button
+            size="sm"
+            variant={statusFilter === null ? 'default' : 'ghost'}
             onClick={() => setStatusFilter(null)}
-            className={`px-3 h-7 ${statusFilter === null ? 'bg-primary text-white' : 'bg-white text-muted-foreground hover:bg-secondary'}`}
-          >All</button>
-          <button
+            className="h-7 rounded-none px-3"
+          >All</Button>
+          <Button
+            size="sm"
+            variant={statusFilter === 1 ? 'default' : 'ghost'}
             onClick={() => setStatusFilter(1)}
-            className={`px-3 h-7 border-l border-border ${statusFilter === 1 ? 'bg-primary text-white' : 'bg-white text-muted-foreground hover:bg-secondary'}`}
-          >Pending</button>
-          <button
+            className="h-7 rounded-none border-l border-border px-3"
+          >Pending</Button>
+          <Button
+            size="sm"
+            variant={statusFilter === 2 ? 'default' : 'ghost'}
             onClick={() => setStatusFilter(2)}
-            className={`px-3 h-7 border-l border-border ${statusFilter === 2 ? 'bg-primary text-white' : 'bg-white text-muted-foreground hover:bg-secondary'}`}
-          >Generated</button>
-          <button
+            className="h-7 rounded-none border-l border-border px-3"
+          >Generated</Button>
+          <Button
+            size="sm"
+            variant={statusFilter === 3 ? 'default' : 'ghost'}
             onClick={() => setStatusFilter(3)}
-            className={`px-3 h-7 border-l border-border ${statusFilter === 3 ? 'bg-primary text-white' : 'bg-white text-muted-foreground hover:bg-secondary'}`}
-          >Scheduled</button>
+            className="h-7 rounded-none border-l border-border px-3"
+          >Scheduled</Button>
         </div>
 
         <div className="flex-1" />
@@ -223,7 +233,7 @@ export default function BlogTitlesPage() {
           <CardContent className="p-4">
             <div className="flex gap-3 items-end">
               <div className="flex-1">
-                <label className="text-[13px] font-semibold mb-1 block">Topic</label>
+                <Label className="text-[13px] font-semibold mb-1 block">Topic</Label>
                 <Input
                   value={genTopic}
                   onChange={(e) => setGenTopic(e.target.value)}
@@ -232,7 +242,7 @@ export default function BlogTitlesPage() {
                 />
               </div>
               <div className="w-24">
-                <label className="text-[13px] font-semibold mb-1 block">Count</label>
+                <Label className="text-[13px] font-semibold mb-1 block">Count</Label>
                 <Input
                   type="number"
                   value={genCount}

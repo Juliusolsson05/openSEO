@@ -5,6 +5,7 @@ import { useCtaStore } from '@/stores/cta-store'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface SelectCTAModalProps {
   modelValue: boolean
@@ -32,16 +33,17 @@ export default function SelectCTAModal({ modelValue, onOpenChange, onCtaSelected
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ''
   const fullImage = (url: string) => (url?.startsWith('http') ? url : `${baseUrl}${url}`)
 
-  if (!modelValue) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <Card className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded border-border bg-white">
-        <CardHeader className="flex-row items-center justify-between rounded-t-[4px] bg-primary py-3 text-white">
-          <CardTitle>Choose a CTA</CardTitle>
-          <Button variant="ghost" className="text-white hover:bg-white/20" onClick={close}>✕</Button>
-        </CardHeader>
-        <CardContent className="bg-background pt-5 text-[13px]">
+    <Dialog open={modelValue} onOpenChange={(open) => !open && close()}>
+      <DialogContent className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded border-border bg-white p-0">
+        <Card className="border-0 shadow-none">
+          <CardHeader className="flex-row items-center justify-between rounded-t-[4px] bg-primary py-3 text-white">
+            <DialogHeader className="p-0">
+              <DialogTitle asChild><CardTitle>Choose a CTA</CardTitle></DialogTitle>
+            </DialogHeader>
+            <Button variant="ghost" className="text-white hover:bg-white/20" onClick={close}>✕</Button>
+          </CardHeader>
+          <CardContent className="bg-background pt-5 text-[13px]">
           {isLoading ? (
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -76,8 +78,9 @@ export default function SelectCTAModal({ modelValue, onOpenChange, onCtaSelected
               Confirm Selection
             </Button>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </DialogContent>
+    </Dialog>
   )
 }

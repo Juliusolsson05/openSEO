@@ -1,5 +1,7 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -105,7 +107,7 @@ export default function ShareDialog({ postId }: ShareDialogProps) {
 
           {status?.share_url ? (
             <div className="space-y-2">
-              <label className="text-[12px] text-muted-foreground">Share link</label>
+              <Label className="text-[12px] text-muted-foreground">Share link</Label>
               <div className="flex gap-2">
                 <Input value={status.share_url} readOnly />
                 <Button variant="outline" onClick={copyLink}>{copied ? 'Copied' : 'Copy'}</Button>

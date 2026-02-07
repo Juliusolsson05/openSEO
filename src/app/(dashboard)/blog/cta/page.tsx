@@ -1,5 +1,7 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 /**
  * CTA Management — ported from aurora_dashboard/pages/apps/blog/cta.vue
  * Campaigns with nested CTAs. CRUD for both.
@@ -11,7 +13,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   Plus,
   Pencil,
@@ -236,17 +242,21 @@ export default function BlogCtaPage() {
       </div>
 
       {/* Modals */}
-      {modal.type && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setModal({ type: null })}>
-          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+      <Dialog open={!!modal.type} onOpenChange={(open) => !open && setModal({ type: null })}>
+        <DialogContent className="w-full max-w-md p-0">
+          <Card className="border-0 shadow-none">
             <CardHeader className="flex-row items-center justify-between">
-              <CardTitle>
-                {modal.type === 'campaign-create' && 'Create Campaign'}
-                {modal.type === 'campaign-edit' && 'Edit Campaign'}
-                {modal.type === 'cta-create' && 'Create CTA'}
-                {modal.type === 'cta-edit' && 'Edit CTA'}
-                {modal.type === 'cta-detail' && modal.data?.title}
-              </CardTitle>
+              <DialogHeader className="p-0">
+                <DialogTitle asChild>
+                  <CardTitle>
+                    {modal.type === 'campaign-create' && 'Create Campaign'}
+                    {modal.type === 'campaign-edit' && 'Edit Campaign'}
+                    {modal.type === 'cta-create' && 'Create CTA'}
+                    {modal.type === 'cta-edit' && 'Edit CTA'}
+                    {modal.type === 'cta-detail' && modal.data?.title}
+                  </CardTitle>
+                </DialogTitle>
+              </DialogHeader>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setModal({ type: null })}>
                 <X className="h-4 w-4" />
               </Button>
@@ -256,7 +266,7 @@ export default function BlogCtaPage() {
               {(modal.type === 'campaign-create' || modal.type === 'campaign-edit') && (
                 <>
                   <div>
-                    <label className="text-[13px] font-semibold mb-1 block">Campaign Name</label>
+                    <Label className="text-[13px] font-semibold mb-1 block">Campaign Name</Label>
                     <Input value={campaignName} onChange={(e) => setCampaignName(e.target.value)} placeholder="e.g. Summer Sale" className="h-9" />
                   </div>
                   <div className="flex gap-2 justify-end">
@@ -273,25 +283,26 @@ export default function BlogCtaPage() {
                 <>
                   {modal.type === 'cta-create' && (
                     <div>
-                      <label className="text-[13px] font-semibold mb-1 block">Campaign</label>
-                      <select
-                        value={ctaForm.campaignId}
-                        onChange={(e) => setCtaForm((f) => ({ ...f, campaignId: Number(e.target.value) }))}
-                        className="h-9 w-full rounded-sm border border-border bg-white px-3 text-[13px] focus:border-primary focus:outline-none"
-                      >
-                        {store.campaigns.map((c) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                      </select>
+                      <Label className="text-[13px] font-semibold mb-1 block">Campaign</Label>
+                      <Select value={String(ctaForm.campaignId)} onValueChange={(value) => setCtaForm((f) => ({ ...f, campaignId: Number(value) }))}>
+                        <SelectTrigger className="h-9 w-full rounded-sm border border-border bg-white px-3 text-[13px] focus:border-primary focus:outline-none">
+                          <SelectValue placeholder="Select campaign" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {store.campaigns.map((c) => (
+                            <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   )}
                   <div>
-                    <label className="text-[13px] font-semibold mb-1 block">Title</label>
+                    <Label className="text-[13px] font-semibold mb-1 block">Title</Label>
                     <Input value={ctaForm.title} onChange={(e) => setCtaForm((f) => ({ ...f, title: e.target.value }))} className="h-9" />
                   </div>
                   <div>
-                    <label className="text-[13px] font-semibold mb-1 block">Description</label>
-                    <textarea
+                    <Label className="text-[13px] font-semibold mb-1 block">Description</Label>
+                    <Textarea
                       value={ctaForm.description}
                       onChange={(e) => setCtaForm((f) => ({ ...f, description: e.target.value }))}
                       rows={3}
@@ -299,23 +310,21 @@ export default function BlogCtaPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-[13px] font-semibold mb-1 block">Link URL</label>
+                    <Label className="text-[13px] font-semibold mb-1 block">Link URL</Label>
                     <Input value={ctaForm.link} onChange={(e) => setCtaForm((f) => ({ ...f, link: e.target.value }))} placeholder="https://..." className="h-9" />
                   </div>
                   {modal.type === 'cta-create' && (
-                    <label className="flex items-center gap-2 text-[13px]">
-                      <input
-                        type="checkbox"
+                    <Label className="flex items-center gap-2 text-[13px]">
+                      <Checkbox
                         checked={ctaForm.generateImage}
-                        onChange={(e) => setCtaForm((f) => ({ ...f, generateImage: e.target.checked }))}
-                        className="accent-primary"
+                        onCheckedChange={(checked) => setCtaForm((f) => ({ ...f, generateImage: checked === true }))}
                       />
                       Generate image with AI
-                    </label>
+                    </Label>
                   )}
                   {!ctaForm.generateImage && (
                     <div>
-                      <label className="text-[13px] font-semibold mb-1 block">Upload Image</label>
+                      <Label className="text-[13px] font-semibold mb-1 block">Upload Image</Label>
                       <input
                         type="file"
                         accept="image/*"
@@ -354,8 +363,8 @@ export default function BlogCtaPage() {
               )}
             </CardContent>
           </Card>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

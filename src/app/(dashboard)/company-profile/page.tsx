@@ -1,5 +1,7 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import { FormEvent, useEffect, useState } from 'react'
 import { api, apiPost } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -115,9 +117,9 @@ export default function CompanyProfilePage() {
               </p>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">
                   Website URL
-                </label>
+                </Label>
                 <Input
                   value={websiteUrl}
                   onChange={(e) => setWebsiteUrl(e.target.value)}

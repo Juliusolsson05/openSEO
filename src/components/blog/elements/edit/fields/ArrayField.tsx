@@ -1,5 +1,7 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EditFieldRenderer } from '../EditFieldRenderer'
@@ -33,7 +35,7 @@ export function ArrayFieldInput({ field, value, onChange }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-muted-foreground">{field.label}</label>
+        <Label className="text-sm font-medium text-muted-foreground">{field.label}</Label>
         <Button
           variant="ghost"
           size="icon"

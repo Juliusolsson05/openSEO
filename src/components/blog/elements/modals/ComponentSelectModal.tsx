@@ -3,6 +3,7 @@
 import { createElement, useMemo, useState } from 'react'
 import { Search, Eye, X, LayoutGrid, List, Sparkles, LayoutTemplate } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
@@ -190,7 +191,7 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
               )}
 
               {selected && (
-                <textarea
+                <Textarea
                   className="w-full min-h-[72px] rounded-sm border border-border bg-background px-3 py-2 text-[13px]"
                   placeholder="Optional generation instructions"
                   value={note}

@@ -5,6 +5,7 @@ import { IdeogramControls } from './providers/IdeogramControls'
 import { GptImageControls } from './providers/GptImageControls'
 import { StockPhotoControls } from './providers/StockPhotoControls'
 import { UploadControls } from './providers/UploadControls'
+import { Button } from '@/components/ui/button'
 
 interface Props {
   provider: ImageStudioProvider
@@ -44,15 +45,15 @@ export function ImageControlPanel(props: Props) {
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
         {providers.map((item) => (
-          <button key={item.key} type="button" onClick={() => props.setProvider(item.key)} className={`rounded border px-2 py-1 text-sm ${props.provider === item.key ? 'border-primary bg-primary text-white' : 'border-border'}`}>
+          <Button key={item.key} type="button" size="sm" variant={props.provider === item.key ? 'default' : 'outline'} onClick={() => props.setProvider(item.key)}>
             {item.label}
-          </button>
+          </Button>
         ))}
       </div>
 
       <div className="flex gap-2">
-        <button type="button" className="rounded border border-border px-2 py-1 text-xs" onClick={() => props.setPrompt(props.postTitle)}>Post Title</button>
-        <button type="button" className="rounded border border-border px-2 py-1 text-xs" onClick={() => props.setPrompt(props.currentDescription)}>Image Description</button>
+        <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => props.setPrompt(props.postTitle)}>Post Title</Button>
+        <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => props.setPrompt(props.currentDescription)}>Image Description</Button>
       </div>
 
       {props.provider === 'ideogram' ? (

@@ -1,11 +1,14 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import { useMemo, useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Eye, Save, X } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 import '@/components/blog/elements'
 import {
@@ -116,10 +119,10 @@ export default function ElementsPage() {
                   <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={() => setPreviewType(e.type)}>
                     <Eye className="h-3 w-3" /> Preview
                   </Button>
-                  <label className="flex items-center gap-2 text-[12px] cursor-pointer">
+                  <Label className="flex items-center gap-2 text-[12px] cursor-pointer">
                     <input type="checkbox" checked={e.enabled} onChange={() => toggle(e.type)} className="accent-primary" />
                     Enabled
-                  </label>
+                  </Label>
                 </div>
               </CardContent>
             </Card>
@@ -148,21 +151,23 @@ export default function ElementsPage() {
         </CardContent>
       </Card>
 
-      {previewType && PreviewComponent && previewExample && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setPreviewType(null)}>
-          <Card className="w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
+      <Dialog open={!!previewType && !!PreviewComponent && !!previewExample} onOpenChange={(open) => !open && setPreviewType(null)}>
+        <DialogContent className="w-full max-w-3xl p-0">
+          <Card className="border-0 shadow-none">
             <CardHeader className="flex-row items-center justify-between pb-2">
-              <CardTitle>{pretty(previewType)} Preview</CardTitle>
+              <DialogHeader className="p-0">
+                <DialogTitle asChild><CardTitle>{previewType ? `${pretty(previewType)} Preview` : 'Element Preview'}</CardTitle></DialogTitle>
+              </DialogHeader>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPreviewType(null)}>
                 <X className="h-4 w-4" />
               </Button>
             </CardHeader>
             <CardContent className="max-h-[70vh] overflow-y-auto">
-              <PreviewComponent content={previewExample as any} />
+              {PreviewComponent && previewExample ? <PreviewComponent content={previewExample as any} /> : null}
             </CardContent>
           </Card>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

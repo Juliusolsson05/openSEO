@@ -1,5 +1,7 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import { useState } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -42,7 +44,7 @@ export default function ForgotPasswordPage() {
 
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <label className="text-[13px] font-semibold mb-1 block">Email</label>
+            <Label className="text-[13px] font-semibold mb-1 block">Email</Label>
             <div className="relative">
               <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-8 h-9" required />

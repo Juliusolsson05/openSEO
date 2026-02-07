@@ -1,5 +1,7 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 /**
  * EditFieldRenderer — routes to the correct field component based on field.type.
  * Ported from aurora_dashboard/views/apps/blog/elements/edit/EditField.vue
@@ -11,6 +13,8 @@ import { ArrayFieldInput } from './fields/ArrayField'
 import { NumberFieldInput } from './fields/NumberField'
 import { UrlFieldInput } from './fields/UrlField'
 import { SelectFieldInput } from './fields/SelectField'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 
 interface EditFieldRendererProps {
   field: EditField
@@ -44,7 +48,7 @@ export function EditFieldRenderer({ field, value, onChange }: EditFieldRendererP
       // Object-like fields render sub-fields recursively
       return (
         <div className="space-y-3 border rounded-lg p-3">
-          <label className="text-sm font-medium text-muted-foreground">{field.label}</label>
+          <Label className="text-sm font-medium text-muted-foreground">{field.label}</Label>
           {field.fields &&
             Object.entries(field.fields).map(([key, subField]) => (
               <EditFieldRenderer
@@ -60,8 +64,8 @@ export function EditFieldRenderer({ field, value, onChange }: EditFieldRendererP
     case 'color':
       return (
         <div>
-          <label className="text-sm font-medium text-muted-foreground">{field.label}</label>
-          <input
+          <Label className="text-sm font-medium text-muted-foreground">{field.label}</Label>
+          <Input
             type="color"
             value={value || '#000000'}
             onChange={(e) => onChange(e.target.value)}
@@ -79,8 +83,8 @@ export function EditFieldRenderer({ field, value, onChange }: EditFieldRendererP
       // Individual element sub-agents will implement specialized versions
       return (
         <div>
-          <label className="text-sm font-medium text-muted-foreground">{field.label}</label>
-          <textarea
+          <Label className="text-sm font-medium text-muted-foreground">{field.label}</Label>
+          <Textarea
             className="mt-1 w-full min-h-[120px] rounded-md border bg-background px-3 py-2 text-sm font-mono"
             value={typeof value === 'string' ? value : JSON.stringify(value, null, 2)}
             onChange={(e) => {

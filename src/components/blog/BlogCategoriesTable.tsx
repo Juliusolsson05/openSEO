@@ -1,5 +1,7 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import { useEffect, useMemo, useState } from 'react'
 import { api, apiDelete, apiPost, apiPut } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -43,7 +45,7 @@ function CategoryFormModal({
       <div className="w-full max-w-md rounded border border-border bg-white p-4 shadow-none">
         <h3 className="text-[13px] font-semibold text-foreground">{title}</h3>
         <div className="mt-3">
-          <label className="mb-1 block text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Category name</label>
+          <Label className="mb-1 block text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Category name</Label>
           <Input
             value={value}
             onChange={(e) => onChange(e.target.value)}

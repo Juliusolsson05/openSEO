@@ -1,5 +1,7 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import type { ChangeEvent } from 'react'
 
 interface Props {
@@ -14,10 +16,10 @@ export function UploadControls({ onSelect }: Props) {
 
   return (
     <div className="space-y-3 text-sm">
-      <label className="flex min-h-28 cursor-pointer items-center justify-center rounded border border-dashed border-border p-4 text-center text-muted-foreground">
+      <Label className="flex min-h-28 cursor-pointer items-center justify-center rounded border border-dashed border-border p-4 text-center text-muted-foreground">
         Drag & drop or click to choose file
         <input type="file" accept="image/*" className="hidden" onChange={onFileChange} />
-      </label>
+      </Label>
       <p className="text-xs text-muted-foreground">Accepted: JPG, PNG, WEBP. Keep file size reasonable for fast uploads.</p>
     </div>
   )

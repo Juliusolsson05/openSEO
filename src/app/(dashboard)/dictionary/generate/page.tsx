@@ -1,11 +1,15 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDictionaryStore } from '@/stores/dictionary-store'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export default function DictionaryGeneratePage() {
   const router = useRouter()
@@ -30,13 +34,13 @@ export default function DictionaryGeneratePage() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
           <div className="space-y-1">
-            <label className="text-[11px] uppercase tracking-wide">Dictionary Title</label>
+            <Label className="text-[11px] uppercase tracking-wide">Dictionary Title</Label>
             <Input className="rounded-sm" value={title} onChange={(e) => setTitle(e.target.value)} required />
           </div>
 
           <div className="space-y-1">
-            <label className="text-[11px] uppercase tracking-wide">Subject</label>
-            <textarea
+            <Label className="text-[11px] uppercase tracking-wide">Subject</Label>
+            <Textarea
               className="w-full min-h-24 rounded-sm border border-border px-3 py-2"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
@@ -45,21 +49,22 @@ export default function DictionaryGeneratePage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-[11px] uppercase tracking-wide">Language</label>
-            <select
-              className="w-full rounded-sm border border-border px-3 py-2 bg-white"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-            >
-              <option value="en">English</option>
-              <option value="es">Spanish</option>
-              <option value="fr">French</option>
-              <option value="de">German</option>
-            </select>
+            <Label className="text-[11px] uppercase tracking-wide">Language</Label>
+            <Select value={language} onValueChange={setLanguage}>
+              <SelectTrigger className="w-full rounded-sm border border-border px-3 py-2 bg-white">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="es">Spanish</SelectItem>
+                <SelectItem value="fr">French</SelectItem>
+                <SelectItem value="de">German</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1">
-            <label className="text-[11px] uppercase tracking-wide">Words per Letter</label>
+            <Label className="text-[11px] uppercase tracking-wide">Words per Letter</Label>
             <Input
               type="number"
               min={5}

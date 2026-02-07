@@ -1,5 +1,7 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -51,19 +53,19 @@ export default function RegisterPage() {
       <CardContent>
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <label className="text-[13px] font-semibold mb-1 block">Full name</label>
+            <Label className="text-[13px] font-semibold mb-1 block">Full name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} className="h-9" required />
           </div>
           <div>
-            <label className="text-[13px] font-semibold mb-1 block">Email</label>
+            <Label className="text-[13px] font-semibold mb-1 block">Email</Label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-9" required />
           </div>
           <div>
-            <label className="text-[13px] font-semibold mb-1 block">Password</label>
+            <Label className="text-[13px] font-semibold mb-1 block">Password</Label>
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-9" required />
           </div>
           <div>
-            <label className="text-[13px] font-semibold mb-1 block">Confirm password</label>
+            <Label className="text-[13px] font-semibold mb-1 block">Confirm password</Label>
             <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="h-9" required />
           </div>
 

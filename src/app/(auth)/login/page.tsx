@@ -1,5 +1,7 @@
 'use client'
 
+import { Label } from '@/components/ui/label'
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -53,9 +55,9 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
-          <label className="block text-[13px] font-semibold text-foreground mb-1">
+          <Label className="block text-[13px] font-semibold text-foreground mb-1">
             Email
-          </label>
+          </Label>
           <Input
             type="email"
             placeholder="name@company.com"
@@ -68,9 +70,9 @@ export default function LoginPage() {
 
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-[13px] font-semibold text-foreground">
+            <Label className="text-[13px] font-semibold text-foreground">
               Password
-            </label>
+            </Label>
             <Link
               href="/forgot-password"
               className="text-[12px] text-primary hover:underline"

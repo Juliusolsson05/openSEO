@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { api, apiPost } from '@/lib/api'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface Message {
   sender: 'user' | 'quillo'
