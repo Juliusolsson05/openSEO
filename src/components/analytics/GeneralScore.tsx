@@ -20,13 +20,15 @@ export function GeneralScore({ generalSeoScore, scoreBreakdown }: GeneralScorePr
 
   const score = Math.max(0, Math.min(100, generalSeoScore || 0))
   const color = score >= 80 ? '#107C10' : score >= 50 ? '#FFB900' : '#D13438'
-  const size = 210
-  const stroke = 14
-  const radius = (size - stroke) / 2
-  const c = 2 * Math.PI * radius
-  const offset = c - (score / 100) * c
 
   const entries = useMemo(() => Object.entries(scoreBreakdown || {}), [scoreBreakdown])
+
+  // SVG uses viewBox so it scales responsively
+  const vbSize = 210
+  const stroke = 14
+  const radius = (vbSize - stroke) / 2
+  const c = 2 * Math.PI * radius
+  const offset = c - (score / 100) * c
 
   return (
     <>
@@ -35,12 +37,12 @@ export function GeneralScore({ generalSeoScore, scoreBreakdown }: GeneralScorePr
           <CardTitle className="text-[13px] uppercase tracking-wide">General score</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-4">
-          <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
-            <svg width={size} height={size} className="-rotate-90">
-              <circle cx={size / 2} cy={size / 2} r={radius} stroke="#E1E1E1" strokeWidth={stroke} fill="none" />
+          <div className="relative w-[160px] sm:w-[200px] lg:w-[210px]">
+            <svg viewBox={`0 0 ${vbSize} ${vbSize}`} className="w-full">
+              <circle cx={vbSize / 2} cy={vbSize / 2} r={radius} stroke="#E1E1E1" strokeWidth={stroke} fill="none" transform={`rotate(-90 ${vbSize / 2} ${vbSize / 2})`} />
               <circle
-                cx={size / 2}
-                cy={size / 2}
+                cx={vbSize / 2}
+                cy={vbSize / 2}
                 r={radius}
                 stroke={color}
                 strokeWidth={stroke}
@@ -48,16 +50,13 @@ export function GeneralScore({ generalSeoScore, scoreBreakdown }: GeneralScorePr
                 strokeDasharray={c}
                 strokeDashoffset={offset}
                 strokeLinecap="round"
+                transform={`rotate(-90 ${vbSize / 2} ${vbSize / 2})`}
               />
+              <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" fill={color} fontSize="44" fontWeight="bold">{score}</text>
+              <text x="50%" y="60%" textAnchor="middle" dominantBaseline="middle" fill="#999" fontSize="11">SEO SCORE</text>
             </svg>
-            <div className="absolute text-center">
-              <p className="text-[44px] font-bold leading-none" style={{ color }}>
-                {score}
-              </p>
-              <p className="text-[11px] text-muted-foreground">SEO SCORE</p>
-            </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+          <Button variant="outline" size="sm" className="text-[12px]" onClick={() => setOpen(true)}>
             How is this calculated?
           </Button>
         </CardContent>
@@ -85,7 +84,7 @@ export function GeneralScore({ generalSeoScore, scoreBreakdown }: GeneralScorePr
                   <tr key={key}>
                     <td className="border-b border-border px-3 py-2 capitalize">{key.replace(/_/g, ' ')}</td>
                     <td className="border-b border-border px-3 py-2">{Math.round(item.score)}</td>
-                    <td className="border-b border-border px-3 py-2">{Math.round(item.weight * 100)}%</td>
+                    <td className="border-b border-border px-3 py-2">{item.weight <= 1 ? Math.round(item.weight * 100) : Math.round(item.weight)}%</td>
                   </tr>
                 ))}
                 {entries.length === 0 && (

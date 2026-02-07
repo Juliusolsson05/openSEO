@@ -45,51 +45,53 @@ export function AnalyticsOverview({ generalBlogData, scoreBreakdown }: Analytics
   const chartData = useMemo(() => [{ name: 'Score', value: score }, { name: 'Remaining', value: 100 - score }], [score])
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-      <Card className="rounded-sm lg:col-span-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+      <Card className="rounded-sm md:col-span-5 lg:col-span-4">
         <CardHeader>
           <CardTitle className="text-[13px] uppercase tracking-wide">Overall SEO score</CardTitle>
         </CardHeader>
-        <CardContent className="h-[280px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={chartData} dataKey="value" innerRadius={60} outerRadius={95} startAngle={90} endAngle={-270}>
-                <Cell fill="#0078D4" />
-                <Cell fill="#E1E1E1" />
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-          <p className="-mt-36 text-center text-[34px] font-bold">{Math.round(score)}</p>
+        <CardContent>
+          <div className="mx-auto h-[200px] w-[200px] sm:h-[260px] sm:w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={chartData} dataKey="value" innerRadius={50} outerRadius={80} startAngle={90} endAngle={-270}>
+                  <Cell fill="#0078D4" />
+                  <Cell fill="#E1E1E1" />
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="-mt-28 text-center text-[28px] font-bold sm:-mt-32 sm:text-[34px]">{Math.round(score)}</p>
           <p className="text-center text-[11px] text-muted-foreground">/100</p>
         </CardContent>
       </Card>
 
-      <Card className="rounded-sm lg:col-span-8">
+      <Card className="rounded-sm md:col-span-7 lg:col-span-8">
         <CardHeader>
           <CardTitle className="text-[13px] uppercase tracking-wide">Breakdown</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
             {Object.entries(scoreBreakdown || {}).map(([key, value]) => (
               <SmallRing key={key} value={value.score} label={key} />
             ))}
           </div>
-          <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div className="rounded-sm border border-border p-3">
               <p className="text-[11px] uppercase text-muted-foreground">Content Volume</p>
-              <p className="text-[13px]">Assess total publishing throughput and posting consistency across the year.</p>
+              <p className="text-[12px] sm:text-[13px]">Assess total publishing throughput and posting consistency across the year.</p>
             </div>
             <div className="rounded-sm border border-border p-3">
               <p className="text-[11px] uppercase text-muted-foreground">Content Depth</p>
-              <p className="text-[13px]">Evaluate average post length, case studies, and tool recommendation richness.</p>
+              <p className="text-[12px] sm:text-[13px]">Evaluate average post length, case studies, and tool recommendation richness.</p>
             </div>
             <div className="rounded-sm border border-border p-3">
               <p className="text-[11px] uppercase text-muted-foreground">Keyword Strategy</p>
-              <p className="text-[13px]">Track density and placement quality for focus keywords and supporting term links.</p>
+              <p className="text-[12px] sm:text-[13px]">Track density and placement quality for focus keywords and supporting term links.</p>
             </div>
             <div className="rounded-sm border border-border p-3">
               <p className="text-[11px] uppercase text-muted-foreground">Link Strategy</p>
-              <p className="text-[13px]">Measure internal linking quality, outgoing references, and overall link distribution.</p>
+              <p className="text-[12px] sm:text-[13px]">Measure internal linking quality, outgoing references, and overall link distribution.</p>
             </div>
           </div>
         </CardContent>

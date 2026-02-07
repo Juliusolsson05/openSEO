@@ -1,5 +1,5 @@
 import { NotFoundError, ValidationError } from '@/server/api/errors'
-import { generateImage } from '@/server/ai/image/generate-image'
+import { generateGptImage, generateIdeogramImage } from '@/server/ai/image/generate-image'
 import * as imageRepository from '@/server/repositories/image.repository'
 
 const DEFAULT_PLACEHOLDER_URL = 'https://res.cloudinary.com/dl9qdd24e/image/upload/v1732560659/600x400_fqbihy.png'
@@ -88,6 +88,40 @@ async function uploadUrlToCloudinary(imageUrl: string, folder: string) {
   return data.secure_url ?? null
 }
 
+async function uploadBase64ToCloudinary(base64: string, folder: string, mimeType: 'image/png' | 'image/jpeg' | 'image/webp' = 'image/png') {
+  const creds = getCloudinaryCredentials()
+  if (!creds) {
+    console.error('[ImageService] Missing Cloudinary credentials (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET)')
+    return null
+  }
+
+  const timestamp = String(Math.floor(Date.now() / 1000))
+  const paramsToSign: Record<string, string> = { folder, timestamp }
+  const signature = await generateCloudinarySignature(paramsToSign, creds.apiSecret)
+
+  const body = new URLSearchParams({
+    file: `data:${mimeType};base64,${base64}`,
+    folder,
+    timestamp,
+    api_key: creds.apiKey,
+    signature,
+  })
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${creds.cloudName}/image/upload`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  })
+
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '')
+    console.error(`[ImageService] Cloudinary base64 upload failed: ${res.status} ${errBody}`)
+    return null
+  }
+  const data = (await res.json()) as { secure_url?: string }
+  return data.secure_url ?? null
+}
+
 export class ImageService {
   async generateImages(companyId: number, payload: unknown) {
     const body = payload as {
@@ -114,7 +148,7 @@ export class ImageService {
     const coverVersion = body.quality_thumbnail ? 2 : version
 
     if (forceUpdate || (coverImage.url ?? '') === DEFAULT_PLACEHOLDER_URL) {
-      const img = await generateImage(coverDescription, coverVersion, body.magic_prompt ?? true)
+      const img = await generateIdeogramImage(coverDescription, coverVersion, body.magic_prompt ?? true)
       if ((img as any).url) {
         const cloudinaryUrl = await uploadUrlToCloudinary((img as any).url, 'blog_covers')
         if (cloudinaryUrl) coverImage.url = cloudinaryUrl
@@ -127,7 +161,7 @@ export class ImageService {
       const content = (element.content as any) || {}
       const description = content.description ?? ''
       if (forceUpdate || (content.url ?? '') === DEFAULT_PLACEHOLDER_URL) {
-        const img = await generateImage(description, version, body.magic_prompt ?? true)
+        const img = await generateIdeogramImage(description, version, body.magic_prompt ?? true)
         if ((img as any).url) {
           const cloudinaryUrl = await uploadUrlToCloudinary((img as any).url, 'blog_covers')
           if (cloudinaryUrl) content.url = cloudinaryUrl
@@ -158,7 +192,18 @@ export class ImageService {
   }
 
   async regenerateImage(companyId: number, payload: unknown) {
-    const body = payload as { post_id?: number | string; image_number?: number | string; version?: number | string; magic_prompt?: boolean; force_prompt?: string }
+    const body = payload as {
+      post_id?: number | string
+      image_number?: number | string
+      version?: number | string
+      magic_prompt?: boolean
+      force_prompt?: string
+      provider?: 'ideogram' | 'gpt-image'
+      gpt_quality?: 'low' | 'medium' | 'high'
+      gpt_size?: '1024x1024' | '1536x1024' | '1024x1536' | 'auto'
+      gpt_background?: 'auto' | 'transparent' | 'opaque'
+      gpt_output_format?: 'png' | 'jpeg' | 'webp'
+    }
     if (!body.post_id) throw new ValidationError('post_id is required.')
     if (body.image_number === undefined || body.image_number === null || body.image_number === '') {
       throw new ValidationError('image_number is required.')
@@ -166,9 +211,13 @@ export class ImageService {
 
     const imageNumber = Number(body.image_number)
     if (!Number.isInteger(imageNumber)) throw new ValidationError('image_number must be an integer.')
+
+    const provider = body.provider ?? 'ideogram'
     const version = Number(body.version ?? 1)
-    if (!Number.isInteger(version)) throw new ValidationError('version must be an integer between 1 and 3.')
-    if (![1, 2, 3].includes(version)) throw new ValidationError('Invalid version. Please select a version between 1 and 3.')
+    if (provider === 'ideogram') {
+      if (!Number.isInteger(version)) throw new ValidationError('version must be an integer between 1 and 3.')
+      if (![1, 2, 3].includes(version)) throw new ValidationError('Invalid version. Please select a version between 1 and 3.')
+    }
 
     const post = await imageRepository.findBlogPost(companyId, Number(body.post_id))
     if (!post) throw new NotFoundError('Not found.')
@@ -178,15 +227,36 @@ export class ImageService {
     if (imageNumber === 1) {
       const cover = (post.cover_image as any) || {}
       const description = body.force_prompt || cover.description || ''
-      const img = await generateImage(description, version, body.magic_prompt ?? true)
-      if ((img as any).error) {
-        console.error(`[ImageService] AI image generation failed: ${(img as any).error}`)
-        throw new ValidationError(`Image generation failed: ${(img as any).error}`)
+
+      if (provider === 'gpt-image') {
+        const img = await generateGptImage(
+          description,
+          body.gpt_quality ?? 'medium',
+          body.gpt_size ?? 'auto',
+          body.gpt_background ?? 'auto',
+          body.gpt_output_format ?? 'png',
+        )
+        if ((img as any).error) {
+          console.error(`[ImageService] GPT image generation failed: ${(img as any).error}`)
+          throw new ValidationError(`Image generation failed: ${(img as any).error}`)
+        }
+        newUrl = await uploadBase64ToCloudinary(
+          (img as any).b64_json,
+          'blog_covers',
+          (img as any).output_format === 'jpeg' ? 'image/jpeg' : (img as any).output_format === 'webp' ? 'image/webp' : 'image/png',
+        )
+      } else {
+        const img = await generateIdeogramImage(description, version, body.magic_prompt ?? true)
+        if ((img as any).error) {
+          console.error(`[ImageService] AI image generation failed: ${(img as any).error}`)
+          throw new ValidationError(`Image generation failed: ${(img as any).error}`)
+        }
+        if ((img as any).url) {
+          newUrl = await uploadUrlToCloudinary((img as any).url, 'blog_covers')
+        }
       }
-      if ((img as any).url) {
-        newUrl = await uploadUrlToCloudinary((img as any).url, 'blog_covers')
-        if (!newUrl) console.error('[ImageService] Cloudinary upload returned null for cover image')
-      }
+
+      if (!newUrl) console.error('[ImageService] Cloudinary upload returned null for cover image')
       if (newUrl) {
         cover.url = newUrl
         await imageRepository.updateBlogPostCover(post.id, cover)
@@ -198,15 +268,36 @@ export class ImageService {
       if (!target) throw new ValidationError(`No image element found at position ${imageNumber} (found ${imgs.length} image elements).`)
       const content = (target.content as any) || {}
       const description = body.force_prompt || content.description || ''
-      const img = await generateImage(description, version, body.magic_prompt ?? true)
-      if ((img as any).error) {
-        console.error(`[ImageService] AI image generation failed: ${(img as any).error}`)
-        throw new ValidationError(`Image generation failed: ${(img as any).error}`)
+
+      if (provider === 'gpt-image') {
+        const img = await generateGptImage(
+          description,
+          body.gpt_quality ?? 'medium',
+          body.gpt_size ?? 'auto',
+          body.gpt_background ?? 'auto',
+          body.gpt_output_format ?? 'png',
+        )
+        if ((img as any).error) {
+          console.error(`[ImageService] GPT image generation failed: ${(img as any).error}`)
+          throw new ValidationError(`Image generation failed: ${(img as any).error}`)
+        }
+        newUrl = await uploadBase64ToCloudinary(
+          (img as any).b64_json,
+          'blog_elements',
+          (img as any).output_format === 'jpeg' ? 'image/jpeg' : (img as any).output_format === 'webp' ? 'image/webp' : 'image/png',
+        )
+      } else {
+        const img = await generateIdeogramImage(description, version, body.magic_prompt ?? true)
+        if ((img as any).error) {
+          console.error(`[ImageService] AI image generation failed: ${(img as any).error}`)
+          throw new ValidationError(`Image generation failed: ${(img as any).error}`)
+        }
+        if ((img as any).url) {
+          newUrl = await uploadUrlToCloudinary((img as any).url, 'blog_elements')
+        }
       }
-      if ((img as any).url) {
-        newUrl = await uploadUrlToCloudinary((img as any).url, 'blog_elements')
-        if (!newUrl) console.error('[ImageService] Cloudinary upload returned null for element image')
-      }
+
+      if (!newUrl) console.error('[ImageService] Cloudinary upload returned null for element image')
       if (newUrl) {
         content.url = newUrl
         await imageRepository.updateElementContent(target.id, content)

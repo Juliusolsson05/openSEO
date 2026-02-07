@@ -1,4 +1,4 @@
-import { apiPost, apiPostForm } from '@/lib/api'
+import { api, apiPost, apiPostForm } from '@/lib/api'
 
 export interface BlogImageResponse {
   new_url: string
@@ -7,9 +7,14 @@ export interface BlogImageResponse {
 interface RegenerateBlogImagePayload {
   post_id: number
   image_number: number
-  version: number
-  magic_prompt: boolean
+  version?: number
+  magic_prompt?: boolean
   force_prompt?: string
+  provider?: 'ideogram' | 'gpt-image'
+  gpt_quality?: 'low' | 'medium' | 'high'
+  gpt_size?: '1024x1024' | '1536x1024' | '1024x1536' | 'auto'
+  gpt_background?: 'auto' | 'transparent' | 'opaque'
+  gpt_output_format?: 'png' | 'jpeg' | 'webp'
 }
 
 export async function regenerateBlogImage(payload: RegenerateBlogImagePayload) {
@@ -39,4 +44,32 @@ interface UseStockPhotoPayload {
 
 export async function useStockPhoto(payload: UseStockPhotoPayload) {
   return apiPost<BlogImageResponse>('/api/aurora/blog/images/stock_photos/use', payload)
+}
+
+export interface PexelsImage {
+  id: number
+  photographer: string
+  src: {
+    original: string
+    large: string
+    medium: string
+  }
+}
+
+export interface SearchImagesResponse {
+  page: number
+  per_page: number
+  total_results: number
+  images: PexelsImage[]
+}
+
+export async function searchStockPhotos(query: string, page = 1, perPage = 12) {
+  return api<SearchImagesResponse>('/api/aurora/blog/images/stock_photos/search', {
+    method: 'GET',
+    params: {
+      query,
+      page,
+      per_page: perPage,
+    },
+  })
 }

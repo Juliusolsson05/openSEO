@@ -25,13 +25,18 @@ function SectionLabel({ children }: { children: string }) {
 function AnalyticsSkeleton() {
   return (
     <div className="space-y-4">
-      <Skeleton className="h-9 w-72" />
-      <div className="grid grid-cols-12 gap-4">
-        <Skeleton className="col-span-12 h-72 lg:col-span-4" />
-        <Skeleton className="col-span-12 h-72 lg:col-span-8" />
-        <Skeleton className="col-span-12 h-64" />
-        <Skeleton className="col-span-12 h-64 lg:col-span-4" />
-        <Skeleton className="col-span-12 h-64 lg:col-span-8" />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <Skeleton className="h-6 w-24" />
+        <Skeleton className="h-9 w-full sm:w-60" />
+      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+        <Skeleton className="h-72 md:col-span-5 lg:col-span-4" />
+        <Skeleton className="h-72 md:col-span-7 lg:col-span-8" />
+      </div>
+      <Skeleton className="h-48" />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+        <Skeleton className="h-64 md:col-span-5 lg:col-span-4" />
+        <Skeleton className="h-64 md:col-span-7 lg:col-span-8" />
       </div>
     </div>
   )
@@ -75,9 +80,9 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-4 animate-in">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-[16px] font-semibold">Analytics</h1>
-        <Button variant={fullView ? 'secondary' : 'default'} onClick={() => setFullView((v) => !v)}>
+        <Button variant={fullView ? 'secondary' : 'default'} className="w-full text-[12px] sm:w-auto sm:text-[13px]" onClick={() => setFullView((v) => !v)}>
           {fullView ? 'This looks scary, bring me back 😨' : 'I know what I am doing 😎'}
         </Button>
       </div>
@@ -87,11 +92,11 @@ export default function AnalyticsPage() {
       ) : (
         <div className="space-y-4">
           <SectionLabel>GENERAL</SectionLabel>
-          <div className="grid grid-cols-12 gap-4">
-            <div className="col-span-12 lg:col-span-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+            <div className="md:col-span-5 lg:col-span-4">
               <GeneralScore generalSeoScore={generalBlogData?.general_seo_score ?? 0} scoreBreakdown={scoreBreakdown} />
             </div>
-            <div className="col-span-12 lg:col-span-8">
+            <div className="md:col-span-7 lg:col-span-8">
               <BlogPostCalendar blogTitles={blogTitles} />
             </div>
           </div>
@@ -100,44 +105,40 @@ export default function AnalyticsPage() {
           <GeneralBreakdown generalBlogData={generalBlogData} />
 
           <SectionLabel>CATEGORY AND FREQUENCY</SectionLabel>
-          <div className="grid grid-cols-12 gap-4">
-            <div className="col-span-12 lg:col-span-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+            <div className="md:col-span-5 lg:col-span-4">
               <BlogCategoryDistribution blogTitles={blogTitles} />
             </div>
-            <div className="col-span-12 lg:col-span-8">
+            <div className="md:col-span-7 lg:col-span-8">
               <AdditionalBlogStatistics generalBlogData={generalBlogData} />
             </div>
           </div>
 
           <SectionLabel>RELATED POSTS INTERNAL LINKING</SectionLabel>
-          <div className="grid grid-cols-12 gap-4">
-            <div className="col-span-12 lg:col-span-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+            <div className="md:col-span-5 lg:col-span-4">
               <BlogNetworkPreview blogTitles={blogTitles} />
             </div>
-            <div className="col-span-12 lg:col-span-8">
+            <div className="md:col-span-7 lg:col-span-8">
               <BlogStatistics blogTitles={blogTitles} />
             </div>
           </div>
 
           <SectionLabel>DICTIONARY OVERVIEW</SectionLabel>
-          <div className="grid grid-cols-12 gap-4">
-            <div className="col-span-12 lg:col-span-8">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+            <div className="md:col-span-7 lg:col-span-8">
               <KeywordsOverview linkedWords={linkedWords} />
             </div>
-            <div className="col-span-12 lg:col-span-4">
+            <div className="md:col-span-5 lg:col-span-4">
               <DictionaryOverview dictionaryData={dictionaryData} />
             </div>
           </div>
 
           <SectionLabel>SEO ISSUES</SectionLabel>
-          <div className="grid grid-cols-12 gap-4">
-            <div className="col-span-12 lg:col-span-8">
-              <PostMeta
-                oversizedSeoTitles={blogMetaData?.oversized_seo_titles ?? []}
-                oversizedMetaDescriptions={blogMetaData?.oversized_meta_descriptions ?? []}
-              />
-            </div>
-          </div>
+          <PostMeta
+            oversizedSeoTitles={blogMetaData?.oversized_seo_titles ?? []}
+            oversizedMetaDescriptions={blogMetaData?.oversized_meta_descriptions ?? []}
+          />
         </div>
       )}
     </div>

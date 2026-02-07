@@ -8,6 +8,14 @@ interface ImageResult {
   error?: never
 }
 
+interface Base64ImageResult {
+  prompt: string
+  resolution?: string
+  b64_json: string
+  output_format: 'png' | 'jpeg' | 'webp'
+  error?: never
+}
+
 interface ImageError {
   error: string
   url?: never
@@ -15,32 +23,16 @@ interface ImageError {
 
 type GenerateResult = ImageResult | ImageError
 
-/**
- * Try Ideogram first, fall back to DALL-E 3 if Ideogram fails.
- */
-export async function generateImage(
+type GenerateBase64Result = Base64ImageResult | ImageError
+
+export async function generateIdeogramImage(
   prompt: string,
   version = 1,
   magicPromptOn = false,
 ): Promise<GenerateResult> {
-  // Try Ideogram first
   const ideogramKey = process.env.IDEOGRAM
-  if (ideogramKey) {
-    const result = await tryIdeogram(prompt, version, magicPromptOn, ideogramKey)
-    if ('url' in result && result.url) return result
-    console.warn(`[ImageGen] Ideogram failed: ${(result as ImageError).error}, falling back to DALL-E`)
-  }
+  if (!ideogramKey) return { error: 'Ideogram API key is not configured.' }
 
-  // Fallback to DALL-E 3
-  return tryDallE(prompt)
-}
-
-async function tryIdeogram(
-  prompt: string,
-  version: number,
-  magicPromptOn: boolean,
-  apiKey: string,
-): Promise<GenerateResult> {
   try {
     const versions: Record<number, string> = { 1: 'V_1_TURBO', 2: 'V_2_TURBO', 3: 'V_2' }
     const model = versions[version] ?? 'V_1'
@@ -50,7 +42,7 @@ async function tryIdeogram(
       headers: {
         accept: 'application/json',
         'content-type': 'application/json',
-        'Api-Key': apiKey,
+        'Api-Key': ideogramKey,
       },
       body: JSON.stringify({
         image_request: {
@@ -62,46 +54,54 @@ async function tryIdeogram(
       }),
     })
 
-    if (response.ok) {
-      const json = (await response.json()) as {
-        data: Array<{ is_image_safe: boolean; prompt: string; resolution: string; url: string }>
-      }
-      const img = json.data[0]
-      return {
-        is_image_safe: img.is_image_safe,
-        prompt: img.prompt,
-        resolution: img.resolution,
-        url: img.url,
-      }
+    if (!response.ok) return { error: `Ideogram: status ${response.status}` }
+
+    const json = (await response.json()) as {
+      data: Array<{ is_image_safe: boolean; prompt: string; resolution: string; url: string }>
     }
 
-    return { error: `Ideogram: status ${response.status}` }
+    const img = json.data?.[0]
+    if (!img?.url) return { error: 'Ideogram returned no image' }
+
+    return {
+      is_image_safe: img.is_image_safe,
+      prompt: img.prompt,
+      resolution: img.resolution,
+      url: img.url,
+    }
   } catch (err) {
     return { error: `Ideogram: ${err instanceof Error ? err.message : String(err)}` }
   }
 }
 
-async function tryDallE(prompt: string): Promise<GenerateResult> {
+export async function generateGptImage(
+  prompt: string,
+  quality: 'low' | 'medium' | 'high' = 'medium',
+  size: '1024x1024' | '1536x1024' | '1024x1536' | 'auto' = 'auto',
+  background: 'auto' | 'transparent' | 'opaque' = 'auto',
+  outputFormat: 'png' | 'jpeg' | 'webp' = 'png',
+): Promise<GenerateBase64Result> {
   try {
     const openai = getOpenAIClient()
     const response = await openai.images.generate({
-      model: 'dall-e-3',
+      model: 'gpt-image-1',
       prompt: prompt || 'A professional blog header image',
-      n: 1,
-      size: '1792x1024',
-      quality: 'standard',
+      quality,
+      size,
+      background,
+      output_format: outputFormat,
     })
 
     const img = response.data?.[0]
-    if (!img?.url) return { error: 'DALL-E returned no image' }
+    if (!img?.b64_json) return { error: 'GPT Image returned no image data' }
 
     return {
-      is_image_safe: true,
-      prompt: img.revised_prompt ?? prompt,
-      resolution: '1792x1024',
-      url: img.url,
+      prompt,
+      resolution: size,
+      b64_json: img.b64_json,
+      output_format: outputFormat,
     }
   } catch (err) {
-    return { error: `DALL-E: ${err instanceof Error ? err.message : String(err)}` }
+    return { error: `GPT Image: ${err instanceof Error ? err.message : String(err)}` }
   }
 }
