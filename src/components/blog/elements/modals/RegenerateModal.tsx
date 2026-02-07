@@ -1,5 +1,7 @@
 'use client'
 
+import { createPortal } from 'react-dom'
+
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,7 +28,7 @@ export function RegenerateModal({ open, onOpenChange, onRegenerate, loading }: P
 
   const canSubmit = createNew ? newType !== '' && newCount > 0 : true
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-background rounded-lg shadow-lg w-full max-w-md p-6">
         <h2 className="text-lg font-semibold mb-4">Regenerate Content</h2>
@@ -82,6 +84,7 @@ export function RegenerateModal({ open, onOpenChange, onRegenerate, loading }: P
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

@@ -1,5 +1,7 @@
 'use client'
 
+import { createPortal } from 'react-dom'
+
 import { Button } from '@/components/ui/button'
 
 interface Props {
@@ -12,7 +14,7 @@ interface Props {
 export function EnhanceModal({ open, onOpenChange, onEnhance, loading }: Props) {
   if (!open) return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-background rounded-lg shadow-lg w-full max-w-sm p-6">
         <h2 className="text-lg font-semibold mb-2">Enhance Content</h2>
@@ -28,6 +30,7 @@ export function EnhanceModal({ open, onOpenChange, onEnhance, loading }: Props) 
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

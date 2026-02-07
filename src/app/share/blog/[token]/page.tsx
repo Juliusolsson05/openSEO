@@ -1,0 +1,121 @@
+import { notFound } from 'next/navigation'
+
+import { prisma } from '@/lib/prisma'
+import { api } from '@/lib/api'
+
+import '@/components/blog/elements'
+import { getPreviewComponent } from '@/components/blog/elements/registry'
+
+type SharedPost = {
+  id: number
+  title_text: string
+  cover_image?: { url?: string; description?: string } | null
+  elements: Array<{
+    id: number
+    element_type: string
+    content: any
+  }>
+}
+
+function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-[#F8F9FB] text-[#1B1A19]" style={{ fontFamily: 'Segoe UI, Arial, sans-serif' }}>
+      <header className="border-b border-[#E1E1E1] bg-white">
+        <div className="mx-auto flex max-w-[720px] items-center justify-between px-4 py-3">
+          <div className="text-[18px] font-semibold text-[#0078D4]">Aurora</div>
+          <span className="rounded-[4px] border border-[#C7E0F4] bg-[#EFF6FC] px-2 py-1 text-[11px] font-semibold text-[#0078D4]">
+            Shared preview
+          </span>
+        </div>
+      </header>
+      <main className="mx-auto max-w-[720px] px-4 py-8">{children}</main>
+      <footer className="mt-10 border-t border-[#E1E1E1] bg-white">
+        <div className="mx-auto max-w-[720px] px-4 py-4 text-[12px] text-[#605E5C]">
+          Powered by Aurora — Nordtools
+        </div>
+      </footer>
+    </div>
+  )
+}
+
+function Message({ text }: { text: string }) {
+  return (
+    <Shell>
+      <div className="rounded-[4px] border border-[#E1E1E1] bg-white p-5 text-[14px]">{text}</div>
+    </Shell>
+  )
+}
+
+async function fetchPost(postId: number): Promise<SharedPost | null> {
+  const { data } = await api<SharedPost>(`/api/aurora/blog/posts?post_id=${postId}`, {
+    method: 'GET',
+  })
+
+  if (data && typeof data === 'object') return data
+
+  const local = await prisma.blogPost.findUnique({
+    where: { id: postId },
+    include: {
+      elements: {
+        orderBy: { order: 'asc' },
+        select: { id: true, element_type: true, content: true },
+      },
+    },
+  })
+
+  if (!local) return null
+
+  return {
+    id: local.id,
+    title_text: local.title_text,
+    cover_image: (local.cover_image as any) ?? null,
+    elements: local.elements,
+  }
+}
+
+export default async function SharedBlogPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params
+
+  if (!token) notFound()
+
+  const link = await prisma.shareLink.findUnique({ where: { token } })
+
+  if (!link || !link.enabled) {
+    return <Message text="This link is invalid or has been revoked" />
+  }
+
+  if (link.expiresAt && link.expiresAt.getTime() < Date.now()) {
+    return <Message text="This link has expired" />
+  }
+
+  const post = await fetchPost(link.postId)
+
+  if (!post) {
+    return <Message text="This link is invalid or has been revoked" />
+  }
+
+  return (
+    <Shell>
+      <article className="rounded-[4px] border border-[#E1E1E1] bg-white p-6">
+        <h1 className="mb-6 text-[32px] font-semibold leading-tight">{post.title_text}</h1>
+
+        {post.cover_image?.url ? (
+          <div className="mb-8 overflow-hidden rounded-[4px] border border-[#E1E1E1]">
+            <img
+              src={post.cover_image.url}
+              alt={post.cover_image.description || post.title_text}
+              className="h-auto w-full"
+            />
+          </div>
+        ) : null}
+
+        <div className="space-y-4">
+          {post.elements.map((element) => {
+            const Preview = getPreviewComponent(element.element_type as any)
+            return <Preview key={element.id} content={element.content} />
+          })}
+        </div>
+      </article>
+    </Shell>
+  )
+}

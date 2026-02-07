@@ -117,8 +117,9 @@ export default function BlogPreviewPage() {
   }, [])
 
   useEffect(() => {
-    if (post && typeof post.company === 'string' && post.company.trim()) {
-      setCompanyName(post.company)
+    const companyVal = (post as any)?.company
+    if (post && typeof companyVal === 'string' && companyVal.trim()) {
+      setCompanyName(companyVal)
     }
   }, [post])
 

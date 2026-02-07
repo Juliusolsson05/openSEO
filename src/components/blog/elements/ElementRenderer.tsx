@@ -50,7 +50,6 @@ export function ElementRenderer({
         content={element.content}
         blogId={blogId}
         elementId={element.id}
-        editable={editable}
         onContentUpdated={onContentUpdated}
         onElementAdded={onElementAdded}
         onElementDeleted={onElementDeleted}

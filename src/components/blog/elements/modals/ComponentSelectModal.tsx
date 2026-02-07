@@ -1,5 +1,7 @@
 'use client'
 
+import { createPortal } from 'react-dom'
+
 import { useMemo, useState } from 'react'
 import { Search, Eye, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -47,7 +49,7 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, loading }: 
   const PreviewComponent = previewType ? getPreviewComponent(previewType) : null
   const previewExample = previewType ? getExample(previewType) : null
 
-  return (
+  return createPortal(
     <>
       <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4" onClick={() => onOpenChange(false)}>
         <div className="bg-background rounded-sm border border-border w-full max-w-4xl p-5 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -121,6 +123,7 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, loading }: 
           </Card>
         </div>
       )}
-    </>
+    </>,
+    document.body
   )
 }
