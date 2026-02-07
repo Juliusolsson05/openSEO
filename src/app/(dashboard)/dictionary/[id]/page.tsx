@@ -33,38 +33,58 @@ export default function DictionaryDetailPage() {
   const params = useParams<{ id: string }>()
   const [dictionary, setDictionary] = useState<Dictionary | null>(null)
   const [search, setSearch] = useState('')
+  const [definitionFilter, setDefinitionFilter] = useState<'all' | 'missing' | 'ready'>('all')
   const [loadingWordId, setLoadingWordId] = useState<number | null>(null)
   const [editing, setEditing] = useState<Record<number, Partial<Word>>>({})
 
   const fetchDictionary = async () => {
     const { data, error } = await api<Dictionary>(`/api/aurora/dictionary/dictionary/${params.id}`)
-    if (error) {
-      window.alert(error.message)
-      return
-    }
+    if (error) return window.alert(error.message)
     setDictionary(data)
   }
 
   useEffect(() => {
-    fetchDictionary()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let alive = true
+
+    const load = async () => {
+      const { data, error } = await api<Dictionary>(`/api/aurora/dictionary/dictionary/${params.id}`)
+      if (!alive) return
+      if (error) {
+        window.alert(error.message)
+        return
+      }
+      setDictionary(data)
+    }
+
+    void load()
+    return () => {
+      alive = false
+    }
   }, [params.id])
 
-  const filtered = useMemo(() => {
+  const words = useMemo(() => {
     if (!dictionary) return []
-    return dictionary.words.filter((w) =>
-      `${w.keyword} ${w.description}`.toLowerCase().includes(search.toLowerCase())
-    )
-  }, [dictionary, search])
 
-  const grouped = useMemo(() => {
-    return filtered.reduce<Record<string, Word[]>>((acc, word) => {
-      const letter = (word.letter || word.keyword[0] || '').toUpperCase()
-      if (!acc[letter]) acc[letter] = []
-      acc[letter].push(word)
-      return acc
-    }, {})
-  }, [filtered])
+    return dictionary.words.filter((w) => {
+      const qMatch = `${w.keyword} ${w.description}`.toLowerCase().includes(search.toLowerCase())
+      if (!qMatch) return false
+      if (definitionFilter === 'all') return true
+      if (definitionFilter === 'missing') return !w.has_definition
+      return Boolean(w.has_definition)
+    })
+  }, [dictionary, search, definitionFilter])
+
+  const stats = useMemo(() => {
+    if (!dictionary) return { total: 0, withDef: 0, withoutDef: 0, highPriority: 0 }
+    const withDef = dictionary.words.filter((w) => w.has_definition).length
+    const highPriority = dictionary.words.filter((w) => w.priority === 1).length
+    return {
+      total: dictionary.words.length,
+      withDef,
+      withoutDef: dictionary.words.length - withDef,
+      highPriority,
+    }
+  }, [dictionary])
 
   const generateDefinition = async (word: Word) => {
     setLoadingWordId(word.id)
@@ -73,6 +93,16 @@ export default function DictionaryDetailPage() {
       word: word.keyword,
     })
     setLoadingWordId(null)
+    if (error) return window.alert(error.message)
+    fetchDictionary()
+  }
+
+  const generateMissing = async () => {
+    const { error } = await apiPost('/api/aurora/dictionary/generation/definition/generate/', {
+      session_id: Number(params.id),
+      include_priority_two: true,
+      batch_size: 20,
+    })
     if (error) return window.alert(error.message)
     fetchDictionary()
   }
@@ -107,95 +137,104 @@ export default function DictionaryDetailPage() {
   }
 
   return (
-    <div className="space-y-4" style={{ fontSize: 13 }}>
-      <Card className="rounded-sm border-border">
+    <div className="space-y-4">
+      <Card className="rounded-sm border-border bg-white">
         <CardHeader>
-          <CardTitle className="text-[20px]">{dictionary.title}</CardTitle>
-          <div className="flex gap-2 flex-wrap">
-            <Badge className="rounded-sm">Subject: {dictionary.subject}</Badge>
-            <Badge className="rounded-sm" variant="outline">Language: {dictionary.language}</Badge>
-            <Badge className="rounded-sm" variant="outline">Total Words: {dictionary.num_words}</Badge>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-[22px]">{dictionary.title}</CardTitle>
+              <p className="text-sm text-muted-foreground">{dictionary.subject} · {dictionary.language.toUpperCase()}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button className="rounded-sm" onClick={generateMissing}>Generate missing definitions</Button>
+              <Button variant="outline" className="rounded-sm">Export</Button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 pt-2">
+            <Badge variant="outline">Total words: {stats.total}</Badge>
+            <Badge variant="success">Ready: {stats.withDef}</Badge>
+            <Badge variant="warning">Missing: {stats.withoutDef}</Badge>
+            <Badge variant="outline">High priority: {stats.highPriority}</Badge>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Input
-            placeholder="Search words..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="max-w-sm rounded-sm"
-          />
 
-          {Object.keys(grouped)
-            .sort()
-            .map((letter) => (
-              <div key={letter} className="space-y-2">
-                <h3 className="font-semibold">Words starting with “{letter}”</h3>
-                <div className="border border-border rounded-sm overflow-x-auto">
-                  <Table className="w-full">
-                    <TableHeader className="bg-background text-left">
-                      <TableRow>
-                        <TableHead className="p-2">Keyword</TableHead>
-                        <TableHead className="p-2">Description</TableHead>
-                        <TableHead className="p-2">Priority</TableHead>
-                        <TableHead className="p-2">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {grouped[letter].map((word) => {
-                        const edit = editing[word.id]
-                        return (
-                          <TableRow key={word.id} className="border-t border-border">
-                            <TableCell className="p-2">
-                              <Input
-                                className="rounded-sm"
-                                value={edit?.keyword ?? word.keyword}
-                                onChange={(e) =>
-                                  setEditing((prev) => ({ ...prev, [word.id]: { ...(prev[word.id] || {}), keyword: e.target.value } }))
-                                }
-                              />
-                            </TableCell>
-                            <TableCell className="p-2">
-                              <Input
-                                className="rounded-sm"
-                                value={edit?.description ?? word.description}
-                                onChange={(e) =>
-                                  setEditing((prev) => ({ ...prev, [word.id]: { ...(prev[word.id] || {}), description: e.target.value } }))
-                                }
-                              />
-                            </TableCell>
-                            <TableCell className="p-2 w-24">
-                              <Input
-                                className="rounded-sm"
-                                type="number"
-                                value={edit?.priority ?? word.priority}
-                                onChange={(e) =>
-                                  setEditing((prev) => ({ ...prev, [word.id]: { ...(prev[word.id] || {}), priority: Number(e.target.value) } }))
-                                }
-                              />
-                            </TableCell>
-                            <TableCell className="p-2">
-                              <div className="flex flex-wrap gap-2">
-                                {word.has_definition ? (
-                                  <Link href={`/dictionary/${dictionary.id}/${word.id}`}>
-                                    <Button variant="outline" className="rounded-sm h-8">View</Button>
-                                  </Link>
-                                ) : (
-                                  <Button variant="outline" className="rounded-sm h-8" onClick={() => generateDefinition(word)} disabled={loadingWordId !== null}>
-                                    {loadingWordId === word.id ? 'Generating...' : 'Generate'}
-                                  </Button>
-                                )}
-                                <Button variant="outline" className="rounded-sm h-8" onClick={() => saveWord(word.id)}>Save</Button>
-                                <Button variant="outline" className="rounded-sm h-8" onClick={() => deleteWord(word.id)}>Delete</Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            ))}
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              placeholder="Search words..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-8 max-w-sm rounded-sm"
+            />
+
+            <div className="ml-auto flex gap-2">
+              <Button variant={definitionFilter === 'all' ? 'default' : 'outline'} className="h-8 rounded-sm" onClick={() => setDefinitionFilter('all')}>All</Button>
+              <Button variant={definitionFilter === 'missing' ? 'default' : 'outline'} className="h-8 rounded-sm" onClick={() => setDefinitionFilter('missing')}>Missing definitions</Button>
+              <Button variant={definitionFilter === 'ready' ? 'default' : 'outline'} className="h-8 rounded-sm" onClick={() => setDefinitionFilter('ready')}>Ready</Button>
+            </div>
+          </div>
+
+          <div className="rounded-sm border border-border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Keyword</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Definition</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {words.map((word) => {
+                  const edit = editing[word.id]
+                  return (
+                    <TableRow key={word.id}>
+                      <TableCell className="w-56">
+                        <Input
+                          className="h-8 rounded-sm"
+                          value={edit?.keyword ?? word.keyword}
+                          onChange={(e) => setEditing((prev) => ({ ...prev, [word.id]: { ...(prev[word.id] || {}), keyword: e.target.value } }))}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          className="h-8 rounded-sm"
+                          value={edit?.description ?? word.description}
+                          onChange={(e) => setEditing((prev) => ({ ...prev, [word.id]: { ...(prev[word.id] || {}), description: e.target.value } }))}
+                        />
+                      </TableCell>
+                      <TableCell className="w-28">
+                        <Input
+                          className="h-8 rounded-sm"
+                          type="number"
+                          value={edit?.priority ?? word.priority}
+                          onChange={(e) => setEditing((prev) => ({ ...prev, [word.id]: { ...(prev[word.id] || {}), priority: Number(e.target.value) } }))}
+                        />
+                      </TableCell>
+                      <TableCell className="w-36">{word.has_definition ? <Badge variant="success">Ready</Badge> : <Badge variant="warning">Missing</Badge>}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          {word.has_definition ? (
+                            <Link href={`/dictionary/${dictionary.id}/${word.id}`}>
+                              <Button size="sm" variant="outline" className="h-7 rounded-sm">View</Button>
+                            </Link>
+                          ) : (
+                            <Button size="sm" variant="outline" className="h-7 rounded-sm" onClick={() => generateDefinition(word)} disabled={loadingWordId !== null}>
+                              {loadingWordId === word.id ? 'Generating...' : 'Generate'}
+                            </Button>
+                          )}
+                          <Button size="sm" variant="outline" className="h-7 rounded-sm" onClick={() => saveWord(word.id)}>Save</Button>
+                          <Button size="sm" variant="outline" className="h-7 rounded-sm" onClick={() => deleteWord(word.id)}>Delete</Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
