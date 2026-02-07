@@ -101,13 +101,13 @@ export default function QuilloChat({ blogPostId }: Props) {
     <>
       {/* Floating button */}
       {!isOpen && (
-        <button
+        <Button
           onClick={toggle}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-sidebar px-4 py-3 text-white shadow-lg hover:bg-sidebar-muted transition-colors"
+          className="fixed bottom-6 right-6 z-40 h-auto rounded-full bg-sidebar px-4 py-3 text-white shadow-lg hover:bg-sidebar-muted"
         >
           <Sparkles className="h-5 w-5 text-primary" />
           <span className="text-[13px] font-semibold">Quillo Assistant</span>
-        </button>
+        </Button>
       )}
 
       {/* Analysis panel */}
@@ -139,10 +139,16 @@ export default function QuilloChat({ blogPostId }: Props) {
                 {/* Tabs */}
                 <div className="flex border-b border-border">
                   {(['overall', 'seo', 'content'] as const).map((t) => (
-                    <button key={t} onClick={() => setTab(t)}
-                      className={`flex-1 py-2 text-[12px] font-semibold uppercase tracking-wide transition-colors ${tab === t ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+                    <Button
+                      key={t}
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setTab(t)}
+                      className={`h-auto flex-1 rounded-none py-2 text-[12px] font-semibold uppercase tracking-wide ${tab === t ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
                       {t}
-                    </button>
+                    </Button>
                   ))}
                 </div>
 

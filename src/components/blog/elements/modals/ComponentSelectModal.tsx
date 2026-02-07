@@ -202,15 +202,18 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
           ) : (
             <div className="space-y-2 mb-4">
               {TEMPLATES.map((template) => (
-                <button
+                <Button
                   type="button"
                   key={template.id}
-                  className={`w-full text-left border rounded-sm px-3 py-2 transition-all ${selectedTemplate === template.id ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'border-info-light hover:border-primary/40 hover:bg-primary/5'}`}
+                  variant="outline"
+                  className={`h-auto w-full justify-start rounded-sm px-3 py-2 text-left ${selectedTemplate === template.id ? 'border-primary bg-primary/10 ring-1 ring-primary hover:bg-primary/10' : 'border-info-light hover:border-primary/40 hover:bg-primary/5'}`}
                   onClick={() => setSelectedTemplate(template.id)}
                 >
-                  <div className="font-medium text-[13px]">{template.label}</div>
-                  <div className="text-[12px] text-muted-foreground">Insert a template-based component flow.</div>
-                </button>
+                  <div>
+                    <div className="font-medium text-[13px]">{template.label}</div>
+                    <div className="text-[12px] text-muted-foreground">Insert a template-based component flow.</div>
+                  </div>
+                </Button>
               ))}
             </div>
           )}

@@ -65,17 +65,18 @@ export default function QuilloAutopilot({ postId }: Props) {
               <div className="absolute -right-[6px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-b-[6px] border-l-[6px] border-transparent border-l-white" />
             </div>
           )}
-          <button
+          <Button
             onClick={handleClick}
             disabled={isRunning}
-            className={`flex items-center justify-center bg-sidebar text-white transition-all hover:bg-sidebar-muted disabled:opacity-60 ${
+            size="icon"
+            className={`bg-sidebar text-white transition-all hover:bg-sidebar-muted disabled:opacity-60 ${
               collapsed
                 ? 'h-16 w-12 rounded-l-full'
                 : 'h-14 w-14 rounded-full shadow-lg'
             } ${isRunning ? 'animate-pulse bg-primary' : ''}`}
           >
             <Sparkles className={`${collapsed ? 'h-6 w-6' : 'h-5 w-5'} text-white`} />
-          </button>
+          </Button>
         </div>
       </div>
 

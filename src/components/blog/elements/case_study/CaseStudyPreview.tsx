@@ -2,6 +2,7 @@
 
 import { BasePreview } from '../BasePreview'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
+import { Button } from '@/components/ui/button'
 import type { PreviewComponentProps } from '../registry'
 import type { CaseStudyContent } from './CaseStudy'
 
@@ -105,9 +106,9 @@ export function CaseStudyPreview({ content }: CaseStudyPreviewProps) {
           >
             Visit <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.clientName) }} /> Website
           </a>
-          <button type="button" className="flex items-center font-medium text-blue-600 transition-colors duration-200 hover:text-blue-800">
+          <Button type="button" variant="link" className="flex items-center p-0 font-medium text-blue-600 transition-colors duration-200 hover:text-blue-800">
             Read Full Case Study <i className="ri-arrow-right-line ml-2" />
-          </button>
+          </Button>
         </div>
       </div>
     </BasePreview>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -59,6 +59,7 @@ const statusConfig = (status: number | string, published: boolean) => {
 
 export default function BlogPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [view, setView] = useState<'list' | 'grid'>('list')
   const [searchQuery, setSearchQuery] = useState('')
   const [posts, setPosts] = useState<BlogPostSummary[]>([])
@@ -87,6 +88,11 @@ export default function BlogPage() {
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  useEffect(() => {
+    const fromQuery = searchParams.get('search')
+    if (fromQuery) setSearchQuery(fromQuery)
+  }, [searchParams])
 
   useEffect(() => {
     if (!searchQuery.trim()) {

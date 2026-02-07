@@ -19,6 +19,7 @@ import {
   LogOut,
 } from 'lucide-react'
 import { AuroraLogo } from '@/components/brand/logo'
+import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 
 interface NavItem {
@@ -125,12 +126,14 @@ function NavGroup({ item, pathname }: { item: NavItem; pathname: string }) {
 
   return (
     <div>
-      <button
+      <Button
+        type="button"
+        variant="ghost"
         onClick={() => setOpen(!open)}
         className={cn(
-          'group flex w-full items-center gap-3 px-4 py-[7px] text-[13px] transition-colors',
+          'group h-auto w-full justify-start gap-3 rounded-none px-4 py-[7px] text-[13px] transition-colors',
           isActive
-            ? 'text-white bg-sidebar-accent'
+            ? 'text-white bg-sidebar-accent hover:bg-sidebar-accent'
             : 'text-sidebar-foreground hover:bg-sidebar-hover'
         )}
       >
@@ -142,7 +145,7 @@ function NavGroup({ item, pathname }: { item: NavItem; pathname: string }) {
             open && 'rotate-180'
           )}
         />
-      </button>
+      </Button>
 
       {open && (
         <div className="bg-[rgba(0,0,0,0.15)]">
@@ -209,13 +212,16 @@ export function Sidebar() {
               {userData?.company?.name || 'Nordtools'}
             </p>
           </div>
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
             onClick={handleLogout}
-            className="shrink-0 p-1.5 text-sidebar-foreground/40 hover:text-white transition-colors"
+            className="h-auto w-auto shrink-0 p-1.5 text-sidebar-foreground/40 hover:bg-transparent hover:text-white"
             title="Sign out"
           >
             <LogOut className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
       </div>
     </aside>
