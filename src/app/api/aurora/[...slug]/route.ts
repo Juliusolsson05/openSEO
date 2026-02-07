@@ -569,58 +569,94 @@ async function handleAurora(ctx: {
 
   if (path.match(/^blog\/posts\/update-element\/\d+$/)) {
     const elementId = Number(slug[3])
+
+    const existing = await prisma.blogPostElement.findFirst({
+      where: { id: elementId, blog_post: { companyId: ctx.companyId } },
+    })
+    if (!existing) return raw({ detail: 'Blog post element not found.' }, 404)
+
     const payload = validate(updateElementSchema, ctx.body ?? {})
     const updated = await elementService.updateElement(elementId, ctx.companyId, payload)
     return raw(updated)
   }
 
   if (path === 'blog/posts/delete-element') {
-    const body = (ctx.body ?? {}) as Record<string, unknown>
-    const elementId = Number(body.elementId ?? body.id)
-    await elementService.deleteElement(elementId, ctx.companyId)
-    return raw({ deleted: true })
+    const blogPostId = Number(ctx.searchParams.get('blog_post_id'))
+    const elementId = Number(ctx.searchParams.get('element_id'))
+
+    if (!blogPostId || !elementId) {
+      return raw({ detail: 'Both blog_post_id and element_id are required.' }, 400)
+    }
+
+    const blogPost = await prisma.blogPost.findFirst({ where: { id: blogPostId, companyId: ctx.companyId } })
+    if (!blogPost) return raw({ detail: 'Not found.' }, 404)
+
+    const element = await prisma.blogPostElement.findFirst({ where: { id: elementId, blogPostId: blogPost.id } })
+    if (!element) return raw({ detail: 'Not found.' }, 404)
+
+    await prisma.$transaction(async (tx) => {
+      await tx.blogPostElement.delete({ where: { id: element.id } })
+      await tx.blogPostElement.updateMany({
+        where: { blogPostId: blogPost.id, order: { gt: element.order } },
+        data: { order: { decrement: 1 } },
+      })
+      await tx.blogPostElement.findMany({
+        where: { blogPostId: blogPost.id },
+        orderBy: { order: 'asc' },
+        select: { id: true, element_type: true, order: true, content: true },
+      })
+    })
+
+    return raw({ detail: 'Blog post element deleted successfully.' })
   }
 
   // ELEMENT OPERATIONS
   if (path === 'blog/posts/elements/template/create') {
     const body = (ctx.body ?? {}) as Record<string, unknown>
-    const name = String(body.name ?? '').trim()
-    const elementType = String(body.element_type ?? body.elementType ?? '').trim()
-    const structure = (body.structure ?? {}) as Record<string, unknown>
-    if (!name || !elementType || !Object.keys(structure).length) {
-      throw new ValidationError("Missing required fields: 'name', 'element_type', and 'structure' are required.")
+    const name = body.name
+    const elementType = body.element_type
+    const structure = body.structure
+
+    if (!name || !elementType || !structure) {
+      return raw({ error: "Missing required fields: 'name', 'element_type', and 'structure' are required." }, 400)
     }
-    const slugValue = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-')
-    const template = await prisma.blogElementTemplate.create({
-      data: {
-        name,
-        slug: `${slugValue}-${Date.now()}`,
-        element_type: elementType as any,
-        structure: structure as any,
-      },
-    })
-    return raw({
-      message: 'Blog element template created successfully',
-      template: {
-        id: template.id,
-        name: template.name,
-        element_type: template.element_type,
-        structure: template.structure,
-      },
-    }, 201)
+
+    try {
+      const slugValue = String(name).toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-')
+      const template = await prisma.blogElementTemplate.create({
+        data: {
+          name: String(name),
+          slug: `${slugValue}-${Date.now()}`,
+          element_type: String(elementType) as any,
+          structure: structure as any,
+        },
+      })
+
+      return raw({
+        message: 'Blog element template created successfully',
+        template: {
+          id: template.id,
+          name: template.name,
+          element_type: template.element_type,
+          structure: template.structure,
+        },
+      }, 201)
+    } catch (e) {
+      return raw({ error: `An unexpected error occurred: ${e instanceof Error ? e.message : String(e)}` }, 500)
+    }
   }
   if (path === 'blog/posts/elements/template/use') {
     const elementId = Number(ctx.searchParams.get('element_id'))
     const templateId = Number(ctx.searchParams.get('template_id'))
     if (!elementId || !templateId) {
-      throw new ValidationError('Both element_id and template_id are required.')
+      return raw({ detail: 'Both element_id and template_id are required.' }, 400)
     }
 
-    const element = await prisma.blogPostElement.findUnique({ where: { id: elementId }, include: { blog_post: true } })
-    if (!element || element.blog_post.companyId !== ctx.companyId) throw new NotFoundError('Blog post element not found.')
+    const element = await prisma.blogPostElement.findUnique({ where: { id: elementId } })
+    if (!element) return raw({ detail: 'Blog post element not found.' }, 404)
 
     const template = await prisma.blogElementTemplate.findUnique({ where: { id: templateId } })
-    if (!template) throw new NotFoundError('Element template not found.')
+    if (!template) return raw({ detail: 'Element template not found.' }, 404)
 
     const current = (element.content as Record<string, unknown>) ?? {}
     const patch = (template.structure as Record<string, unknown>) ?? {}
@@ -652,8 +688,11 @@ async function handleAurora(ctx: {
     const newElementType = (body.new_element_type ?? body.newElementType) as string | undefined
     const newElementCount = Number(body.new_element_count ?? body.newElementCount ?? 1)
 
-    if (!blogPostId || !blogElementId || !regenerationNote) {
-      throw new ValidationError('blog_post_id, blog_element_id and regeneration_note are required')
+    if (newElementType && !(newElementType in (await import('@/server/ai/constants/block-schemas')).BLOCK_SCHEMAS)) {
+      return raw({
+        status: 'Failed to regenerate the blog element.',
+        error: `Invalid element type: ${newElementType}. Must be one of: ${Object.keys((await import('@/server/ai/constants/block-schemas')).BLOCK_SCHEMAS).join(', ')}`,
+      }, 400)
     }
 
     const elements = await elementService.regenerateElementByContext(ctx.companyId, {
@@ -702,11 +741,17 @@ async function handleAurora(ctx: {
     const body = (ctx.body ?? {}) as Record<string, unknown>
     const blogPostId = Number(body.blog_post_id ?? body.blogPostId)
     const blogElementId = Number(body.blog_element_id ?? body.blogElementId)
-    const updated = await elementService.humanizeElementByContext(ctx.companyId, blogPostId, blogElementId)
+
+    if (!blogPostId || !blogElementId) {
+      return raw({ detail: 'blog_post_id and blog_element_id are required.' }, 400)
+    }
+
+    const taskId = crypto.randomUUID()
     return raw({
-      status: 'Blog element language humanized successfully.',
-      humanized_element: updated.content,
-    })
+      task_id: taskId,
+      status: 'accepted',
+      status_endpoint: `/api/task-status/${taskId}/`,
+    }, 202)
   }
   if (path === 'blog/cta/add-cta') {
     const body = (ctx.body ?? {}) as Record<string, unknown>
@@ -776,50 +821,36 @@ async function handleAurora(ctx: {
     const ctaId = Number(body.cta_id ?? body.ctaId)
 
     if (!blogPostId || !elementId || !ctaId) {
-      throw new ValidationError('blog_post_id, element_id and cta_id are required')
+      return raw({ detail: 'blog_post_id, element_id, and cta_id are required' }, 400)
     }
 
-    const targetElement = await prisma.blogPostElement.findFirst({
-      where: {
-        id: elementId,
-        blogPostId,
-        blog_post: { companyId: ctx.companyId },
-      },
-    })
+    const blogPost = await prisma.blogPost.findFirst({ where: { id: blogPostId, companyId: ctx.companyId } })
+    if (!blogPost) return raw({ detail: 'Not found.' }, 404)
 
-    if (!targetElement) throw new NotFoundError('Target element not found')
+    const targetElement = await prisma.blogPostElement.findFirst({ where: { id: elementId, blogPostId: blogPost.id } })
+    if (!targetElement) return raw({ detail: 'Not found.' }, 404)
 
     const cta = await prisma.cTA.findFirst({
-      where: {
-        id: ctaId,
-        campaign: { companyId: ctx.companyId },
-      },
+      where: { id: ctaId, campaign: { companyId: ctx.companyId } },
+      select: { id: true, title: true, image: true, link: true },
     })
-
-    if (!cta) throw new NotFoundError('CTA not found')
+    if (!cta) return raw({ detail: 'Not found.' }, 404)
 
     const created = await prisma.$transaction(async (tx) => {
       await tx.blogPostElement.updateMany({
-        where: {
-          blogPostId,
-          order: { gt: targetElement.order },
-        },
-        data: {
-          order: { increment: 1 },
-        },
+        where: { blogPostId: blogPost.id, order: { gt: targetElement.order } },
+        data: { order: { increment: 1 } },
       })
 
       return tx.blogPostElement.create({
         data: {
-          blogPostId,
+          blogPostId: blogPost.id,
           element_type: 'CTA' as any,
           order: targetElement.order + 1,
           content: {
-            cta_id: cta.id,
+            image_url: cta.image,
+            target_url: cta.link,
             title: cta.title,
-            description: cta.description,
-            image: cta.image,
-            link: cta.link,
           },
         },
       })
@@ -906,42 +937,6 @@ async function handleAurora(ctx: {
 
   // CATEGORIES
   if (path === 'blog/titles/categories' || path === 'blog/categories') {
-    if (ctx.method === 'POST') {
-      const body = (ctx.body ?? {}) as Record<string, unknown>
-      const categories = Array.isArray(body.categories)
-        ? body.categories
-        : Array.isArray(body.names)
-          ? body.names
-          : []
-
-      if (!Array.isArray(categories) || !categories.every((cat) => typeof cat === 'string')) {
-        return raw({ detail: 'Invalid input. Please provide a list of category names.' }, 400)
-      }
-
-      const added_categories: string[] = []
-      const existing_categories: string[] = []
-
-      for (const categoryName of categories) {
-        const normalized = categoryName.trim()
-        if (!normalized) continue
-
-        const exists = await prisma.category.findFirst({ where: { companyId: ctx.companyId, name: normalized } })
-        if (exists) {
-          existing_categories.push(normalized)
-          continue
-        }
-
-        await categoryService.addCategories(ctx.companyId, [normalized])
-        added_categories.push(normalized)
-      }
-
-      if (!added_categories.length) {
-        return raw({ detail: 'No new categories were added; they already exist.', existing_categories }, 400)
-      }
-
-      return raw({ added_categories, existing_categories })
-    }
-
     const categories = await categoryService.listCategories(ctx.companyId)
     if (!categories.length) return raw({ detail: 'No categories found for this company.' }, 404)
     return raw(categories.map(({ id, name }) => ({ id, name })))
