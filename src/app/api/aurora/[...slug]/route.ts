@@ -46,6 +46,7 @@ import {
   updateBulkScheduleSchema,
 } from '@/server/validators/schedule.validators'
 import { createTitleSchema, listTitlesQuerySchema, updateTitleSchema } from '@/server/validators/title.validators'
+import { BLOCK_SCHEMAS } from '@/server/ai/constants/block-schemas'
 import { serializeElement } from '@/server/utils/element-type'
 
 function getSlugParts(params: Record<string, unknown>): string[] {
@@ -688,10 +689,10 @@ async function handleAurora(ctx: {
     const newElementType = (body.new_element_type ?? body.newElementType) as string | undefined
     const newElementCount = Number(body.new_element_count ?? body.newElementCount ?? 1)
 
-    if (newElementType && !(newElementType in (await import('@/server/ai/constants/block-schemas')).BLOCK_SCHEMAS)) {
+    if (newElementType && !(newElementType in BLOCK_SCHEMAS)) {
       return raw({
         status: 'Failed to regenerate the blog element.',
-        error: `Invalid element type: ${newElementType}. Must be one of: ${Object.keys((await import('@/server/ai/constants/block-schemas')).BLOCK_SCHEMAS).join(', ')}`,
+        error: `Invalid element type: ${newElementType}. Must be one of: ${Object.keys(BLOCK_SCHEMAS).join(', ')}`,
       }, 400)
     }
 
@@ -856,7 +857,7 @@ async function handleAurora(ctx: {
       })
     })
 
-    return raw(created, 201)
+    return raw(serializeElement(created), 201)
   }
 
   // TITLES

@@ -117,7 +117,12 @@ export class ElementService {
     }))
 
     const generatedContent = payload.elementType === 'case_study'
-      ? await generateCaseStudy(blogPost.title_text, blogPost.focus_keyword ?? '')
+      ? await (() => {
+          if (!blogPost.focus_keyword) {
+            throw new ValidationError('focus_keyword is required for case_study elements.')
+          }
+          return generateCaseStudy(blogPost.title_text, blogPost.focus_keyword)
+        })()
       : await generateNewElement(
           payload.elementType,
           blogPost.title_text,
