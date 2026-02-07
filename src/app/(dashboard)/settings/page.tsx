@@ -16,6 +16,18 @@ type CompanyMetadata = {
   industry_description?: string
 }
 
+type InboundKey = {
+  id: number
+  name: string
+  key_prefix: string
+  is_active: boolean
+  last_used_at?: string | null
+}
+
+type InboundKeyCreateResponse = InboundKey & {
+  key?: string
+}
+
 const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i
 
 export default function SettingsPage() {
@@ -27,7 +39,7 @@ export default function SettingsPage() {
   const [publishingEndpoint, setPublishingEndpoint] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-  const [inboundKeys, setInboundKeys] = useState<Array<{ id: number; name: string; key_prefix: string; is_active: boolean; last_used_at?: string | null }>>([])
+  const [inboundKeys, setInboundKeys] = useState<InboundKey[]>([])
   const [newInboundKeyName, setNewInboundKeyName] = useState('')
   const [newInboundKeyValue, setNewInboundKeyValue] = useState<string | null>(null)
 
@@ -52,11 +64,6 @@ export default function SettingsPage() {
 
     setIsLoading(false)
   }
-
-  useEffect(() => {
-    fetchCompanyMetadata()
-    fetchInboundKeys()
-  }, [])
 
   const submitUrl = async (e: FormEvent) => {
     e.preventDefault()
@@ -99,8 +106,8 @@ export default function SettingsPage() {
     setIsSavingApi(false)
   }
 
-  const fetchInboundKeys = async () => {
-    const { data, error } = await api<any>('/api/v1/publishing/api-keys')
+  async function fetchInboundKeys() {
+    const { data, error } = await api<InboundKey[] | { data: InboundKey[] }>('/api/v1/publishing/api-keys')
     if (error) return
     const items = Array.isArray(data) ? data : (data?.data ?? [])
     setInboundKeys(items)
@@ -110,7 +117,7 @@ export default function SettingsPage() {
     e.preventDefault()
     if (!newInboundKeyName.trim()) return
 
-    const { data, error } = await apiPost<any>('/api/v1/publishing/api-keys', { name: newInboundKeyName.trim() })
+    const { data, error } = await apiPost<InboundKeyCreateResponse | { data: InboundKeyCreateResponse }>('/api/v1/publishing/api-keys', { name: newInboundKeyName.trim() })
     if (error) {
       setStatus({ type: 'error', message: error.message || 'Failed to create inbound key.' })
       return
@@ -131,6 +138,12 @@ export default function SettingsPage() {
     }
     await fetchInboundKeys()
   }
+
+
+  useEffect(() => {
+    fetchCompanyMetadata()
+    fetchInboundKeys()
+  }, [])
 
   return (
     <div className="space-y-4" style={{ fontSize: 13 }}>

@@ -1,0 +1,201 @@
+import { prisma } from '@/lib/prisma'
+import { ValidationError } from '@/server/api/errors'
+import { appendTaskLog, completeTask, createTask, failTask, setTaskRunning } from '@/server/tasks/runtime'
+import { sendJsonWebhook } from '@/server/services/webhook-delivery.service'
+
+function createEnvelope(eventType: string, payload: unknown) {
+  return {
+    contract_version: '2026-02-1',
+    event: eventType,
+    event_id: `evt_${crypto.randomUUID()}`,
+    sent_at: new Date().toISOString(),
+    payload,
+  }
+}
+
+export class PublishingSyncService {
+  async pushAllPosts(companyId: number) {
+    const task = createTask()
+
+    void (async () => {
+      try {
+        setTaskRunning(task.id, 'posts_push_all')
+
+        const company = await prisma.company.findUnique({
+          where: { id: companyId },
+          select: { api_endpoint: true, api_key: true },
+        })
+
+        if (!company?.api_endpoint) {
+          throw new ValidationError('Publishing endpoint is not configured')
+        }
+
+        const posts = await prisma.blogPost.findMany({
+          where: { companyId, status: 'GENERATED' },
+          include: {
+            categories: { select: { name: true } },
+            elements: { orderBy: { order: 'asc' } },
+          },
+          orderBy: { id: 'asc' },
+        })
+
+        appendTaskLog(task.id, {
+          stage: 'posts_push_all',
+          type: 'planned',
+          data: { count: posts.length },
+        })
+
+        for (const post of posts) {
+          const envelope = createEnvelope('post.upsert', {
+            post: {
+              id: post.id,
+              title_text: post.title_text,
+              slug: post.slug,
+              seo_title: post.seo_title,
+              focus_keyword: post.focus_keyword,
+              excerpt: post.excerpt,
+              meta_description: post.meta_description,
+              status: post.status,
+              categories: post.categories.map((c) => c.name),
+            },
+            processed_content: {
+              id: post.id,
+              elements: post.elements.map((el) => ({
+                id: el.id,
+                order: el.order,
+                element_type: el.element_type.toLowerCase(),
+                content: el.content,
+              })),
+            },
+          })
+
+          const delivery = await sendJsonWebhook({
+            endpoint: company.api_endpoint,
+            apiKey: company.api_key,
+            eventType: 'post.upsert',
+            payload: envelope,
+          })
+
+          if (!delivery.ok) {
+            throw new ValidationError(`Push failed for post ${post.id}, HTTP ${delivery.status}`)
+          }
+
+          const existing = await prisma.blogPublish.findFirst({ where: { blogPostId: post.id } })
+          if (existing) {
+            await prisma.blogPublish.update({ where: { id: existing.id }, data: { remote_id: delivery.deliveryId } })
+          } else {
+            await prisma.blogPublish.create({ data: { blogPostId: post.id, remote_id: delivery.deliveryId } })
+          }
+
+          appendTaskLog(task.id, {
+            stage: 'posts_push_all',
+            type: 'completed_item',
+            data: { post_id: post.id, remote_id: delivery.deliveryId, http_status: delivery.status },
+          })
+        }
+
+        completeTask(task.id, `Successfully pushed ${posts.length} posts`)
+      } catch (error) {
+        failTask(task.id, error instanceof Error ? error.message : String(error))
+      }
+    })()
+
+    return { job_id: task.id, status: 'accepted' as const }
+  }
+
+  async pushAllDictionaries(companyId: number) {
+    const task = createTask()
+
+    void (async () => {
+      try {
+        setTaskRunning(task.id, 'dictionary_push_all')
+
+        const company = await prisma.company.findUnique({
+          where: { id: companyId },
+          select: { api_endpoint: true, api_key: true },
+        })
+
+        if (!company?.api_endpoint) {
+          throw new ValidationError('Publishing endpoint is not configured')
+        }
+
+        const dictionaries = await prisma.dictionary.findMany({
+          where: { companyId },
+          include: {
+            words: {
+              include: { definition: true },
+              orderBy: [{ letter: 'asc' }, { keyword: 'asc' }],
+            },
+          },
+          orderBy: { id: 'asc' },
+        })
+
+        appendTaskLog(task.id, {
+          stage: 'dictionary_push_all',
+          type: 'planned',
+          data: { count: dictionaries.length },
+        })
+
+        for (const dictionary of dictionaries) {
+          const envelope = createEnvelope('dictionary.upsert', {
+            dictionary: {
+              id: dictionary.id,
+              title: dictionary.title,
+              subject: dictionary.subject,
+              language: dictionary.language,
+              status: dictionary.status,
+              current_letter: dictionary.current_letter,
+              num_words: dictionary.num_words,
+            },
+            terms: dictionary.words.map((w) => ({
+              id: w.id,
+              letter: w.letter,
+              keyword: w.keyword,
+              description: w.description,
+              priority: w.priority,
+              focus_keyword: w.focus_keyword,
+              definition: w.definition
+                ? {
+                    title: w.definition.title,
+                    featured_google_snippet: w.definition.featured_google_snippet,
+                    meta_description: w.definition.meta_description,
+                    seo_title: w.definition.seo_title,
+                    synonyms: w.definition.synonyms,
+                    antonyms: w.definition.antonyms,
+                    usage_examples: w.definition.usage_examples,
+                    related_keywords: w.definition.related_keywords,
+                    faqs: w.definition.faqs,
+                  }
+                : null,
+            })),
+          })
+
+          const delivery = await sendJsonWebhook({
+            endpoint: company.api_endpoint,
+            apiKey: company.api_key,
+            eventType: 'dictionary.upsert',
+            payload: envelope,
+          })
+
+          if (!delivery.ok) {
+            throw new ValidationError(`Push failed for dictionary ${dictionary.id}, HTTP ${delivery.status}`)
+          }
+
+          appendTaskLog(task.id, {
+            stage: 'dictionary_push_all',
+            type: 'completed_item',
+            data: { dictionary_id: dictionary.id, remote_id: delivery.deliveryId, http_status: delivery.status },
+          })
+        }
+
+        completeTask(task.id, `Successfully pushed ${dictionaries.length} dictionaries`)
+      } catch (error) {
+        failTask(task.id, error instanceof Error ? error.message : String(error))
+      }
+    })()
+
+    return { job_id: task.id, status: 'accepted' as const }
+  }
+}
+
+export const publishingSyncService = new PublishingSyncService()

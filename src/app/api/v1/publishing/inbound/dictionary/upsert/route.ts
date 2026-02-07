@@ -1,0 +1,110 @@
+import { prisma } from '@/lib/prisma'
+import { apiHandler } from '@/server/api/handler'
+import { ValidationError } from '@/server/api/errors'
+import { raw, success } from '@/server/api/response'
+import { resolveCompanyByInboundApiKey } from '@/server/publishing/auth'
+
+type InboundEnvelope = {
+  event?: string
+  event_id?: string
+  payload?: {
+    dictionary?: {
+      id?: number
+      title?: string
+      subject?: string
+      language?: string
+      num_words?: number
+      current_letter?: string
+      status?: 'IN_PROGRESS' | 'KEYWORD_GENERATION' | 'DEFINITION_GENERATION' | 'COMPLETED'
+    }
+  }
+}
+
+function readInboundKey(headers: Headers) {
+  const auth = headers.get('authorization') ?? ''
+  if (auth.toLowerCase().startsWith('bearer ')) return auth.slice(7).trim()
+  return headers.get('x-aurora-inbound-key')?.trim() ?? ''
+}
+
+export const POST = apiHandler(async ({ body }, req) => {
+  const inboundKey = readInboundKey(req.headers)
+  if (!inboundKey) return raw({ detail: 'Missing inbound API key' }, 401)
+
+  const companyId = await resolveCompanyByInboundApiKey(inboundKey)
+  if (!companyId) return raw({ detail: 'Invalid inbound API key' }, 401)
+
+  const envelope = (body ?? {}) as InboundEnvelope
+  if (!envelope.event_id) throw new ValidationError('event_id is required')
+
+  const existingInbound = await prisma.inboundEvent.findFirst({
+    where: { companyId, event_id: envelope.event_id },
+    select: { id: true, processed: true },
+  })
+
+  if (existingInbound?.processed) {
+    return success({ status: 'duplicate_ignored', event_id: envelope.event_id })
+  }
+
+  const dictionaryPayload = envelope.payload?.dictionary
+  if (!dictionaryPayload) throw new ValidationError('payload.dictionary is required')
+
+  let dictionary = null as Awaited<ReturnType<typeof prisma.dictionary.findFirst>>
+
+  if (dictionaryPayload.id) {
+    dictionary = await prisma.dictionary.findFirst({ where: { id: dictionaryPayload.id, companyId } })
+  }
+
+  if (!dictionary && dictionaryPayload.title) {
+    dictionary = await prisma.dictionary.findFirst({ where: { title: dictionaryPayload.title, companyId } })
+  }
+
+  if (!dictionary) {
+    if (!dictionaryPayload.title || !dictionaryPayload.subject || !dictionaryPayload.language) {
+      throw new ValidationError('For create, dictionary title/subject/language are required')
+    }
+
+    dictionary = await prisma.dictionary.create({
+      data: {
+        companyId,
+        title: dictionaryPayload.title,
+        subject: dictionaryPayload.subject,
+        language: dictionaryPayload.language,
+        num_words: dictionaryPayload.num_words ?? 0,
+        current_letter: dictionaryPayload.current_letter ?? 'a',
+        status: dictionaryPayload.status ?? 'IN_PROGRESS',
+      },
+    })
+  } else {
+    dictionary = await prisma.dictionary.update({
+      where: { id: dictionary.id },
+      data: {
+        ...(dictionaryPayload.title !== undefined ? { title: dictionaryPayload.title } : {}),
+        ...(dictionaryPayload.subject !== undefined ? { subject: dictionaryPayload.subject } : {}),
+        ...(dictionaryPayload.language !== undefined ? { language: dictionaryPayload.language } : {}),
+        ...(dictionaryPayload.num_words !== undefined ? { num_words: dictionaryPayload.num_words } : {}),
+        ...(dictionaryPayload.current_letter !== undefined ? { current_letter: dictionaryPayload.current_letter } : {}),
+        ...(dictionaryPayload.status !== undefined ? { status: dictionaryPayload.status } : {}),
+      },
+    })
+  }
+
+  if (existingInbound) {
+    await prisma.inboundEvent.update({
+      where: { id: existingInbound.id },
+      data: { payload: envelope as object, event_type: envelope.event ?? 'dictionary.upsert', processed: true, processed_at: new Date() },
+    })
+  } else {
+    await prisma.inboundEvent.create({
+      data: {
+        companyId,
+        event_id: envelope.event_id,
+        event_type: envelope.event ?? 'dictionary.upsert',
+        payload: envelope as object,
+        processed: true,
+        processed_at: new Date(),
+      },
+    })
+  }
+
+  return success({ status: 'processed', dictionary_id: dictionary.id, event_id: envelope.event_id })
+}, { auth: false })
