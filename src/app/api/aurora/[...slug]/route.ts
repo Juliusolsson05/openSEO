@@ -717,16 +717,24 @@ async function handleAurora(ctx: {
     const generationNote = String(body.generation_note ?? body.generationNote ?? '')
 
     if (!blogPostId || !elementId || !elementType) {
-      throw new ValidationError('blog_post_id, element_id, and element_type are required')
+      return raw({ detail: `blog_post_id, element_id, and element_type are required. Got: blog_post_id=${blogPostId}, element_id=${elementId}, element_type='${elementType}'` }, 400)
     }
 
-    const created = await elementService.addGeneratedElement(ctx.companyId, {
-      blogPostId,
-      elementId,
-      elementType,
-      generationNote,
-    })
-    return raw(serializeElement(created), 201)
+    try {
+      const created = await elementService.addGeneratedElement(ctx.companyId, {
+        blogPostId,
+        elementId,
+        elementType,
+        generationNote,
+      })
+      return raw(serializeElement(created), 201)
+    } catch (err) {
+      if (err instanceof ValidationError || err instanceof NotFoundError) {
+        return raw({ detail: err.message }, err instanceof NotFoundError ? 404 : 400)
+      }
+      console.error('[addElement] Unexpected error:', err)
+      return raw({ detail: err instanceof Error ? err.message : 'Failed to add element' }, 500)
+    }
   }
   if (path === 'blog/posts/elements/enhance' || path === 'blog/posts/elements/enhance-readability') {
     const body = (ctx.body ?? {}) as Record<string, unknown>
