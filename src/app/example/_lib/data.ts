@@ -4,25 +4,36 @@ import type { ExamplePost } from './types'
 
 /**
  * Resolve which company's published content to show.
- *
  * In production, this comes from the domain/subdomain/config.
- * For now, uses EXAMPLE_COMPANY_ID env var or falls back to 1.
  */
 function getCompanyId(): number {
   return parseInt(process.env.EXAMPLE_COMPANY_ID ?? '1', 10)
 }
 
 /**
+ * Whether to include fixture (demo) data as fallback.
+ * Set EXAMPLE_USE_FIXTURES=false in production to show only real synced content.
+ * Default: true (fixtures fill in when DB is empty).
+ */
+function fixturesEnabled(): boolean {
+  return process.env.EXAMPLE_USE_FIXTURES !== 'false'
+}
+
+/**
  * Merged data layer.
  *
- * Synced posts (from Aurora webhook → Postgres) override fixture posts by slug.
- * Fixture posts fill the rest. This means:
- * - Fresh install → shows fixture/demo content
- * - After sync    → shows real Aurora-generated content + remaining fixtures
+ * When EXAMPLE_USE_FIXTURES=true (default):
+ *   Synced posts override fixtures by slug, fixtures fill the rest.
+ *
+ * When EXAMPLE_USE_FIXTURES=false (production):
+ *   Only synced (DB) content is returned. No demo data.
  */
 export async function getAllPosts(): Promise<ExamplePost[]> {
   const companyId = getCompanyId()
   const synced = await getSyncedPosts(companyId)
+
+  if (!fixturesEnabled()) return synced
+
   const syncedSlugs = new Set(synced.map((p) => p.slug))
   const fixtures = EXAMPLE_POSTS.filter((p) => !syncedSlugs.has(p.slug))
   return [...synced, ...fixtures].sort(
@@ -50,7 +61,10 @@ export async function getPost(slug: string) {
 export async function getDictionary() {
   const companyId = getCompanyId()
   const synced = await getSyncedDictionaries(companyId)
-  return synced[0] ?? EXAMPLE_DICTIONARY
+
+  if (synced.length > 0) return synced[0]
+  if (!fixturesEnabled()) return { id: '', name: '', description: '', word_count: 0, words: [] }
+  return EXAMPLE_DICTIONARY
 }
 
 export async function getWord(wordId: string) {
