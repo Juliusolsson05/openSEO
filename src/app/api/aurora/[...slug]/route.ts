@@ -886,13 +886,42 @@ async function handleAurora(ctx: {
       search: ctx.searchParams.get('search') ?? ctx.searchParams.get('q') ?? undefined,
     })
 
-    const { items, total } = await titleService.listTitles(ctx.companyId, query)
-    const filtered = categoryIds.length
-      ? items.filter((title) => title.categories.some((category) => categoryIds.includes(category.id)))
-      : items
+    const where = {
+      companyId: ctx.companyId,
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { title_text: { contains: query.search, mode: 'insensitive' as const } },
+              { seo_title: { contains: query.search, mode: 'insensitive' as const } },
+              { focus_keyword: { contains: query.search, mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
+      ...(categoryIds.length
+        ? {
+            categories: {
+              some: {
+                id: { in: categoryIds },
+              },
+            },
+          }
+        : {}),
+    }
+
+    const [data, total] = await Promise.all([
+      prisma.title.findMany({
+        where,
+        include: { categories: true, _count: { select: { categories: true } } },
+        orderBy: { created_at: 'desc' },
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
+      }),
+      prisma.title.count({ where }),
+    ])
 
     return raw({
-      data: filtered,
+      data,
       total,
       page: query.page,
       pageSize: query.pageSize,

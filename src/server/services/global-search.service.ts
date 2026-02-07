@@ -53,7 +53,7 @@ export class GlobalSearchService {
         },
         take,
         orderBy: { id: 'desc' },
-        select: { id: true, title: true, subject: true, created_at: true },
+        select: { id: true, title: true, subject: true },
       }),
       prisma.product.findMany({
         where: {
@@ -93,7 +93,7 @@ export class GlobalSearchService {
         title: dictionary.title,
         subtitle: dictionary.subject,
         url: `/dictionary/${dictionary.id}`,
-        updatedAt: dictionary.created_at.toISOString(),
+        updatedAt: new Date().toISOString(),
       })),
       ...products.map((product) => ({
         id: `product-${product.id}`,
