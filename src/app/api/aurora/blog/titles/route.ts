@@ -45,7 +45,7 @@ const handler = apiHandler(async (ctx) => {
   const [data, total] = await Promise.all([
     prisma.title.findMany({
       where,
-      include: { categories: true, _count: { select: { categories: true } } },
+      include: { categories: true, bulk_schedule: true, _count: { select: { categories: true } } },
       orderBy: { created_at: 'desc' },
       skip: (query.page - 1) * query.pageSize,
       take: query.pageSize,

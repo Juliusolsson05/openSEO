@@ -32,7 +32,7 @@ type BulkSchedule = { id: number; name: string }
 interface BlogTitle {
   id: number
   title_text: string
-  status: number
+  status: number | string
   scheduled_date: string | null
   bulk_schedule: BulkSchedule | null
   categories: Category[]
@@ -96,10 +96,10 @@ export default function BlogSchedulingPage() {
 
   const fetchPosts = useCallback(async () => {
     setLoading(true)
-    const { data } = await api<BlogTitle[] | { data?: BlogTitle[]; results?: BlogTitle[] }>('/api/aurora/blog/titles/')
+    const { data } = await api<BlogTitle[] | { data?: BlogTitle[]; results?: BlogTitle[] }>('/api/aurora/blog/titles/?pageSize=500')
 
     const items = Array.isArray(data) ? data : data?.data ?? data?.results ?? []
-    const filtered = items.filter((post) => post.status === 4 || Boolean(post.scheduled_date))
+    const filtered = items.filter((post) => post.status === 'GENERATED' || post.status === 4 || Boolean(post.scheduled_date))
 
     setPosts(filtered)
     setLoading(false)
