@@ -82,7 +82,9 @@ function enforceMethod(path: string, method: string): ReturnType<typeof raw> | n
     { pattern: 'blog/titles/categories/bulk-delete', allowed: ['POST'] },
     { pattern: 'blog/titles/categories/generate', allowed: ['POST'] },
     { pattern: 'blog/titles/categories/categorize', allowed: ['POST'] },
-    { pattern: 'blog/categories', allowed: ['GET'] },
+    { pattern: 'blog/categories', allowed: ['GET', 'POST'] },
+    { pattern: /^blog\/categories\/\d+\/?$/, allowed: ['PUT', 'PATCH', 'DELETE'] },
+    { pattern: 'blog/categories/bulk-delete', allowed: ['POST', 'DELETE'] },
     { pattern: 'blog/categories/generate', allowed: ['POST'] },
     { pattern: 'blog/categories/categorize', allowed: ['POST'] },
     { pattern: 'blog/posts/delete-element', allowed: ['DELETE'] },
@@ -98,6 +100,8 @@ function enforceMethod(path: string, method: string): ReturnType<typeof raw> | n
     { pattern: 'blog/posts/share', allowed: ['POST'] },
     { pattern: /^blog\/posts\/update-element\/\d+$/, allowed: ['PUT'] },
     { pattern: 'blog/posts/update', allowed: ['PUT', 'PATCH'] },
+    { pattern: /^blog\/posts\/update\/\d+\/?$/, allowed: ['PUT', 'PATCH'] },
+    { pattern: 'blog/posts/update_meta', allowed: ['PUT', 'PATCH'] },
     { pattern: 'blog/schedule/bulk', allowed: ['POST'] },
     { pattern: 'blog/schedule/bulk/create', allowed: ['POST'] },
     { pattern: 'blog/schedule/bulk/remove', allowed: ['POST'] },
@@ -262,11 +266,15 @@ async function handleAurora(ctx: {
     })
   }
 
-  if (path === 'blog/posts/update' || path === 'blog/posts/update/') {
-    if (ctx.method !== 'PUT') return methodNotAllowed(ctx.method)
+  // Handle blog/posts/update/{id} and blog/posts/update_meta?post_id={id}
+  if (path === 'blog/posts/update' || path === 'blog/posts/update/' || path.startsWith('blog/posts/update/') || path === 'blog/posts/update_meta') {
+    if (ctx.method !== 'PUT' && ctx.method !== 'PATCH') return methodNotAllowed(ctx.method)
 
     const body = (ctx.body ?? {}) as Record<string, unknown>
-    const postIdRaw = body.post_id
+    // Support post_id from: body, path segment (/update/123), or query param (?post_id=123)
+    const pathSegments = path.split('/')
+    const pathId = pathSegments.length > 3 ? pathSegments[3] : undefined
+    const postIdRaw = body.post_id ?? body.postId ?? pathId ?? ctx.searchParams.get('post_id')
     if (postIdRaw === undefined || postIdRaw === null || postIdRaw === '') {
       return raw({ detail: "'post_id' is required in the request body." }, 400)
     }
@@ -977,6 +985,35 @@ async function handleAurora(ctx: {
 
   // CATEGORIES
   if (path === 'blog/titles/categories' || path === 'blog/categories') {
+    // POST = add category (same as blog/titles/categories/add)
+    if (ctx.method === 'POST') {
+      const body = ctx.body as Record<string, unknown>
+      const categories = Array.isArray(body?.categories)
+        ? body.categories
+        : Array.isArray(body?.names)
+          ? body.names
+          : typeof body?.name === 'string'
+            ? [body.name]
+            : []
+
+      if (!Array.isArray(categories) || !categories.every((cat) => typeof cat === 'string')) {
+        return raw({ detail: 'Invalid input. Please provide a category name.' }, 400)
+      }
+
+      const added: string[] = []
+      const existing: string[] = []
+      for (const name of categories) {
+        const normalized = name.trim()
+        if (!normalized) continue
+        const exists = await prisma.category.findFirst({ where: { companyId: ctx.companyId, name: normalized } })
+        if (exists) { existing.push(normalized); continue }
+        await categoryService.addCategories(ctx.companyId, [normalized])
+        added.push(normalized)
+      }
+      return raw({ added_categories: added, existing_categories: existing })
+    }
+
+    // GET = list categories
     const categories = await categoryService.listCategories(ctx.companyId)
     if (!categories.length) return raw({ detail: 'No categories found for this company.' }, 404)
     return raw(categories.map(({ id, name }) => ({ id, name })))
@@ -1018,7 +1055,35 @@ async function handleAurora(ctx: {
     return raw({ added_categories, existing_categories })
   }
 
-  if (path === 'blog/titles/categories/bulk-delete') {
+  // Handle blog/categories/{id} — edit (PUT) and delete (DELETE) single category
+  if (path.match(/^blog\/categories\/\d+\/?$/) || path.match(/^blog\/titles\/categories\/\d+\/?$/)) {
+    const categoryId = Number(path.split('/').filter(Boolean).pop())
+
+    if (ctx.method === 'PUT' || ctx.method === 'PATCH') {
+      const body = (ctx.body ?? {}) as Record<string, unknown>
+      const name = typeof body.name === 'string' ? body.name.trim() : ''
+      if (!name) return raw({ detail: 'Category name is required.' }, 400)
+
+      const category = await prisma.category.findFirst({ where: { id: categoryId, companyId: ctx.companyId } })
+      if (!category) return raw({ detail: 'Category not found.' }, 404)
+
+      const updated = await prisma.category.update({ where: { id: categoryId }, data: { name } })
+      return raw({ id: updated.id, name: updated.name })
+    }
+
+    if (ctx.method === 'DELETE') {
+      const category = await prisma.category.findFirst({ where: { id: categoryId, companyId: ctx.companyId } })
+      if (!category) return raw({ detail: 'Category not found.' }, 404)
+
+      await prisma.category.delete({ where: { id: categoryId } })
+      return raw({ detail: 'Category deleted successfully.' })
+    }
+
+    return methodNotAllowed(ctx.method)
+  }
+
+  // Bulk delete categories — support both paths
+  if (path === 'blog/titles/categories/bulk-delete' || path === 'blog/categories/bulk-delete') {
     const body = (ctx.body ?? {}) as Record<string, unknown>
     const categoryIds = body.category_ids ?? body.ids
 
