@@ -5,7 +5,7 @@
  * Ported from aurora_dashboard/views/apps/blog/elements/base.vue
  */
 
-import { useState, useRef, useCallback, type ReactNode } from 'react'
+import { useState, useCallback, type ReactNode } from 'react'
 import { Pencil, RefreshCw, Sparkles, Heart, Trash2, Plus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useElementsStore } from '@/stores/elements-store'
@@ -16,7 +16,6 @@ import { ConfirmDeleteModal } from './modals/ConfirmDeleteModal'
 import { EnhanceModal } from './modals/EnhanceModal'
 import { ComponentSelectModal } from './modals/ComponentSelectModal'
 import type { ElementType } from './types'
-import { GENERATE_ELEMENT_TYPES } from './types'
 
 interface BaseElementProps {
   blogId: number
@@ -33,6 +32,7 @@ interface BaseElementProps {
   onContentUpdated?: (content: any) => void
   onElementAdded?: (element: any) => void
   onElementDeleted?: (elementId: number) => void
+  onOpenCtaModal?: () => void
 }
 
 export function BaseElement({
@@ -49,6 +49,7 @@ export function BaseElement({
   onContentUpdated,
   onElementAdded,
   onElementDeleted,
+  onOpenCtaModal,
 }: BaseElementProps) {
   const [showAddButton, setShowAddButton] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -156,6 +157,20 @@ export function BaseElement({
     [blogId, elementId, elementsStore, fetchPost, post]
   )
 
+  const handleTemplateSelect = useCallback(
+    (templateId: string) => {
+      if (templateId === 'call_to_action') {
+        if (onOpenCtaModal) {
+          onOpenCtaModal()
+        } else {
+          console.log('CTA template selected (no CTA modal wired yet).')
+        }
+      }
+      setShowAddElementModal(false)
+    },
+    [onOpenCtaModal]
+  )
+
   return (
     <div
       className="relative mb-5 group"
@@ -253,6 +268,7 @@ export function BaseElement({
         open={showAddElementModal}
         onOpenChange={setShowAddElementModal}
         onSelect={handleAddElement}
+        onTemplateSelect={handleTemplateSelect}
         loading={loading}
       />
     </div>
