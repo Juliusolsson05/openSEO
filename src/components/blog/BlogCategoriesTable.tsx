@@ -9,14 +9,29 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import {
+  Sparkles,
+  Tags,
+  Plus,
+  Pencil,
+  Trash2,
+  FolderTree,
+  FileText,
+} from 'lucide-react'
 
 interface Category {
   id: number
   name: string
   post_count: number
+  title_count: number
 }
 
 interface CategoryFormModalProps {
@@ -47,15 +62,24 @@ function CategoryFormModal({
           <DialogTitle className="text-[13px]">{title}</DialogTitle>
         </DialogHeader>
         <div className="mt-3">
-          <Label className="mb-1 block text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Category name</Label>
+          <Label className="mb-1 block text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+            Category name
+          </Label>
           <Input
             value={value}
             onChange={(e) => onChange(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && value.trim() && onSubmit()}
             className="h-8 rounded-sm border-border text-[13px]"
+            autoFocus
           />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={loading} className="h-8 rounded-sm text-[12px]">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={loading}
+            className="h-8 rounded-sm text-[12px]"
+          >
             Cancel
           </Button>
           <Button
@@ -104,27 +128,23 @@ export default function BlogCategoriesTable() {
     fetchCategories()
   }, [])
 
-  const allSelected = useMemo(
-    () => categories.length > 0 && selectedIds.length === categories.length,
-    [selectedIds, categories]
+  const totalPostsInCategories = useMemo(
+    () => categories.reduce((sum, c) => sum + (c.post_count ?? 0), 0),
+    [categories],
   )
 
-  const isIndeterminate = useMemo(
-    () => selectedIds.length > 0 && selectedIds.length < categories.length,
-    [selectedIds, categories]
+  const allSelected = useMemo(
+    () => categories.length > 0 && selectedIds.length === categories.length,
+    [selectedIds, categories],
   )
 
   const toggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedIds([])
-    } else {
-      setSelectedIds(categories.map((c) => c.id))
-    }
+    setSelectedIds(allSelected ? [] : categories.map((c) => c.id))
   }
 
   const toggleSelect = (id: number) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id],
     )
   }
 
@@ -160,7 +180,9 @@ export default function BlogCategoriesTable() {
     if (!newCategoryName.trim()) return
     setActionLoading((v) => ({ ...v, add: true }))
     try {
-      const { error } = await apiPost('/api/aurora/blog/categories/', { name: newCategoryName.trim() })
+      const { error } = await apiPost('/api/aurora/blog/categories/', {
+        name: newCategoryName.trim(),
+      })
       if (error) throw error
       setNewCategoryName('')
       setAddOpen(false)
@@ -183,9 +205,10 @@ export default function BlogCategoriesTable() {
     if (!editCategoryId || !editCategoryName.trim()) return
     setActionLoading((v) => ({ ...v, edit: true }))
     try {
-      const { error } = await apiPut(`/api/aurora/blog/categories/${editCategoryId}/`, {
-        name: editCategoryName.trim(),
-      })
+      const { error } = await apiPut(
+        `/api/aurora/blog/categories/${editCategoryId}/`,
+        { name: editCategoryName.trim() },
+      )
       if (error) throw error
       setEditOpen(false)
       setEditCategoryId(null)
@@ -233,96 +256,139 @@ export default function BlogCategoriesTable() {
   }
 
   return (
-    <Card className="rounded border-border bg-white shadow-none" style={{ fontFamily: 'Segoe UI, sans-serif' }}>
+    <Card>
       <CardHeader className="pb-3">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <CardTitle className="text-[15px] font-semibold">Categories</CardTitle>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={runGenerate} disabled={actionLoading.generate} className="h-8 rounded-sm bg-primary text-[12px] hover:bg-primary-hover">
-              {actionLoading.generate ? 'Generating...' : categories.length ? 'Generate More' : 'Generate'}
-            </Button>
-            <Button onClick={runCategorize} disabled={actionLoading.categorize} className="h-8 rounded-sm bg-primary text-[12px] hover:bg-primary-hover">
-              {actionLoading.categorize ? 'Categorizing...' : 'Categorize'}
-            </Button>
-            <Button onClick={() => setAddOpen(true)} className="h-8 rounded-sm bg-primary text-[12px] hover:bg-primary-hover">
-              Add Category
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-[15px] font-semibold">Categories</CardTitle>
+            {!loading && (
+              <Badge variant="outline" className="text-[11px] font-normal">
+                {categories.length}
+              </Badge>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={runGenerate}
+              disabled={actionLoading.generate}
+              className="gap-1.5 text-[12px]"
+            >
+              <Sparkles className="h-3 w-3" />
+              {actionLoading.generate ? 'Generating...' : 'Generate'}
             </Button>
             <Button
-              variant="destructive"
-              onClick={deleteSelected}
-              disabled={selectedIds.length === 0 || actionLoading.deleteSelected}
-              className="h-8 rounded-sm text-[12px]"
+              variant="outline"
+              size="sm"
+              onClick={runCategorize}
+              disabled={actionLoading.categorize}
+              className="gap-1.5 text-[12px]"
             >
-              {actionLoading.deleteSelected ? 'Deleting...' : 'Delete Selected'}
+              <FolderTree className="h-3 w-3" />
+              {actionLoading.categorize ? 'Categorizing...' : 'Categorize'}
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setAddOpen(true)}
+              className="gap-1.5 text-[12px]"
+            >
+              <Plus className="h-3 w-3" /> Add
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+
+      <CardContent className="pt-0">
         {loading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-9 w-full rounded-sm" />
-            <Skeleton className="h-9 w-full rounded-sm" />
-            <Skeleton className="h-9 w-full rounded-sm" />
+          <div className="flex flex-wrap gap-2">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="h-8 w-28 rounded-sm" />
+            ))}
           </div>
         ) : categories.length === 0 ? (
-          <div className="rounded-sm border border-border bg-background p-3 text-[13px] text-muted-foreground">
-            No categories found. Click <span className="font-semibold">Generate</span> to create categories.
+          <div className="flex flex-col items-center py-10">
+            <Tags className="h-8 w-8 text-muted-foreground/30 mb-2" />
+            <p className="text-[13px] font-semibold">No categories yet</p>
+            <p className="text-[12px] text-muted-foreground mt-0.5">
+              Generate categories or add one manually.
+            </p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-sm border border-border">
-            <Table className="w-full border-collapse text-left text-[13px]">
-              <TableHeader className="bg-background">
-                <TableRow>
-                  <TableHead className="w-10 border-b border-border px-3 py-2">
+          <div className="space-y-3">
+            {/* Summary row */}
+            <div className="flex items-center gap-4 text-[12px] text-muted-foreground">
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={toggleSelectAll}
+                />
+                <span>Select all</span>
+              </label>
+              {selectedIds.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={deleteSelected}
+                  disabled={actionLoading.deleteSelected}
+                  className="h-6 gap-1 text-destructive hover:text-destructive px-2 text-[11px]"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  {actionLoading.deleteSelected
+                    ? 'Deleting...'
+                    : `Delete ${selectedIds.length}`}
+                </Button>
+              )}
+              <span className="ml-auto">
+                {totalPostsInCategories} post assignments across{' '}
+                {categories.length} categories
+              </span>
+            </div>
+
+            {/* Category chips */}
+            <div className="flex flex-wrap gap-2">
+              {categories.map((cat) => {
+                const selected = selectedIds.includes(cat.id)
+                return (
+                  <div
+                    key={cat.id}
+                    className={`group flex items-center gap-1.5 rounded-sm border px-2.5 py-1.5 text-[13px] transition-colors ${
+                      selected
+                        ? 'border-primary/40 bg-primary/5'
+                        : 'border-border bg-white hover:border-primary/30'
+                    }`}
+                  >
                     <Checkbox
-                      checked={allSelected ? true : isIndeterminate ? "indeterminate" : false}
-                      onCheckedChange={toggleSelectAll}
+                      checked={selected}
+                      onCheckedChange={() => toggleSelect(cat.id)}
+                      className="h-3.5 w-3.5"
                     />
-                  </TableHead>
-                  <TableHead className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Name</TableHead>
-                  <TableHead className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Post Count</TableHead>
-                  <TableHead className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {categories.map((category) => (
-                  <TableRow key={category.id} className="odd:bg-white even:bg-background">
-                    <TableCell className="border-b border-border px-3 py-2">
-                      <Checkbox
-                        checked={selectedIds.includes(category.id)}
-                        onCheckedChange={() => toggleSelect(category.id)}
-                      />
-                    </TableCell>
-                    <TableCell className="border-b border-border px-3 py-2">{category.name}</TableCell>
-                    <TableCell className="border-b border-border px-3 py-2">
-                      <Badge className="rounded-sm bg-background text-muted-foreground hover:bg-background">
-                        {category.post_count}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="border-b border-border px-3 py-2">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          className="h-7 rounded-sm border-border px-2 text-[12px]"
-                          onClick={() => openEdit(category)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          className="h-7 rounded-sm px-2 text-[12px]"
-                          onClick={() => deleteOne(category.id)}
-                          disabled={actionLoading.deleteOneId === category.id}
-                        >
-                          {actionLoading.deleteOneId === category.id ? 'Deleting...' : 'Delete'}
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    <span className="font-medium">{cat.name}</span>
+                    <Badge
+                      variant="secondary"
+                      className="ml-0.5 h-5 min-w-[20px] justify-center rounded-full px-1.5 text-[10px] font-semibold"
+                    >
+                      {cat.post_count}
+                    </Badge>
+                    <div className="ml-0.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => openEdit(cat)}
+                        className="rounded p-0.5 text-muted-foreground hover:text-foreground hover:bg-muted"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={() => deleteOne(cat.id)}
+                        disabled={actionLoading.deleteOneId === cat.id}
+                        className="rounded p-0.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
       </CardContent>

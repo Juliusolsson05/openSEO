@@ -30,7 +30,14 @@ export const handleCategoriesRoute: Handler = async (ctx, req) => {
 
   const categories = await categoryService.listCategories(ctx.companyId!)
   if (!categories.length) return raw({ detail: 'No categories found for this company.' }, 404)
-  return raw(categories.map(({ id, name }) => ({ id, name })))
+  return raw(
+    categories.map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      post_count: (cat as any)._count?.blog_posts ?? 0,
+      title_count: (cat as any)._count?.titles ?? 0,
+    })),
+  )
 }
 
 export const handleCategoryByIdRoute: Handler = async (ctx, req) => {
