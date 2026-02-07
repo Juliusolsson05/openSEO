@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { api, apiPost, apiDelete } from '@/lib/api'
+import { apiPost, apiDelete } from '@/lib/api'
 import { useBlogStore } from '@/stores/blog-store'
 import { useEditorUiStore } from '@/stores/editor-ui-store'
 import { Button } from '@/components/ui/button'
@@ -44,8 +44,6 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
 
   // Publish
   const [showPublish, setShowPublish] = useState(false)
-  const [dictionaries, setDictionaries] = useState<{ id: number; title: string }[]>([])
-  const [publishDictId, setPublishDictId] = useState('')
 
   useEffect(() => {
     if (toast) {
@@ -98,22 +96,15 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
   ]
 
   const openPublish = async () => {
-    if (!dictionaries.length) {
-      const { data } = await api<{ dictionaries: any[] }>('/api/aurora/dictionary/dictionaries/')
-      if (data?.dictionaries) setDictionaries(data.dictionaries)
-    }
     setShowPublish(true)
   }
 
   const doPublish = () => run('publish', 'Publish', async () => {
     setShowPublish(false)
-    const { error } = await apiPost('/api/aurora/blog/posts/upload/', {
+    const { error } = await apiPost('/api/v1/publishing/sync/posts/one', {
       post_id: Number(postId),
-      dictionary_id: Number(publishDictId),
-      export_method: 'elementor',
     })
     if (error) throw error
-    setPublishDictId('')
   })
 
   const doRegenerate = () => run('regenerate', 'Regenerate', async () => {
@@ -292,35 +283,14 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
           <div className="w-[400px] rounded-lg border border-border bg-background p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-[15px] font-semibold mb-1">Publish Post</h3>
             <p className="text-[13px] text-muted-foreground mb-4">
-              Select a dictionary and export method to publish.
+              This sends the post using the v1 publishing sync contract.
             </p>
-
-            <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 block">Dictionary</label>
-            <select
-              value={publishDictId}
-              onChange={(e) => setPublishDictId(e.target.value)}
-              className="mb-3 h-8 w-full rounded-md border border-border bg-background px-2 text-[13px] focus:border-primary focus:outline-none"
-            >
-              <option value="">Select dictionary…</option>
-              {dictionaries.map((d) => (
-                <option key={d.id} value={String(d.id)}>{d.title}</option>
-              ))}
-            </select>
-
-            <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 block">Export Method</label>
-            <select
-              className="mb-4 h-8 w-full rounded-md border border-border bg-background px-2 text-[13px]"
-              defaultValue="elementor"
-              disabled
-            >
-              <option value="elementor">Elementor</option>
-            </select>
 
             <div className="flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => setShowPublish(false)}>Cancel</Button>
               <Button
                 size="sm"
-                disabled={!publishDictId || !!loadingAction}
+                disabled={!!loadingAction}
                 onClick={doPublish}
               >
                 {loadingAction ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}

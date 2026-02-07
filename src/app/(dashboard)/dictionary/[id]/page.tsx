@@ -149,7 +149,7 @@ export default function DictionaryDetailPage() {
     setPublishing(true)
     const toastId = toast.loading('Publishing dictionary...')
     try {
-      const { error } = await apiPost('/api/aurora/dictionary/dictionary/upload/', {
+      const { error } = await apiPost('/api/v1/publishing/sync/dictionaries/one', {
         dictionary_id: Number(params.id),
       })
       if (error) throw error

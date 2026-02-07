@@ -552,7 +552,7 @@ export class BlogService {
     const delivery = await sendJsonWebhook({
       endpoint: company.api_endpoint,
       apiKey: company.api_key,
-      eventType: 'blog.post.upload',
+      eventType: 'post.upsert',
       payload,
     })
 
@@ -601,7 +601,7 @@ export class BlogService {
       const delivery = await sendJsonWebhook({
         endpoint: company.api_endpoint,
         apiKey: company.api_key,
-        eventType: 'blog.post.upload',
+        eventType: 'post.upsert',
         payload,
       })
 
@@ -684,7 +684,7 @@ export class BlogService {
     const payload = await this.getPost(post.id, companyId)
     const delivery = await sendJsonWebhook({
       endpoint: endpointUrl,
-      eventType: 'blog.post.export',
+      eventType: 'post.upsert',
       payload,
     })
 
@@ -705,7 +705,7 @@ export class BlogService {
       const payload = await this.getPost(post.id, companyId)
       const delivery = await sendJsonWebhook({
         endpoint: endpointUrl,
-        eventType: 'blog.post.export',
+        eventType: 'post.upsert',
         payload,
       })
 
