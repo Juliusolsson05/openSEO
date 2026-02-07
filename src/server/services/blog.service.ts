@@ -280,8 +280,113 @@ export class BlogService {
     }
   }
 
-  async regeneratePost(_companyId: number, _postId: number) {
-    throw new ValidationError('Not implemented yet')
+  async regeneratePost(companyId: number, postId: number) {
+    if (!postId) throw new ValidationError('post_id is required.')
+
+    const blogPost = await prisma.blogPost.findFirst({
+      where: { id: postId, companyId, status: TitleStatus.GENERATED },
+      include: { categories: { select: { id: true } } },
+    })
+
+    if (!blogPost) {
+      throw new NotFoundError('BlogPost not found or not in a regenerable state.')
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.blogPostElement.deleteMany({ where: { blogPostId: blogPost.id } })
+      await tx.blogPublish.deleteMany({ where: { blogPostId: blogPost.id } })
+
+      await tx.blogPost.update({
+        where: { id: blogPost.id },
+        data: {
+          cover_image: { url: DEFAULT_IMAGE, description: '' } as any,
+          meta_description: null,
+          excerpt: null,
+          generated_date: new Date(),
+          image_generation: false,
+          keyword_synced: false,
+          keyword_linked: false,
+          posts_synced: false,
+          reviewed: false,
+        },
+      })
+    })
+
+    const settings = ((await prisma.company.findUnique({ where: { id: companyId }, select: { settings: true } }))?.settings ?? {}) as Record<string, any>
+    const blogSettings = settings['aurora.blog'] ?? {}
+    const structureModel = blogSettings.blog_post_structure_model ?? 'gpt-4o'
+    const contentModel = blogSettings.blog_post_content_model ?? 'gpt-4o-mini'
+    const allowedElements = blogSettings.initial_generation_elements
+
+    const { structure } = await generateStructure(blogPost.title_text, structureModel, allowedElements)
+    const { elements } = await generateBlogPost(
+      blogPost.seo_title ?? blogPost.title_text,
+      blogPost.focus_keyword ?? '',
+      blogPost.title_text,
+      structure,
+      contentModel,
+      false,
+    )
+
+    let metaDescription: string | null = null
+    let excerpt: string | null = null
+    let coverImage: Record<string, unknown> | null = null
+    const filtered: Array<{ type: string; content: Record<string, unknown> }> = []
+
+    for (const element of elements) {
+      const type = String(element.type ?? '')
+      const content = (element.content ?? {}) as Record<string, unknown>
+      if (type === 'meta_description') metaDescription = (content.text as string) ?? null
+      else if (type === 'excerpt') excerpt = (content.text as string) ?? null
+      else if (type === 'cover_image') coverImage = { ...content, url: DEFAULT_IMAGE }
+      else filtered.push({ type, content })
+    }
+
+    await prisma.$transaction(async (tx) => {
+      for (let index = 0; index < filtered.length; index += 1) {
+        const dbType = toDbElementType(filtered[index].type)
+        if (!dbType) continue
+        const content = filtered[index].type === 'image'
+          ? { ...filtered[index].content, url: DEFAULT_IMAGE }
+          : filtered[index].content
+
+        await tx.blogPostElement.create({
+          data: {
+            blogPostId: blogPost.id,
+            element_type: dbType,
+            content: content as any,
+            order: index,
+          },
+        })
+      }
+
+      await tx.blogPost.update({
+        where: { id: blogPost.id },
+        data: {
+          status: TitleStatus.GENERATED,
+          generated_date: new Date(),
+          cover_image: (coverImage ?? { url: DEFAULT_IMAGE, description: '' }) as any,
+          meta_description: metaDescription,
+          excerpt,
+          image_generation: false,
+          keyword_synced: false,
+          keyword_linked: false,
+          posts_synced: false,
+          reviewed: false,
+        },
+      })
+    })
+
+    const nextTitle = await prisma.title.findFirst({
+      where: { companyId, status: TitleStatus.TO_BE_GENERATED },
+      orderBy: { id: 'asc' },
+      select: { id: true },
+    })
+
+    return {
+      status: `Regenerated post for title: ${blogPost.title_text}`,
+      next_post_id: nextTitle?.id ?? null,
+    }
   }
 
   async sharePost(companyId: number, postId: number) {

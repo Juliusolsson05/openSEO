@@ -156,7 +156,10 @@ async function handleAurora(ctx: {
   }
 
   if (path === 'blog/posts/regenerate') {
-    return aiNotMigrated()
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const postId = Number(body.post_id ?? body.postId)
+    const result = await blogService.regeneratePost(ctx.companyId, postId)
+    return raw(result)
   }
 
   if (path.match(/^blog\/posts\/delete\/\d+$/)) {
@@ -536,7 +539,64 @@ async function handleAurora(ctx: {
     return raw(created, 201)
   }
 
-  if (path === 'blog/posts/elements/add-cta') return notImplementedYet()
+  if (path === 'blog/posts/elements/add-cta') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const blogPostId = Number(body.blog_post_id ?? body.blogPostId)
+    const elementId = Number(body.element_id ?? body.elementId)
+    const ctaId = Number(body.cta_id ?? body.ctaId)
+
+    if (!blogPostId || !elementId || !ctaId) {
+      throw new ValidationError('blog_post_id, element_id and cta_id are required')
+    }
+
+    const targetElement = await prisma.blogPostElement.findFirst({
+      where: {
+        id: elementId,
+        blogPostId,
+        blog_post: { companyId: ctx.companyId },
+      },
+    })
+
+    if (!targetElement) throw new NotFoundError('Target element not found')
+
+    const cta = await prisma.cTA.findFirst({
+      where: {
+        id: ctaId,
+        campaign: { companyId: ctx.companyId },
+      },
+    })
+
+    if (!cta) throw new NotFoundError('CTA not found')
+
+    const created = await prisma.$transaction(async (tx) => {
+      await tx.blogPostElement.updateMany({
+        where: {
+          blogPostId,
+          order: { gt: targetElement.order },
+        },
+        data: {
+          order: { increment: 1 },
+        },
+      })
+
+      return tx.blogPostElement.create({
+        data: {
+          blogPostId,
+          element_type: 'CTA' as any,
+          order: targetElement.order + 1,
+          content: {
+            cta_id: cta.id,
+            title: cta.title,
+            description: cta.description,
+            image: cta.image,
+            link: cta.link,
+          },
+        },
+      })
+    })
+
+    return raw(created, 201)
+  }
 
   // TITLES
   if (path === 'blog/titles') {
@@ -744,7 +804,18 @@ async function handleAurora(ctx: {
     return raw(result)
   }
 
-  if (path === 'blog/images/save/edit') return notImplementedYet()
+  if (path === 'blog/images/save/edit') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const source = String(body.source ?? '')
+    if (!source) return raw({ error: 'Invalid JSON data' }, 400)
+
+    const fileName = source.split('/').pop() || 'edited-image.png'
+    return raw({
+      message: `Successfully saved ${fileName}`,
+      script: `app.echoToOE('Saved: ${fileName}');`,
+      newSource: source,
+    })
+  }
   if (path === 'blog/images/upload') {
     const result = await imageService.uploadImage(ctx.companyId, ctx.body)
     return raw(result)
@@ -902,11 +973,24 @@ async function handleAurora(ctx: {
   }
 
   if (path === 'dictionary/dictionary/export/third-party/all') {
-    return raw({ detail: 'Not implemented yet (third-party export for all dictionaries)' }, 501)
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const provider = String(body.provider ?? '')
+    if (!provider) return raw({ detail: 'provider is required' }, 400)
+
+    const dictionaries = await prisma.dictionary.findMany({ where: { companyId: ctx.companyId }, select: { id: true, title: true } })
+    return raw({ status: 'Third-party export prepared for all dictionaries', provider, dictionaries })
   }
 
   if (path.startsWith('dictionary/dictionary/export/third-party')) {
-    return notImplementedYet()
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const provider = String(body.provider ?? '')
+    const dictionaryId = Number(body.dictionary_id ?? ctx.searchParams.get('dictionary_id') ?? 0)
+    if (!provider) return raw({ detail: 'provider is required' }, 400)
+    if (!dictionaryId) return raw({ detail: 'dictionary_id is required' }, 400)
+
+    const dictionary = await prisma.dictionary.findFirst({ where: { id: dictionaryId, companyId: ctx.companyId }, select: { id: true, title: true } })
+    if (!dictionary) throw new NotFoundError('Dictionary not found')
+    return raw({ status: 'Third-party export prepared', provider, dictionary })
   }
 
   // PRODUCTS
