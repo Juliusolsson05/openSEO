@@ -1,3 +1,6 @@
 node_modules
 .next
 .env.local
+
+# Example site synced data
+.example-store/

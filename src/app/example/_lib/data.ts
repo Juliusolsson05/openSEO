@@ -1,7 +1,27 @@
 import { EXAMPLE_DICTIONARY, EXAMPLE_POSTS } from './fixtures'
+import { getSyncedDictionaries, getSyncedPosts } from './store'
+import type { ExamplePost } from './types'
+
+/**
+ * Merged data layer.
+ *
+ * Synced posts (from Aurora webhook) override fixture posts by slug.
+ * Fixture posts fill the rest. This means:
+ * - Fresh install → shows fixture/demo content
+ * - After sync    → shows real Aurora-generated content + remaining fixtures
+ */
+
+export function getAllPosts(): ExamplePost[] {
+  const synced = getSyncedPosts()
+  const syncedSlugs = new Set(synced.map((p) => p.slug))
+  const fixtures = EXAMPLE_POSTS.filter((p) => !syncedSlugs.has(p.slug))
+  return [...synced, ...fixtures].sort(
+    (a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
+  )
+}
 
 export function getPosts() {
-  return EXAMPLE_POSTS.map((post) => ({
+  return getAllPosts().map((post) => ({
     id: post.id,
     slug: post.slug,
     title: post.title,
@@ -12,13 +32,16 @@ export function getPosts() {
 }
 
 export function getPost(slug: string) {
-  return EXAMPLE_POSTS.find((post) => post.slug === slug) ?? null
+  return getAllPosts().find((post) => post.slug === slug) ?? null
 }
 
 export function getDictionary() {
-  return EXAMPLE_DICTIONARY
+  const synced = getSyncedDictionaries()
+  // Return first synced dictionary if available, otherwise fixtures
+  return synced[0] ?? EXAMPLE_DICTIONARY
 }
 
 export function getWord(wordId: string) {
-  return EXAMPLE_DICTIONARY.words.find((word) => word.id === wordId) ?? null
+  const dict = getDictionary()
+  return dict.words.find((word) => word.id === wordId) ?? null
 }
