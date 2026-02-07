@@ -2,11 +2,13 @@
 
 import { BaseElement } from '../BaseElement'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
+import { ExternalLink, Check, Star } from 'lucide-react'
 import type { ElementComponentProps } from '../registry'
 
 interface ToolRecommendationContent {
   title: string
   companyUrl: string
+  companyWebsite: string
   pricing: string
   productDescription: string
   headerColor: string
@@ -18,20 +20,14 @@ interface ToolRecommendationProps extends Omit<ElementComponentProps, 'content'>
 }
 
 const extractDomain = (url: string): string => {
-  return url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
-}
-
-const adjustColorOpacity = (color: string, opacity: number): string => {
-  if (!/^#[0-9A-Fa-f]{6}$/.test(color)) return `rgba(0, 0, 0, ${opacity})`
-
-  const r = Number.parseInt(color.slice(1, 3), 16)
-  const g = Number.parseInt(color.slice(3, 5), 16)
-  const b = Number.parseInt(color.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${opacity})`
+  return String(url || '')
+    .replace(/^https?:\/\/(www\.)?/, '')
+    .replace(/\/$/, '')
 }
 
 export function ToolRecommendation({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ToolRecommendationProps) {
   const features = Array.isArray(content?.features) ? content.features : []
+  const websiteUrl = content?.companyUrl || content?.companyWebsite || ''
 
   return (
     <BaseElement
@@ -41,71 +37,65 @@ export function ToolRecommendation({ content, blogId, elementId, onContentUpdate
       onContentUpdated={onContentUpdated}
       onElementDeleted={onElementDeleted}
     >
-      <div
-        className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
-        style={{ borderColor: content?.headerColor || '#e5e7eb' }}
-      >
-        <div
-          className="flex items-center justify-between gap-4 p-6"
-          style={{ backgroundColor: adjustColorOpacity(content?.headerColor || '#000000', 0.3) }}
-        >
-          <div className="flex-1">
-            <h2
-              className="m-0 text-[22px] font-semibold leading-tight tracking-tight text-foreground"
-              dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.title || '') }}
-            />
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        {/* Header */}
+        <div className="flex items-center gap-5 border-b border-border px-6 py-5">
+          <img
+            src={`https://img.logo.dev/${extractDomain(websiteUrl)}?token=pk_PJnue9akRVmT-qo6GmYjhA`}
+            alt={`${content?.title || 'Tool'} Logo`}
+            className="h-12 w-12 shrink-0 rounded-lg border border-border bg-white object-contain p-1.5"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h2
+                className="text-[20px] font-semibold leading-tight tracking-tight text-foreground"
+                dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.title || '') }}
+              />
+              <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" />
+            </div>
             <p
-              className="mt-1 text-[15px] font-medium text-primary"
+              className="mt-0.5 text-[14px] font-medium text-primary"
               dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.pricing || '') }}
             />
           </div>
-          <img
-            src={`https://img.logo.dev/${extractDomain(content?.companyUrl || '')}?token=pk_PJnue9akRVmT-qo6GmYjhA`}
-            alt={`${content?.title || 'Tool'} Logo`}
-            className="h-[60px] w-auto rounded-lg bg-card p-1"
+          {websiteUrl && (
+            <a
+              href={websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex shrink-0 items-center gap-1.5 rounded-md border border-primary bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Visit Site
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
+        </div>
+
+        {/* Description */}
+        <div className="px-6 py-5">
+          <div
+            className="text-[16px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]"
+            dangerouslySetInnerHTML={{ __html: renderMarkdown(content?.productDescription || '') }}
           />
         </div>
 
-        <div className="p-6">
-          <div className="mb-5 flex items-start gap-3">
-            <span className="mt-0.5 text-2xl">ℹ️</span>
-            <div
-              className="flex-1 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(content?.productDescription || '') }}
-            />
-          </div>
-
-          <div>
-            <h3 className="mb-2 text-[17px] font-semibold leading-snug text-foreground">
-              Key Features:
-            </h3>
-            <ul className="grid list-none grid-cols-1 gap-2 p-0 md:grid-cols-2">
+        {/* Features */}
+        {features.length > 0 && (
+          <div className="border-t border-border px-6 py-5">
+            <h3 className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Key Features</h3>
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
               {features.map((feature, index) => (
-                <li
+                <div
                   key={`feature-${index}`}
-                  className="flex items-start rounded-lg bg-secondary/50 px-3 py-2 text-[16px] font-light leading-[1.7] text-foreground"
-
+                  className="flex items-start gap-2.5 rounded-md px-3 py-2"
                 >
-                  <span className="mr-2 shrink-0 text-emerald-600">
-                    ✓
-                  </span>
-                  <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(feature) }} />
-                </li>
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <span className="text-[14px] leading-snug text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(feature) }} />
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
-        </div>
-
-        <div className="flex items-center justify-start bg-secondary/50 p-5">
-          <a
-            href={content?.companyUrl || '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-primary transition-colors hover:text-primary"
-          >
-            Visit <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.title || '') }} /> Website
-          </a>
-        </div>
+        )}
       </div>
     </BaseElement>
   )
