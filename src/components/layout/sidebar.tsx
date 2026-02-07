@@ -76,7 +76,8 @@ const navigation: NavSection[] = [
 function isActiveRoute(href: string, pathname: string) {
   // Prevent /blog from matching /blog/titles, /blog/scheduling, /blog/cta
   if (href === '/blog') {
-    return pathname === '/blog' || /^\/blog\/[^/]+(?:\/preview)?$/.test(pathname)
+    // Only mark Blog Posts active for list + single post routes, not subpages like /blog/titles
+    return pathname === '/blog' || /^\/blog\/\d+(?:\/preview)?$/.test(pathname)
   }
 
   // Prevent /settings from matching unrelated settings-like paths

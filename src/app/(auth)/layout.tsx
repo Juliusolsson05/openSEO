@@ -9,9 +9,11 @@ export default function AuthLayout({
     <div className="flex min-h-screen">
       {/* Left — Azure-style branding panel */}
       <div className="hidden lg:flex lg:w-[480px] azure-hero items-center justify-center relative overflow-hidden">
-        {/* Subtle diagonal accent */}
-        <div className="absolute -right-24 -top-24 h-[500px] w-[500px] rounded-full bg-white/5" />
-        <div className="absolute -left-12 -bottom-32 h-[400px] w-[400px] rounded-full bg-white/5" />
+        {/* Premium geometric accents */}
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.10)_0%,rgba(255,255,255,0.00)_45%)]" />
+        <div className="absolute -top-16 -right-20 h-64 w-64 rotate-12 border border-white/20 bg-white/5" />
+        <div className="absolute -bottom-20 -left-20 h-56 w-56 -rotate-12 border border-white/15 bg-white/5" />
+        <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:28px_28px]" />
 
         <div className="relative z-10 max-w-sm px-10 text-center">
           <div className="flex justify-center mb-6">

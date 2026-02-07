@@ -8,8 +8,15 @@
 
 import { getCookie } from 'cookies-next'
 
-const getBaseUrl = () =>
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'
+const getBaseUrl = () => {
+  // In the browser, always use relative URLs so the request goes to the
+  // same origin the page was loaded from (works on LAN, localhost, etc.)
+  if (typeof window !== 'undefined') {
+    return process.env.NEXT_PUBLIC_API_BASE_URL || ''
+  }
+  // Server-side (SSR / RSC) needs an absolute URL
+  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000'
+}
 
 interface ApiOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>
