@@ -16,41 +16,58 @@ export class ProductService {
   }
 
   async importProducts(companyId: number, products: ShopifyImportInput['products']) {
-    const upserts = products.map((product) => ({
-      where: { id: product.id },
-      update: {
-        title: product.title,
-        description: product.description,
-        vendor: product.vendor,
-        product_type: product.product_type,
-        companyId,
-        variants: {
-          deleteMany: {},
-          create: product.variants,
-        },
-        images: {
-          deleteMany: {},
-          create: product.images,
-        },
-        tags: {
-          deleteMany: {},
-          create: product.tags.map((tag) => ({ name: tag })),
-        },
-      },
-      create: {
-        id: product.id,
-        title: product.title,
-        description: product.description,
-        vendor: product.vendor,
-        product_type: product.product_type,
-        companyId,
-        variants: { create: product.variants },
-        images: { create: product.images },
-        tags: { create: product.tags.map((tag) => ({ name: tag })) },
-      },
-    }))
+    const results: unknown[] = []
 
-    return productRepository.bulkCreate(upserts)
+    for (const product of products) {
+      const variants = Array.isArray(product.variants) ? product.variants : []
+      const images = Array.isArray(product.images) ? product.images : []
+      const tags = Array.isArray(product.tags) ? product.tags : []
+
+      if (product.id) {
+        const upserted = await productRepository.bulkCreate([{
+          where: { id: product.id },
+          update: {
+            title: product.title,
+            description: product.description ?? '',
+            vendor: product.vendor ?? '',
+            product_type: product.product_type ?? '',
+            companyId,
+            variants: { deleteMany: {}, create: variants },
+            images: { deleteMany: {}, create: images },
+            tags: { deleteMany: {}, create: tags.map((tag: string) => ({ name: tag })) },
+          },
+          create: {
+            id: product.id,
+            title: product.title,
+            description: product.description ?? '',
+            vendor: product.vendor ?? '',
+            product_type: product.product_type ?? '',
+            companyId,
+            variants: { create: variants },
+            images: { create: images },
+            tags: { create: tags.map((tag: string) => ({ name: tag })) },
+          },
+        }])
+        results.push(...(Array.isArray(upserted) ? upserted : [upserted]))
+      } else {
+        // No Shopify ID — just create
+        const created = await prisma.product.create({
+          data: {
+            title: product.title ?? 'Untitled',
+            description: product.description ?? '',
+            vendor: product.vendor ?? '',
+            product_type: product.product_type ?? '',
+            companyId,
+            variants: { create: variants },
+            images: { create: images },
+            tags: { create: tags.map((tag: string) => ({ name: tag })) },
+          },
+        })
+        results.push(created)
+      }
+    }
+
+    return results
   }
 
   async searchProducts(companyId: number, query: string, age?: number, amount?: number) {
