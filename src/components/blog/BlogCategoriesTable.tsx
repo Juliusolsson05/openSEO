@@ -1,13 +1,13 @@
 'use client'
 
-import { Label } from '@/components/ui/label'
-
 import { useEffect, useMemo, useState } from 'react'
 import { api, apiDelete, apiPost, apiPut } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 
@@ -230,13 +230,9 @@ export default function BlogCategoriesTable() {
               <TableHeader className="bg-background">
                 <TableRow>
                   <TableHead className="w-10 border-b border-border px-3 py-2">
-                    <input
-                      type="checkbox"
-                      checked={allSelected}
-                      ref={(el) => {
-                        if (el) el.indeterminate = isIndeterminate
-                      }}
-                      onChange={toggleSelectAll}
+                    <Checkbox
+                      checked={allSelected ? true : isIndeterminate ? "indeterminate" : false}
+                      onCheckedChange={toggleSelectAll}
                     />
                   </TableHead>
                   <TableHead className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Name</TableHead>
@@ -248,10 +244,9 @@ export default function BlogCategoriesTable() {
                 {categories.map((category) => (
                   <TableRow key={category.id} className="odd:bg-white even:bg-background">
                     <TableCell className="border-b border-border px-3 py-2">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedIds.includes(category.id)}
-                        onChange={() => toggleSelect(category.id)}
+                        onCheckedChange={() => toggleSelect(category.id)}
                       />
                     </TableCell>
                     <TableCell className="border-b border-border px-3 py-2">{category.name}</TableCell>

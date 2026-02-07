@@ -12,8 +12,8 @@ import type {
 } from '@/server/validators/dictionary.validators'
 
 export class DictionaryService {
-  async listDictionaries(companyId: number) {
-    return dictionaryRepository.findMany(companyId)
+  async listDictionaries(companyId: number, query?: { search?: string; page?: number; pageSize?: number }) {
+    return dictionaryRepository.findMany(companyId, query)
   }
 
   async getDictionary(id: number, companyId: number) {

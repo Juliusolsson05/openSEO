@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import {
@@ -198,7 +199,7 @@ export default function BlogSchedulingPage() {
             <div className="px-4 pb-3">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
-                <input
+                <Input
                   placeholder="Filter..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -216,7 +217,7 @@ export default function BlogSchedulingPage() {
               <div className="divide-y divide-border/60 max-h-80 overflow-y-auto">
                 {unscheduled.map((p) => (
                   <div key={p.id} className="flex items-center gap-2.5 px-4 py-2 hover:bg-muted">
-                    <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} className="accent-primary" />
+                    <Checkbox checked={selected.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} className="accent-primary" />
                     <span className="text-[13px] truncate flex-1">{p.title_text}</span>
                     {p.categories?.[0] && <Badge variant="outline" className="text-[10px] shrink-0">{p.categories[0].name}</Badge>}
                   </div>

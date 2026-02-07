@@ -3,6 +3,7 @@
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
 
 interface Props {
   prompt: string

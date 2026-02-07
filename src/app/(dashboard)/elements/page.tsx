@@ -6,6 +6,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { Eye, Save, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -120,7 +121,7 @@ export default function ElementsPage() {
                     <Eye className="h-3 w-3" /> Preview
                   </Button>
                   <Label className="flex items-center gap-2 text-[12px] cursor-pointer">
-                    <input type="checkbox" checked={e.enabled} onChange={() => toggle(e.type)} className="accent-primary" />
+                    <Checkbox checked={e.enabled} onCheckedChange={() => toggle(e.type)} className="accent-primary" />
                     Enabled
                   </Label>
                 </div>

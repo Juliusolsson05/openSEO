@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
 import {
   ArrowLeft,
   Eye,
@@ -151,17 +152,19 @@ export default function BlogPreviewPage() {
         </header>
       )}
 
-      <div className="fixed left-4 top-24 z-50 flex flex-col gap-2 rounded border border-border bg-white p-2">
-        <Button variant="ghost" size="icon" onClick={() => router.push(`/blog/${postId}`)}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={() => setShowHeaderFooter((v) => !v)}>
-          {showHeaderFooter ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-        </Button>
-        <Button variant="ghost" size="icon" onClick={sharePost}>
-          <Share2 className="h-5 w-5" />
-        </Button>
-      </div>
+      <Card className="fixed left-4 top-24 z-50 rounded border-border bg-white p-2 shadow-none">
+        <CardContent className="flex flex-col gap-2 p-0">
+          <Button variant="ghost" size="icon" onClick={() => router.push(`/blog/${postId}`)}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setShowHeaderFooter((v) => !v)}>
+            {showHeaderFooter ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </Button>
+          <Button variant="ghost" size="icon" onClick={sharePost}>
+            <Share2 className="h-5 w-5" />
+          </Button>
+        </CardContent>
+      </Card>
 
       <main className="mx-auto w-full max-w-[1280px] px-4 py-8 lg:px-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -175,12 +178,14 @@ export default function BlogPreviewPage() {
             )}
 
             {!loading && error && (
-              <div className="mx-auto max-w-[720px] rounded border border-border bg-white p-8 text-center">
-                Failed to load preview.
-                <div className="mt-4">
-                  <Button variant="outline" onClick={() => router.push(`/blog/${postId}`)}>Go back</Button>
-                </div>
-              </div>
+              <Card className="mx-auto max-w-[720px] rounded border-border bg-white shadow-none">
+                <CardContent className="p-8 text-center">
+                  Failed to load preview.
+                  <div className="mt-4">
+                    <Button variant="outline" onClick={() => router.push(`/blog/${postId}`)}>Go back</Button>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {!loading && !error && post && (
@@ -299,7 +304,7 @@ export default function BlogPreviewPage() {
                     <p className="mb-2 flex items-center gap-2 text-sm font-semibold"><Tag className="h-4 w-4 text-primary" /> Trending Topics</p>
                     <div className="flex flex-wrap gap-2">
                       {trendingTopics.map((topic) => (
-                        <span key={topic} className="rounded-sm border border-border px-2 py-1 text-xs">{topic}</span>
+                        <Badge key={topic} variant="outline" className="rounded-sm">{topic}</Badge>
                       ))}
                     </div>
                   </div>

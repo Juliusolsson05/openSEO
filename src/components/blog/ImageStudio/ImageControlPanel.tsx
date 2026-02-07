@@ -91,14 +91,14 @@ export function ImageControlPanel(props: Props) {
           <p className="mb-2 text-sm font-medium">Edit with Photopea</p>
           <p className="mb-3 text-xs text-muted-foreground">Edit your image with a full Photoshop-like editor.</p>
           {props.currentImageUrl ? <img src={props.currentImageUrl} alt="Current image" className="mb-3 h-20 w-20 rounded border border-border object-cover" /> : null}
-          <button
+          <Button
             type="button"
+            size="sm"
             onClick={props.onOpenPhotopea}
             disabled={!props.currentImageUrl}
-            className="rounded bg-primary px-3 py-1 text-sm text-white disabled:opacity-60"
           >
             Open in Editor
-          </button>
+          </Button>
         </div>
       ) : null}
     </div>

@@ -11,6 +11,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface InputField {
   type: 'text' | 'number' | 'select' | 'switch' | 'hidden'
@@ -266,11 +269,12 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
                 <div key={input.key}>
                   <Label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">{input.label}</Label>
                   {input.type === 'select' ? (
-                    <select className="h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]" value={formData[input.key] ?? ''} onChange={(e) => setFormData((p) => ({ ...p, [input.key]: e.target.value }))}>
-                      {(input.options ?? []).map((o) => <option key={String(o.value)} value={o.value}>{o.title}</option>)}
-                    </select>
+                    <Select value={String(formData[input.key] ?? "")} onValueChange={(value) => setFormData((p) => ({ ...p, [input.key]: value }))}>
+                      <SelectTrigger className="h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]"><SelectValue placeholder="Select..." /></SelectTrigger>
+                      <SelectContent>{(input.options ?? []).map((o) => <SelectItem key={String(o.value)} value={String(o.value)}>{o.title}</SelectItem>)}</SelectContent>
+                    </Select>
                   ) : input.type === 'switch' ? (
-                    <input type="checkbox" checked={!!formData[input.key]} onChange={(e) => setFormData((p) => ({ ...p, [input.key]: e.target.checked }))} />
+                    <Checkbox checked={!!formData[input.key]} onCheckedChange={(checked) => setFormData((p) => ({ ...p, [input.key]: checked === true }))} />
                   ) : (
                     <Input type={input.type === 'number' ? 'number' : 'text'} value={formData[input.key] ?? ''} onChange={(e) => setFormData((p) => ({ ...p, [input.key]: e.target.value }))} className="rounded-sm border-border" />
                   )}
@@ -294,14 +298,17 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
           <div className={modalCard}>
             <h3 className="mb-2 text-[14px] font-semibold">Publish Details</h3>
             <Label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">Select Dictionary</Label>
-            <select className="mb-3 h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]" value={publishDetails.dictionaryId} onChange={(e) => setPublishDetails((p) => ({ ...p, dictionaryId: e.target.value }))} disabled={loadingDictionaries}>
-              <option value="">Select</option>
-              {availableDictionaries.map((d: any) => <option key={d.id} value={d.id}>{d.title}</option>)}
-            </select>
+            <Select value={publishDetails.dictionaryId} onValueChange={(value) => setPublishDetails((p) => ({ ...p, dictionaryId: value }))} disabled={loadingDictionaries}>
+              <SelectTrigger className="mb-3 h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]"><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectContent>
+                {availableDictionaries.map((d: any) => <SelectItem key={d.id} value={String(d.id)}>{d.title}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">Export Method</Label>
-            <select className="h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]" value={publishDetails.exportMethod} onChange={(e) => setPublishDetails((p) => ({ ...p, exportMethod: e.target.value }))}>
-              <option value="elementor">Elementor</option>
-            </select>
+            <Select value={publishDetails.exportMethod} onValueChange={(value) => setPublishDetails((p) => ({ ...p, exportMethod: value }))}>
+              <SelectTrigger className="h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="elementor">Elementor</SelectItem></SelectContent>
+            </Select>
             <div className="mt-4 flex justify-end gap-2"><Button variant="outline" onClick={() => setShowPublishDetailsDialog(false)}>Cancel</Button><Button onClick={handlePublish} disabled={!isPublishDetailsValid || loadingDictionaries}>Publish</Button></div>
           </div>
         </div>

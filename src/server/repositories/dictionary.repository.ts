@@ -2,16 +2,44 @@ import type { Prisma } from '@prisma/client'
 
 import { prisma } from '@/lib/prisma'
 
-export function findMany(companyId: number) {
-  return prisma.dictionary.findMany({
-    where: { companyId },
-    orderBy: { id: 'desc' },
-    include: {
-      _count: {
-        select: { words: true },
+type FindManyFilters = {
+  search?: string
+  page?: number
+  pageSize?: number
+}
+
+export async function findMany(companyId: number, filters: FindManyFilters = {}) {
+  const page = Math.max(1, filters.page ?? 1)
+  const pageSize = Math.max(1, Math.min(100, filters.pageSize ?? 50))
+
+  const where = {
+    companyId,
+    ...(filters.search
+      ? {
+          OR: [
+            { title: { contains: filters.search, mode: 'insensitive' as const } },
+            { subject: { contains: filters.search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {}),
+  }
+
+  const [items, total] = await Promise.all([
+    prisma.dictionary.findMany({
+      where,
+      orderBy: { id: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        _count: {
+          select: { words: true },
+        },
       },
-    },
-  })
+    }),
+    prisma.dictionary.count({ where }),
+  ])
+
+  return { items, total }
 }
 
 export function findById(id: number, companyId: number) {

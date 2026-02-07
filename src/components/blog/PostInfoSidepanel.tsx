@@ -7,6 +7,8 @@ import { apiPut } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Textarea } from '@/components/ui/textarea'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
 interface PostInfo {
@@ -173,9 +175,11 @@ export default function PostInfoSidepanel({
                 Edit
               </Button>
             </div>
-            <div className="rounded-sm border border-border bg-background p-2">
-              {renderWithHighlightAndOverflow(post.seo_title || '', TITLE_MAX, post.focus_keyword || '', highlightKeywords)}
-            </div>
+            <Card className="rounded-sm border-border bg-background p-2 shadow-none">
+              <CardContent className="p-0">
+                {renderWithHighlightAndOverflow(post.seo_title || '', TITLE_MAX, post.focus_keyword || '', highlightKeywords)}
+              </CardContent>
+            </Card>
           </div>
 
           <div>
@@ -192,14 +196,16 @@ export default function PostInfoSidepanel({
                 Edit
               </Button>
             </div>
-            <div className="rounded-sm border border-border bg-background p-2">
-              {renderWithHighlightAndOverflow(
-                post.meta_description || '',
-                META_MAX,
-                post.focus_keyword || '',
-                highlightKeywords
-              )}
-            </div>
+            <Card className="rounded-sm border-border bg-background p-2 shadow-none">
+              <CardContent className="p-0">
+                {renderWithHighlightAndOverflow(
+                  post.meta_description || '',
+                  META_MAX,
+                  post.focus_keyword || '',
+                  highlightKeywords
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           <div className="rounded-sm border border-border bg-background p-2">
@@ -213,10 +219,9 @@ export default function PostInfoSidepanel({
           </div>
 
           <Label className="flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={highlightKeywords}
-              onChange={(e) => toggleHighlight(e.target.checked)}
+              onCheckedChange={(checked) => toggleHighlight(checked === true)}
             />
             <span className="text-[13px]">Highlight focus keywords</span>
           </Label>
@@ -257,7 +262,7 @@ export default function PostInfoSidepanel({
             <SheetTitle>Edit Meta Description</SheetTitle>
           </SheetHeader>
           <div className="mt-3 space-y-1">
-            <textarea
+            <Textarea
               value={editedMetaDescription}
               onChange={(e) => setEditedMetaDescription(e.target.value)}
               className="min-h-[120px] w-full rounded-sm border border-border px-3 py-2 text-[13px] outline-none focus:border-primary"

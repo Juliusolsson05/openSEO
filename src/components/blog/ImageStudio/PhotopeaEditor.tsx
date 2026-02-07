@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { uploadBlogPostImage } from '@/lib/blog/images'
+import { Button } from '@/components/ui/button'
 
 interface Props {
   open: boolean
@@ -129,18 +130,18 @@ export function PhotopeaEditor({ open, onClose, imageUrl, blogId, imageNumber, o
     <div className="fixed inset-0 z-[100] flex flex-col bg-black">
       <div className="flex items-center justify-between border-b border-white/20 bg-zinc-900 px-4 py-2 text-white">
         <div className="flex items-center gap-4">
-          <button type="button" onClick={onClose} className="rounded border border-white/30 px-2 py-1 text-sm hover:bg-white/10">✕</button>
+          <Button type="button" variant="outline" size="sm" onClick={onClose} className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white">✕</Button>
           <h2 className="text-sm font-semibold">Image Editor</h2>
           <p className="text-xs text-white/70">Click Save or Ctrl+S to save</p>
         </div>
-        <button
+        <Button
           type="button"
           onClick={triggerSave}
           disabled={!isReady || isSaving}
-          className="rounded bg-emerald-600 px-3 py-1 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="bg-emerald-600 text-white hover:bg-emerald-700"
         >
           {isSaving ? 'Saving…' : 'Save'}
-        </button>
+        </Button>
       </div>
 
       <div className="relative flex-1">

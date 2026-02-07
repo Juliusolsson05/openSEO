@@ -1,6 +1,7 @@
 'use client'
 
 import type { HistoryEntry } from './types'
+import { Button } from '@/components/ui/button'
 
 interface Props {
   items: HistoryEntry[]
@@ -16,14 +17,14 @@ export function ImageHistory({ items, activeUrl, onSelect, onApply, onCancel, ap
     <div className="mt-4 border-t border-border pt-3">
       <div className="mb-3 flex gap-2 overflow-x-auto">
         {items.map((item) => (
-          <button key={`${item.url}-${item.timestamp}`} type="button" onClick={() => onSelect(item.url)} className={`h-12 w-12 shrink-0 overflow-hidden rounded border ${activeUrl === item.url ? 'ring-2 ring-primary' : ''}`}>
+          <Button key={`${item.url}-${item.timestamp}`} type="button" variant="outline" size="icon" onClick={() => onSelect(item.url)} className={`h-12 w-12 shrink-0 overflow-hidden p-0 ${activeUrl === item.url ? 'ring-2 ring-primary' : ''}`}>
             <img src={item.url} alt={item.provider} className="h-full w-full object-cover" />
-          </button>
+          </Button>
         ))}
       </div>
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className="rounded border border-border px-3 py-1 text-sm">Cancel</button>
-        <button type="button" onClick={onApply} disabled={!activeUrl || applying} className="rounded bg-primary px-3 py-1 text-sm text-white disabled:opacity-60">{applying ? 'Applying...' : 'Apply'}</button>
+        <Button type="button" variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
+        <Button type="button" size="sm" onClick={onApply} disabled={!activeUrl || applying}>{applying ? 'Applying...' : 'Apply'}</Button>
       </div>
     </div>
   )

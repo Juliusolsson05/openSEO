@@ -2,6 +2,7 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
 
 interface Props {
   prompt: string
@@ -75,9 +76,9 @@ export function GptImageControls({
         </Select>
       </div>
 
-      <button type="button" onClick={onGenerate} disabled={!prompt.trim() || isGenerating} className="w-full rounded bg-primary px-4 py-2 text-white disabled:opacity-60">
+      <Button type="button" onClick={onGenerate} disabled={!prompt.trim() || isGenerating} className="w-full">
         {isGenerating ? 'Generating...' : 'Generate'}
-      </button>
+      </Button>
     </div>
   )
 }

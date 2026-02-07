@@ -121,18 +121,21 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
 
   return createPortal(
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
-        <Card className="w-full max-w-3xl h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-          {/* Header */}
-          <CardHeader className="flex-row items-center justify-between bg-sidebar text-white rounded-t-sm px-4 py-3 shrink-0">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <CardTitle className="text-white text-[16px]">Chat with Quillo</CardTitle>
-            </div>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/10" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </CardHeader>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="w-full max-w-3xl h-[80vh] p-0">
+          <Card className="h-full border-0 shadow-none flex flex-col">
+            {/* Header */}
+            <CardHeader className="flex-row items-center justify-between bg-sidebar text-white rounded-t-sm px-4 py-3 shrink-0">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                <DialogHeader className="p-0">
+                  <DialogTitle asChild><CardTitle className="text-white text-[16px]">Chat with Quillo</CardTitle></DialogTitle>
+                </DialogHeader>
+              </div>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/10" onClick={onClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
 
           {/* Messages */}
           <CardContent className="flex-1 overflow-y-auto p-4 space-y-3" ref={chatRef}>
@@ -223,24 +226,27 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
             </Button>
           </div>
         </Card>
-      </div>
+      </DialogContent>
+      </Dialog>
 
       {/* LinkedIn preview */}
-      {showLinkedInPreview && linkedInPost && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30" onClick={() => setShowLinkedInPreview(false)}>
-          <Card className="w-full max-w-xl" onClick={(e) => e.stopPropagation()}>
+      <Dialog open={showLinkedInPreview && !!linkedInPost} onOpenChange={(open) => !open && setShowLinkedInPreview(false)}>
+        <DialogContent className="w-full max-w-xl p-0">
+          <Card className="border-0 shadow-none">
             <CardHeader className="flex-row items-center justify-between">
-              <CardTitle>LinkedIn Post Preview</CardTitle>
+              <DialogHeader className="p-0">
+                <DialogTitle asChild><CardTitle>LinkedIn Post Preview</CardTitle></DialogTitle>
+              </DialogHeader>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowLinkedInPreview(false)}>
                 <X className="h-4 w-4" />
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="prose text-[13px]" dangerouslySetInnerHTML={{ __html: linkedInPost.html }} />
+              {linkedInPost ? <div className="prose text-[13px]" dangerouslySetInnerHTML={{ __html: linkedInPost.html }} /> : null}
             </CardContent>
           </Card>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </>,
     document.body
   )

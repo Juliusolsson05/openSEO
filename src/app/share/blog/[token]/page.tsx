@@ -5,6 +5,8 @@ import { api } from '@/lib/api'
 
 import '@/components/blog/elements'
 import { getPreviewComponent } from '@/components/blog/elements/registry'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 
 type SharedPost = {
   id: number
@@ -23,9 +25,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       <header className="border-b border-border bg-white">
         <div className="mx-auto flex max-w-[720px] items-center justify-between px-4 py-3">
           <div className="text-[18px] font-semibold text-primary">Aurora</div>
-          <span className="rounded border border-info-light bg-info-light px-2 py-1 text-[11px] font-semibold text-primary">
-            Shared preview
-          </span>
+          <Badge>Shared preview</Badge>
         </div>
       </header>
       <main className="mx-auto max-w-[720px] px-4 py-8">{children}</main>
@@ -41,7 +41,9 @@ function Shell({ children }: { children: React.ReactNode }) {
 function Message({ text }: { text: string }) {
   return (
     <Shell>
-      <div className="rounded border border-border bg-white p-5 text-[14px]">{text}</div>
+      <Card className="rounded border-border bg-white shadow-none">
+        <CardContent className="p-5 text-[14px]">{text}</CardContent>
+      </Card>
     </Shell>
   )
 }
@@ -96,26 +98,30 @@ export default async function SharedBlogPage({ params }: { params: Promise<{ tok
 
   return (
     <Shell>
-      <article className="rounded border border-border bg-white p-6">
-        <h1 className="mb-6 text-[32px] font-semibold leading-tight">{post.title_text}</h1>
+      <Card className="rounded border-border bg-white shadow-none">
+        <CardContent className="p-6">
+          <article>
+            <h1 className="mb-6 text-[32px] font-semibold leading-tight">{post.title_text}</h1>
 
-        {post.cover_image?.url ? (
-          <div className="mb-8 overflow-hidden rounded border border-border">
-            <img
-              src={post.cover_image.url}
-              alt={post.cover_image.description || post.title_text}
-              className="h-auto w-full"
-            />
-          </div>
-        ) : null}
+            {post.cover_image?.url ? (
+              <div className="mb-8 overflow-hidden rounded border border-border">
+                <img
+                  src={post.cover_image.url}
+                  alt={post.cover_image.description || post.title_text}
+                  className="h-auto w-full"
+                />
+              </div>
+            ) : null}
 
-        <div className="space-y-4">
-          {post.elements.map((element) => {
-            const Preview = getPreviewComponent(element.element_type as any)
-            return <Preview key={element.id} content={element.content} />
-          })}
-        </div>
-      </article>
+            <div className="space-y-4">
+              {post.elements.map((element) => {
+                const Preview = getPreviewComponent(element.element_type as any)
+                return <Preview key={element.id} content={element.content} />
+              })}
+            </div>
+          </article>
+        </CardContent>
+      </Card>
     </Shell>
   )
 }

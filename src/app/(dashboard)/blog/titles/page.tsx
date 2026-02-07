@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Search,
@@ -162,7 +163,7 @@ export default function BlogTitlesPage() {
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <input
+          <Input
             placeholder="Search titles..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -272,10 +273,9 @@ export default function BlogTitlesPage() {
         <CardContent className="p-0">
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border bg-secondary/50 text-[11px] font-semibold text-muted-foreground tracking-wide uppercase">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={filtered.length > 0 && selected.size === filtered.length}
-              onChange={selectAll}
+              onCheckedChange={selectAll}
               className="accent-primary"
             />
             <div className="flex-1">Title</div>
@@ -314,10 +314,9 @@ export default function BlogTitlesPage() {
 
                 return (
                   <div key={title.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-border/60 last:border-0 hover:bg-muted group">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={selected.has(title.id)}
-                      onChange={() => toggleSelect(title.id)}
+                      onCheckedChange={() => toggleSelect(title.id)}
                       className="accent-primary"
                     />
 
@@ -325,7 +324,7 @@ export default function BlogTitlesPage() {
                     <div className="flex-1 min-w-0">
                       {isEditing ? (
                         <div className="flex gap-1.5">
-                          <input
+                          <Input
                             value={editText}
                             onChange={(e) => setEditText(e.target.value)}
                             className="flex-1 h-7 rounded-sm border border-primary bg-white px-2 text-[13px] focus:outline-none"

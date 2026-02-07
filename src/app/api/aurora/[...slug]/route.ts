@@ -879,24 +879,24 @@ async function handleAurora(ctx: {
         .filter((id) => Number.isInteger(id) && id > 0),
     )
 
-    const titles = await prisma.title.findMany({
-      where: {
-        companyId: ctx.companyId,
-        ...(categoryIds.length
-          ? {
-              categories: {
-                some: {
-                  id: { in: categoryIds },
-                },
-              },
-            }
-          : {}),
-      },
-      include: { categories: true },
-      orderBy: { id: 'asc' },
+    const query = validate(listTitlesQuerySchema, {
+      page: ctx.searchParams.get('page') ?? 1,
+      pageSize: ctx.searchParams.get('pageSize') ?? ctx.searchParams.get('limit') ?? 50,
+      status: ctx.searchParams.get('status') ?? undefined,
+      search: ctx.searchParams.get('search') ?? ctx.searchParams.get('q') ?? undefined,
     })
 
-    return raw(titles)
+    const { items, total } = await titleService.listTitles(ctx.companyId, query)
+    const filtered = categoryIds.length
+      ? items.filter((title) => title.categories.some((category) => categoryIds.includes(category.id)))
+      : items
+
+    return raw({
+      data: filtered,
+      total,
+      page: query.page,
+      pageSize: query.pageSize,
+    })
   }
 
   if (path === 'blog/titles/generate') {
@@ -1334,17 +1334,31 @@ async function handleAurora(ctx: {
 
   // DICTIONARY
   if (path === 'dictionary/dictionaries') {
-    const dictionaries = await dictionaryService.listDictionaries(ctx.companyId)
+    const page = Math.max(1, Number(ctx.searchParams.get('page') ?? 1) || 1)
+    const pageSize = Math.max(1, Math.min(100, Number(ctx.searchParams.get('itemsPerPage') ?? ctx.searchParams.get('pageSize') ?? 20) || 20))
+    const search = (ctx.searchParams.get('q') ?? '').trim() || undefined
+
+    const { items, total } = await dictionaryService.listDictionaries(ctx.companyId, {
+      search,
+      page,
+      pageSize,
+    })
+
     return raw({
-      dictionaries: dictionaries.map((d) => ({
+      dictionaries: items.map((d) => ({
         id: d.id,
         title: d.title,
+        subject: d.subject,
+        language: d.language,
         num_words: d.num_words,
         total_words: d.num_words * 26,
         in_progress: !['COMPLETED', 'UPLOADED'].includes(String(d.status)),
         current_letter: d.current_letter,
         status: String(d.status).toLowerCase(),
       })),
+      total,
+      page,
+      pageSize,
     })
   }
 

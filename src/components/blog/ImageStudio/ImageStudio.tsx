@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { regenerateBlogImage, uploadBlogPostImage, useStockPhoto } from '@/lib/blog/images'
 import { ImageControlPanel } from './ImageControlPanel'
 import { ImagePreviewPanel } from './ImagePreviewPanel'
@@ -111,11 +112,11 @@ export function ImageStudio({
             <h2 className="text-lg font-semibold">Image Studio</h2>
             <div className="flex items-center gap-2">
               {editableImageUrl ? (
-                <button onClick={() => setPhotopeaOpen(true)} className="rounded border border-border px-2 py-1 text-sm">
+                <Button type="button" variant="outline" size="sm" onClick={() => setPhotopeaOpen(true)}>
                   ✏️ Edit in Photopea
-                </button>
+                </Button>
               ) : null}
-              <button onClick={onClose} className="rounded border border-border px-2 py-1 text-sm">✕</button>
+              <Button type="button" variant="outline" size="sm" onClick={onClose}>✕</Button>
             </div>
           </div>
 
