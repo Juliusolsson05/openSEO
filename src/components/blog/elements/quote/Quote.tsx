@@ -1,44 +1,65 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
-import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
+import { renderMarkdownInline } from '@/lib/markdown'
+import { useElementsStore } from '@/stores/elements-store'
+import { useAutoSave } from '@/hooks/use-auto-save'
+import { InlineText, SaveIndicator, useInlineEdit } from '../inline'
 
-const formatQuote = (text: string) => {
-  let value = text ?? ''
-  value = value.replace(/(<br\s*\/?>)(?!<br\s*\/?>)/g, '<br/><br/>')
-  value = value.replace(/(<br\s*\/?>){3,}/g, '<br/><br/>')
-  return renderMarkdown(value)
+type QuoteContent = {
+  text?: string
+  quote?: string
+  author?: string
+  person?: string
+  description?: string
 }
 
 export function Quote({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
-  const quoteHtml = formatQuote(content?.quote ?? '')
-  const personHtml = renderMarkdownInline(content?.person ?? '')
-  const descriptionHtml = renderMarkdownInline(content?.description ?? '')
+  const [localContent, setLocalContent] = useState<QuoteContent>((content ?? {}) as QuoteContent)
+  const updateElement = useElementsStore((s) => s.updateElement)
+  const { isEditing, startEditing } = useInlineEdit()
+  const editing = isEditing(elementId)
+
+  useEffect(() => setLocalContent((content ?? {}) as QuoteContent), [content])
+
+  const { save, flush, status } = useAutoSave(async (next) => {
+    const result = await updateElement(elementId, next, blogId)
+    if (result.success) onContentUpdated?.(next)
+    return result.success
+  })
+
+  const handleChange = (key: keyof QuoteContent, value: string) => {
+    const next = { ...localContent, [key]: value }
+    setLocalContent(next)
+    void save(next)
+  }
+
+  const quote = localContent.quote ?? localContent.text ?? ''
+  const author = localContent.author ?? localContent.person ?? ''
+  const description = localContent.description ?? ''
 
   return (
-    <BaseElement
-      content={content}
-      blogId={blogId}
-      elementId={elementId}
-      onContentUpdated={onContentUpdated}
-      onElementDeleted={onElementDeleted}
-    >
-      <div className="rounded-lg bg-muted/60 p-6">
-        <div className="flex items-start">
-          <span className="relative -top-2 mr-3 text-6xl font-bold leading-none text-primary">&#8220;</span>
-          <div className="min-w-0 flex-1">
-            <div
-              className="ml-2 text-3xl font-normal leading-tight [&_a]:underline [&_a]:decoration-dotted hover:[&_a]:decoration-solid [&_em]:italic [&_strong]:font-bold"
-              dangerouslySetInnerHTML={{ __html: quoteHtml }}
-            />
-            <p className="mt-4 text-2xl">
-              —{' '}
-              <span className="underline" dangerouslySetInnerHTML={{ __html: personHtml }} />,
-              <span className="ml-1 text-base font-light" dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
+    <BaseElement content={localContent} blogId={blogId} elementId={elementId} allowEdit={false} onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
+      <div className="space-y-2 rounded-lg bg-muted/60 p-6">
+        {editing ? (
+          <>
+            <InlineText elementId={elementId} value={localContent.text ?? ''} onChange={(v) => handleChange('text', v)} onBlur={() => void flush()} multiline className="text-lg" placeholder="Intro text (optional)" />
+            <InlineText elementId={elementId} value={quote} onChange={(v) => handleChange('quote', v)} onBlur={() => void flush()} multiline className="text-3xl" placeholder="Quote" />
+            <InlineText elementId={elementId} value={author} onChange={(v) => handleChange('author', v)} onBlur={() => void flush()} className="text-2xl" placeholder="Author" />
+            <InlineText elementId={elementId} value={description} onChange={(v) => handleChange('description', v)} onBlur={() => void flush()} className="text-base" placeholder="Author description" />
+          </>
+        ) : (
+          <div className="cursor-text" onClick={() => startEditing(elementId)}>
+            {localContent.text ? <p className="mb-3" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(localContent.text) }} /> : null}
+            <p className="text-3xl" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(quote) }} />
+            <p className="mt-4 text-2xl">— <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(author) }} />
+              {description ? <span className="ml-1 text-base font-light" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(description) }} /> : null}
             </p>
           </div>
-        </div>
+        )}
+        <SaveIndicator status={status} />
       </div>
     </BaseElement>
   )
