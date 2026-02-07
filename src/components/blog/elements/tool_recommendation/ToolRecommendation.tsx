@@ -42,7 +42,7 @@ export function ToolRecommendation({ content, blogId, elementId, onContentUpdate
       onElementDeleted={onElementDeleted}
     >
       <div
-        className="overflow-hidden rounded-xl border-2 bg-white shadow-sm"
+        className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
         style={{ borderColor: content?.headerColor || '#e5e7eb' }}
       >
         <div
@@ -51,18 +51,18 @@ export function ToolRecommendation({ content, blogId, elementId, onContentUpdate
         >
           <div className="flex-1">
             <h2
-              className="m-0 text-3xl font-bold text-gray-800"
+              className="m-0 text-[22px] font-semibold leading-tight tracking-tight text-foreground"
               dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.title || '') }}
             />
             <p
-              className="mt-1 text-lg text-gray-700"
+              className="mt-1 text-[15px] font-medium text-primary"
               dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.pricing || '') }}
             />
           </div>
           <img
             src={`https://img.logo.dev/${extractDomain(content?.companyUrl || '')}?token=pk_PJnue9akRVmT-qo6GmYjhA`}
             alt={`${content?.title || 'Tool'} Logo`}
-            className="h-[60px] w-auto rounded-lg bg-white p-1"
+            className="h-[60px] w-auto rounded-lg bg-card p-1"
           />
         </div>
 
@@ -70,23 +70,23 @@ export function ToolRecommendation({ content, blogId, elementId, onContentUpdate
           <div className="mb-5 flex items-start gap-3">
             <span className="mt-0.5 text-2xl">ℹ️</span>
             <div
-              className="flex-1 text-base leading-relaxed text-gray-700"
+              className="flex-1 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]"
               dangerouslySetInnerHTML={{ __html: renderMarkdown(content?.productDescription || '') }}
             />
           </div>
 
           <div>
-            <h3 className="mb-2 text-xl font-semibold" style={{ color: content?.headerColor || '#111827' }}>
+            <h3 className="mb-2 text-[17px] font-semibold leading-snug text-foreground">
               Key Features:
             </h3>
             <ul className="grid list-none grid-cols-1 gap-2 p-0 md:grid-cols-2">
               {features.map((feature, index) => (
                 <li
                   key={`feature-${index}`}
-                  className="flex items-start rounded-lg px-3 py-2 text-sm"
-                  style={{ backgroundColor: `${content?.headerColor || '#111827'}10` }}
+                  className="flex items-start rounded-lg bg-secondary/50 px-3 py-2 text-[16px] font-light leading-[1.7] text-foreground"
+
                 >
-                  <span className="mr-2 shrink-0" style={{ color: content?.headerColor || '#111827' }}>
+                  <span className="mr-2 shrink-0 text-emerald-600">
                     ✓
                   </span>
                   <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(feature) }} />
@@ -96,12 +96,12 @@ export function ToolRecommendation({ content, blogId, elementId, onContentUpdate
           </div>
         </div>
 
-        <div className="flex items-center justify-start bg-slate-50 p-6">
+        <div className="flex items-center justify-start bg-secondary/50 p-5">
           <a
             href={content?.companyUrl || '#'}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-blue-600 transition-colors hover:text-blue-800"
+            className="font-medium text-primary transition-colors hover:text-primary"
           >
             Visit <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.title || '') }} /> Website
           </a>

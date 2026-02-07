@@ -79,14 +79,14 @@ export function Timeline({ content, blogId, elementId, onContentUpdated, onEleme
       {editing ? (
         <InlineEditorShell title="Timeline" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
           <div data-inline-edit-root="true" className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Title</Label>
-              <Input value={draft.title ?? ''} onChange={(e) => patch({ title: e.target.value })} placeholder="Timeline title" />
+              <Input value={draft.title ?? ''} onChange={(e) => patch({ title: e.target.value })} placeholder="Timeline title" className="text-[18px] font-semibold" />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Text before timeline</Label>
-              <Textarea value={draft.text_before ?? ''} onChange={(e) => patch({ text_before: e.target.value })} placeholder="Text before timeline" rows={4} />
+              <Textarea value={draft.text_before ?? ''} onChange={(e) => patch({ text_before: e.target.value })} placeholder="Text before timeline" rows={4} className="min-h-[120px] text-[15px] font-light leading-relaxed" />
             </div>
 
             <div className="space-y-3">
@@ -100,17 +100,17 @@ export function Timeline({ content, blogId, elementId, onContentUpdated, onEleme
               <div className="space-y-3">
                 {events.map((event, index) => (
                   <div key={index} className="rounded-lg border p-4 space-y-3">
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Label>Date</Label>
                       <Input value={event.date ?? ''} onChange={(e) => updateEvent(index, 'date', e.target.value)} placeholder="Date" />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Label>Title</Label>
                       <Input value={event.title ?? ''} onChange={(e) => updateEvent(index, 'title', e.target.value)} placeholder="Event title" />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Label>Description</Label>
-                      <Textarea value={event.description ?? ''} onChange={(e) => updateEvent(index, 'description', e.target.value)} placeholder="Description" rows={4} />
+                      <Textarea value={event.description ?? ''} onChange={(e) => updateEvent(index, 'description', e.target.value)} placeholder="Description" rows={4} className="min-h-[120px] text-[15px] font-light leading-relaxed" />
                     </div>
                     <div>
                       <Button type="button" variant="ghost" size="sm" onClick={() => removeEvent(index)}>
@@ -122,9 +122,9 @@ export function Timeline({ content, blogId, elementId, onContentUpdated, onEleme
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Text after timeline</Label>
-              <Textarea value={draft.text_after ?? ''} onChange={(e) => patch({ text_after: e.target.value })} placeholder="Text after timeline" rows={4} />
+              <Textarea value={draft.text_after ?? ''} onChange={(e) => patch({ text_after: e.target.value })} placeholder="Text after timeline" rows={4} className="min-h-[120px] text-[15px] font-light leading-relaxed" />
             </div>
           </div>
         </InlineEditorShell>
@@ -133,18 +133,18 @@ export function Timeline({ content, blogId, elementId, onContentUpdated, onEleme
           className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
           onClick={() => isEditModeEnabled && startEditing(elementId)}
         >
-          {viewContent.title ? <h3 className="mb-4 text-2xl font-semibold" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(viewContent.title) }} /> : null}
-          {viewContent.text_before ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_before) }} /> : null}
-          <div className="space-y-6">
+          {viewContent.title ? <h3 className="mb-4 text-[22px] font-semibold leading-tight tracking-tight text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(viewContent.title) }} /> : null}
+          {viewContent.text_before ? <p className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_before) }} /> : null}
+          <div className="space-y-4">
             {viewEvents.map((event, index) => (
-              <div key={index} className="rounded border-l-4 border-l-primary p-4">
-                <div className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(event.date ?? '') }} />
-                <h4 className="text-xl font-semibold text-primary" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(event.title ?? '') }} />
-                <div dangerouslySetInnerHTML={{ __html: renderMarkdown(event.description ?? '') }} />
+              <div key={index} className="rounded-lg border border-border bg-card p-5">
+                <div className="text-[13px] text-muted-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(event.date ?? '') }} />
+                <h4 className="text-[17px] font-semibold text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(event.title ?? '') }} />
+                <div className="text-[16px] font-light leading-[1.7] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(event.description ?? '') }} />
               </div>
             ))}
           </div>
-          {viewContent.text_after ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_after) }} /> : null}
+          {viewContent.text_after ? <p className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_after) }} /> : null}
         </div>
       )}
     </BaseElement>

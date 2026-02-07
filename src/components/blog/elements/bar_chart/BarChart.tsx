@@ -7,7 +7,6 @@ import {
   Bar,
   BarChart as RechartsBarChart,
   CartesianGrid,
-  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -85,7 +84,6 @@ export function BarChart({
   elementId,
   onContentUpdated,
   onElementDeleted,
-  baseColor = '#00008B', // theme: primary (customizable)
 }: BarChartProps) {
   const bars = Array.isArray(content?.bars) ? content.bars : []
 
@@ -98,20 +96,7 @@ export function BarChart({
   const minValue = Math.min(...values)
   const roundedMax = Math.ceil(maxValue / 10) * 10
   const startValue = minValue - 5
-  const denominator = Math.max(1, maxValue - startValue)
-  const baseHSL = hexToHSL(baseColor)
-
-  const data = [...bars]
-    .sort((a, b) => b.value - a.value)
-    .map((bar) => {
-      const normalizedValue = (bar.value - startValue) / denominator
-      const color = calculateLighterColor(baseHSL.h, baseHSL.s, baseHSL.l, normalizedValue)
-
-      return {
-        ...bar,
-        fill: `hsl(${color.hue}, ${color.saturation}%, ${color.lightness}%)`,
-      }
-    })
+  const data = [...bars].sort((a, b) => b.value - a.value)
 
   const interval = Math.ceil((roundedMax - startValue) / 3)
   const yTicks = [roundedMax, roundedMax - interval, startValue + interval, startValue]
@@ -124,15 +109,15 @@ export function BarChart({
       onContentUpdated={onContentUpdated}
       onElementDeleted={onElementDeleted}
     >
-      <div className="rounded-lg bg-secondary p-8">
+      <div className="rounded-lg bg-secondary/50 p-5">
         <h2
-          className="mb-6 text-2xl font-semibold leading-[1.5] text-foreground"
+          className="mb-4 text-center text-[22px] font-semibold leading-tight tracking-tight text-foreground"
           dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content.title) }}
         />
 
         {content.text_before ? (
           <p
-            className="mb-6 text-[1.125rem] leading-[1.77] text-foreground"
+            className="text-center text-[17px] font-light text-foreground"
             dangerouslySetInnerHTML={{ __html: renderMarkdown(content.text_before) }}
           />
         ) : null}
@@ -147,46 +132,42 @@ export function BarChart({
                 textAnchor="end"
                 interval={0}
                 height={100}
-                tick={{ fill: '#213343' /* theme: foreground */, fontWeight: 700, fontSize: 12 }}
-                axisLine={{ stroke: '#e2e8f0' /* theme: border */ }}
+                tick={{ fill: 'hsl(var(--foreground))', fontWeight: 600, fontSize: 12 }}
+                axisLine={{ stroke: 'hsl(var(--border))' }}
                 tickLine={false}
               />
               <YAxis
                 ticks={yTicks}
                 domain={[startValue, roundedMax]}
-                tick={{ fill: '#213343' /* theme: foreground */, fontWeight: 700, fontSize: 14 }}
-                axisLine={{ stroke: '#e2e8f0' /* theme: border */ }}
+                tick={{ fill: 'hsl(var(--foreground))', fontWeight: 600, fontSize: 14 }}
+                axisLine={{ stroke: 'hsl(var(--border))' }}
                 tickLine={false}
               />
               <Tooltip
-                cursor={{ fill: 'rgba(2, 6, 23, 0.06)' }}
+                cursor={{ fill: 'hsl(var(--secondary))' }}
                 formatter={((value: number) => [`${value}%`, 'Value']) as any}
                 contentStyle={{
-                  backgroundColor: '#00008B', // theme: primary
+                  backgroundColor: 'hsl(var(--primary))',
                   border: 'none',
                   borderRadius: '4px',
-                  color: '#fff', // theme: text-white
+                  color: 'hsl(var(--primary-foreground))',
                 }}
-                labelStyle={{ color: '#fff', fontWeight: 600 }} // theme: text-white
-                itemStyle={{ color: '#fff' }} // theme: text-white
+                labelStyle={{ color: 'hsl(var(--primary-foreground))', fontWeight: 600 }}
+                itemStyle={{ color: 'hsl(var(--primary-foreground))' }}
               />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                {data.map((entry, index) => (
-                  <Cell key={`${entry.label}-${index}`} fill={entry.fill} />
-                ))}
-              </Bar>
+              <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
             </RechartsBarChart>
           </ResponsiveContainer>
         </div>
 
         {content.text_after ? (
           <p
-            className="mt-6 text-[1.125rem] leading-[1.77] text-foreground"
+            className="text-center text-[17px] font-light text-foreground"
             dangerouslySetInnerHTML={{ __html: renderMarkdown(content.text_after) }}
           />
         ) : null}
 
-        <span className="block w-full text-center text-[1.125rem] font-bold leading-[1.77] text-foreground">(Max 100%)</span>
+        <span className="block w-full text-center text-[13px] text-muted-foreground">(Max 100%)</span>
       </div>
     </BaseElement>
   )

@@ -64,7 +64,7 @@ export function Quote({ content, blogId, elementId, onContentUpdated, onElementD
       {editing ? (
         <InlineEditorShell title="Quote" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
           <div data-inline-edit-root="true" className="space-y-4 rounded-lg bg-muted/60 p-6">
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor={`quote-intro-${elementId}`}>Intro text (optional)</Label>
               <Input
                 id={`quote-intro-${elementId}`}
@@ -73,27 +73,27 @@ export function Quote({ content, blogId, elementId, onContentUpdated, onElementD
                 placeholder="Intro text (optional)"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor={`quote-quote-${elementId}`}>Quote</Label>
               <Textarea
                 id={`quote-quote-${elementId}`}
                 value={draft.quote ?? ''}
                 onChange={(e) => patch({ quote: e.target.value })}
                 placeholder="Quote"
-                className="min-h-[120px] text-3xl"
+                className="min-h-[120px] text-[15px] font-light leading-relaxed"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor={`quote-author-${elementId}`}>Author</Label>
               <Input
                 id={`quote-author-${elementId}`}
                 value={draft.author ?? draft.person ?? ''}
                 onChange={(e) => patch({ author: e.target.value })}
                 placeholder="Author"
-                className="text-2xl"
+                className="text-[18px] font-semibold"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor={`quote-description-${elementId}`}>Description</Label>
               <Input
                 id={`quote-description-${elementId}`}
@@ -106,13 +106,13 @@ export function Quote({ content, blogId, elementId, onContentUpdated, onElementD
         </InlineEditorShell>
       ) : (
         <div
-          className={`space-y-2 rounded-lg bg-muted/60 p-6 ${isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}`}
+          className={`rounded-lg border-l-4 border-primary bg-secondary/50 p-5 ${isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}`}
           onClick={() => isEditModeEnabled && startEditing(elementId)}
         >
-          {viewContent.text ? <p className="mb-3" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(viewContent.text, hyperlink, 'text')) }} /> : null}
-          <p className="text-3xl" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(quote, hyperlink, 'quote')) }} />
-          <p className="mt-4 text-2xl">— <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(author, hyperlink, 'person')) }} />
-            {description ? <span className="ml-1 text-base font-light" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(description, hyperlink, 'description')) }} /> : null}
+          {viewContent.text ? <p className="text-[13px] text-muted-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(viewContent.text, hyperlink, 'text')) }} /> : null}
+          <p className="text-[20px] font-light italic leading-[1.7] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(quote, hyperlink, 'quote')) }} />
+          <p className="mt-3 text-[15px] font-medium text-muted-foreground">— <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(author, hyperlink, 'person')) }} />
+            {description ? <span className="ml-1 text-[13px] text-muted-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(description, hyperlink, 'description')) }} /> : null}
           </p>
         </div>
       )}

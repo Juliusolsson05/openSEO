@@ -36,15 +36,15 @@ export function ListSnippetBlock({
       onElementAdded={onElementAdded}
       onElementDeleted={onElementDeleted}
     >
-      <div className="my-[30px] border-[10px] border-primary/90 bg-[rgba(211,211,211,0.44)] p-[45px]">
+      <div className="rounded-lg border border-border bg-secondary/50 p-5">
         <h2
-          className="mb-5 text-[28px] font-medium leading-[40px]"
+          className="mb-4 text-[22px] font-semibold leading-tight tracking-tight text-foreground"
           dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(data.title ?? '', hyperlink, 'title')) }}
         />
 
-        <ul className="list-disc pl-5 text-[18px] leading-8">
+        <ul className="my-4 list-disc pl-6 space-y-2">
           {items.map((item, index) => (
-            <li key={index} dangerouslySetInnerHTML={{ __html: renderMarkdownInline(hyperlinkedListItem(item, index)) }} />
+            <li key={index} className="text-[16px] font-light leading-[1.7] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(hyperlinkedListItem(item, index)) }} />
           ))}
         </ul>
       </div>

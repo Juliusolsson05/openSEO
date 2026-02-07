@@ -81,7 +81,7 @@ export function Conclusion({ content, blogId, elementId, onContentUpdated, onEle
                 value={draft.title ?? ''}
                 onChange={(e) => patch({ title: e.target.value })}
                 placeholder="Conclusion"
-                className="text-2xl font-semibold"
+                className="text-[18px] font-semibold"
               />
             </div>
             <div className="space-y-2">
@@ -91,19 +91,19 @@ export function Conclusion({ content, blogId, elementId, onContentUpdated, onEle
                 value={draft.text ?? ''}
                 onChange={(e) => patch({ text: e.target.value })}
                 placeholder="Write conclusion..."
-                className="min-h-[140px] custom-content my-[15px] text-lg font-light leading-[1.77778] text-foreground"
+                className="min-h-[120px] text-[15px] font-light leading-relaxed"
               />
             </div>
           </div>
         </InlineEditorShell>
       ) : (
         <div
-          className={`space-y-2 ${isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}`}
+          className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
           onClick={() => isEditModeEnabled && startEditing(elementId)}
         >
-          <h2 className="mb-3 text-2xl font-semibold">{viewContent.title ?? 'Conclusion'}</h2>
+          <h2 className="mb-4 text-[22px] font-semibold leading-tight tracking-tight text-foreground">{viewContent.title ?? 'Conclusion'}</h2>
           <div
-            className="custom-content my-[15px] text-lg font-light leading-[1.77778] text-foreground"
+            className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]"
             dangerouslySetInnerHTML={{ __html: formatConclusionText(applyHyperlinks(viewContent.text ?? '', hyperlink, 'text')) }}
           />
         </div>

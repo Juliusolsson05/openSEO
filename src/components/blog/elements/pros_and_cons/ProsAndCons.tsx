@@ -94,7 +94,7 @@ export function ProsAndCons({ content, blogId, elementId, onContentUpdated, onEl
               value={draft.title ?? ''}
               onChange={(e) => patch({ title: e.target.value })}
               placeholder="Title"
-              className="text-lg font-semibold"
+              className="text-[18px] font-semibold"
             />
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -154,20 +154,20 @@ export function ProsAndCons({ content, blogId, elementId, onContentUpdated, onEl
           onClick={() => isEditModeEnabled && startEditing(elementId)}
         >
           {data.title ? (
-            <h3 className="mb-6 text-2xl font-semibold" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(data.title, hyperlink, 'title')) }} />
+            <h3 className="mb-4 text-[22px] font-semibold leading-tight tracking-tight text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(data.title, hyperlink, 'title')) }} />
           ) : null}
-          {data.text_before ? <p className="my-4" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(data.text_before, hyperlink, 'text_before')) }} /> : null}
-          <div className="my-8 grid grid-cols-1 gap-8 md:grid-cols-2">
+          {data.text_before ? <p className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(data.text_before, hyperlink, 'text_before')) }} /> : null}
+          <div className="my-4 grid grid-cols-1 gap-8 md:grid-cols-2">
             <div>
-              <h4 className="mb-3 border-b-2 border-emerald-600 pb-2 text-xl font-semibold text-emerald-600">Pros</h4>
-              <ul className="space-y-3">{viewPros.map((pro, index) => <li key={index}>✓ <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(pro) }} /></li>)}</ul>
+              <h4 className="mb-3 border-b-2 border-emerald-600 pb-2 text-[17px] font-semibold leading-snug text-foreground">Pros</h4>
+              <ul className="space-y-2">{viewPros.map((pro, index) => <li key={index} className="text-[16px] font-light leading-[1.7] text-foreground"><span className="text-emerald-600">✓</span> <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(pro) }} /></li>)}</ul>
             </div>
             <div>
-              <h4 className="mb-3 border-b-2 border-rose-600 pb-2 text-xl font-semibold text-rose-600">Cons</h4>
-              <ul className="space-y-3">{viewCons.map((con, index) => <li key={index}>✕ <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(con) }} /></li>)}</ul>
+              <h4 className="mb-3 border-b-2 border-rose-600 pb-2 text-[17px] font-semibold leading-snug text-foreground">Cons</h4>
+              <ul className="space-y-2">{viewCons.map((con, index) => <li key={index} className="text-[16px] font-light leading-[1.7] text-foreground"><span className="text-rose-600">✕</span> <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(con) }} /></li>)}</ul>
             </div>
           </div>
-          {data.text_after ? <p className="my-4" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(data.text_after, hyperlink, 'text_after')) }} /> : null}
+          {data.text_after ? <p className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(data.text_after, hyperlink, 'text_after')) }} /> : null}
         </div>
       )}
     </BaseElement>

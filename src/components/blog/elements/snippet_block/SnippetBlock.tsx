@@ -54,7 +54,7 @@ export function SnippetBlock({ content, blogId, elementId, onContentUpdated, onE
     <BaseElement content={content} blogId={blogId} elementId={elementId} allowEdit={false} onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
       {editing ? (
         <InlineEditorShell title="Snippet" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
-          <div data-inline-edit-root="true" className="my-[30px] border-[10px] border-primary bg-[rgba(211,211,211,0.44)] p-[45px] space-y-4">
+          <div data-inline-edit-root="true" className="rounded-lg border border-border bg-secondary/50 p-5 space-y-4">
             <div className="space-y-2">
               <Label htmlFor={`snippet-title-${elementId}`}>Title</Label>
               <Input
@@ -62,7 +62,7 @@ export function SnippetBlock({ content, blogId, elementId, onContentUpdated, onE
                 value={draft.title ?? ''}
                 onChange={(e) => patch({ title: e.target.value })}
                 placeholder="Snippet title"
-                className="text-[28px] font-medium leading-[40px]"
+                className="text-[18px] font-semibold"
               />
             </div>
             <div className="space-y-2">
@@ -72,18 +72,18 @@ export function SnippetBlock({ content, blogId, elementId, onContentUpdated, onE
                 value={draft.text ?? ''}
                 onChange={(e) => patch({ text: e.target.value })}
                 placeholder="Snippet text"
-                className="min-h-[140px] text-[18px] leading-[32px]"
+                className="min-h-[120px] text-[15px] font-light leading-relaxed"
               />
             </div>
           </div>
         </InlineEditorShell>
       ) : (
         <div
-          className={`my-[30px] border-[10px] border-primary bg-[rgba(211,211,211,0.44)] p-[45px] space-y-3 ${isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}`}
+          className={`rounded-lg border border-border bg-secondary/50 p-5 space-y-4 ${isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}`}
           onClick={() => isEditModeEnabled && startEditing(elementId)}
         >
-          <h2 className="mb-5 text-[28px] font-medium leading-[40px]" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(viewContent.title ?? '', hyperlink, 'title')) }} />
-          <p className="text-[18px] leading-[32px]" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(viewContent.text ?? '', hyperlink, 'text')) }} />
+          <h2 className="mb-4 text-[22px] font-semibold leading-tight tracking-tight text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(viewContent.title ?? '', hyperlink, 'title')) }} />
+          <p className="text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(viewContent.text ?? '', hyperlink, 'text')) }} />
         </div>
       )}
     </BaseElement>

@@ -79,24 +79,25 @@ export function NumberedListParagraph({ content, blogId, elementId, onContentUpd
         {editing ? (
           <InlineEditorShell title="Numbered List Paragraph" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
             <div data-inline-edit-root="true" className="space-y-4">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor={`${elementId}-title`}>Title</Label>
-                <Input id={`${elementId}-title`} value={draft.title ?? ''} onChange={(e) => patch({ title: e.target.value })} placeholder="Title" />
+                <Input id={`${elementId}-title`} value={draft.title ?? ''} onChange={(e) => patch({ title: e.target.value })} placeholder="Title" className="text-[18px] font-semibold" />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor={`${elementId}-text-before`}>Text before list</Label>
                 <Textarea
                   id={`${elementId}-text-before`}
                   value={draft.text_before_list ?? ''}
                   onChange={(e) => patch({ text_before_list: e.target.value })}
                   placeholder="Text before list"
+                  className="min-h-[120px] text-[15px] font-light leading-relaxed"
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>List items</Label>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {items.map((item, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <span className="w-6 shrink-0 text-sm text-muted-foreground">{index + 1}.</span>
@@ -112,13 +113,14 @@ export function NumberedListParagraph({ content, blogId, elementId, onContentUpd
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor={`${elementId}-text-after`}>Text after list</Label>
                 <Textarea
                   id={`${elementId}-text-after`}
                   value={draft.text_after_list ?? ''}
                   onChange={(e) => patch({ text_after_list: e.target.value })}
                   placeholder="Text after list"
+                  className="min-h-[120px] text-[15px] font-light leading-relaxed"
                 />
               </div>
             </div>
@@ -128,14 +130,14 @@ export function NumberedListParagraph({ content, blogId, elementId, onContentUpd
             className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
             onClick={() => isEditModeEnabled && startEditing(elementId)}
           >
-            <h3 className="mb-[10px] text-[1.5rem] font-medium" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(view.title ?? '', hyperlink, 'title')) }} />
-            <div className="my-[15px] text-lg font-light" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(view.text_before_list ?? '', hyperlink, 'text_before_list')) }} />
-            <ol className="my-[15px] list-decimal pl-5 text-lg font-light">
+            <h3 className="mb-4 text-[22px] font-semibold leading-tight tracking-tight text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(view.title ?? '', hyperlink, 'title')) }} />
+            <div className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(view.text_before_list ?? '', hyperlink, 'text_before_list')) }} />
+            <ol className="my-4 list-decimal pl-6 space-y-2">
               {viewItems.map((item, index) => (
-                <li key={index} dangerouslySetInnerHTML={{ __html: renderMarkdownInline(hyperlinkedListItem(item, index)) }} />
+                <li key={index} className="text-[16px] font-light leading-[1.7] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(hyperlinkedListItem(item, index)) }} />
               ))}
             </ol>
-            <div className="my-[15px] text-lg font-light" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(view.text_after_list ?? '', hyperlink, 'text_after_list')) }} />
+            <div className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(view.text_after_list ?? '', hyperlink, 'text_after_list')) }} />
           </div>
         )}
       </div>

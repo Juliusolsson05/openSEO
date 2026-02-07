@@ -103,14 +103,14 @@ export function Table({ content, blogId, elementId, onContentUpdated, onElementD
       {editing ? (
         <InlineEditorShell title="Table" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
           <div data-inline-edit-root="true" className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Title</Label>
-              <Input value={draft.title ?? ''} onChange={(e) => patch({ title: e.target.value })} placeholder="Table title" />
+              <Input value={draft.title ?? ''} onChange={(e) => patch({ title: e.target.value })} placeholder="Table title" className="text-[18px] font-semibold" />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Text before table</Label>
-              <Textarea value={draft.text_before ?? ''} onChange={(e) => patch({ text_before: e.target.value })} placeholder="Text before table" rows={4} />
+              <Textarea value={draft.text_before ?? ''} onChange={(e) => patch({ text_before: e.target.value })} placeholder="Text before table" rows={4} className="min-h-[120px] text-[15px] font-light leading-relaxed" />
             </div>
 
             <div className="space-y-3">
@@ -120,7 +120,7 @@ export function Table({ content, blogId, elementId, onContentUpdated, onElementD
                   <Plus className="mr-1 h-4 w-4" /> Add column
                 </Button>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {headers.map((header, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <Input value={header} onChange={(e) => updateHeader(index, e.target.value)} placeholder={`Header ${index + 1}`} />
@@ -139,7 +139,7 @@ export function Table({ content, blogId, elementId, onContentUpdated, onElementD
                   <Plus className="mr-1 h-4 w-4" /> Add row
                 </Button>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {rows.map((row, rowIndex) => (
                   <div key={rowIndex} className="flex items-start gap-2">
                     <div className="grid flex-1 gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(headers.length, 1)}, minmax(0, 1fr))` }}>
@@ -160,9 +160,9 @@ export function Table({ content, blogId, elementId, onContentUpdated, onElementD
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Text after table</Label>
-              <Textarea value={draft.text_after ?? ''} onChange={(e) => patch({ text_after: e.target.value })} placeholder="Text after table" rows={4} />
+              <Textarea value={draft.text_after ?? ''} onChange={(e) => patch({ text_after: e.target.value })} placeholder="Text after table" rows={4} className="min-h-[120px] text-[15px] font-light leading-relaxed" />
             </div>
           </div>
         </InlineEditorShell>
@@ -171,14 +171,14 @@ export function Table({ content, blogId, elementId, onContentUpdated, onElementD
           className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
           onClick={() => isEditModeEnabled && startEditing(elementId)}
         >
-          <h3 className="mb-6 text-2xl font-semibold" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(viewContent.title ?? '', hyperlink, 'title')) }} />
-          {viewContent.text_before ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(viewContent.text_before, hyperlink, 'text_before')) }} /> : null}
-          <div className="my-8 overflow-x-auto rounded-lg border shadow-sm">
+          <h3 className="mb-4 text-[22px] font-semibold leading-tight tracking-tight text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(viewContent.title ?? '', hyperlink, 'title')) }} />
+          {viewContent.text_before ? <p className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(viewContent.text_before, hyperlink, 'text_before')) }} /> : null}
+          <div className="my-4 overflow-x-auto rounded-lg border border-border bg-card">
             <table className="w-full border-separate border-spacing-0">
               <thead>
-                <tr className="bg-muted/50">
+                <tr className="bg-secondary/50">
                   {viewHeaders.map((header, index) => (
-                    <th key={index} className="border-b px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(header) }} />
+                    <th key={index} className="border-b border-border px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-wide text-muted-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(header) }} />
                   ))}
                 </tr>
               </thead>
@@ -186,14 +186,14 @@ export function Table({ content, blogId, elementId, onContentUpdated, onElementD
                 {viewRows.map((row, rowIndex) => (
                   <tr key={rowIndex}>
                     {row.map((cell, cellIndex) => (
-                      <td key={cellIndex} className="border-b px-4 py-3 text-sm" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(cell) }} />
+                      <td key={cellIndex} className="border-b border-border px-4 py-3 text-[15px] text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(cell) }} />
                     ))}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          {viewContent.text_after ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(viewContent.text_after, hyperlink, 'text_after')) }} /> : null}
+          {viewContent.text_after ? <p className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(viewContent.text_after, hyperlink, 'text_after')) }} /> : null}
         </div>
       )}
     </BaseElement>

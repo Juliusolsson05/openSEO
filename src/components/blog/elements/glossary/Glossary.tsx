@@ -30,7 +30,7 @@ export function Glossary({
       onElementDeleted={onElementDeleted}
     >
       <h2
-        className="mb-6 text-3xl font-semibold tracking-tight custom-content"
+        className="mb-4 text-[22px] font-semibold leading-tight tracking-tight text-foreground"
         dangerouslySetInnerHTML={{ __html: renderMarkdownInline(glossaryContent.title ?? '') }}
       />
 
@@ -38,11 +38,11 @@ export function Glossary({
         {Object.entries(terms).map(([term, definition]) => (
           <div key={term}>
             <dt
-              className="mt-4 font-semibold custom-content"
+              className="mt-4 text-[17px] font-semibold text-foreground"
               dangerouslySetInnerHTML={{ __html: renderMarkdownInline(term) }}
             />
             <dd
-              className="mb-4 ml-6 custom-content"
+              className="mb-4 ml-6 text-[16px] font-light leading-[1.7] text-muted-foreground"
               dangerouslySetInnerHTML={{ __html: renderMarkdownInline(definition) }}
             />
           </div>

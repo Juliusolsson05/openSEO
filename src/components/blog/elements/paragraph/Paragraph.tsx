@@ -99,7 +99,7 @@ export function Paragraph({
                 value={draft.title ?? ''}
                 onChange={(e) => patch({ title: e.target.value })}
                 placeholder="Paragraph title"
-                className="text-2xl font-semibold custom-content"
+                className="text-[18px] font-semibold"
               />
             </div>
             <div className="space-y-2">
@@ -110,18 +110,18 @@ export function Paragraph({
                 onChange={(e) => patch({ text: e.target.value })}
                 onInput={handleAutoResize}
                 placeholder="Write your paragraph..."
-                className="min-h-[140px] resize-none overflow-hidden my-[15px] text-[1.125rem] font-light leading-[1.77778] text-foreground custom-content"
+                className="min-h-[120px] resize-none overflow-hidden text-[15px] font-light leading-relaxed"
               />
             </div>
           </div>
         </InlineEditorShell>
       ) : (
         <div
-          className={`space-y-2 ${isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}`}
+          className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
           onClick={() => isEditModeEnabled && startEditing(elementId)}
         >
-          <h3 className="mb-3 text-2xl font-semibold custom-content" dangerouslySetInnerHTML={{ __html: formattedTitle }} />
-          <p className="my-[15px] text-[1.125rem] font-light leading-[1.77778] text-foreground custom-content" dangerouslySetInnerHTML={{ __html: formattedText }} />
+          <h3 className="mb-3 text-[22px] font-semibold leading-tight tracking-tight text-foreground" dangerouslySetInnerHTML={{ __html: formattedTitle }} />
+          <p className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: formattedText }} />
         </div>
       )}
     </BaseElement>

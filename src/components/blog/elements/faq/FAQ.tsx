@@ -82,9 +82,9 @@ export function FAQ({ content, blogId, elementId, onContentUpdated, onElementAdd
       {editing ? (
         <InlineEditorShell title="FAQ" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
           <div data-inline-edit-root="true" className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Title</Label>
-              <Input value={draft.title ?? 'FAQ'} onChange={(e) => patch({ title: e.target.value })} placeholder="FAQ title" />
+              <Input value={draft.title ?? 'FAQ'} onChange={(e) => patch({ title: e.target.value })} placeholder="FAQ title" className="text-[18px] font-semibold" />
             </div>
 
             <div className="space-y-3">
@@ -98,13 +98,13 @@ export function FAQ({ content, blogId, elementId, onContentUpdated, onElementAdd
               <div className="space-y-3">
                 {items.map((item, index) => (
                   <div key={index} className="rounded-lg border bg-card p-4 space-y-3">
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Label>Question</Label>
                       <Input value={item.question ?? ''} onChange={(e) => updateItem(index, 'question', e.target.value)} placeholder="Question" />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Label>Answer</Label>
-                      <Textarea value={item.answer ?? ''} onChange={(e) => updateItem(index, 'answer', e.target.value)} placeholder="Answer" rows={4} />
+                      <Textarea value={item.answer ?? ''} onChange={(e) => updateItem(index, 'answer', e.target.value)} placeholder="Answer" rows={4} className="min-h-[120px] text-[15px] font-light leading-relaxed" />
                     </div>
                     <div>
                       <Button type="button" variant="ghost" size="sm" onClick={() => removeItem(index)}>
@@ -122,8 +122,8 @@ export function FAQ({ content, blogId, elementId, onContentUpdated, onElementAdd
           className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
           onClick={() => isEditModeEnabled && startEditing(elementId)}
         >
-          <h2 className="mt-12 text-3xl font-semibold tracking-tight">{viewContent.title || 'FAQ'}</h2>
-          <div className="space-y-3 mt-4">
+          <h2 className="mb-4 text-[22px] font-semibold leading-tight tracking-tight text-foreground">{viewContent.title || 'FAQ'}</h2>
+          <div className="space-y-3">
             {viewContent.items.map((item, index) => {
               const faqKeywords = hyperlink?.matched_keywords as unknown as Array<{ question?: any[]; answer?: any[] }>
               const qKeywords = faqKeywords?.[index]?.question
@@ -132,9 +132,9 @@ export function FAQ({ content, blogId, elementId, onContentUpdated, onElementAdd
               const linkedAnswer = Array.isArray(aKeywords) && aKeywords.length ? createHyperlinkedText(item.answer, aKeywords) : item.answer
 
               return (
-                <div key={index} className="overflow-hidden rounded-lg border bg-card px-6 py-4">
-                  <div className="font-medium" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(linkedQuestion) }} />
-                  <div className="mt-2 prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: renderMarkdown(linkedAnswer) }} />
+                <div key={index} className="rounded-lg border border-border bg-card p-5">
+                  <div className="text-[17px] font-semibold leading-snug text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(linkedQuestion) }} />
+                  <div className="mt-2 text-[16px] font-light leading-[1.7] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(linkedAnswer) }} />
                 </div>
               )
             })}

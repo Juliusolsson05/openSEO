@@ -55,17 +55,17 @@ export function CaseStudy({ content, blogId, elementId, onContentUpdated, onElem
       onContentUpdated={onContentUpdated}
       onElementDeleted={onElementDeleted}
     >
-      <div className="mx-auto max-w-5xl overflow-hidden rounded-lg bg-white shadow-md">
+      <div className="mx-auto max-w-5xl overflow-hidden rounded-lg bg-card shadow-md">
         <div
-          className="flex items-center justify-between gap-5 p-8 text-white"
+          className="flex items-center justify-between gap-5 p-8 text-primary-foreground"
           style={{ backgroundColor: convertToRGBA(content?.headerColor) }}
         >
           <div className="w-[90%] flex-1">
             <h2
-              className="mb-2 text-[22px] font-bold leading-[1.5]"
+              className="mb-2 text-[22px] font-semibold leading-tight tracking-tight text-foreground"
               dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.title) }}
             />
-            <p className="w-fit bg-white px-[5px] py-[5px] text-xl text-black">
+            <p className="w-fit bg-card px-[5px] py-[5px] text-[15px] text-foreground">
               <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.clientName) }} /> |{' '}
               <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.industry) }} />
             </p>
@@ -80,55 +80,55 @@ export function CaseStudy({ content, blogId, elementId, onContentUpdated, onElem
 
         <div className="p-8">
           <div className="mb-8">
-            <h3 className="mb-3 text-2xl font-semibold text-gray-900">The Challenge</h3>
+            <h3 className="mb-3 text-[17px] font-semibold leading-snug text-foreground">The Challenge</h3>
             <div
-              className="leading-relaxed text-gray-600 [&_a]:border-b [&_a]:border-dotted [&_a]:border-current [&_a]:text-blue-600 [&_li]:mb-2 [&_ol]:my-4 [&_ol]:pl-6 [&_ul]:my-4 [&_ul]:pl-6"
+              className="text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450] [&_a]:border-b [&_a]:border-dotted [&_a]:border-current [&_a]:text-primary [&_li]:mb-2 [&_ol]:my-4 [&_ol]:pl-6 [&_ul]:my-4 [&_ul]:pl-6"
               dangerouslySetInnerHTML={{ __html: renderMarkdown(content?.challenge) }}
             />
           </div>
 
           <div className="mb-8">
-            <h3 className="mb-3 text-2xl font-semibold text-gray-900">The Solution</h3>
+            <h3 className="mb-3 text-[17px] font-semibold leading-snug text-foreground">The Solution</h3>
             <div
-              className="leading-relaxed text-gray-600 [&_a]:border-b [&_a]:border-dotted [&_a]:border-current [&_a]:text-blue-600 [&_li]:mb-2 [&_ol]:my-4 [&_ol]:pl-6 [&_ul]:my-4 [&_ul]:pl-6"
+              className="text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450] [&_a]:border-b [&_a]:border-dotted [&_a]:border-current [&_a]:text-primary [&_li]:mb-2 [&_ol]:my-4 [&_ol]:pl-6 [&_ul]:my-4 [&_ul]:pl-6"
               dangerouslySetInnerHTML={{ __html: renderMarkdown(content?.solution) }}
             />
           </div>
 
           <div className="mb-8">
-            <h3 className="mb-3 text-2xl font-semibold text-gray-900">The Results</h3>
+            <h3 className="mb-3 text-[17px] font-semibold leading-snug text-foreground">The Results</h3>
             <ul className="list-none p-0">
               {results.map((result, index) => (
                 <li key={index} className="mb-3 flex items-center">
-                  <i className="ri-checkbox-circle-fill mr-3 text-xl text-green-500" />
+                  <i className="ri-checkbox-circle-fill mr-3 text-xl text-emerald-600" />
                   <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(result) }} />
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="mt-8 rounded-md bg-slate-50 p-6">
+          <div className="mt-8 rounded-lg bg-secondary/50 p-5">
             <blockquote
-              className="mb-3 italic text-gray-600"
+              className="mb-3 text-[20px] font-light italic leading-[1.7] text-foreground"
               dangerouslySetInnerHTML={{ __html: renderMarkdownInline(quote) }}
             />
             <p
-              className="text-right font-semibold text-gray-800"
+              className="text-right text-[15px] font-medium text-muted-foreground"
               dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.testimonial?.author) }}
             />
           </div>
         </div>
 
-        <div className="flex items-center justify-between bg-slate-50 p-6">
+        <div className="flex items-center justify-between bg-secondary/50 p-5">
           <a
             href={content?.companyWebsite}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-blue-600 transition-colors duration-200 hover:text-blue-800"
+            className="font-medium text-primary transition-colors duration-200 hover:text-primary"
           >
             Visit <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(content?.clientName) }} /> Website
           </a>
-          <Button type="button" variant="link" className="flex items-center p-0 font-medium text-blue-600 transition-colors duration-200 hover:text-blue-800">
+          <Button type="button" variant="link" className="flex items-center p-0 font-medium text-primary transition-colors duration-200 hover:text-primary">
             Read Full Case Study <i className="ri-arrow-right-line ml-2" />
           </Button>
         </div>

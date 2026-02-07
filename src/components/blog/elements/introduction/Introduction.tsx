@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect } from 'react'
-import { BookOpen } from 'lucide-react'
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
 import { renderMarkdown } from '@/lib/markdown'
@@ -80,7 +79,7 @@ export function Introduction({ content, blogId, elementId, onContentUpdated, onE
                 value={draft.title ?? ''}
                 onChange={(e) => patch({ title: e.target.value })}
                 placeholder="Introduction"
-                className="text-2xl font-semibold"
+                className="text-[18px] font-semibold"
               />
             </div>
             <div className="space-y-2">
@@ -90,7 +89,7 @@ export function Introduction({ content, blogId, elementId, onContentUpdated, onE
                 value={draft.text ?? ''}
                 onChange={(e) => patch({ text: e.target.value })}
                 placeholder="Write introduction..."
-                className="min-h-[140px] my-[15px] text-lg font-light leading-[1.77778] text-foreground [&_em]:font-[450] [&_strong]:font-bold"
+                className="min-h-[120px] text-[15px] font-light leading-relaxed"
               />
             </div>
           </div>
@@ -100,12 +99,9 @@ export function Introduction({ content, blogId, elementId, onContentUpdated, onE
           className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
           onClick={() => isEditModeEnabled && startEditing(elementId)}
         >
-          <h2 className="mt-4 mb-3 text-2xl font-semibold tracking-tight text-foreground flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-sky-600" />
-            <span>{viewContent.title ?? 'Introduction'}</span>
-          </h2>
+          <h2 className="mb-4 text-[22px] font-semibold leading-tight tracking-tight text-foreground">{viewContent.title ?? 'Introduction'}</h2>
           <p
-            className="my-[15px] text-lg font-light leading-[1.77778] text-foreground [&_em]:font-[450] [&_strong]:font-bold"
+            className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]"
             dangerouslySetInnerHTML={{ __html: formatText(applyHyperlinks(viewContent.text ?? '', hyperlink, 'text')) }}
           />
         </div>

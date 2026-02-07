@@ -52,13 +52,13 @@ export function CodeCluster({ content, blogId, elementId, onContentUpdated, onEl
         </div>
 
         {showDetails && (
-          <div className="mt-[15px] rounded border border-border bg-secondary p-[15px]">
+          <div className="mt-3 rounded-lg border border-border bg-secondary/50 p-5">
             <h4
-              className="custom-content mb-2 text-xl font-medium text-foreground"
+              className="mb-4 text-[22px] font-semibold leading-tight tracking-tight text-foreground"
               dangerouslySetInnerHTML={{ __html: formattedTitle }}
             />
             <div
-              className="custom-content my-[15px] text-lg font-light leading-[1.77778] text-foreground"
+              className="text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]"
               dangerouslySetInnerHTML={{ __html: formattedDescription }}
             />
           </div>

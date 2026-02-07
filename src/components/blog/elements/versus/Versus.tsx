@@ -109,17 +109,17 @@ export function Versus({ content, blogId, elementId, onContentUpdated, onElement
       {editing ? (
         <InlineEditorShell title="Versus" isDirty={isDirty} status={status} error={error} onSave={handleSave} onCancel={handleCancel}>
           <div data-inline-edit-root="true" className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Title</Label>
-              <Input value={draft.title ?? ''} onChange={(e) => patch({ title: e.target.value })} placeholder="Title" />
+              <Input value={draft.title ?? ''} onChange={(e) => patch({ title: e.target.value })} placeholder="Title" className="text-[18px] font-semibold" />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Text before</Label>
-              <Textarea value={draft.text_before ?? ''} onChange={(e) => patch({ text_before: e.target.value })} placeholder="Text before comparison" rows={4} />
+              <Textarea value={draft.text_before ?? ''} onChange={(e) => patch({ text_before: e.target.value })} placeholder="Text before comparison" rows={4} className="min-h-[120px] text-[15px] font-light leading-relaxed" />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Competitors</Label>
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                 {competitors.map((competitor, index) => (
@@ -139,12 +139,12 @@ export function Versus({ content, blogId, elementId, onContentUpdated, onElement
               <div className="space-y-3">
                 {criteria.map((criterion, criterionIndex) => (
                   <div key={criterionIndex} className="rounded-lg border p-4 space-y-3">
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Label>Criterion name</Label>
                       <Input value={criterion.name ?? ''} onChange={(e) => updateCriterion(criterionIndex, { name: e.target.value })} placeholder="Criterion name" />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Label>Winner</Label>
                       <select
                         value={String(criterion.winner ?? 0)}
@@ -157,7 +157,7 @@ export function Versus({ content, blogId, elementId, onContentUpdated, onElement
                       </select>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Label>Details</Label>
                       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                         {competitors.map((competitor, competitorIndex) => (
@@ -181,9 +181,9 @@ export function Versus({ content, blogId, elementId, onContentUpdated, onElement
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Text after</Label>
-              <Textarea value={draft.text_after ?? ''} onChange={(e) => patch({ text_after: e.target.value })} placeholder="Text after comparison" rows={4} />
+              <Textarea value={draft.text_after ?? ''} onChange={(e) => patch({ text_after: e.target.value })} placeholder="Text after comparison" rows={4} className="min-h-[120px] text-[15px] font-light leading-relaxed" />
             </div>
           </div>
         </InlineEditorShell>
@@ -194,25 +194,25 @@ export function Versus({ content, blogId, elementId, onContentUpdated, onElement
         >
           {viewContent.title ? (
             <h3
-              className="mb-6 text-2xl font-semibold text-foreground"
+              className="mb-4 text-[22px] font-semibold leading-tight tracking-tight text-foreground"
               dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(viewContent.title, hyperlink, 'title')) }}
             />
           ) : null}
 
           {viewContent.text_before ? (
             <p
-              className="my-6 text-[1.05rem] leading-relaxed text-muted-foreground"
+              className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]"
               dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(viewContent.text_before, hyperlink, 'text_before')) }}
             />
           ) : null}
 
-          <div className="my-8 overflow-hidden rounded-lg border">
-            <div className="grid grid-cols-2 bg-muted/40 font-semibold md:grid-cols-[30%_1fr_1fr]">
+          <div className="my-4 overflow-hidden rounded-lg border border-border bg-card">
+            <div className="grid grid-cols-2 bg-secondary/50 md:grid-cols-[30%_1fr_1fr]">
               <div className="hidden border-b p-4 md:block" />
               {viewCompetitors.map((competitor, index) => (
                 <div
                   key={`competitor-${index}`}
-                  className="border-b p-4 text-center"
+                  className="border-b border-border p-4 text-center text-[13px] font-semibold uppercase tracking-wide text-muted-foreground"
                   dangerouslySetInnerHTML={{ __html: renderMarkdownInline(competitor) }}
                 />
               ))}
@@ -221,7 +221,7 @@ export function Versus({ content, blogId, elementId, onContentUpdated, onElement
             {viewCriteria.map((criterion, index) => (
               <div key={`criterion-${index}`} className="grid grid-cols-1 border-b last:border-b-0 md:grid-cols-[30%_1fr_1fr]">
                 <div
-                  className="bg-muted/25 p-4 font-semibold"
+                  className="bg-secondary/50 p-4 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground"
                   dangerouslySetInnerHTML={{ __html: renderMarkdownInline(criterion.name) }}
                 />
 
@@ -229,9 +229,9 @@ export function Versus({ content, blogId, elementId, onContentUpdated, onElement
                   const isWinner = criterion.winner === detailIndex
 
                   return (
-                    <div key={`detail-${index}-${detailIndex}`} className={`relative p-4 ${isWinner ? 'bg-emerald-50 dark:bg-emerald-950/30' : ''}`}>
+                    <div key={`detail-${index}-${detailIndex}`} className="relative p-4 text-[15px] text-foreground">
                       <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(detail) }} />
-                      {isWinner ? <span className="absolute top-1/2 right-4 -translate-y-1/2 font-bold text-emerald-600">✓</span> : null}
+                      {isWinner ? <span className="absolute top-1/2 right-4 -translate-y-1/2 text-emerald-600">●</span> : null}
                     </div>
                   )
                 })}
@@ -241,7 +241,7 @@ export function Versus({ content, blogId, elementId, onContentUpdated, onElement
 
           {viewContent.text_after ? (
             <p
-              className="my-6 text-[1.05rem] leading-relaxed text-muted-foreground"
+              className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]"
               dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(viewContent.text_after, hyperlink, 'text_after')) }}
             />
           ) : null}
