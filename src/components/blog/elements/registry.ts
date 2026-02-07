@@ -17,6 +17,7 @@ export interface ElementComponentProps {
   elementId: number
   postTitle?: string
   imageNumber?: number | null
+  hyperlink?: any
   onContentUpdated?: (content: any) => void
   onElementAdded?: (element: any) => void
   onElementDeleted?: (elementId: number) => void

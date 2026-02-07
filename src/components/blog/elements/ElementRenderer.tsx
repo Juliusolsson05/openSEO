@@ -50,6 +50,7 @@ export function ElementRenderer({
         content={element.content}
         blogId={blogId}
         elementId={element.id}
+        hyperlink={element.hyperlink}
         onContentUpdated={onContentUpdated}
         onElementAdded={onElementAdded}
         onElementDeleted={onElementDeleted}
