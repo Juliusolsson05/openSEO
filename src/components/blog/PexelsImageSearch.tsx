@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 
 interface PexelsImage { id: number; photographer: string; src: { original: string; large: string; medium: string } }
 interface SearchImagesResponse { page: number; per_page: number; total_results: number; images: PexelsImage[] }
@@ -48,6 +49,7 @@ export default function PexelsImageSearch({ modelValue, initialSearchTerm = '', 
   return (
     <Dialog open={modelValue} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] w-full max-w-5xl overflow-y-auto p-0">
+        <VisuallyHidden><DialogTitle>Stock Photo Search</DialogTitle></VisuallyHidden>
         <Card className="border-0 shadow-none">
           <CardHeader className="flex-row items-center justify-between py-3">
             <CardTitle className="text-[14px]">Image Search</CardTitle>
@@ -80,6 +82,7 @@ export default function PexelsImageSearch({ modelValue, initialSearchTerm = '', 
 
         <Dialog open={imageDialog} onOpenChange={setImageDialog}>
           <DialogContent className="w-full max-w-4xl p-0">
+            <VisuallyHidden><DialogTitle>Image Preview</DialogTitle></VisuallyHidden>
             {selectedImage ? (
               <Card className="border-0 shadow-none">
                 <img src={selectedImage.src.large} alt={selectedImage.photographer} className="max-h-[70vh] w-full object-contain" />

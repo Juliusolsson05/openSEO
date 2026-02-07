@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { useEffect, useState } from 'react'
+import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
+import { Pencil } from 'lucide-react'
 import { regenerateBlogImage, uploadBlogPostImage, useStockPhoto } from '@/lib/blog/images'
 import { ImageControlPanel } from './ImageControlPanel'
 import { ImagePreviewPanel } from './ImagePreviewPanel'
@@ -39,12 +40,13 @@ export function ImageStudio({
   const [gptSize, setGptSize] = useState<'1024x1024' | '1536x1024' | '1024x1536' | 'auto'>('auto')
   const [gptBackground, setGptBackground] = useState<'auto' | 'transparent' | 'opaque'>('auto')
   const [selectedUrl, setSelectedUrl] = useState<string | null>(currentUrl ?? null)
-  const [history, setHistory] = useState<HistoryEntry[]>(currentUrl ? [{ url: currentUrl, provider: 'ideogram', timestamp: Date.now() }] : [])
+  const [history, setHistory] = useState<HistoryEntry[]>(
+    currentUrl ? [{ url: currentUrl, provider: 'ideogram', timestamp: Date.now() }] : []
+  )
   const [isGenerating, setIsGenerating] = useState(false)
   const [isApplying, setIsApplying] = useState(false)
   const [photopeaOpen, setPhotopeaOpen] = useState(false)
 
-  const providerLabel = useMemo(() => provider, [provider])
   const editableImageUrl = selectedUrl ?? currentUrl ?? null
 
   useEffect(() => {
@@ -57,27 +59,31 @@ export function ImageStudio({
 
   const addToHistory = (url: string, source: ImageStudioProvider) => {
     setSelectedUrl(url)
-    setHistory((prev) => [{ url, provider: source, timestamp: Date.now() }, ...prev.filter((item) => item.url !== url)])
+    setHistory((prev) => [
+      { url, provider: source, timestamp: Date.now() },
+      ...prev.filter((item) => item.url !== url),
+    ])
   }
 
   const onGenerate = async () => {
     setIsGenerating(true)
-    const { data, error } = await regenerateBlogImage({
-      post_id: blogId,
-      image_number: imageNumber,
-      force_prompt: prompt,
-      provider: provider === 'gpt-image' ? 'gpt-image' : 'ideogram',
-      version: ideogramQuality,
-      magic_prompt: magicPrompt,
-      gpt_quality: gptQuality,
-      gpt_size: gptSize,
-      gpt_background: gptBackground,
-      gpt_output_format: 'png',
-    })
-    setIsGenerating(false)
-
-    if (error || !data?.new_url) return
-    addToHistory(data.new_url, provider)
+    try {
+      const { data, error } = await regenerateBlogImage({
+        post_id: blogId,
+        image_number: imageNumber,
+        force_prompt: prompt,
+        provider: provider === 'gpt-image' ? 'gpt-image' : 'ideogram',
+        version: ideogramQuality,
+        magic_prompt: magicPrompt,
+        gpt_quality: gptQuality,
+        gpt_size: gptSize,
+        gpt_background: gptBackground,
+        gpt_output_format: 'png',
+      })
+      if (!error && data?.new_url) addToHistory(data.new_url, provider)
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const onUploadSelect = async (file: File) => {
@@ -92,69 +98,106 @@ export function ImageStudio({
 
   const onStockSelect = async (url: string) => {
     setIsGenerating(true)
-    const { data } = await useStockPhoto({ post_id: blogId, image_number: imageNumber, image_url: url })
-    setIsGenerating(false)
-    if (data?.new_url) addToHistory(data.new_url, 'stock')
+    try {
+      const { data } = await useStockPhoto({ post_id: blogId, image_number: imageNumber, image_url: url })
+      if (data?.new_url) addToHistory(data.new_url, 'stock')
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const onApply = async () => {
     setIsApplying(true)
-    await onImageApplied?.()
-    setIsApplying(false)
-    onClose()
+    try {
+      await onImageApplied?.()
+    } finally {
+      setIsApplying(false)
+      onClose()
+    }
   }
 
   return (
     <>
-      <Dialog open={open} onOpenChange={(next) => { if (!next) onClose() }}>
-        <DialogContent className="w-[min(1100px,95vw)] max-w-none max-h-[85vh] overflow-hidden rounded-lg border border-border bg-background p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Image Studio</h2>
+      <Modal open={open} onClose={onClose} zClass="z-[60]">
+        <div className="flex w-[min(1100px,95vw)] max-h-[85vh] flex-col overflow-hidden rounded-lg border border-border bg-background shadow-xl">
+          {/* Header */}
+          <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-3">
+            <h2 className="text-base font-semibold">🎨 Image Studio</h2>
             <div className="flex items-center gap-2">
-              {editableImageUrl ? (
-                <Button type="button" variant="outline" size="sm" onClick={() => setPhotopeaOpen(true)}>
-                  ✏️ Edit in Photopea
+              {editableImageUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  onClick={() => setPhotopeaOpen(true)}
+                >
+                  <Pencil className="h-3 w-3" /> Edit in Photopea
                 </Button>
-              ) : null}
-              <Button type="button" variant="outline" size="sm" onClick={onClose}>✕</Button>
+              )}
+              <button
+                onClick={onClose}
+                className="rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              >
+                ✕
+              </button>
             </div>
           </div>
 
-          <div className="grid h-[60vh] grid-cols-1 gap-4 md:grid-cols-[55%_45%]">
-            <ImagePreviewPanel imageUrl={selectedUrl} provider={providerLabel} isGenerating={isGenerating} />
-            <div className="overflow-y-auto pr-1">
-              <ImageControlPanel
+          {/* Body — two panels */}
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+            {/* Left: Preview */}
+            <div className="flex w-[55%] shrink-0 p-4">
+              <ImagePreviewPanel
+                imageUrl={selectedUrl}
                 provider={provider}
-                setProvider={setProvider}
-                prompt={prompt}
-                setPrompt={setPrompt}
-                postTitle={postTitle}
-                currentDescription={currentDescription}
-                ideogramQuality={ideogramQuality}
-                setIdeogramQuality={setIdeogramQuality}
-                magicPrompt={magicPrompt}
-                setMagicPrompt={setMagicPrompt}
-                gptQuality={gptQuality}
-                setGptQuality={setGptQuality}
-                gptSize={gptSize}
-                setGptSize={setGptSize}
-                gptBackground={gptBackground}
-                setGptBackground={setGptBackground}
-                onGenerate={onGenerate}
                 isGenerating={isGenerating}
-                onStockSelect={onStockSelect}
-                onUploadSelect={onUploadSelect}
-                currentImageUrl={editableImageUrl}
-                onOpenPhotopea={() => setPhotopeaOpen(true)}
               />
             </div>
+
+            {/* Right: Controls */}
+            <div className="flex w-[45%] flex-col border-l border-border">
+              <div className="flex-1 overflow-y-auto p-4">
+                <ImageControlPanel
+                  provider={provider}
+                  setProvider={setProvider}
+                  prompt={prompt}
+                  setPrompt={setPrompt}
+                  postTitle={postTitle}
+                  currentDescription={currentDescription}
+                  ideogramQuality={ideogramQuality}
+                  setIdeogramQuality={setIdeogramQuality}
+                  magicPrompt={magicPrompt}
+                  setMagicPrompt={setMagicPrompt}
+                  gptQuality={gptQuality}
+                  setGptQuality={setGptQuality}
+                  gptSize={gptSize}
+                  setGptSize={setGptSize}
+                  gptBackground={gptBackground}
+                  setGptBackground={setGptBackground}
+                  onGenerate={onGenerate}
+                  isGenerating={isGenerating}
+                  onStockSelect={onStockSelect}
+                  onUploadSelect={onUploadSelect}
+                  currentImageUrl={editableImageUrl}
+                  onOpenPhotopea={() => setPhotopeaOpen(true)}
+                />
+              </div>
+            </div>
           </div>
 
-          <ImageHistory items={history} activeUrl={selectedUrl} onSelect={setSelectedUrl} onApply={onApply} onCancel={onClose} applying={isApplying} />
-        </DialogContent>
-      </Dialog>
+          {/* Footer: History + Actions */}
+          <ImageHistory
+            items={history}
+            activeUrl={selectedUrl}
+            onSelect={setSelectedUrl}
+            onApply={onApply}
+            onCancel={onClose}
+            applying={isApplying}
+          />
+        </div>
+      </Modal>
 
-      {editableImageUrl ? (
+      {editableImageUrl && (
         <PhotopeaEditor
           open={photopeaOpen}
           onClose={() => setPhotopeaOpen(false)}
@@ -166,7 +209,7 @@ export function ImageStudio({
             setPhotopeaOpen(false)
           }}
         />
-      ) : null}
+      )}
     </>
   )
 }

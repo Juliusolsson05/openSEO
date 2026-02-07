@@ -1,7 +1,7 @@
 'use client'
 
 import type { ImageStudioProvider } from './types'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Loader2 } from 'lucide-react'
 
 interface Props {
   imageUrl: string | null
@@ -9,13 +9,43 @@ interface Props {
   isGenerating: boolean
 }
 
+const PROVIDER_LABELS: Record<ImageStudioProvider, string> = {
+  ideogram: 'Ideogram',
+  'gpt-image': 'GPT Image',
+  stock: 'Stock Photos',
+  upload: 'Upload',
+  photopea: 'Photopea',
+}
+
 export function ImagePreviewPanel({ imageUrl, provider, isGenerating }: Props) {
   return (
-    <div className="flex h-full flex-col rounded border border-border bg-muted/20 p-3">
-      <div className="relative flex-1 overflow-hidden rounded border border-border bg-background">
-        {isGenerating ? <Skeleton className="h-full w-full" /> : imageUrl ? <img src={imageUrl} alt="Image preview" className="h-full w-full object-contain" /> : <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No image selected</div>}
+    <div className="flex h-full min-h-0 flex-col rounded-md border border-border bg-muted/30">
+      {/* Image area — fills available space, never overflows */}
+      <div className="relative flex flex-1 min-h-0 items-center justify-center overflow-hidden p-3">
+        {isGenerating ? (
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="text-sm">Generating image…</span>
+          </div>
+        ) : imageUrl ? (
+          <img
+            src={imageUrl}
+            alt="Preview"
+            className="max-h-full max-w-full rounded object-contain"
+          />
+        ) : (
+          <div className="text-center text-sm text-muted-foreground">
+            <p className="text-lg mb-1">📷</p>
+            <p>No image yet</p>
+            <p className="text-xs mt-1">Generate or select an image</p>
+          </div>
+        )}
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">Provider: {provider}</p>
+
+      {/* Footer info */}
+      <div className="shrink-0 border-t border-border px-3 py-1.5 text-[11px] text-muted-foreground">
+        {PROVIDER_LABELS[provider] ?? provider}
+      </div>
     </div>
   )
 }

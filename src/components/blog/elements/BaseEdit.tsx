@@ -7,7 +7,8 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { EditFieldRenderer } from './edit/EditFieldRenderer'
 import { useBlogStore } from '@/stores/blog-store'
 import { useElementsStore } from '@/stores/elements-store'
@@ -82,6 +83,7 @@ export function BaseEdit({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-xl max-h-[80vh] overflow-y-auto p-0">
+        <VisuallyHidden><DialogTitle>Edit Element</DialogTitle></VisuallyHidden>
         <div className="p-6">
           <h2 className="text-lg font-semibold mb-4">
             {editSchema?.title || 'Edit Content'}

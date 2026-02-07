@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { GENERATE_ELEMENT_TYPES, type ElementType } from '../types'
 import { getPreviewComponent, getExample, getIcon } from '../registry'
 
@@ -73,6 +74,7 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
     <>
       <Dialog open={open} onOpenChange={(next) => { if (!next) handleClose() }}>
         <DialogContent className="z-[70] bg-background rounded-sm border border-info-light w-full max-w-5xl p-5 max-h-[85vh] overflow-y-auto">
+          <VisuallyHidden><DialogTitle>Add Element</DialogTitle></VisuallyHidden>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[16px] font-semibold">Add Element</h2>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleClose}>
@@ -229,7 +231,8 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateS
 
       {previewType && previewExample && (
         <Dialog open={true} onOpenChange={(next) => { if (!next) setPreviewType(null) }}>
-          <DialogContent className="z-[80] max-w-3xl border-border rounded-sm p-0"> 
+          <DialogContent className="z-[80] max-w-3xl border-border rounded-sm p-0">
+            <VisuallyHidden><DialogTitle>Element Preview</DialogTitle></VisuallyHidden> 
             <Card className="w-full max-w-3xl border-border rounded-sm">
             <CardHeader className="flex-row items-center justify-between py-3">
               <CardTitle className="text-[14px]">{pretty(previewType)} Preview</CardTitle>
