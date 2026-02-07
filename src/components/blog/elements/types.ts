@@ -31,6 +31,7 @@ export type ElementType =
   | 'poll'
   | 'quiz'
   | 'interactive_calculator'
+  | 'affiliate_recommendations'
   | 'form'
   | 'cta'
 
