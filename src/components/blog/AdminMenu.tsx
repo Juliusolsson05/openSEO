@@ -104,7 +104,7 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
     setShowPublish(true)
   }
 
-  const doPublish = () => run('Publish', async () => {
+  const doPublish = () => run('publish', 'Publish', async () => {
     setShowPublish(false)
     const { error } = await apiPost('/api/aurora/blog/posts/upload/', {
       post_id: Number(postId),
@@ -115,14 +115,14 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
     setPublishDictId('')
   })
 
-  const doRegenerate = () => run('Regenerate', async () => {
+  const doRegenerate = () => run('regenerate', 'Regenerate', async () => {
     setShowRegenerate(false)
     setConfirmText('')
     const { error } = await apiPost('/api/aurora/blog/posts/regenerate/', { post_id: Number(postId) })
     if (error) throw error
   })
 
-  const doDelete = () => run('Delete', async () => {
+  const doDelete = () => run('delete', 'Delete', async () => {
     setShowDelete(false)
     setConfirmText('')
     const { error } = await apiDelete(`/api/aurora/blog/posts/delete/${postId}/`)
