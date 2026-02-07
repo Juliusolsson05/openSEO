@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -188,10 +189,11 @@ export default function ElementsPage() {
   return (
     <div className="space-y-6">
       {/* Toast */}
-      {toast && (
+      {toast && createPortal(
         <div className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-md text-[13px] font-medium shadow-lg ${toast.variant === 'success' ? 'bg-[#DFF6DD] text-[#107C10]' : 'bg-[#FDE7E9] text-[#D13438]'}`}>
           {toast.message}
-        </div>
+        </div>,
+        document.body
       )}
 
       <Card>

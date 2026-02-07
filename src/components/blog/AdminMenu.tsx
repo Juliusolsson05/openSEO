@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { api, apiPost, apiDelete } from '@/lib/api'
 import { useBlogStore } from '@/stores/blog-store'
@@ -223,7 +224,7 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
       </Card>
 
       {/* Regenerate confirm */}
-      {showRegenerate && (
+      {showRegenerate && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowRegenerate(false)}>
           <div className="w-[400px] rounded-lg border border-border bg-background p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-[15px] font-semibold mb-1">Regenerate Post</h3>
@@ -249,11 +250,12 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Delete confirm */}
-      {showDelete && (
+      {showDelete && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowDelete(false)}>
           <div className="w-[400px] rounded-lg border border-border bg-background p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-[15px] font-semibold mb-1">Delete Post</h3>
@@ -280,11 +282,12 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Publish flow */}
-      {showPublish && (
+      {showPublish && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowPublish(false)}>
           <div className="w-[400px] rounded-lg border border-border bg-background p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-[15px] font-semibold mb-1">Publish Post</h3>
@@ -325,7 +328,8 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )
