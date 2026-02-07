@@ -5,6 +5,7 @@ import { NotFoundError, ValidationError } from '@/server/api/errors'
 import { generateExplanation } from '@/server/ai/dictionary/generate-explanation'
 import { generateKeywords } from '@/server/ai/dictionary/generate-keywords'
 import { generateShortDescription } from '@/server/ai/dictionary/generate-short-description'
+import { sendJsonWebhook } from '@/server/services/webhook-delivery.service'
 import * as dictionaryRepository from '@/server/repositories/dictionary.repository'
 import { toDjangoDictionaryStatus } from '@/server/utils/dictionary'
 import type {
@@ -356,12 +357,99 @@ export class DictionaryService {
 
   async uploadDictionary(companyId: number, payload: unknown) {
     const body = (payload ?? {}) as Record<string, unknown>
-    return { status: 'Dictionary upload prepared', payload: body }
+    const dictionaryId = Number(body.dictionary_id)
+    if (!dictionaryId) throw new ValidationError('dictionary_id is required')
+
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { api_endpoint: true, api_key: true },
+    })
+    if (!company?.api_endpoint) {
+      throw new ValidationError('Publishing endpoint is not configured. Set it in Settings → API Configuration.')
+    }
+
+    const exportData = await this.exportAll(companyId, dictionaryId)
+
+    const envelope = {
+      contract_version: '2026-02-1',
+      event: 'dictionary.upsert',
+      event_id: `evt_${crypto.randomUUID()}`,
+      sent_at: new Date().toISOString(),
+      payload: {
+        dictionary: exportData.dictionary_info,
+        terms: exportData.words,
+      },
+    }
+
+    const delivery = await sendJsonWebhook({
+      endpoint: company.api_endpoint,
+      apiKey: company.api_key,
+      eventType: 'dictionary.upsert',
+      payload: envelope,
+    })
+
+    if (!delivery.ok) {
+      throw new ValidationError(`Publishing endpoint returned HTTP ${delivery.status}`)
+    }
+
+    return {
+      status: `Successfully published dictionary "${exportData.dictionary_info.title}" (${exportData.words.length} words)`,
+      delivery: {
+        remote_id: delivery.deliveryId,
+        endpoint_status: delivery.status,
+      },
+    }
   }
 
   async uploadAll(companyId: number) {
-    const dictionaries = await prisma.dictionary.findMany({ where: { companyId }, select: { id: true, title: true } })
-    return { status: 'Sync completed', synced_words: [], errors: [], dictionaries }
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { api_endpoint: true, api_key: true },
+    })
+    if (!company?.api_endpoint) {
+      throw new ValidationError('Publishing endpoint is not configured. Set it in Settings → API Configuration.')
+    }
+
+    const dictionaries = await prisma.dictionary.findMany({
+      where: { companyId },
+      select: { id: true, title: true },
+    })
+
+    const results = []
+    const errors = []
+
+    for (const dict of dictionaries) {
+      try {
+        const exportData = await this.exportAll(companyId, dict.id)
+        const envelope = {
+          contract_version: '2026-02-1',
+          event: 'dictionary.upsert',
+          event_id: `evt_${crypto.randomUUID()}`,
+          sent_at: new Date().toISOString(),
+          payload: {
+            dictionary: exportData.dictionary_info,
+            terms: exportData.words,
+          },
+        }
+
+        const delivery = await sendJsonWebhook({
+          endpoint: company.api_endpoint,
+          apiKey: company.api_key,
+          eventType: 'dictionary.upsert',
+          payload: envelope,
+        })
+
+        if (!delivery.ok) {
+          errors.push({ dictionary_id: dict.id, error: `HTTP ${delivery.status}` })
+        } else {
+          results.push({ dictionary_id: dict.id, title: dict.title, remote_id: delivery.deliveryId })
+        }
+      } catch (e) {
+        errors.push({ dictionary_id: dict.id, error: e instanceof Error ? e.message : String(e) })
+      }
+    }
+
+    return { status: 'Sync completed', synced: results, errors, total: dictionaries.length }
   }
 
   async exportWord(companyId: number, dictionaryId: number, wordInput: string) {

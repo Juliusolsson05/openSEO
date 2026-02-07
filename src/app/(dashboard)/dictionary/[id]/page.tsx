@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { api, apiDelete, apiPost, apiPut } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -40,6 +40,7 @@ export default function DictionaryDetailPage() {
   const [loadingWordId, setLoadingWordId] = useState<number | null>(null)
   const [generatingAll, setGeneratingAll] = useState(false)
   const [editing, setEditing] = useState<Record<number, Partial<Word>>>({})
+  const [publishing, setPublishing] = useState(false)
 
   const fetchDictionary = async () => {
     const { data, error } = await api<Dictionary>(`/api/aurora/dictionary/dictionary/${params.id}`)
@@ -144,6 +145,43 @@ export default function DictionaryDetailPage() {
     }
   }
 
+  const publishDictionary = async () => {
+    setPublishing(true)
+    const toastId = toast.loading('Publishing dictionary...')
+    try {
+      const { error } = await apiPost('/api/aurora/dictionary/dictionary/upload/', {
+        dictionary_id: Number(params.id),
+      })
+      if (error) throw error
+      toast.success('Dictionary published to your endpoint', { id: toastId })
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to publish dictionary'
+      toast.error(msg, { id: toastId })
+    } finally {
+      setPublishing(false)
+    }
+  }
+
+  const exportDictionary = async () => {
+    try {
+      const { data, error } = await apiPost('/api/aurora/dictionary/dictionary/export/all/', {
+        dictionary_id: Number(params.id),
+      })
+      if (error) throw error
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `dictionary-${params.id}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success('Dictionary exported')
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to export dictionary'
+      toast.error(msg)
+    }
+  }
+
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
   const deleteWord = async (id: number) => {
@@ -186,7 +224,11 @@ export default function DictionaryDetailPage() {
                   'Generate missing definitions'
                 )}
               </Button>
-              <Button variant="outline" className="rounded-sm">Export</Button>
+              <Button variant="outline" className="rounded-sm" onClick={exportDictionary}>Export JSON</Button>
+              <Button className="rounded-sm gap-1.5" onClick={publishDictionary} disabled={publishing}>
+                {publishing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                Publish
+              </Button>
             </div>
           </div>
 
