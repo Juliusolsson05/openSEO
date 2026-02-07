@@ -67,11 +67,13 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, loading }: 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mb-4">
             {filtered.map((type) => (
-              <button
+              <div
                 key={type}
-                type="button"
-                className={`text-left border rounded-sm p-2.5 transition-colors ${selected === type ? 'border-primary bg-primary/5' : 'border-border hover:bg-secondary/60'}`}
+                role="button"
+                tabIndex={0}
+                className={`text-left border rounded-sm p-2.5 transition-colors cursor-pointer ${selected === type ? 'border-primary bg-primary/5' : 'border-border hover:bg-secondary/60'}`}
                 onClick={() => setSelected(type)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelected(type) }}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[12px] font-semibold leading-snug">{pretty(type)}</span>
@@ -88,7 +90,7 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, loading }: 
                     <Eye className="h-3.5 w-3.5" />
                   </Button>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
 
