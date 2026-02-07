@@ -87,7 +87,10 @@ export function InlineText({
           e.currentTarget.style.height = 'auto'
           e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`
         }}
-        onBlur={commit}
+        onBlur={() => {
+          // Do not auto-commit on blur (caused instant-save/close issues).
+          // Save is explicit via keyboard (Cmd/Ctrl+Enter) or element-level actions.
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
             e.preventDefault()
@@ -112,7 +115,9 @@ export function InlineText({
       value={draft}
       placeholder={placeholder}
       onChange={(e) => setDraft(e.target.value)}
-      onBlur={commit}
+      onBlur={() => {
+        // Do not auto-commit on blur (caused instant-save/close issues).
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {
           e.preventDefault()

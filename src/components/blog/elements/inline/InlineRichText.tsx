@@ -21,7 +21,7 @@ interface InlineRichTextProps {
 }
 
 export function InlineRichText({ value, onChange, className, placeholder, elementId, onBlur }: InlineRichTextProps) {
-  const { isEditModeEnabled, startEditing, stopEditing, isEditing } = useInlineEdit()
+  const { isEditModeEnabled, startEditing, isEditing } = useInlineEdit()
   const active = elementId ? isEditing(elementId) : false
 
   const editor = useEditor({
@@ -63,19 +63,8 @@ export function InlineRichText({ value, onChange, className, placeholder, elemen
     }
   }, [active, editor])
 
-  useEffect(() => {
-    if (!editor) return
-
-    const handleBlur = () => {
-      onBlur?.()
-      stopEditing()
-    }
-
-    editor.on('blur', handleBlur)
-    return () => {
-      editor.off('blur', handleBlur)
-    }
-  }, [editor, onBlur, stopEditing])
+  // Intentionally no blur auto-save/auto-close here.
+  // Save/close should be explicit in element-level editors.
 
   if (!active) {
     return (
