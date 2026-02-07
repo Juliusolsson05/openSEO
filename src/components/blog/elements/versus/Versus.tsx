@@ -221,7 +221,7 @@ export function Versus({ content, blogId, elementId, onContentUpdated, onElement
             {viewCriteria.map((criterion, index) => (
               <div key={`criterion-${index}`} className="grid grid-cols-1 border-b last:border-b-0 md:grid-cols-[30%_1fr_1fr]">
                 <div
-                  className="bg-secondary/50 p-4 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground"
+                  className="bg-secondary/50 p-4 text-[15px] font-semibold text-foreground"
                   dangerouslySetInnerHTML={{ __html: renderMarkdownInline(criterion.name) }}
                 />
 
@@ -229,9 +229,9 @@ export function Versus({ content, blogId, elementId, onContentUpdated, onElement
                   const isWinner = criterion.winner === detailIndex
 
                   return (
-                    <div key={`detail-${index}-${detailIndex}`} className="relative p-4 text-[15px] text-foreground">
+                    <div key={`detail-${index}-${detailIndex}`} className={`relative p-4 text-[15px] text-foreground ${isWinner ? 'bg-emerald-50' : ''}`}>
                       <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(detail) }} />
-                      {isWinner ? <span className="absolute top-1/2 right-4 -translate-y-1/2 text-emerald-600">●</span> : null}
+                      {isWinner ? <span className="absolute top-1/2 right-4 -translate-y-1/2 font-bold text-emerald-600">✓</span> : null}
                     </div>
                   )
                 })}

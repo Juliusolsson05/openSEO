@@ -107,11 +107,11 @@ export function Statistic({ content, blogId, elementId, onContentUpdated, onElem
             onClick={() => isEditModeEnabled && startEditing(elementId)}
           >
             <h3 className="text-center text-[22px] font-semibold leading-tight tracking-tight text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(view.title ?? '') }} />
-            <div className="my-5 flex justify-center">
+            <div className="my-5 flex justify-center text-primary">
               <svg className="h-auto w-full max-w-[200px]" width="200" height="200" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" fill="none" stroke="#e6e6e6" strokeWidth="8" />
-                <circle cx="50" cy="50" r="45" fill="none" stroke="hsl(var(--primary))" strokeWidth="8" strokeDasharray={circumference} strokeDashoffset={dashOffset} strokeLinecap="round" transform="rotate(-90 50 50)" />
-                <text x="50" y="50" textAnchor="middle" dominantBaseline="central" fontSize="20" fontWeight="bold" fill="hsl(var(--primary))">{percentage}%</text>
+                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" strokeDasharray={circumference} strokeDashoffset={dashOffset} strokeLinecap="round" transform="rotate(-90 50 50)" />
+                <text x="50" y="50" textAnchor="middle" dominantBaseline="central" fontSize="20" fontWeight="bold" fill="currentColor">{percentage}%</text>
               </svg>
             </div>
             <p className="text-center text-[17px] font-light text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(view.label ?? view.description ?? '') }} />
