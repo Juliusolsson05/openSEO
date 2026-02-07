@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -96,7 +97,7 @@ export default function QuilloChat({ blogPostId }: Props) {
     }
   }
 
-  return (
+  return createPortal(
     <>
       {/* Floating button */}
       {!isOpen && (
@@ -225,6 +226,7 @@ export default function QuilloChat({ blogPostId }: Props) {
       )}
 
       <QuilloChatInterface isOpen={showChat} blogPostId={blogPostId} onClose={() => setShowChat(false)} />
-    </>
+    </>,
+    document.body
   )
 }

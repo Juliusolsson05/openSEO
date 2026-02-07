@@ -747,12 +747,14 @@ async function handleAurora(ctx: {
       return raw({ detail: 'blog_post_id and blog_element_id are required.' }, 400)
     }
 
-    const taskId = crypto.randomUUID()
+    const updated = await elementService.humanizeElementByContext(ctx.companyId, blogPostId, blogElementId)
     return raw({
-      task_id: taskId,
-      status: 'accepted',
-      status_endpoint: `/api/task-status/${taskId}/`,
-    }, 202)
+      id: updated.id,
+      element_type: updated.element_type.toLowerCase(),
+      order: updated.order,
+      content: updated.content,
+      created_at: updated.created_at,
+    })
   }
   if (path === 'blog/cta/add-cta') {
     const body = (ctx.body ?? {}) as Record<string, unknown>

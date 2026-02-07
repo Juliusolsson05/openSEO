@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -117,7 +118,7 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
 
   if (!isOpen) return null
 
-  return (
+  return createPortal(
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
         <Card className="w-full max-w-3xl h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
@@ -239,6 +240,7 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
           </Card>
         </div>
       )}
-    </>
+    </>,
+    document.body
   )
 }
