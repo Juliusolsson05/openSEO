@@ -283,7 +283,7 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
           <div className="w-[400px] rounded-lg border border-border bg-background p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-[15px] font-semibold mb-1">Publish Post</h3>
             <p className="text-[13px] text-muted-foreground mb-4">
-              This sends the post using the v1 publishing sync contract.
+              Publish this post now?
             </p>
 
             <div className="flex justify-end gap-2">
