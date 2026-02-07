@@ -90,10 +90,19 @@ export default function PublishingPage() {
 
   const refreshJob = async () => {
     if (!activeJobId) return
-    const { data, error } = await api<{ status: SyncJobStatus }>(`/api/v1/publishing/jobs/${activeJobId}`)
+    const { data, error } = await api<{ status: SyncJobStatus } | { data: { status: SyncJobStatus } }>(`/api/v1/publishing/jobs/${activeJobId}`)
     if (error || !data) return
-    setJobState(data.status)
+    const payload = 'data' in data && data.data && typeof data.data === 'object' ? data.data : data
+    const s = (payload as { status: SyncJobStatus }).status
+    if (s) setJobState(s)
   }
+
+  // Auto-poll active job
+  useEffect(() => {
+    if (!activeJobId || jobState === 'completed' || jobState === 'failed' || jobState === 'not_available') return
+    const interval = setInterval(() => { void refreshJob() }, 1500)
+    return () => clearInterval(interval)
+  }, [activeJobId, jobState]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const isConfigured = Boolean(publishingEndpoint.trim()) && hasExistingKey
 
