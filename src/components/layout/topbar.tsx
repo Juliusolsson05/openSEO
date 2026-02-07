@@ -235,7 +235,7 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
         <span className="text-[13px] font-semibold text-foreground">{title}</span>
       </div>
 
-      {isAdmin && companies.length > 1 && (
+      {isAdmin && companies.length > 0 && (
         <div className="flex items-center gap-1.5 ml-2">
           <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
           <select
