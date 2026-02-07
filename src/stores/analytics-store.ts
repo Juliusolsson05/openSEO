@@ -127,18 +127,19 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
       try {
         const [dictionaryRes, blogMetaRes, blogTitlesRes, generalBlogRes] = await Promise.all([
           api<DictionaryGeneralResponse>('/api/aurora/analytics/dictionary/general', {
-            params: { include_all_words_links: true },
-          }),
-          api<BlogMetaResponse>('/api/aurora/analytics/blog/meta'),
-          api<BlogTitle[]>('/api/aurora/blog/titles/'),
+            params: { include_all_words_links: 'true' },
+          }).catch(() => ({ data: null, error: new Error('dictionary failed') })),
+          api<BlogMetaResponse>('/api/aurora/analytics/blog/meta')
+            .catch(() => ({ data: null, error: new Error('meta failed') })),
+          api<BlogTitle[]>('/api/aurora/blog/titles/')
+            .catch(() => ({ data: null, error: new Error('titles failed') })),
           api<BlogGeneralResponse>('/api/aurora/analytics/blog/general', {
-            params: { include_recommendations: false },
-          }),
+            params: { include_recommendations: 'false' },
+          }).catch(() => ({ data: null, error: new Error('general failed') })),
         ])
 
-        if (dictionaryRes.error || blogMetaRes.error || blogTitlesRes.error || generalBlogRes.error) {
-          throw new Error('One or more analytics endpoints failed')
-        }
+        const hasAnyData = dictionaryRes.data || blogMetaRes.data || blogTitlesRes.data || generalBlogRes.data
+        const allFailed = !hasAnyData
 
         set({
           linkedWords: dictionaryRes.data?.all_words_link_count ?? [],
@@ -147,6 +148,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
           blogTitles: blogTitlesRes.data ?? [],
           generalBlogData: generalBlogRes.data ?? null,
           isLoading: false,
+          error: allFailed ? 'Could not load analytics data. Please check your connection and try again.' : null,
           fetchPromise: null,
         })
       } catch {

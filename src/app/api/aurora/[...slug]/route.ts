@@ -1618,7 +1618,18 @@ async function handleAurora(ctx: {
   if (path === 'analytics/dictionary/general') {
     const dictionaryCount = await prisma.dictionary.count({ where: { companyId: ctx.companyId } })
     if (!dictionaryCount) {
-      return raw({ error: 'No dictionary found for this company' }, 404)
+      return raw({
+        total_words: 0,
+        total_definitions: 0,
+        total_hyperlinks: 0,
+        most_linked_words: [],
+        isolated_words_count: 0,
+        isolated_words: [],
+        all_words_link_count: [],
+        words_per_letter: {},
+        high_priority_words: 0,
+        low_priority_words: 0,
+      })
     }
     const includeAllWordsLinks = (ctx.searchParams.get('include_all_words_links') ?? 'false').toLowerCase() === 'true'
     const data = await analyticsService.getDictionaryAnalytics(ctx.companyId, includeAllWordsLinks)
