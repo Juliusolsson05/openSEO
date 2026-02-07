@@ -6,6 +6,16 @@ const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
   allowedDevOrigins: ['192.168.50.42', '127.0.0.1', 'localhost'],
 
+  async rewrites() {
+    return [
+      // Phase II: explicit legacy namespace alias (no breaking changes)
+      {
+        source: '/api/legacy/aurora/:path*',
+        destination: '/api/aurora/:path*',
+      },
+    ]
+  },
+
   // Allow LAN access (e.g. 192.168.x.x:4000)
   async headers() {
     return [

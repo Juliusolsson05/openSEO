@@ -31,6 +31,22 @@ function isBodyMethod(method: string): boolean {
   return method === 'POST' || method === 'PUT' || method === 'PATCH'
 }
 
+function isLegacyAuroraPath(pathname: string): boolean {
+  return pathname.startsWith('/api/aurora/') || pathname === '/api/aurora'
+}
+
+function applyStandardHeaders(res: NextResponse, req: NextRequest, requestId: string) {
+  res.headers.set('x-request-id', requestId)
+
+  if (isLegacyAuroraPath(req.nextUrl.pathname)) {
+    res.headers.set('deprecation', 'true')
+    res.headers.set('sunset', '2026-12-31T23:59:59Z')
+    res.headers.set('link', '</docs/api-architecture.md>; rel="deprecation"')
+  }
+
+  return res
+}
+
 export function apiHandler(handler: RouteHandler, options: ApiHandlerOptions = {}) {
   return async (
     req: NextRequest,
@@ -93,16 +109,14 @@ export function apiHandler(handler: RouteHandler, options: ApiHandlerOptions = {
         req,
       )
 
-      response.headers.set('x-request-id', requestId)
-      return response
+      return applyStandardHeaders(response, req, requestId)
     } catch (err) {
       if (err instanceof AppError) {
         const response = errorResponse(err.message, err.statusCode, err.details, {
           code: err.code,
           requestId,
         })
-        response.headers.set('x-request-id', requestId)
-        return response
+        return applyStandardHeaders(response, req, requestId)
       }
 
       console.error('Unhandled API error', { requestId, err })
@@ -110,8 +124,7 @@ export function apiHandler(handler: RouteHandler, options: ApiHandlerOptions = {
         code: 'INTERNAL_ERROR',
         requestId,
       })
-      response.headers.set('x-request-id', requestId)
-      return response
+      return applyStandardHeaders(response, req, requestId)
     }
   }
 }
