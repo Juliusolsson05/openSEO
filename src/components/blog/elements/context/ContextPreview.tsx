@@ -82,9 +82,19 @@ export function ContextPreview({ content, elements }: ContextPreviewProps) {
         <ol className="m-0 list-decimal space-y-2 pl-8 marker:font-semibold marker:text-primary">
           {tableOfContents.map((item, index) => (
             <li key={`${item.id}-${index}`}>
-              <a href={`#section-${item.id}`} className="text-base leading-6 text-foreground hover:text-primary hover:underline">
+              <button
+                type="button"
+                onClick={() => {
+                  const target = document.getElementById(`section-${item.id}`)
+                  if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    window.history.replaceState(null, '', `#section-${item.id}`)
+                  }
+                }}
+                className="bg-transparent p-0 text-left text-base leading-6 text-foreground hover:text-primary hover:underline"
+              >
                 <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(item.title) }} />
-              </a>
+              </button>
             </li>
           ))}
         </ol>

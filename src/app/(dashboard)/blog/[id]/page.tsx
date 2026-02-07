@@ -22,6 +22,7 @@ import {
 
 import '@/components/blog/elements'
 import { ElementRenderer } from '@/components/blog/elements/ElementRenderer'
+import { ContextPreview } from '@/components/blog/elements/context/ContextPreview'
 import { InlineEditProvider } from '@/components/blog/elements/inline'
 import QuilloChat from '@/components/blog/QuilloChat'
 import QuilloAutopilot from '@/components/blog/QuilloAutopilot'
@@ -124,8 +125,14 @@ export default function BlogPostPage() {
 
               <InlineEditProvider>
                 <div className="space-y-2">
+                  <ContextPreview
+                    content={{ elements: post.elements }}
+                    elements={post.elements as any}
+                  />
                   {post.elements.map((element) => (
-                    <ElementRenderer key={element.id} element={element} blogId={post.id} editable={true} />
+                    <div key={element.id} id={`section-${element.id}`} className="scroll-mt-24">
+                      <ElementRenderer element={element} blogId={post.id} editable={true} />
+                    </div>
                   ))}
                 </div>
               </InlineEditProvider>

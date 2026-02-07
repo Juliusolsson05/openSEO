@@ -213,20 +213,21 @@ export default function BlogPreviewPage() {
 
                 <div className="space-y-4">
                   {post.elements.map((element) => (
-                    <ElementRenderer
-                      key={element.id}
-                      element={element}
-                      blogId={post.id}
-                      editable={false}
-                      preview
-                      previewProps={{
-                        blogId: post.id,
-                        elementId: element.id,
-                        postTitle: post.title_text,
-                        imageNumber: imageNumbers[element.id] ? imageNumbers[element.id] + 1 : null,
-                        hyperlink: element.hyperlink,
-                      }}
-                    />
+                    <div key={element.id} id={`section-${element.id}`} className="scroll-mt-24">
+                      <ElementRenderer
+                        element={element}
+                        blogId={post.id}
+                        editable={false}
+                        preview
+                        previewProps={{
+                          blogId: post.id,
+                          elementId: element.id,
+                          postTitle: post.title_text,
+                          imageNumber: imageNumbers[element.id] ? imageNumbers[element.id] + 1 : null,
+                          hyperlink: element.hyperlink,
+                        }}
+                      />
+                    </div>
                   ))}
                 </div>
               </article>
