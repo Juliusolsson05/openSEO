@@ -2,6 +2,7 @@ import { registerElement } from '../registry'
 import { ProductRecommendations } from './ProductRecommendations'
 import { ProductRecommendationsPreview } from './ProductRecommendationsPreview'
 import { ProductRecommendationsLoading } from './ProductRecommendationsLoading'
+import Icon from './Icon'
 import { productRecommendationsEditSchema } from './edit_schema'
 import { productRecommendationsExample } from './example'
 
@@ -15,6 +16,7 @@ registerElement('product_recommendations', {
   component: ProductRecommendations,
   preview: ProductRecommendationsPreview,
   loading: ProductRecommendationsLoading,
+  icon: Icon,
   editSchema: productRecommendationsEditSchema,
   example: productRecommendationsExample,
 })

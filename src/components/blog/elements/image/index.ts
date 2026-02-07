@@ -2,6 +2,7 @@ import { registerElement } from '../registry'
 import { ImageElement } from './ImageElement'
 import { ImagePreview } from './ImagePreview'
 import { ImageLoading } from './ImageLoading'
+import Icon from './Icon'
 import { imageEditSchema } from './edit_schema'
 import { imageExample } from './example'
 
@@ -15,6 +16,7 @@ registerElement('image', {
   component: ImageElement,
   preview: ImagePreview,
   loading: ImageLoading,
+  icon: Icon,
   editSchema: imageEditSchema,
   example: imageExample,
 })

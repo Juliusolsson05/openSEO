@@ -2,6 +2,7 @@ import { registerElement } from '../registry'
 import { ListSnippetBlock } from './ListSnippetBlock'
 import { ListSnippetBlockPreview } from './ListSnippetBlockPreview'
 import { ListSnippetBlockLoading } from './ListSnippetBlockLoading'
+import Icon from './Icon'
 import { listSnippetBlockEditSchema } from './edit_schema'
 import { listSnippetBlockExample } from './example'
 
@@ -15,6 +16,7 @@ registerElement('list_featured_snippet_block', {
   component: ListSnippetBlock,
   preview: ListSnippetBlockPreview,
   loading: ListSnippetBlockLoading,
+  icon: Icon,
   editSchema: listSnippetBlockEditSchema,
   example: listSnippetBlockExample,
 })

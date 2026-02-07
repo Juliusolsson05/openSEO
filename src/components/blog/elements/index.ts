@@ -11,6 +11,7 @@ export {
   getLoadingComponent,
   getEditSchema,
   getExample,
+  getIcon,
   getElementInfo,
 } from './registry'
 export type {

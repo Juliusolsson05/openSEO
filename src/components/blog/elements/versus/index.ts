@@ -2,6 +2,7 @@ import { registerElement } from '../registry'
 import { Versus } from './Versus'
 import { VersusPreview } from './VersusPreview'
 import { VersusLoading } from './VersusLoading'
+import Icon from './Icon'
 import { versusEditSchema } from './edit_schema'
 import { versusExample } from './example'
 
@@ -9,6 +10,7 @@ registerElement('versus', {
   component: Versus,
   preview: VersusPreview,
   loading: VersusLoading,
+  icon: Icon,
   editSchema: versusEditSchema,
   example: versusExample,
 })

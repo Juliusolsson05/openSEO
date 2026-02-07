@@ -43,6 +43,7 @@ const previewRegistry: Partial<Record<ElementType, ComponentType<PreviewComponen
 const loadingRegistry: Partial<Record<ElementType, ComponentType>> = {}
 const editSchemaRegistry: Partial<Record<ElementType, EditSchema>> = {}
 const exampleRegistry: Partial<Record<ElementType, any>> = {}
+const iconRegistry: Partial<Record<ElementType, ComponentType<{ width?: number | string; height?: number | string; className?: string }>>> = {}
 
 // ─── Registration functions (used by each element module) ────────────
 
@@ -54,6 +55,7 @@ export function registerElement(
     loading?: ComponentType
     editSchema?: EditSchema
     example?: any
+    icon?: ComponentType<{ width?: number | string; height?: number | string; className?: string }>
   }
 ) {
   componentRegistry[type] = config.component
@@ -61,6 +63,7 @@ export function registerElement(
   if (config.loading) loadingRegistry[type] = config.loading
   if (config.editSchema) editSchemaRegistry[type] = config.editSchema
   if (config.example) exampleRegistry[type] = config.example
+  if (config.icon) iconRegistry[type] = config.icon
 }
 
 // ─── Lookup functions ────────────────────────────────────────────────
@@ -91,6 +94,10 @@ export function getExample(type: ElementType): any | null {
   return exampleRegistry[normalize(type)] || null
 }
 
+export function getIcon(type: ElementType): ComponentType<{ width?: number | string; height?: number | string; className?: string }> | null {
+  return iconRegistry[normalize(type)] || null
+}
+
 // ─── Element renderer helper ─────────────────────────────────────────
 
 export function getElementInfo(type: string) {
@@ -101,5 +108,6 @@ export function getElementInfo(type: string) {
     Loading: getLoadingComponent(elementType),
     editSchema: getEditSchema(elementType),
     example: getExample(elementType),
+    icon: getIcon(elementType),
   }
 }

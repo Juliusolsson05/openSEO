@@ -2,6 +2,7 @@ import { registerElement } from '../registry'
 import { ProsAndCons } from './ProsAndCons'
 import { ProsAndConsPreview } from './ProsAndConsPreview'
 import { ProsAndConsLoading } from './ProsAndConsLoading'
+import Icon from './Icon'
 import { prosAndConsEditSchema } from './edit_schema'
 import { prosAndConsExample } from './example'
 
@@ -9,6 +10,7 @@ registerElement('pros_and_cons', {
   component: ProsAndCons,
   preview: ProsAndConsPreview,
   loading: ProsAndConsLoading,
+  icon: Icon,
   editSchema: prosAndConsEditSchema,
   example: prosAndConsExample,
 })
