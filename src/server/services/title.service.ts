@@ -3,6 +3,7 @@ import { TitleStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { NotFoundError } from '@/server/api/errors'
 import { generateTitles as generateTitlesAI } from '@/server/ai/titles/generate-titles'
+import { generateSingleTitle } from '@/server/ai/titles/generate-single-title'
 import * as titleRepository from '@/server/repositories/title.repository'
 
 type ListTitlesQuery = {
@@ -100,7 +101,29 @@ export class TitleService {
     })
   }
 
-  async regenerateTitle(_companyId: number, _titleId: number) { throw new Error('TODO: implement regenerateTitle') }
+  async regenerateTitle(companyId: number, titleId: number) {
+    const company = await prisma.company.findUnique({ where: { id: companyId } })
+    if (!company) throw new NotFoundError('Company not found')
+
+    const title = await prisma.title.findFirst({ where: { id: titleId, companyId } })
+    if (!title) throw new NotFoundError('Title not found')
+
+    const existingTitles = await prisma.title.findMany({ where: { companyId }, select: { title_text: true } })
+    const generated = await generateSingleTitle(
+      company.business_type,
+      existingTitles.map((t) => t.title_text),
+      company.language ?? 'en',
+    )
+
+    return prisma.title.update({
+      where: { id: titleId },
+      data: {
+        title_text: generated.title_text,
+        seo_title: generated.seo_title,
+        focus_keyword: generated.focus_keyword,
+      },
+    })
+  }
 }
 
 export const titleService = new TitleService()

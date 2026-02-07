@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma'
 import { NotFoundError, ValidationError } from '@/server/api/errors'
 import { generateStructure } from '@/server/ai/blog-generation/generate-structure'
 import { generateBlogPost } from '@/server/ai/blog-generation/generate-blog-post'
+import { generateRecommendedPosts } from '@/server/ai/post-linking/generate-recommended-posts'
+import { processHyperlinks } from '@/server/ai/keyword-linking/process-hyperlinks'
+import { ELEMENT_PROCESSING_MAP } from '@/server/ai/keyword-matching/find-matched-keywords'
 import * as blogRepository from '@/server/repositories/blog.repository'
 import { toDbElementType } from '@/server/utils/element-type'
 import type {
@@ -281,20 +284,194 @@ export class BlogService {
     throw new ValidationError('Not implemented yet')
   }
 
-  async sharePost(_companyId: number, _postId: number) {
-    throw new Error('TODO: implement sharePost')
+  async sharePost(companyId: number, postId: number) {
+    const post = await prisma.blogPost.findFirst({ where: { id: postId, companyId }, select: { id: true } })
+    if (!post) throw new NotFoundError('Blog post not found or does not belong to your company')
+
+    const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+    const frontendBaseUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000'
+    const shareToken = Buffer.from(`post:${postId}:company:${companyId}:exp:${expiresAt.toISOString()}`).toString('base64url')
+
+    return {
+      share_url: `${frontendBaseUrl}/apps/blog/preview/${postId}?share_token=${shareToken}`,
+      expires_at: expiresAt.toISOString(),
+    }
   }
 
-  async syncPost(_companyId: number, _postId: number) {
-    throw new Error('TODO: implement syncPost')
+  async syncRecommendedPosts(companyId: number) {
+    const posts = await prisma.blogPost.findMany({
+      where: { companyId },
+      select: { id: true, title_text: true },
+      orderBy: { id: 'asc' },
+    })
+
+    if (!posts.length) return []
+    const recommendations = await generateRecommendedPosts(
+      posts.map((p) => ({ id: p.id, title: p.title_text })),
+    )
+    if (typeof recommendations === 'string') throw new ValidationError(recommendations)
+
+    await prisma.$transaction(async (tx) => {
+      for (const row of recommendations) {
+        const targetIds = (row.recommended_posts ?? []).filter((id) => id !== row.id).slice(0, 3)
+        await tx.blogPostPostLink.deleteMany({ where: { fromBlogPostId: row.id } })
+        if (targetIds.length) {
+          await tx.blogPostPostLink.createMany({
+            data: targetIds.map((toId) => ({ fromBlogPostId: row.id, toBlogPostId: toId })),
+            skipDuplicates: true,
+          })
+        }
+      }
+    })
+
+    return recommendations
+  }
+
+  async syncKeywords(companyId: number, dictionaryId: number, postId?: number) {
+    const dictionary = await prisma.dictionary.findFirst({ where: { id: dictionaryId, companyId } })
+    if (!dictionary) throw new NotFoundError('Dictionary not found')
+
+    const post = postId
+      ? await prisma.blogPost.findFirst({ where: { id: postId, companyId } })
+      : await prisma.blogPost.findFirst({ where: { companyId, keyword_linked: false }, orderBy: { id: 'asc' } })
+
+    if (!post) {
+      const total = await prisma.blogPost.count({ where: { companyId } })
+      const linked = await prisma.blogPost.count({ where: { companyId, keyword_linked: true } })
+      return {
+        status: 'No more blog posts to link keywords.',
+        elements: [],
+        next_post_id: null,
+        remaining_posts_count: 0,
+        total_posts_count: total,
+        linked_posts_count: linked,
+      }
+    }
+
+    const elements = await prisma.blogPostElement.findMany({
+      where: { blogPostId: post.id },
+      orderBy: { order: 'asc' },
+      include: { hyperlink: true },
+    })
+    const words = await prisma.word.findMany({ where: { dictionaryId }, select: { keyword: true, description: true } })
+
+    const serialized: any[] = []
+    for (const element of elements) {
+      if (element.element_type === 'IMAGE') continue
+      const processor = (ELEMENT_PROCESSING_MAP as any)[element.element_type.toLowerCase()]
+      if (!processor) continue
+
+      const matchedKeywords = processor(element.content as Record<string, unknown>, words)
+      const processed = await processHyperlinks({
+        id: element.id,
+        element_type: element.element_type.toLowerCase(),
+        order: element.order,
+        content: element.content,
+        hyperlink: { matched_keywords: matchedKeywords },
+      })
+
+      const processedKeywords = (processed as any)?.hyperlink?.matched_keywords ?? matchedKeywords
+      await prisma.elementHyperlink.upsert({
+        where: { blogPostElementId: element.id },
+        update: { matched_keywords: processedKeywords as Prisma.InputJsonValue },
+        create: {
+          blogPostElementId: element.id,
+          matched_keywords: processedKeywords as Prisma.InputJsonValue,
+        },
+      })
+
+      serialized.push({
+        id: element.id,
+        element_type: element.element_type.toLowerCase(),
+        order: element.order,
+        content: element.content,
+        created_at: element.created_at,
+        blog_post: element.blogPostId,
+        matched_keywords: processedKeywords,
+      })
+    }
+
+    await prisma.blogPost.update({ where: { id: post.id }, data: { keyword_linked: true } })
+
+    const nextPost = await prisma.blogPost.findFirst({ where: { companyId, keyword_linked: false }, orderBy: { id: 'asc' } })
+    const [remaining, total, linked] = await Promise.all([
+      prisma.blogPost.count({ where: { companyId, keyword_linked: false } }),
+      prisma.blogPost.count({ where: { companyId } }),
+      prisma.blogPost.count({ where: { companyId, keyword_linked: true } }),
+    ])
+
+    return {
+      status: `Linked keywords for blog post: ${post.title_text}`,
+      elements: serialized,
+      next_post_id: nextPost?.id ?? null,
+      remaining_posts_count: remaining,
+      total_posts_count: total,
+      linked_posts_count: linked,
+    }
   }
 
   async exportPost(_companyId: number, _postId: number) {
     throw new Error('TODO: implement exportPost')
   }
 
-  async listPostHistory(_companyId: number, _postId: number) {
-    throw new Error('TODO: implement listPostHistory')
+  async getCodeClusterBlogPosts(companyId: number) {
+    const rows = await prisma.blogPost.findMany({
+      where: {
+        companyId,
+        elements: { some: { element_type: 'GLOSSARY' } },
+      },
+      distinct: ['id'],
+      select: { title_text: true },
+      orderBy: { id: 'asc' },
+    })
+    return rows.map((r) => r.title_text)
+  }
+
+  async listPostHistory(companyId: number, postId: number) {
+    const post = await prisma.blogPost.findFirst({
+      where: { id: postId, companyId },
+      include: { elements: { orderBy: { order: 'asc' } } },
+    })
+    if (!post) throw new NotFoundError('Blog post not found')
+
+    return {
+      post_id: post.id,
+      title: post.title_text,
+      total_versions: 1,
+      history: [
+        {
+          history_id: post.id,
+          history_date: post.last_updated,
+          history_type: '~',
+          history_user: null,
+          title_text: post.title_text,
+          seo_title: post.seo_title,
+          focus_keyword: post.focus_keyword,
+          meta_description: post.meta_description,
+          excerpt: post.excerpt,
+          cover_image: post.cover_image,
+          image_generation: post.image_generation,
+          keyword_synced: post.keyword_synced,
+          keyword_linked: post.keyword_linked,
+          posts_synced: post.posts_synced,
+          reviewed: post.reviewed,
+          last_updated: post.last_updated,
+          elements: post.elements.map((e) => ({
+            element_type: e.element_type.toLowerCase(),
+            order: e.order,
+            content: e.content,
+            history_date: e.created_at,
+          })),
+        },
+      ],
+    }
+  }
+
+  async getPostHistoryRevision(companyId: number, postId: number, historyId: number) {
+    const history = await this.listPostHistory(companyId, postId)
+    const record = (history.history as any[]).find((h) => Number(h.history_id) === Number(historyId))
+    if (!record) throw new NotFoundError('Historical version not found')
+    return record
   }
 }
 

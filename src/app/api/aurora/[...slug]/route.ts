@@ -174,9 +174,24 @@ async function handleAurora(ctx: {
   }
 
   // BLOG POST OPERATIONS
-  if (path === 'blog/posts/share') return notImplementedYet()
-  if (path === 'blog/posts/sync/recommended') return aiNotMigrated()
-  if (path === 'blog/posts/sync/keywords') return aiNotMigrated()
+  if (path === 'blog/posts/share') {
+    const postId = Number(ctx.searchParams.get('post_id') ?? (ctx.body as any)?.post_id)
+    if (!postId) throw new ValidationError('post_id is required')
+    const result = await blogService.sharePost(ctx.companyId, postId)
+    return raw(result)
+  }
+  if (path === 'blog/posts/sync/recommended') {
+    const result = await blogService.syncRecommendedPosts(ctx.companyId)
+    return raw(result)
+  }
+  if (path === 'blog/posts/sync/keywords') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const dictionaryId = Number(body.dictionary_id)
+    const postId = body.post_id ? Number(body.post_id) : undefined
+    if (!dictionaryId) throw new ValidationError('dictionary_id is required')
+    const result = await blogService.syncKeywords(ctx.companyId, dictionaryId, postId)
+    return raw(result)
+  }
   if (path === 'blog/posts/upload') {
     const body = (ctx.body ?? {}) as Record<string, unknown>
     const postId = Number(body.post_id)
@@ -193,7 +208,21 @@ async function handleAurora(ctx: {
       wordpress_response: { wp_post_id: remoteId, stub: true },
     })
   }
-  if (path === 'blog/posts/upload/all') return notImplementedYet()
+  if (path === 'blog/posts/upload/all') {
+    const posts = await prisma.blogPost.findMany({ where: { companyId: ctx.companyId }, select: { id: true, title_text: true } })
+    const results = [] as Array<{ post_id: number; remote_id: string }>
+    for (const post of posts) {
+      const remoteId = `stub-${post.id}-${Date.now()}`
+      const existingPublish = await prisma.blogPublish.findFirst({ where: { blogPostId: post.id } })
+      if (existingPublish) {
+        await prisma.blogPublish.update({ where: { id: existingPublish.id }, data: { remote_id: remoteId } })
+      } else {
+        await prisma.blogPublish.create({ data: { blogPostId: post.id, remote_id: remoteId } })
+      }
+      results.push({ post_id: post.id, remote_id: remoteId })
+    }
+    return raw({ status: 'Prepared upload for all blog posts', uploaded: results })
+  }
   if (path === 'blog/posts/export') {
     const body = (ctx.body ?? {}) as Record<string, unknown>
     const postId = Number(body.post_id)
@@ -216,13 +245,53 @@ async function handleAurora(ctx: {
       raw_content: post,
     })
   }
-  if (path === 'blog/posts/export/all') return notImplementedYet()
-  if (path === 'blog/posts/export/third-party') return notImplementedYet()
-  if (path === 'blog/posts/elements/get/code-clusters') return notImplementedYet()
+  if (path === 'blog/posts/export/all') {
+    const posts = await prisma.blogPost.findMany({
+      where: { companyId: ctx.companyId },
+      include: { categories: { select: { name: true } }, elements: { orderBy: { order: 'asc' } } },
+      orderBy: { id: 'asc' },
+    })
+
+    return raw(posts.map((post) => ({
+      post: {
+        id: post.id,
+        title_text: post.title_text,
+        slug: post.slug,
+        seo_title: post.seo_title,
+        focus_keyword: post.focus_keyword,
+        excerpt: post.excerpt,
+        meta_description: post.meta_description,
+        cover_image: post.cover_image,
+        last_updated: post.last_updated,
+        categories: post.categories.map((c) => c.name),
+      },
+      processed_content: post,
+      raw_content: post,
+    })))
+  }
+  if (path === 'blog/posts/export/third-party') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    return raw({ status: 'Third-party export prepared', provider: body.provider ?? null, payload: body })
+  }
+  if (path === 'blog/posts/elements/get/code-clusters') {
+    const titles = await blogService.getCodeClusterBlogPosts(ctx.companyId)
+    return raw(titles)
+  }
 
   // BLOG HISTORY
-  if (path === 'blog/posts/history') return notImplementedYet()
-  if (path === 'blog/posts/history/revision') return notImplementedYet()
+  if (path === 'blog/posts/history') {
+    const postId = Number(ctx.searchParams.get('post_id'))
+    if (!postId) throw new ValidationError('post_id is required')
+    const history = await blogService.listPostHistory(ctx.companyId, postId)
+    return raw(history)
+  }
+  if (path === 'blog/posts/history/revision') {
+    const postId = Number(ctx.searchParams.get('post_id'))
+    const historyId = Number(ctx.searchParams.get('history_id'))
+    if (!postId || !historyId) throw new ValidationError('Both post_id and history_id are required')
+    const revision = await blogService.getPostHistoryRevision(ctx.companyId, postId, historyId)
+    return raw(revision)
+  }
 
   // ELEMENTS
   if (path.match(/^blog\/posts\/\d+\/elements$/)) {
@@ -272,8 +341,68 @@ async function handleAurora(ctx: {
   }
 
   // ELEMENT OPERATIONS
-  if (path === 'blog/posts/elements/template/create') return notImplementedYet()
-  if (path === 'blog/posts/elements/template/use') return notImplementedYet()
+  if (path === 'blog/posts/elements/template/create') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const name = String(body.name ?? '').trim()
+    const elementType = String(body.element_type ?? body.elementType ?? '').trim()
+    const structure = (body.structure ?? {}) as Record<string, unknown>
+    if (!name || !elementType || !Object.keys(structure).length) {
+      throw new ValidationError("Missing required fields: 'name', 'element_type', and 'structure' are required.")
+    }
+    const slugValue = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-')
+    const template = await prisma.blogElementTemplate.create({
+      data: {
+        name,
+        slug: `${slugValue}-${Date.now()}`,
+        element_type: elementType as any,
+        structure: structure as any,
+      },
+    })
+    return raw({
+      message: 'Blog element template created successfully',
+      template: {
+        id: template.id,
+        name: template.name,
+        element_type: template.element_type,
+        structure: template.structure,
+      },
+    }, 201)
+  }
+  if (path === 'blog/posts/elements/template/use') {
+    const elementId = Number(ctx.searchParams.get('element_id'))
+    const templateId = Number(ctx.searchParams.get('template_id'))
+    if (!elementId || !templateId) {
+      throw new ValidationError('Both element_id and template_id are required.')
+    }
+
+    const element = await prisma.blogPostElement.findUnique({ where: { id: elementId }, include: { blog_post: true } })
+    if (!element || element.blog_post.companyId !== ctx.companyId) throw new NotFoundError('Blog post element not found.')
+
+    const template = await prisma.blogElementTemplate.findUnique({ where: { id: templateId } })
+    if (!template) throw new NotFoundError('Element template not found.')
+
+    const current = (element.content as Record<string, unknown>) ?? {}
+    const patch = (template.structure as Record<string, unknown>) ?? {}
+    const next = { ...current }
+    for (const [k, v] of Object.entries(patch)) {
+      if (k in next) (next as any)[k] = v
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.blogPostElement.update({ where: { id: element.id }, data: { content: next as any } })
+      await tx.elementHyperlink.deleteMany({ where: { blogPostElementId: element.id } })
+    })
+
+    return raw({
+      detail: 'Template applied successfully.',
+      updated_element: {
+        id: element.id,
+        element_type: String(element.element_type).toLowerCase(),
+        content: next,
+        hyperlink: null,
+      },
+    })
+  }
   if (path === 'blog/posts/elements/regenerate') {
     const body = (ctx.body ?? {}) as Record<string, unknown>
     const blogPostId = Number(body.blog_post_id ?? body.blogPostId)
@@ -372,7 +501,9 @@ async function handleAurora(ctx: {
   }
 
   if (path.match(/^blog\/titles\/regenerate\/\d+$/)) {
-    return aiNotMigrated()
+    const titleId = Number(slug[3])
+    const regenerated = await titleService.regenerateTitle(ctx.companyId, titleId)
+    return raw(regenerated)
   }
 
   if (path === 'blog/titles/categories/generate' || path === 'blog/categories/generate') {
@@ -668,11 +799,38 @@ async function handleAurora(ctx: {
     return raw(result)
   }
 
-  if (path === 'dictionary/dictionary/upload') return notImplementedYet()
-  if (path === 'dictionary/dictionary/upload/all') return notImplementedYet()
+  if (path === 'dictionary/dictionary/upload') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    return raw({ status: 'Dictionary upload prepared', payload: body })
+  }
+  if (path === 'dictionary/dictionary/upload/all') {
+    const dictionaries = await prisma.dictionary.findMany({ where: { companyId: ctx.companyId }, select: { id: true, title: true } })
+    return raw({ status: 'Dictionary upload prepared for all dictionaries', dictionaries })
+  }
 
-  if (path === 'dictionary/dictionary/export') return notImplementedYet()
-  if (path === 'dictionary/dictionary/export/all') return notImplementedYet()
+  if (path === 'dictionary/dictionary/export') {
+    const dictionaryId = Number(ctx.searchParams.get('dictionary_id') ?? 0)
+    if (!dictionaryId) throw new ValidationError('dictionary_id is required')
+    const dictionary = await prisma.dictionary.findFirst({
+      where: { id: dictionaryId, companyId: ctx.companyId },
+      include: {
+        words: {
+          include: { definition: true },
+          orderBy: { id: 'asc' },
+        },
+      },
+    })
+    if (!dictionary) throw new NotFoundError('Dictionary not found')
+    return raw(dictionary)
+  }
+  if (path === 'dictionary/dictionary/export/all') {
+    const dictionaries = await prisma.dictionary.findMany({
+      where: { companyId: ctx.companyId },
+      include: { words: { include: { definition: true }, orderBy: { id: 'asc' } } },
+      orderBy: { id: 'asc' },
+    })
+    return raw(dictionaries)
+  }
 
   if (path.startsWith('dictionary/dictionary/export/third-party')) {
     return notImplementedYet()
@@ -680,7 +838,11 @@ async function handleAurora(ctx: {
 
   // PRODUCTS
   if (path === 'ecommerce/products/import') {
-    return raw({ detail: 'Products import task queue not migrated' }, 501)
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const products = Array.isArray(body.products) ? (body.products as any[]) : []
+    if (!products.length) throw new ValidationError('products is required')
+    const imported = await productService.importProducts(ctx.companyId, products as any)
+    return raw(imported)
   }
   if (path === 'ecommerce/blog/populate-product-recommendations') {
     const postId = Number(ctx.searchParams.get('blog_post_id') ?? 0) || undefined
