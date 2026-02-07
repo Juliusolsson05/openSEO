@@ -1,12 +1,11 @@
 'use client'
 
-import { createPortal } from 'react-dom'
-
 import { useMemo, useState } from 'react'
 import { Search, Eye, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Modal } from '@/components/ui/modal'
 import { GENERATE_ELEMENT_TYPES, type ElementType } from '../types'
 import { getPreviewComponent, getExample } from '../registry'
 
@@ -35,8 +34,6 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, loading }: 
     return GENERATE_ELEMENT_TYPES.filter((t) => t.includes(q) || pretty(t).toLowerCase().includes(q))
   }, [search])
 
-  if (!open) return null
-
   const handleSelect = () => {
     if (selected) {
       onSelect(selected, note || undefined)
@@ -49,10 +46,10 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, loading }: 
   const PreviewComponent = previewType ? getPreviewComponent(previewType) : null
   const previewExample = previewType ? getExample(previewType) : null
 
-  return createPortal(
+  return (
     <>
-      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4" onClick={() => onOpenChange(false)}>
-        <div className="bg-background rounded-sm border border-border w-full max-w-4xl p-5 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <Modal open={open} onClose={() => onOpenChange(false)} zClass="z-[70]">
+        <div className="bg-background rounded-sm border border-border w-full max-w-4xl p-5 max-h-[85vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[16px] font-semibold">Add Element</h2>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onOpenChange(false)}>
@@ -108,11 +105,11 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, loading }: 
             <Button onClick={handleSelect} disabled={!selected || loading}>{loading ? 'Adding...' : 'Add Element'}</Button>
           </div>
         </div>
-      </div>
+      </Modal>
 
       {previewType && PreviewComponent && previewExample && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4" onClick={() => setPreviewType(null)}>
-          <Card className="w-full max-w-3xl border-border rounded-sm" onClick={(e) => e.stopPropagation()}>
+        <Modal open={true} onClose={() => setPreviewType(null)} zClass="z-[80]" overlayClass="bg-black/40">
+          <Card className="w-full max-w-3xl border-border rounded-sm">
             <CardHeader className="flex-row items-center justify-between py-3">
               <CardTitle className="text-[14px]">{pretty(previewType)} Preview</CardTitle>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPreviewType(null)}>
@@ -123,9 +120,8 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, loading }: 
               <PreviewComponent content={previewExample as any} />
             </CardContent>
           </Card>
-        </div>
+        </Modal>
       )}
-    </>,
-    document.body
+    </>
   )
 }

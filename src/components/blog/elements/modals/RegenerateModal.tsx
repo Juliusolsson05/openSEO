@@ -1,10 +1,9 @@
 'use client'
 
-import { createPortal } from 'react-dom'
-
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Modal } from '@/components/ui/modal'
 import { GENERATE_ELEMENT_TYPES } from '../types'
 
 interface Props {
@@ -24,12 +23,10 @@ export function RegenerateModal({ open, onOpenChange, onRegenerate, loading }: P
   const [newType, setNewType] = useState('')
   const [newCount, setNewCount] = useState(1)
 
-  if (!open) return null
-
   const canSubmit = createNew ? newType !== '' && newCount > 0 : true
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+  return (
+    <Modal open={open} onClose={() => onOpenChange(false)}>
       <div className="bg-background rounded-lg shadow-lg w-full max-w-md p-6">
         <h2 className="text-lg font-semibold mb-4">Regenerate Content</h2>
 
@@ -84,7 +81,6 @@ export function RegenerateModal({ open, onOpenChange, onRegenerate, loading }: P
           </Button>
         </div>
       </div>
-    </div>,
-    document.body
+    </Modal>
   )
 }
