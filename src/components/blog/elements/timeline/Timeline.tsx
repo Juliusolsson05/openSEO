@@ -134,17 +134,22 @@ export function Timeline({ content, blogId, elementId, onContentUpdated, onEleme
           onClick={() => isEditModeEnabled && startEditing(elementId)}
         >
           {viewContent.title ? <h3 className="mb-4 text-[22px] font-semibold leading-tight tracking-tight text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(viewContent.title) }} /> : null}
-          {viewContent.text_before ? <p className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_before) }} /> : null}
-          <div className="space-y-4">
+          {viewContent.text_before ? <p className="mt-3 mb-6 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_before) }} /> : null}
+          <div className="relative ml-4 border-l-2 border-primary/30 pl-8 space-y-8">
             {viewEvents.map((event, index) => (
-              <div key={index} className="rounded-lg border border-border bg-card p-5">
-                <div className="text-[13px] text-muted-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(event.date ?? '') }} />
-                <h4 className="text-[17px] font-semibold text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(event.title ?? '') }} />
-                <div className="text-[16px] font-light leading-[1.7] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(event.description ?? '') }} />
+              <div key={index} className="relative">
+                {/* Dot on the timeline */}
+                <div className="absolute -left-[41px] top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-primary bg-card">
+                  <div className="h-2 w-2 rounded-full bg-primary" />
+                </div>
+                {/* Date badge */}
+                <div className="mb-1.5 inline-block rounded-full bg-primary/10 px-3 py-0.5 text-[12px] font-semibold text-primary" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(event.date ?? '') }} />
+                <h4 className="text-[17px] font-semibold leading-snug text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(event.title ?? '') }} />
+                <div className="mt-1.5 text-[16px] font-light leading-[1.7] text-muted-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(event.description ?? '') }} />
               </div>
             ))}
           </div>
-          {viewContent.text_after ? <p className="mt-3 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_after) }} /> : null}
+          {viewContent.text_after ? <p className="mt-6 text-[17px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_after) }} /> : null}
         </div>
       )}
     </BaseElement>
