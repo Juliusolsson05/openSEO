@@ -27,6 +27,8 @@ interface Props {
   isGenerating: boolean
   onStockSelect: (url: string) => void
   onUploadSelect: (file: File) => void
+  currentImageUrl: string | null
+  onOpenPhotopea: () => void
 }
 
 export function ImageControlPanel(props: Props) {
@@ -35,6 +37,7 @@ export function ImageControlPanel(props: Props) {
     { key: 'gpt-image', label: 'GPT Image' },
     { key: 'stock', label: 'Stock Photos' },
     { key: 'upload', label: 'Upload' },
+    { key: 'photopea', label: 'Photopea' },
   ]
 
   return (
@@ -82,6 +85,21 @@ export function ImageControlPanel(props: Props) {
 
       {props.provider === 'stock' ? <StockPhotoControls onSelect={props.onStockSelect} initialQuery={props.postTitle} /> : null}
       {props.provider === 'upload' ? <UploadControls onSelect={props.onUploadSelect} /> : null}
+      {props.provider === 'photopea' ? (
+        <div className="rounded border border-border bg-muted/20 p-3">
+          <p className="mb-2 text-sm font-medium">Edit with Photopea</p>
+          <p className="mb-3 text-xs text-muted-foreground">Edit your image with a full Photoshop-like editor.</p>
+          {props.currentImageUrl ? <img src={props.currentImageUrl} alt="Current image" className="mb-3 h-20 w-20 rounded border border-border object-cover" /> : null}
+          <button
+            type="button"
+            onClick={props.onOpenPhotopea}
+            disabled={!props.currentImageUrl}
+            className="rounded bg-primary px-3 py-1 text-sm text-white disabled:opacity-60"
+          >
+            Open in Editor
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }

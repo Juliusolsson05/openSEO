@@ -6,6 +6,7 @@ import { regenerateBlogImage, uploadBlogPostImage, useStockPhoto } from '@/lib/b
 import { ImageControlPanel } from './ImageControlPanel'
 import { ImagePreviewPanel } from './ImagePreviewPanel'
 import { ImageHistory } from './ImageHistory'
+import { PhotopeaEditor } from './PhotopeaEditor'
 import type { HistoryEntry, ImageStudioProvider } from './types'
 
 interface Props {
@@ -40,14 +41,17 @@ export function ImageStudio({
   const [history, setHistory] = useState<HistoryEntry[]>(currentUrl ? [{ url: currentUrl, provider: 'ideogram', timestamp: Date.now() }] : [])
   const [isGenerating, setIsGenerating] = useState(false)
   const [isApplying, setIsApplying] = useState(false)
+  const [photopeaOpen, setPhotopeaOpen] = useState(false)
 
   const providerLabel = useMemo(() => provider, [provider])
+  const editableImageUrl = selectedUrl ?? currentUrl ?? null
 
   useEffect(() => {
     if (!open) return
     setPrompt(currentDescription)
     setSelectedUrl(currentUrl ?? null)
     setHistory(currentUrl ? [{ url: currentUrl, provider: 'ideogram', timestamp: Date.now() }] : [])
+    setPhotopeaOpen(false)
   }, [open, currentDescription, currentUrl])
 
   const addToHistory = (url: string, source: ImageStudioProvider) => {
@@ -100,43 +104,68 @@ export function ImageStudio({
   }
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <div className="w-[min(1100px,95vw)] max-h-[85vh] overflow-hidden rounded-lg border border-border bg-background p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Image Studio</h2>
-          <button onClick={onClose} className="rounded border border-border px-2 py-1 text-sm">✕</button>
-        </div>
-
-        <div className="grid h-[60vh] grid-cols-1 gap-4 md:grid-cols-[55%_45%]">
-          <ImagePreviewPanel imageUrl={selectedUrl} provider={providerLabel} isGenerating={isGenerating} />
-          <div className="overflow-y-auto pr-1">
-            <ImageControlPanel
-              provider={provider}
-              setProvider={setProvider}
-              prompt={prompt}
-              setPrompt={setPrompt}
-              postTitle={postTitle}
-              currentDescription={currentDescription}
-              ideogramQuality={ideogramQuality}
-              setIdeogramQuality={setIdeogramQuality}
-              magicPrompt={magicPrompt}
-              setMagicPrompt={setMagicPrompt}
-              gptQuality={gptQuality}
-              setGptQuality={setGptQuality}
-              gptSize={gptSize}
-              setGptSize={setGptSize}
-              gptBackground={gptBackground}
-              setGptBackground={setGptBackground}
-              onGenerate={onGenerate}
-              isGenerating={isGenerating}
-              onStockSelect={onStockSelect}
-              onUploadSelect={onUploadSelect}
-            />
+    <>
+      <Modal open={open} onClose={onClose}>
+        <div className="w-[min(1100px,95vw)] max-h-[85vh] overflow-hidden rounded-lg border border-border bg-background p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Image Studio</h2>
+            <div className="flex items-center gap-2">
+              {editableImageUrl ? (
+                <button onClick={() => setPhotopeaOpen(true)} className="rounded border border-border px-2 py-1 text-sm">
+                  ✏️ Edit in Photopea
+                </button>
+              ) : null}
+              <button onClick={onClose} className="rounded border border-border px-2 py-1 text-sm">✕</button>
+            </div>
           </div>
-        </div>
 
-        <ImageHistory items={history} activeUrl={selectedUrl} onSelect={setSelectedUrl} onApply={onApply} onCancel={onClose} applying={isApplying} />
-      </div>
-    </Modal>
+          <div className="grid h-[60vh] grid-cols-1 gap-4 md:grid-cols-[55%_45%]">
+            <ImagePreviewPanel imageUrl={selectedUrl} provider={providerLabel} isGenerating={isGenerating} />
+            <div className="overflow-y-auto pr-1">
+              <ImageControlPanel
+                provider={provider}
+                setProvider={setProvider}
+                prompt={prompt}
+                setPrompt={setPrompt}
+                postTitle={postTitle}
+                currentDescription={currentDescription}
+                ideogramQuality={ideogramQuality}
+                setIdeogramQuality={setIdeogramQuality}
+                magicPrompt={magicPrompt}
+                setMagicPrompt={setMagicPrompt}
+                gptQuality={gptQuality}
+                setGptQuality={setGptQuality}
+                gptSize={gptSize}
+                setGptSize={setGptSize}
+                gptBackground={gptBackground}
+                setGptBackground={setGptBackground}
+                onGenerate={onGenerate}
+                isGenerating={isGenerating}
+                onStockSelect={onStockSelect}
+                onUploadSelect={onUploadSelect}
+                currentImageUrl={editableImageUrl}
+                onOpenPhotopea={() => setPhotopeaOpen(true)}
+              />
+            </div>
+          </div>
+
+          <ImageHistory items={history} activeUrl={selectedUrl} onSelect={setSelectedUrl} onApply={onApply} onCancel={onClose} applying={isApplying} />
+        </div>
+      </Modal>
+
+      {editableImageUrl ? (
+        <PhotopeaEditor
+          open={photopeaOpen}
+          onClose={() => setPhotopeaOpen(false)}
+          imageUrl={editableImageUrl}
+          blogId={blogId}
+          imageNumber={imageNumber}
+          onSaved={(newUrl) => {
+            addToHistory(newUrl, 'photopea')
+            setPhotopeaOpen(false)
+          }}
+        />
+      ) : null}
+    </>
   )
 }
