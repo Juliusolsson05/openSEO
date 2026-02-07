@@ -1,9 +1,12 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
+import { useElementsStore } from '@/stores/elements-store'
+import { useAutoSave } from '@/hooks/use-auto-save'
+import { InlineRichText, InlineText, SaveIndicator, useInlineEdit } from '../inline'
 
 type HyperlinkMatch = {
   keyword: string
@@ -18,6 +21,11 @@ interface ParagraphProps extends ElementComponentProps {
       text?: HyperlinkMatch[]
     }
   } | null
+}
+
+type ParagraphContent = {
+  title?: string
+  text?: string
 }
 
 const createHyperlinkedText = (text: string, keywords: HyperlinkMatch[]): string => {
@@ -63,16 +71,37 @@ export function Paragraph({
   onElementAdded,
   hyperlink,
 }: ParagraphProps) {
+  const [localContent, setLocalContent] = useState<ParagraphContent>((content ?? {}) as ParagraphContent)
+  const updateElement = useElementsStore((s) => s.updateElement)
+  const { isEditing, startEditing } = useInlineEdit()
+  const editing = isEditing(elementId)
+
+  useEffect(() => {
+    setLocalContent((content ?? {}) as ParagraphContent)
+  }, [content])
+
+  const { save, flush, status } = useAutoSave(async (next) => {
+    const result = await updateElement(elementId, next, blogId)
+    if (result.success) onContentUpdated?.(next)
+    return result.success
+  })
+
+  const handleContentChange = (key: keyof ParagraphContent, value: string) => {
+    const next = { ...localContent, [key]: value }
+    setLocalContent(next)
+    void save(next)
+  }
+
   const formattedTitle = useMemo(() => {
-    const title = content?.title ?? ''
+    const title = localContent?.title ?? ''
     if (hyperlink?.matched_keywords?.title?.length) {
       return renderMarkdownInline(createHyperlinkedText(title, hyperlink.matched_keywords.title))
     }
     return renderMarkdownInline(title)
-  }, [content?.title, hyperlink?.matched_keywords?.title])
+  }, [localContent?.title, hyperlink?.matched_keywords?.title])
 
   const formattedText = useMemo(() => {
-    let text = content?.text ?? ''
+    let text = localContent?.text ?? ''
     text = text.replace(/(<br\s*\/?>)(?!<br\s*\/?>)/g, '<br/><br/>')
     text = text.replace(/(<br\s*\/?>){3,}/g, '<br/><br/>')
 
@@ -81,25 +110,56 @@ export function Paragraph({
     }
 
     return renderMarkdown(text)
-  }, [content?.text, hyperlink?.matched_keywords?.text])
+  }, [localContent?.text, hyperlink?.matched_keywords?.text])
 
   return (
     <BaseElement
-      content={content}
+      content={localContent}
       blogId={blogId}
       elementId={elementId}
+      allowEdit={false}
       onContentUpdated={onContentUpdated}
       onElementDeleted={onElementDeleted}
       onElementAdded={onElementAdded}
     >
-      <h3
-        className="mb-3 text-2xl font-semibold custom-content"
-        dangerouslySetInnerHTML={{ __html: formattedTitle }}
-      />
-      <p
-        className="my-[15px] text-[1.125rem] font-light leading-[1.77778] text-foreground custom-content"
-        dangerouslySetInnerHTML={{ __html: formattedText }}
-      />
+      <div className="space-y-2">
+        {editing ? (
+          <>
+            <InlineText
+              elementId={elementId}
+              value={localContent.title ?? ''}
+              onChange={(value) => handleContentChange('title', value)}
+              onBlur={() => void flush()}
+              as="h3"
+              className="mb-3 text-2xl font-semibold custom-content"
+              placeholder="Paragraph title"
+            />
+            <InlineRichText
+              elementId={elementId}
+              value={localContent.text ?? ''}
+              onChange={(value) => handleContentChange('text', value)}
+              onBlur={() => void flush()}
+              className="my-[15px] text-[1.125rem] font-light leading-[1.77778] text-foreground custom-content"
+              placeholder="Write your paragraph..."
+            />
+          </>
+        ) : (
+          <>
+            <h3
+              className="mb-3 text-2xl font-semibold custom-content cursor-text"
+              onClick={() => startEditing(elementId)}
+              dangerouslySetInnerHTML={{ __html: formattedTitle }}
+            />
+            <p
+              className="my-[15px] text-[1.125rem] font-light leading-[1.77778] text-foreground custom-content cursor-text"
+              onClick={() => startEditing(elementId)}
+              dangerouslySetInnerHTML={{ __html: formattedText }}
+            />
+          </>
+        )}
+
+        <SaveIndicator status={status} />
+      </div>
     </BaseElement>
   )
 }

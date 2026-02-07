@@ -22,6 +22,7 @@ import {
 
 import '@/components/blog/elements'
 import { ElementRenderer } from '@/components/blog/elements/ElementRenderer'
+import { InlineEditProvider } from '@/components/blog/elements/inline'
 import QuilloChat from '@/components/blog/QuilloChat'
 import QuilloAutopilot from '@/components/blog/QuilloAutopilot'
 import { ImageStudio } from '@/components/blog/ImageStudio'
@@ -121,11 +122,13 @@ export default function BlogPostPage() {
                 </Button>
               )}
 
-              <div className="space-y-2">
-                {post.elements.map((element) => (
-                  <ElementRenderer key={element.id} element={element} blogId={post.id} editable={true} />
-                ))}
-              </div>
+              <InlineEditProvider>
+                <div className="space-y-2">
+                  {post.elements.map((element) => (
+                    <ElementRenderer key={element.id} element={element} blogId={post.id} editable={true} />
+                  ))}
+                </div>
+              </InlineEditProvider>
 
               <RelatedPosts posts={post.linked_posts ?? []} variant="grid" />
 
