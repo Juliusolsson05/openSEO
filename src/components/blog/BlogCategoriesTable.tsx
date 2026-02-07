@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 
@@ -38,12 +39,12 @@ function CategoryFormModal({
   onChange,
   onSubmit,
 }: CategoryFormModalProps) {
-  if (!open) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded border border-border bg-white p-4 shadow-none">
-        <h3 className="text-[13px] font-semibold text-foreground">{title}</h3>
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="w-full max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-[13px]">{title}</DialogTitle>
+        </DialogHeader>
         <div className="mt-3">
           <Label className="mb-1 block text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Category name</Label>
           <Input
@@ -52,7 +53,7 @@ function CategoryFormModal({
             className="h-8 rounded-sm border-border text-[13px]"
           />
         </div>
-        <div className="mt-4 flex justify-end gap-2">
+        <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={loading} className="h-8 rounded-sm text-[12px]">
             Cancel
           </Button>
@@ -63,9 +64,9 @@ function CategoryFormModal({
           >
             {loading ? 'Saving...' : submitLabel}
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

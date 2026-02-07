@@ -225,9 +225,6 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
     setDeleteConfirmationText('')
   }
 
-  const modalShell = 'fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4'
-  const modalCard = 'w-full max-w-xl rounded border border-border bg-white p-4 text-[13px]'
-
   return (
     <Card className="mb-4 rounded border-border bg-white">
       <CardHeader>

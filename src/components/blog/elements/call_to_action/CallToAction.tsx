@@ -5,6 +5,7 @@ import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
 import { renderMarkdownInline } from '@/lib/markdown'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 type CallToActionContent = {
   image_url?: string
@@ -52,20 +53,20 @@ export function CallToAction({ content, blogId, elementId, onContentUpdated, onE
           />
         ) : null}
 
-        {openModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-[500px] rounded-lg bg-background p-6 shadow-lg">
-              <h3 className="mb-3 text-lg font-semibold">Call to Action</h3>
-              <p className="mb-6 text-sm text-foreground">
-                <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline('This Call to Action leads to ') }} />
-                <strong dangerouslySetInnerHTML={{ __html: renderMarkdownInline(parsedContent.target_url || '') }} />
-              </p>
-              <div className="flex justify-end">
-                <Button onClick={() => setOpenModal(false)}>Close</Button>
-              </div>
-            </div>
-          </div>
-        )}
+        <Dialog open={openModal} onOpenChange={setOpenModal}>
+          <DialogContent className="w-full max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Call to Action</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-foreground">
+              <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline('This Call to Action leads to ') }} />
+              <strong dangerouslySetInnerHTML={{ __html: renderMarkdownInline(parsedContent.target_url || '') }} />
+            </p>
+            <DialogFooter>
+              <Button onClick={() => setOpenModal(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </>
     </BaseElement>
   )
