@@ -31,7 +31,7 @@ export default function RelatedPosts({ posts, variant }: RelatedPostsProps) {
             <Link
               key={linked.id}
               href={`/blog/${linked.id}`}
-              className="group flex items-center gap-2.5 rounded-[4px] border border-border p-2 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-sm"
+              className="group flex items-center gap-2.5 rounded border border-border p-2 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-sm"
             >
               {linked.cover_image?.url ? (
                 <img
