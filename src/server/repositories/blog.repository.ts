@@ -87,10 +87,18 @@ function buildOrderBy(sort: ListBlogPostsFilters['sort']): Prisma.BlogPostOrderB
   }
 }
 
-function withIsPublished<T extends { publishes: Array<{ remote_id: string | null }> }>(post: T) {
+function withIsPublished<T extends { publishes: Array<{ remote_id: string | null }>; post_linking_from?: Array<{ toBlogPost: { id: number; title_text: string; excerpt: string | null; cover_image: unknown } }> }>(post: T) {
+  const linked_posts = (post.post_linking_from ?? []).map((link) => ({
+    id: link.toBlogPost.id,
+    title_text: link.toBlogPost.title_text,
+    excerpt: link.toBlogPost.excerpt ?? '',
+    cover_image: link.toBlogPost.cover_image ?? { url: '', description: '' },
+  }))
+
   return {
     ...post,
     is_published: post.publishes.some((publish) => publish.remote_id !== null),
+    linked_posts,
   }
 }
 
