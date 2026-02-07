@@ -126,4 +126,18 @@
   .stagger > *:nth-child(6) { animation-delay: 200ms; }
   .stagger > *:nth-child(7) { animation-delay: 240ms; }
   .stagger > *:nth-child(8) { animation-delay: 280ms; }
+
+  /* Keyword hyperlinks injected by createHyperlinkedText */
+  a.hyperlink {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-decoration-color: var(--color-primary);
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+    transition: color 0.15s, text-decoration-color 0.15s;
+  }
+  a.hyperlink:hover {
+    color: var(--color-primary-hover);
+    text-decoration-color: var(--color-primary-hover);
+  }
 }
