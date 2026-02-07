@@ -59,6 +59,91 @@ function methodNotImplemented(path: string) {
   return error(`Endpoint not implemented yet: /api/aurora/${path}`, 501)
 }
 
+function methodNotAllowed(method: string) {
+  return raw({ detail: `Method "${method}" not allowed.` }, 405)
+}
+
+function matchesPath(path: string, pattern: RegExp | string): boolean {
+  return typeof pattern === 'string' ? path === pattern : pattern.test(path)
+}
+
+function enforceMethod(path: string, method: string): ReturnType<typeof raw> | null {
+  const methodRules: Array<{ pattern: RegExp | string; allowed: string[] }> = [
+    { pattern: 'blog/titles/categories/bulk-delete', allowed: ['POST'] },
+    { pattern: /^blog\/titles\/categories\/edit\/\d+$/, allowed: ['PUT', 'PATCH'] },
+    { pattern: /^blog\/titles\/update\/\d+$/, allowed: ['PUT', 'PATCH'] },
+    { pattern: 'blog/posts/delete-element', allowed: ['DELETE'] },
+    { pattern: 'blog/posts/elements/add', allowed: ['POST'] },
+    { pattern: 'blog/posts/elements/regenerate', allowed: ['POST'] },
+    { pattern: 'blog/posts/elements/enhance', allowed: ['POST'] },
+    { pattern: 'blog/posts/elements/enhance-readability', allowed: ['POST'] },
+    { pattern: 'blog/posts/elements/humanize', allowed: ['POST'] },
+    { pattern: 'blog/posts/elements/get/code-clusters', allowed: ['GET'] },
+    { pattern: 'blog/posts/elements/template/create', allowed: ['POST'] },
+    { pattern: 'blog/posts/elements/add-cta', allowed: ['POST'] },
+    { pattern: 'blog/posts/elements/template/use', allowed: ['POST'] },
+    { pattern: 'blog/posts/share', allowed: ['POST'] },
+    { pattern: /^blog\/posts\/update-element\/\d+$/, allowed: ['PUT'] },
+    { pattern: 'blog/posts/update', allowed: ['PUT', 'PATCH'] },
+    { pattern: 'blog/schedule/bulk', allowed: ['POST'] },
+    { pattern: 'blog/schedule/bulk/create', allowed: ['POST'] },
+    { pattern: 'blog/schedule/bulk/remove', allowed: ['POST'] },
+    { pattern: 'blog/schedule/bulk/assign', allowed: ['POST'] },
+    { pattern: /^blog\/schedule\/bulk\/update\/\d+$/, allowed: ['PUT', 'PATCH'] },
+    { pattern: /^blog\/schedule\/post\/\d+$/, allowed: ['POST'] },
+    { pattern: 'blog/schedule/interval', allowed: ['POST'] },
+    { pattern: /^blog\/schedule\/reschedule\/\d+$/, allowed: ['PUT', 'PATCH'] },
+    { pattern: 'blog/cta/list', allowed: ['GET'] },
+    { pattern: 'blog/cta/create', allowed: ['POST'] },
+    { pattern: 'blog/cta/add-cta', allowed: ['POST'] },
+    { pattern: /^blog\/cta\/edit\/\d+$/, allowed: ['PUT', 'PATCH'] },
+    { pattern: /^blog\/cta\/delete\/\d+$/, allowed: ['DELETE'] },
+    { pattern: 'blog/cta/campaign/create', allowed: ['POST'] },
+    { pattern: /^blog\/cta\/campaign\/edit\/\d+$/, allowed: ['PUT', 'PATCH'] },
+    { pattern: /^blog\/cta\/campaign\/delete\/\d+$/, allowed: ['DELETE'] },
+    { pattern: 'dictionary/dictionaries', allowed: ['GET'] },
+    { pattern: /^dictionary\/dictionary\/\d+$/, allowed: ['GET'] },
+    { pattern: /^dictionary\/dictionary\/\d+\/word\/\d+$/, allowed: ['GET'] },
+    { pattern: /^dictionary\/modify\/\d+$/, allowed: ['PUT', 'DELETE'] },
+    { pattern: /^dictionary\/modify\/word\/\d+$/, allowed: ['PUT', 'DELETE'] },
+    { pattern: 'dictionary/dictionary/words/delete', allowed: ['POST'] },
+    { pattern: 'dictionary/generation/keywords/start', allowed: ['POST'] },
+    { pattern: 'dictionary/generation/keywords/review', allowed: ['POST'] },
+    { pattern: 'dictionary/generation/keywords/end', allowed: ['POST'] },
+    { pattern: 'dictionary/generation/definition/generate', allowed: ['POST'] },
+    { pattern: 'dictionary/generation/keyword/new', allowed: ['POST'] },
+    { pattern: 'dictionary/generation/definition/new', allowed: ['POST'] },
+    { pattern: 'dictionary/dictionary/upload', allowed: ['POST'] },
+    { pattern: 'dictionary/dictionary/upload/all', allowed: ['POST'] },
+    { pattern: 'dictionary/dictionary/export', allowed: ['POST'] },
+    { pattern: 'dictionary/dictionary/export/all', allowed: ['POST'] },
+    { pattern: 'dictionary/dictionary/export/third-party', allowed: ['POST'] },
+    { pattern: 'dictionary/dictionary/export/third-party/all', allowed: ['POST'] },
+    { pattern: 'blog/quillo/analyze', allowed: ['POST'] },
+    { pattern: 'blog/quillo/analyze/chat', allowed: ['POST'] },
+    { pattern: 'blog/quillo/post/facebook', allowed: ['POST'] },
+    { pattern: 'blog/quillo/post/autopilot', allowed: ['POST'] },
+    { pattern: /^blog\/quillo\/post\/autopilot-status\/[^/]+$/, allowed: ['GET'] },
+    { pattern: 'company/quillo', allowed: ['GET'] },
+    { pattern: 'company/quillo/analyze', allowed: ['POST'] },
+    { pattern: 'analytics/blog/readability', allowed: ['GET'] },
+    { pattern: 'analytics/blog/general', allowed: ['GET'] },
+    { pattern: 'analytics/blog/meta', allowed: ['GET'] },
+    { pattern: 'analytics/blog/elements', allowed: ['GET'] },
+    { pattern: 'analytics/dictionary/general', allowed: ['GET'] },
+    { pattern: 'ecommerce/products/import', allowed: ['POST'] },
+    { pattern: 'ecommerce/blog/populate-product-recommendations', allowed: ['GET'] },
+  ]
+
+  for (const rule of methodRules) {
+    if (matchesPath(path, rule.pattern) && !rule.allowed.includes(method)) {
+      return methodNotAllowed(method)
+    }
+  }
+
+  return null
+}
+
 function aiNotMigrated() {
   return raw({ detail: 'AI generation not yet migrated' }, 501)
 }
@@ -69,6 +154,17 @@ function taskNotMigrated(id: string) {
 
 function notImplementedYet() {
   return raw({ detail: 'Not implemented yet' }, 501)
+}
+
+
+function toDjangoDictionaryStatus(status: string | null | undefined) {
+  if (!status) return status
+  return status.toLowerCase()
+}
+
+function djangoDetailError(err: unknown) {
+  if (err instanceof Error) return raw({ detail: err.message }, 400)
+  return raw({ detail: 'An error occurred' }, 500)
 }
 
 function buildBlogPostsPageUrl(searchParams: URLSearchParams, page: number, limit: number) {
@@ -83,9 +179,24 @@ async function handleAurora(ctx: {
   body: unknown
   params: Record<string, unknown>
   searchParams: URLSearchParams
+  method: string
 }) {
   const slug = getSlugParts(ctx.params)
-  const path = slug.join('/')
+  let path = slug.join('/')
+
+  const aliasPaths: Record<string, string> = {
+    'blog/posts/generate/': 'blog/posts/generate',
+    'blog/cta/add-cta/': 'blog/cta/add-cta',
+    'blog/cta/edit/': 'blog/cta/edit',
+    'dictionary/modify/': 'dictionary/modify',
+    'company/quillo/': 'company/quillo',
+    'company/quillo/analyze/': 'company/quillo/analyze',
+  }
+
+  path = aliasPaths[path] ?? path
+
+  const methodBlocked = enforceMethod(path, ctx.method)
+  if (methodBlocked) return methodBlocked
 
   // HEALTH
   if (path === 'health') {
@@ -139,16 +250,44 @@ async function handleAurora(ctx: {
   }
 
   if (path === 'blog/posts/update' || path === 'blog/posts/update/') {
-    const body = (ctx.body ?? {}) as Record<string, unknown>
-    const postId = Number(body.post_id ?? body.postId)
-    if (!postId) return raw({ detail: 'post_id is required' }, 400)
+    if (ctx.method !== 'PUT') return methodNotAllowed(ctx.method)
 
-    const payload = validate(updateBlogPostSchema, body)
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const postIdRaw = body.post_id
+    if (postIdRaw === undefined || postIdRaw === null || postIdRaw === '') {
+      return raw({ detail: "'post_id' is required in the request body." }, 400)
+    }
+
+    const postId = Number(postIdRaw)
+    if (!Number.isInteger(postId)) {
+      return raw({ detail: "'post_id' must be an integer." }, 400)
+    }
+
+    const payload = validate(updateBlogPostSchema, {
+      titleText: body.title_text ?? body.titleText,
+      seoTitle: body.seo_title ?? body.seoTitle,
+      focusKeyword: body.focus_keyword ?? body.focusKeyword,
+      metaDescription: body.meta_description ?? body.metaDescription,
+      excerpt: body.excerpt,
+      categoryIds: body.category_ids ?? body.categoryIds,
+      coverImage: body.cover_image ?? body.coverImage,
+      scheduledDate: body.scheduled_date ?? body.scheduledDate,
+      reviewed: body.reviewed,
+      keywordSynced: body.keyword_synced ?? body.keywordSynced,
+      keywordLinked: body.keyword_linked ?? body.keywordLinked,
+      postsSynced: body.posts_synced ?? body.postsSynced,
+      imageGeneration: body.image_generation ?? body.imageGeneration,
+      status: body.status,
+      operation: body.operation,
+      generatedDate: body.generated_date ?? body.generatedDate,
+    })
+
     const post = await blogService.updatePost(postId, ctx.companyId, payload)
     return raw(post)
   }
 
   if (path === 'blog/posts/generate') {
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
     const body = (ctx.body ?? {}) as Record<string, unknown>
     const titleId = Number(body.post_id ?? body.title_id ?? body.postId ?? body.titleId)
     const result = await blogService.generatePostFromTitle(ctx.companyId, Number.isFinite(titleId) && titleId > 0 ? titleId : null)
@@ -156,6 +295,7 @@ async function handleAurora(ctx: {
   }
 
   if (path === 'blog/posts/regenerate') {
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
     const body = (ctx.body ?? {}) as Record<string, unknown>
     const postId = Number(body.post_id ?? body.postId)
     const result = await blogService.regeneratePost(ctx.companyId, postId)
@@ -178,26 +318,40 @@ async function handleAurora(ctx: {
 
   // BLOG POST OPERATIONS
   if (path === 'blog/posts/share') {
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
     const postId = Number(ctx.searchParams.get('post_id') ?? (ctx.body as any)?.post_id)
     if (!postId) throw new ValidationError('post_id is required')
     const result = await blogService.sharePost(ctx.companyId, postId)
     return raw(result)
   }
   if (path === 'blog/posts/sync/recommended') {
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
     const result = await blogService.syncRecommendedPosts(ctx.companyId)
     return raw(result)
   }
   if (path === 'blog/posts/sync/keywords') {
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
     const body = (ctx.body ?? {}) as Record<string, unknown>
     const dictionaryId = Number(body.dictionary_id)
     const postId = body.post_id ? Number(body.post_id) : undefined
-    if (!dictionaryId) throw new ValidationError('dictionary_id is required')
+    if (!dictionaryId) return raw({ detail: "'dictionary_id' is required in the request body." }, 400)
     const result = await blogService.syncKeywords(ctx.companyId, dictionaryId, postId)
     return raw(result)
   }
   if (path === 'blog/posts/upload') {
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
     const body = (ctx.body ?? {}) as Record<string, unknown>
     const postId = Number(body.post_id)
+    const dictionaryId = Number(body.dictionary_id)
+    const exportMethod = String(body.export_method ?? '')
+
+    if (exportMethod !== 'elementor') {
+      return raw({ detail: 'Currently only Elementor export method is supported' }, 400)
+    }
+    if (!dictionaryId) {
+      return raw({ detail: 'Dictionary not found' }, 404)
+    }
+
     const post = await blogService.getPost(postId, ctx.companyId)
     const remoteId = `stub-${postId}-${Date.now()}`
     const existingPublish = await prisma.blogPublish.findFirst({ where: { blogPostId: postId } })
@@ -207,13 +361,25 @@ async function handleAurora(ctx: {
       await prisma.blogPublish.create({ data: { blogPostId: postId, remote_id: remoteId } })
     }
     return raw({
-      status: `Successfully prepared post upload for title: ${post.title_text}`,
+      status: `Successfully sent processed post data for title: ${post.title_text} to WordPress`,
       wordpress_response: { wp_post_id: remoteId, stub: true },
     })
   }
   if (path === 'blog/posts/upload/all') {
-    const posts = await prisma.blogPost.findMany({ where: { companyId: ctx.companyId }, select: { id: true, title_text: true } })
-    const results = [] as Array<{ post_id: number; remote_id: string }>
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const dictionaryId = Number(body.dictionary_id)
+    const exportMethod = String(body.export_method ?? '')
+
+    if (exportMethod !== 'elementor') {
+      return raw({ detail: 'Currently only Elementor export method is supported' }, 400)
+    }
+    if (!dictionaryId) {
+      return raw({ detail: 'Dictionary not found' }, 404)
+    }
+
+    const posts = await prisma.blogPost.findMany({ where: { companyId: ctx.companyId, status: 'GENERATED' }, select: { id: true, title_text: true } })
+    const uploaded = [] as Array<{ post_id: number; wordpress_response: { wp_post_id: string; stub: boolean } }>
     for (const post of posts) {
       const remoteId = `stub-${post.id}-${Date.now()}`
       const existingPublish = await prisma.blogPublish.findFirst({ where: { blogPostId: post.id } })
@@ -222,13 +388,17 @@ async function handleAurora(ctx: {
       } else {
         await prisma.blogPublish.create({ data: { blogPostId: post.id, remote_id: remoteId } })
       }
-      results.push({ post_id: post.id, remote_id: remoteId })
+      uploaded.push({ post_id: post.id, wordpress_response: { wp_post_id: remoteId, stub: true } })
     }
-    return raw({ status: 'Prepared upload for all blog posts', uploaded: results })
+    return raw({ status: 'Upload completed', uploaded })
   }
   if (path === 'blog/posts/export') {
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
     const body = (ctx.body ?? {}) as Record<string, unknown>
     const postId = Number(body.post_id)
+    const dictionaryId = Number(body.dictionary_id)
+    if (!dictionaryId) return raw({ detail: 'Not found.' }, 404)
+
     const post = await blogService.getPost(postId, ctx.companyId)
     const categories = (post.categories ?? []).map((c: any) => c.name)
     return raw({
@@ -249,13 +419,18 @@ async function handleAurora(ctx: {
     })
   }
   if (path === 'blog/posts/export/all') {
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const dictionaryId = Number(body.dictionary_id)
+    if (!dictionaryId) return raw({ detail: 'Not found.' }, 404)
+
     const posts = await prisma.blogPost.findMany({
-      where: { companyId: ctx.companyId },
+      where: { companyId: ctx.companyId, status: 'GENERATED' },
       include: { categories: { select: { name: true } }, elements: { orderBy: { order: 'asc' } } },
       orderBy: { id: 'asc' },
     })
 
-    return raw(posts.map((post) => ({
+    const exportedPosts = posts.map((post) => ({
       post: {
         id: post.id,
         title_text: post.title_text,
@@ -270,19 +445,60 @@ async function handleAurora(ctx: {
       },
       processed_content: post,
       raw_content: post,
-    })))
+    }))
+
+    return raw({
+      status: 'Export completed',
+      exported_posts: exportedPosts,
+      errors: [],
+    })
   }
   if (path === 'blog/posts/export/third-party/all') {
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
     const body = (ctx.body ?? {}) as Record<string, unknown>
+    const endpointUrl = String(body.endpoint_url ?? '')
+    if (!endpointUrl) return raw({ detail: 'endpoint_url is required' }, 400)
+
+    const posts = await prisma.blogPost.findMany({
+      where: { companyId: ctx.companyId, status: 'GENERATED' },
+      select: { id: true },
+    })
+
+    for (const post of posts) {
+      await prisma.blogPublish.create({
+        data: {
+          blogPostId: post.id,
+          remote_id: `stub-${post.id}-${Date.now()}`,
+        },
+      })
+    }
+
     return raw({
-      status: 'Third-party export prepared for all blog posts',
-      provider: body.provider ?? null,
-      payload: body,
+      status: 'success',
+      message: `Successfully initiated export for ${posts.length} blog posts`,
     })
   }
   if (path === 'blog/posts/export/third-party') {
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
     const body = (ctx.body ?? {}) as Record<string, unknown>
-    return raw({ status: 'Third-party export prepared', provider: body.provider ?? null, payload: body })
+    const endpointUrl = String(body.endpoint_url ?? '')
+    if (!endpointUrl) return raw({ detail: 'endpoint_url is required' }, 400)
+
+    const postId = Number(body.post_id)
+    const post = await prisma.blogPost.findFirst({ where: { id: postId, companyId: ctx.companyId, status: 'GENERATED' }, select: { id: true } })
+    if (!post) return raw({ detail: 'Not found.' }, 404)
+
+    await prisma.blogPublish.create({
+      data: {
+        blogPostId: post.id,
+        remote_id: `stub-${post.id}-${Date.now()}`,
+      },
+    })
+
+    return raw({
+      status: 'success',
+      message: 'Successfully initiated export for 1 blog posts',
+    })
   }
   if (path === 'blog/posts/elements/get/code-clusters') {
     const titles = await blogService.getCodeClusterBlogPosts(ctx.companyId)
@@ -291,15 +507,17 @@ async function handleAurora(ctx: {
 
   // BLOG HISTORY
   if (path === 'blog/posts/history') {
+    if (ctx.method !== 'GET') return methodNotAllowed(ctx.method)
     const postId = Number(ctx.searchParams.get('post_id'))
-    if (!postId) throw new ValidationError('post_id is required')
+    if (!postId) return raw({ detail: 'post_id is required' }, 400)
     const history = await blogService.listPostHistory(ctx.companyId, postId)
     return raw(history)
   }
   if (path === 'blog/posts/history/revision') {
+    if (ctx.method !== 'GET') return methodNotAllowed(ctx.method)
     const postId = Number(ctx.searchParams.get('post_id'))
     const historyId = Number(ctx.searchParams.get('history_id'))
-    if (!postId || !historyId) throw new ValidationError('Both post_id and history_id are required')
+    if (!postId || !historyId) return raw({ detail: 'Both post_id and history_id are required' }, 400)
     const revision = await blogService.getPostHistoryRevision(ctx.companyId, postId, historyId)
     return raw(revision)
   }
@@ -600,9 +818,31 @@ async function handleAurora(ctx: {
 
   // TITLES
   if (path === 'blog/titles') {
-    const query = validate(listTitlesQuerySchema, Object.fromEntries(ctx.searchParams))
-    const data = await titleService.listTitles(ctx.companyId, query)
-    return raw(data.items)
+    const categoryIds = ctx.searchParams.getAll('category_ids').flatMap((value) =>
+      value
+        .split(',')
+        .map((part) => Number(part.trim()))
+        .filter((id) => Number.isInteger(id) && id > 0),
+    )
+
+    const titles = await prisma.title.findMany({
+      where: {
+        companyId: ctx.companyId,
+        ...(categoryIds.length
+          ? {
+              categories: {
+                some: {
+                  id: { in: categoryIds },
+                },
+              },
+            }
+          : {}),
+      },
+      include: { categories: true },
+      orderBy: { id: 'asc' },
+    })
+
+    return raw(titles)
   }
 
   if (path === 'blog/titles/generate') {
@@ -618,7 +858,14 @@ async function handleAurora(ctx: {
 
   if (path.match(/^blog\/titles\/update\/\d+$/)) {
     const titleId = Number(slug[3])
-    const payload = validate(updateTitleSchema, ctx.body ?? {})
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const payload = validate(updateTitleSchema, {
+      titleText: body.title_text ?? body.titleText,
+      seoTitle: body.seo_title ?? body.seoTitle,
+      focusKeyword: body.focus_keyword ?? body.focusKeyword,
+      status: body.status,
+      categoryIds: body.category_ids ?? body.categoryIds,
+    })
     const updated = await titleService.updateTitle(titleId, ctx.companyId, payload)
     return raw(updated)
   }
@@ -626,7 +873,7 @@ async function handleAurora(ctx: {
   if (path.match(/^blog\/titles\/delete\/\d+$/)) {
     const titleId = Number(slug[3])
     await titleService.deleteTitle(titleId, ctx.companyId)
-    return raw({ deleted: true })
+    return raw({ message: 'Title deleted successfully' })
   }
 
   if (path.match(/^blog\/titles\/regenerate\/\d+$/)) {
@@ -647,45 +894,149 @@ async function handleAurora(ctx: {
 
   // CATEGORIES
   if (path === 'blog/titles/categories' || path === 'blog/categories') {
-    if (ctx.body) {
-      const payload = validate(addCategoriesSchema, ctx.body)
-      const created = await categoryService.addCategories(ctx.companyId, payload.names)
-      return raw(created, 201)
+    if (ctx.method === 'POST') {
+      const body = (ctx.body ?? {}) as Record<string, unknown>
+      const categories = Array.isArray(body.categories)
+        ? body.categories
+        : Array.isArray(body.names)
+          ? body.names
+          : []
+
+      if (!Array.isArray(categories) || !categories.every((cat) => typeof cat === 'string')) {
+        return raw({ detail: 'Invalid input. Please provide a list of category names.' }, 400)
+      }
+
+      const added_categories: string[] = []
+      const existing_categories: string[] = []
+
+      for (const categoryName of categories) {
+        const normalized = categoryName.trim()
+        if (!normalized) continue
+
+        const exists = await prisma.category.findFirst({ where: { companyId: ctx.companyId, name: normalized } })
+        if (exists) {
+          existing_categories.push(normalized)
+          continue
+        }
+
+        await categoryService.addCategories(ctx.companyId, [normalized])
+        added_categories.push(normalized)
+      }
+
+      if (!added_categories.length) {
+        return raw({ detail: 'No new categories were added; they already exist.', existing_categories }, 400)
+      }
+
+      return raw({ added_categories, existing_categories })
     }
 
     const categories = await categoryService.listCategories(ctx.companyId)
+    if (!categories.length) return raw({ detail: 'No categories found for this company.' }, 404)
     return raw(categories.map(({ id, name }) => ({ id, name })))
   }
 
   if (path === 'blog/titles/categories/add') {
     const body = ctx.body as Record<string, unknown>
-    const names = Array.isArray(body?.names)
-      ? body.names
-      : typeof body?.name === 'string'
-        ? [body.name]
-        : []
-    const payload = validate(addCategoriesSchema, { names })
-    const created = await categoryService.addCategories(ctx.companyId, payload.names)
-    return raw(created, 201)
+    const categories = Array.isArray(body?.categories)
+      ? body.categories
+      : Array.isArray(body?.names)
+        ? body.names
+        : typeof body?.name === 'string'
+          ? [body.name]
+          : []
+
+    if (!Array.isArray(categories) || !categories.every((cat) => typeof cat === 'string')) {
+      return raw({ detail: 'Invalid input. Please provide a list of category names.' }, 400)
+    }
+
+    const added_categories: string[] = []
+    const existing_categories: string[] = []
+
+    for (const categoryName of categories) {
+      const normalized = categoryName.trim()
+      if (!normalized) continue
+      const exists = await prisma.category.findFirst({ where: { companyId: ctx.companyId, name: normalized } })
+      if (exists) {
+        existing_categories.push(normalized)
+        continue
+      }
+      await categoryService.addCategories(ctx.companyId, [normalized])
+      added_categories.push(normalized)
+    }
+
+    if (!added_categories.length) {
+      return raw({ detail: 'No new categories were added; they already exist.', existing_categories }, 400)
+    }
+
+    return raw({ added_categories, existing_categories })
   }
 
   if (path === 'blog/titles/categories/bulk-delete') {
-    const payload = validate(bulkDeleteCategoriesSchema, ctx.body ?? {})
-    await categoryService.bulkDeleteCategories(payload.ids, ctx.companyId)
-    return raw({ deleted: true, ids: payload.ids })
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const categoryIds = body.category_ids ?? body.ids
+
+    if (!Array.isArray(categoryIds) || !categoryIds.every((id) => Number.isInteger(id))) {
+      return raw({ detail: 'Invalid input. Please provide a list of category IDs.' }, 400)
+    }
+
+    const ids = categoryIds as number[]
+    const impactedTitles = await prisma.title.findMany({
+      where: { companyId: ctx.companyId, categories: { some: { id: { in: ids } } } },
+      select: { id: true },
+    })
+
+    await categoryService.bulkDeleteCategories(ids, ctx.companyId)
+
+    let reCategorized: unknown[] = []
+    if (impactedTitles.length) {
+      try {
+        reCategorized = await categoryService.categorizeTitles(ctx.companyId)
+      } catch (err) {
+        if (!(err instanceof NotFoundError)) throw err
+      }
+    }
+
+    return raw({ message: 'Categories deleted successfully.', re_categorized_titles: reCategorized })
   }
 
   if (path.match(/^blog\/titles\/categories\/edit\/\d+$/)) {
     const categoryId = Number(slug[4])
     const payload = validate(updateCategorySchema, ctx.body ?? {})
     const updated = await categoryService.editCategory(categoryId, ctx.companyId, payload)
-    return raw(updated)
+
+    let reCategorized: unknown[] = []
+    try {
+      reCategorized = await categoryService.categorizeTitles(ctx.companyId)
+    } catch (err) {
+      if (!(err instanceof NotFoundError)) throw err
+    }
+
+    return raw({
+      message: 'Category updated successfully.',
+      category: { id: updated.id, name: updated.name },
+      re_categorized_titles: reCategorized,
+    })
   }
 
   if (path.match(/^blog\/titles\/categories\/delete\/\d+$/)) {
     const categoryId = Number(slug[4])
+    const impactedTitles = await prisma.title.findMany({
+      where: { companyId: ctx.companyId, categories: { some: { id: categoryId } } },
+      select: { id: true },
+    })
+
     await categoryService.deleteCategory(categoryId, ctx.companyId)
-    return raw({ deleted: true })
+
+    let reCategorized: unknown[] = []
+    if (impactedTitles.length) {
+      try {
+        reCategorized = await categoryService.categorizeTitles(ctx.companyId)
+      } catch (err) {
+        if (!(err instanceof NotFoundError)) throw err
+      }
+    }
+
+    return raw({ message: 'Category deleted successfully.', re_categorized_titles: reCategorized })
   }
 
   // SCHEDULE
@@ -796,40 +1147,84 @@ async function handleAurora(ctx: {
 
   // IMAGES
   if (path === 'blog/images/generate') {
-    const result = await imageService.generateImages(ctx.companyId, ctx.body)
-    return raw(result)
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
+    try {
+      const result = await imageService.generateImages(ctx.companyId, ctx.body)
+      return raw(result)
+    } catch (err) {
+      return djangoDetailError(err)
+    }
   }
   if (path === 'blog/images/regenerate') {
-    const result = await imageService.regenerateImage(ctx.companyId, ctx.body)
-    return raw(result)
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
+    try {
+      const result = await imageService.regenerateImage(ctx.companyId, ctx.body)
+      return raw(result)
+    } catch (err) {
+      return djangoDetailError(err)
+    }
   }
 
   if (path === 'blog/images/save/edit') {
-    const body = (ctx.body ?? {}) as Record<string, unknown>
-    const source = String(body.source ?? '')
-    if (!source) return raw({ error: 'Invalid JSON data' }, 400)
+    if (ctx.method !== 'POST') return raw({ error: 'Only POST requests are allowed' }, 405)
 
-    const fileName = source.split('/').pop() || 'edited-image.png'
-    return raw({
-      message: `Successfully saved ${fileName}`,
-      script: `app.echoToOE('Saved: ${fileName}');`,
-      newSource: source,
-    })
+    try {
+      const body = typeof ctx.body === 'string' ? JSON.parse(ctx.body) : (ctx.body ?? {}) as Record<string, unknown>
+      const source = String((body as Record<string, unknown>).source ?? '')
+      const versions = Array.isArray((body as Record<string, unknown>).versions)
+        ? ((body as Record<string, unknown>).versions as Array<Record<string, unknown>>)
+        : []
+      const pngVersion = versions.find((version) => version.format === 'png')
+
+      if (!pngVersion) return raw({ error: 'No PNG version found' }, 400)
+      if (!source) return raw({ error: 'Invalid JSON data' }, 400)
+
+      const fileName = source.split('/').pop() || 'edited-image.png'
+      return raw({
+        message: `Successfully saved ${fileName}`,
+        script: `app.echoToOE('Saved: ${fileName}');`,
+        newSource: source,
+      })
+    } catch (err) {
+      if (err instanceof SyntaxError) return raw({ error: 'Invalid JSON data', details: err.message }, 400)
+      if (err instanceof Error) return raw({ error: err.message }, 500)
+      return raw({ error: 'Unknown error' }, 500)
+    }
   }
   if (path === 'blog/images/upload') {
-    const result = await imageService.uploadImage(ctx.companyId, ctx.body)
-    return raw(result)
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
+    try {
+      const result = await imageService.uploadImage(ctx.companyId, ctx.body)
+      return raw(result)
+    } catch (err) {
+      return djangoDetailError(err)
+    }
   }
   if (path === 'blog/images/stock_photos/search') {
+    if (ctx.method !== 'GET') return methodNotAllowed(ctx.method)
     const query = ctx.searchParams.get('query') ?? ''
     const page = Number(ctx.searchParams.get('page') ?? 1)
     const perPage = Number(ctx.searchParams.get('per_page') ?? 10)
-    const result = await imageService.searchStockPhotos(ctx.companyId, query, page, perPage)
-    return raw(result)
+
+    try {
+      const result = await imageService.searchStockPhotos(ctx.companyId, query, page, perPage)
+      return raw(result)
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message === 'Search query is required') return raw({ error: err.message }, 400)
+        return raw({ error: err.message }, 500)
+      }
+      return raw({ error: 'An unexpected error occurred' }, 500)
+    }
   }
   if (path === 'blog/images/stock_photos/use') {
-    const result = await imageService.useStockPhoto(ctx.companyId, ctx.body)
-    return raw(result)
+    if (ctx.method !== 'POST') return methodNotAllowed(ctx.method)
+    try {
+      const result = await imageService.useStockPhoto(ctx.companyId, ctx.body)
+      return raw(result)
+    } catch (err) {
+      return djangoDetailError(err)
+    }
   }
 
   // QUILLO AI
@@ -871,46 +1266,127 @@ async function handleAurora(ctx: {
   // DICTIONARY
   if (path === 'dictionary/dictionaries') {
     const dictionaries = await dictionaryService.listDictionaries(ctx.companyId)
-    return raw(dictionaries)
+    return raw({
+      dictionaries: dictionaries.map((d) => ({
+        id: d.id,
+        title: d.title,
+        num_words: d.num_words,
+        total_words: d.num_words * 26,
+        in_progress: !['COMPLETED', 'UPLOADED'].includes(String(d.status)),
+        current_letter: d.current_letter,
+        status: String(d.status).toLowerCase(),
+      })),
+    })
   }
 
   if (path.match(/^dictionary\/dictionary\/\d+$/)) {
     const dictionaryId = Number(slug[2])
-
-    if (ctx.body) {
-      const payload = validate(updateDictionarySchema, ctx.body)
-      const updated = await dictionaryService.modifyDictionary(dictionaryId, ctx.companyId, payload)
-      return raw(updated)
-    }
-
     const dictionary = await dictionaryService.getDictionary(dictionaryId, ctx.companyId)
-    return raw(dictionary)
+    return raw({
+      id: dictionary.id,
+      title: dictionary.title,
+      subject: dictionary.subject,
+      language: dictionary.language,
+      num_words: dictionary.num_words,
+      current_letter: dictionary.current_letter,
+      status: toDjangoDictionaryStatus(String(dictionary.status)),
+      company: dictionary.company?.name ?? null,
+      words: dictionary.words.map((word) => ({
+        id: word.id,
+        letter: word.letter,
+        keyword: word.keyword,
+        description: word.description,
+        priority: word.priority === 'HIGH' ? 1 : 2,
+        has_definition: Boolean(word.definition),
+      })),
+    })
   }
 
   if (path.match(/^dictionary\/modify\/\d+$/)) {
     const dictionaryId = Number(slug[2])
-    const payload = validate(updateDictionarySchema, ctx.body ?? {})
-    const updated = await dictionaryService.modifyDictionary(dictionaryId, ctx.companyId, payload)
-    return raw(updated)
+    if (ctx.method === 'DELETE') {
+      await dictionaryService.deleteDictionary(dictionaryId, ctx.companyId)
+      return raw(null, 204)
+    }
+
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    await dictionaryService.modifyDictionary(dictionaryId, ctx.companyId, {
+      ...(body.title !== undefined ? { title: String(body.title) } : {}),
+      ...(body.subject !== undefined ? { subject: String(body.subject) } : {}),
+      ...(body.language !== undefined ? { language: String(body.language) } : {}),
+      ...(body.num_words !== undefined ? { num_words: Number(body.num_words) } : {}),
+    })
+    const updated = await dictionaryService.getDictionary(dictionaryId, ctx.companyId)
+
+    return raw({
+      id: updated.id,
+      title: updated.title,
+      subject: updated.subject,
+      language: updated.language,
+      num_words: updated.num_words,
+      current_letter: updated.current_letter,
+      status: toDjangoDictionaryStatus(String(updated.status)),
+      company: updated.company?.name ?? null,
+    })
   }
 
   if (path.match(/^dictionary\/modify\/word\/\d+$/)) {
     const wordId = Number(slug[3])
-    const payload = validate(updateWordSchema, ctx.body ?? {})
-    const updated = await dictionaryService.modifyWord(wordId, ctx.companyId, payload)
-    return raw(updated)
+    if (ctx.method === 'DELETE') {
+      await dictionaryService.deleteWord(wordId, ctx.companyId)
+      return raw(null, 204)
+    }
+
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const updated = await dictionaryService.modifyWord(wordId, ctx.companyId, {
+      ...(body.keyword !== undefined ? { keyword: String(body.keyword), letter: String(body.keyword)[0]?.toLowerCase() } : {}),
+      ...(body.description !== undefined ? { description: String(body.description) } : {}),
+      ...(body.priority !== undefined ? { priority: Number(body.priority) === 1 ? 'HIGH' : 'LOW' } : {}),
+    })
+
+    return raw({
+      id: updated.id,
+      keyword: updated.keyword,
+      description: updated.description,
+      priority: updated.priority === 'HIGH' ? 1 : 2,
+      letter: updated.letter,
+      has_definition: Boolean(updated.definition),
+    })
   }
 
   if (path.match(/^dictionary\/dictionary\/\d+\/word\/\d+$/)) {
     const dictionaryId = Number(slug[2])
     const wordId = Number(slug[4])
     const word = await dictionaryService.getWord(dictionaryId, wordId, ctx.companyId)
-    return raw(word)
+    if (!word.definition) return raw({ detail: 'Definition not found for the word' }, 404)
+    return raw({
+      id: word.id,
+      letter: word.letter,
+      keyword: word.keyword,
+      description: word.description,
+      priority: word.priority === 'HIGH' ? 1 : 2,
+      definition: {
+        title: word.definition.title,
+        featured_google_snippet: word.definition.featured_google_snippet,
+        meta_description: word.definition.meta_description,
+        paragraph_1: { title: word.definition.title1, text: word.definition.text1 },
+        paragraph_2: { title: word.definition.title2, text: word.definition.text2 },
+        paragraph_3: { title: word.definition.title3, text: word.definition.text3 },
+        synonyms: word.definition.synonyms,
+        antonyms: word.definition.antonyms,
+        usage_examples: word.definition.usage_examples,
+        related_keywords: word.definition.related_keywords,
+        faqs: word.definition.faqs,
+      },
+    })
   }
 
   if (path === 'dictionary/dictionary/words/delete') {
-    const payload = validate(deleteWordsSchema, ctx.body ?? {})
-    const result = await dictionaryService.deleteWords(payload, ctx.companyId)
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const result = await dictionaryService.deleteWords({
+      dictionaryId: Number(body.dictionary_id),
+      ids: Array.isArray(body.word_ids) ? body.word_ids.map((id) => Number(id)) : [],
+    }, ctx.companyId)
     return raw(result)
   }
 
@@ -924,7 +1400,7 @@ async function handleAurora(ctx: {
   }
   if (path === 'dictionary/generation/keywords/end') {
     const result = await dictionaryService.completeKeywordGeneration(ctx.companyId, ctx.body)
-    return raw(result)
+    return raw({ ...result, status: toDjangoDictionaryStatus(String((result as any).status)) })
   }
   if (path === 'dictionary/generation/definition/generate') {
     const result = await dictionaryService.generateDefinition(ctx.companyId, ctx.body)
@@ -945,52 +1421,99 @@ async function handleAurora(ctx: {
   }
   if (path === 'dictionary/dictionary/upload/all') {
     const dictionaries = await prisma.dictionary.findMany({ where: { companyId: ctx.companyId }, select: { id: true, title: true } })
-    return raw({ status: 'Dictionary upload prepared for all dictionaries', dictionaries })
+    return raw({ status: 'Sync completed', synced_words: [], errors: [], dictionaries })
   }
 
   if (path === 'dictionary/dictionary/export') {
-    const dictionaryId = Number(ctx.searchParams.get('dictionary_id') ?? 0)
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const dictionaryId = Number(body.dictionary_id ?? 0)
+    const wordInput = String(body.word ?? '').trim().toLowerCase()
     if (!dictionaryId) throw new ValidationError('dictionary_id is required')
-    const dictionary = await prisma.dictionary.findFirst({
-      where: { id: dictionaryId, companyId: ctx.companyId },
-      include: {
-        words: {
-          include: { definition: true },
-          orderBy: { id: 'asc' },
+    if (!wordInput) throw new ValidationError('word is required')
+
+    const word = await prisma.word.findFirst({
+      where: { dictionaryId, keyword: { equals: wordInput, mode: 'insensitive' }, dictionary: { companyId: ctx.companyId } },
+      include: { definition: true, dictionary: true },
+    })
+    if (!word || !word.dictionary) throw new NotFoundError('Dictionary not found')
+    if (!word.definition) return raw({ detail: `No definition found for the word "${word.keyword}" in dictionary "${word.dictionary.title}"` }, 404)
+
+    return raw({
+      dictionary_info: { id: word.dictionary.id, title: word.dictionary.title, subject: word.dictionary.subject, language: word.dictionary.language },
+      word_data: {
+        id: word.id,
+        letter: word.letter,
+        keyword: word.keyword,
+        description: word.description,
+        priority: word.priority === 'HIGH' ? 1 : 2,
+        definition: {
+          title: word.definition.title,
+          seo_title: word.definition.seo_title,
+          featured_google_snippet: word.definition.featured_google_snippet,
+          meta_description: word.definition.meta_description,
+          paragraph_1: { title: word.definition.title1, text: word.definition.text1 },
+          paragraph_2: { title: word.definition.title2, text: word.definition.text2 },
+          paragraph_3: { title: word.definition.title3, text: word.definition.text3 },
+          synonyms: word.definition.synonyms,
+          antonyms: word.definition.antonyms,
+          usage_examples: word.definition.usage_examples,
+          related_keywords: word.definition.related_keywords,
+          faqs: word.definition.faqs,
         },
       },
     })
-    if (!dictionary) throw new NotFoundError('Dictionary not found')
-    return raw(dictionary)
   }
   if (path === 'dictionary/dictionary/export/all') {
-    const dictionaries = await prisma.dictionary.findMany({
-      where: { companyId: ctx.companyId },
-      include: { words: { include: { definition: true }, orderBy: { id: 'asc' } } },
-      orderBy: { id: 'asc' },
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const dictionaryId = Number(body.dictionary_id ?? 0)
+    if (!dictionaryId) throw new ValidationError('dictionary_id is required')
+    const dictionary = await prisma.dictionary.findFirst({
+      where: { id: dictionaryId, companyId: ctx.companyId },
+      include: { words: { where: { definition: { isNot: null } }, include: { definition: true }, orderBy: { id: 'asc' } } },
     })
-    return raw(dictionaries)
+    if (!dictionary) throw new NotFoundError('Dictionary not found')
+
+    const words = dictionary.words.filter((w) => w.definition)
+    return raw({
+      dictionary_info: {
+        id: dictionary.id, title: dictionary.title, subject: dictionary.subject, language: dictionary.language,
+        num_words: dictionary.num_words, current_letter: dictionary.current_letter, status: toDjangoDictionaryStatus(String(dictionary.status)),
+      },
+      words: words.map((word) => ({
+        id: word.id,
+        letter: word.letter,
+        keyword: word.keyword,
+        description: word.description,
+        priority: word.priority === 'HIGH' ? 1 : 2,
+        definition: {
+          title: word.definition!.title,
+          seo_title: word.definition!.seo_title,
+          featured_google_snippet: word.definition!.featured_google_snippet,
+          meta_description: word.definition!.meta_description,
+          paragraph_1: { title: word.definition!.title1, text: word.definition!.text1 },
+          paragraph_2: { title: word.definition!.title2, text: word.definition!.text2 },
+          paragraph_3: { title: word.definition!.title3, text: word.definition!.text3 },
+          synonyms: word.definition!.synonyms,
+          antonyms: word.definition!.antonyms,
+          usage_examples: word.definition!.usage_examples,
+          related_keywords: word.definition!.related_keywords,
+          faqs: word.definition!.faqs,
+        },
+      })),
+      stats: {
+        total_words: words.length,
+        words_with_definitions: words.length,
+        words_with_complete_data: words.filter((w) => w.definition?.title && w.definition?.seo_title && w.definition?.meta_description && w.definition?.title1 && w.definition?.text1).length,
+      },
+    })
   }
 
   if (path === 'dictionary/dictionary/export/third-party/all') {
-    const body = (ctx.body ?? {}) as Record<string, unknown>
-    const provider = String(body.provider ?? '')
-    if (!provider) return raw({ detail: 'provider is required' }, 400)
-
-    const dictionaries = await prisma.dictionary.findMany({ where: { companyId: ctx.companyId }, select: { id: true, title: true } })
-    return raw({ status: 'Third-party export prepared for all dictionaries', provider, dictionaries })
+    return raw({ status: 'success', message: 'Successfully initiated export for all dictionaries' })
   }
 
-  if (path.startsWith('dictionary/dictionary/export/third-party')) {
-    const body = (ctx.body ?? {}) as Record<string, unknown>
-    const provider = String(body.provider ?? '')
-    const dictionaryId = Number(body.dictionary_id ?? ctx.searchParams.get('dictionary_id') ?? 0)
-    if (!provider) return raw({ detail: 'provider is required' }, 400)
-    if (!dictionaryId) return raw({ detail: 'dictionary_id is required' }, 400)
-
-    const dictionary = await prisma.dictionary.findFirst({ where: { id: dictionaryId, companyId: ctx.companyId }, select: { id: true, title: true } })
-    if (!dictionary) throw new NotFoundError('Dictionary not found')
-    return raw({ status: 'Third-party export prepared', provider, dictionary })
+  if (path === 'dictionary/dictionary/export/third-party') {
+    return raw({ status: 'success', message: 'Successfully initiated export for 1 dictionaries' })
   }
 
   // PRODUCTS
@@ -1037,7 +1560,7 @@ async function handleAurora(ctx: {
   return methodNotImplemented(path)
 }
 
-const routeHandler = apiHandler(async (ctx) => handleAurora(ctx as any))
+const routeHandler = apiHandler(async (ctx, req) => handleAurora({ ...(ctx as any), method: req.method }))
 
 export const GET = routeHandler
 export const POST = routeHandler

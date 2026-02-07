@@ -45,8 +45,8 @@ export class DictionaryService {
     return word
   }
 
-  async modifyWord(wordId: number, companyId: number, data: ModifyWordInput) {
-    const existing = await dictionaryRepository.findWord(data.dictionaryId, wordId)
+  async modifyWord(wordId: number, companyId: number, data: Partial<ModifyWordInput>) {
+    const existing = await dictionaryRepository.findWordById(wordId)
     if (!existing || existing.dictionary.companyId !== companyId) {
       throw new NotFoundError('Word not found')
     }
@@ -81,7 +81,7 @@ export class DictionaryService {
     }
 
     return dictionaryRepository.updateWord(wordId, {
-      dictionaryId: data.dictionaryId,
+      ...(data.dictionaryId !== undefined ? { dictionaryId: data.dictionaryId } : {}),
       ...(data.letter !== undefined ? { letter: data.letter } : {}),
       ...(data.keyword !== undefined ? { keyword: data.keyword } : {}),
       ...(data.description !== undefined ? { description: data.description } : {}),
@@ -91,6 +91,7 @@ export class DictionaryService {
   }
 
   async deleteWords(payload: DeleteWordsInput, companyId: number) {
+    const dictionary = await this.getDictionary(payload.dictionaryId, companyId)
     const words = await Promise.all(payload.ids.map((id) => dictionaryRepository.findWord(payload.dictionaryId, id)))
 
     const invalid = words.some((word) => !word || word.dictionary.companyId !== companyId)
@@ -98,7 +99,32 @@ export class DictionaryService {
       throw new NotFoundError('One or more words were not found')
     }
 
-    return dictionaryRepository.deleteWords(payload.ids)
+    const removed = await dictionaryRepository.deleteWords(payload.ids)
+    const refreshed = await this.getDictionary(dictionary.id, companyId)
+
+    return {
+      detail: `${removed.count} words successfully removed from the dictionary`,
+      new_word_count: refreshed.num_words,
+    }
+  }
+
+  async deleteDictionary(id: number, companyId: number) {
+    await this.getDictionary(id, companyId)
+    await dictionaryRepository.deleteDictionary(id)
+  }
+
+  async deleteWord(wordId: number, companyId: number) {
+    const word = await dictionaryRepository.findWordById(wordId)
+    if (!word || word.dictionary.companyId !== companyId) {
+      throw new NotFoundError('Word not found')
+    }
+
+    await dictionaryRepository.deleteWord(wordId)
+
+    const dictionary = await dictionaryRepository.findById(word.dictionaryId, companyId)
+    if (dictionary) {
+      await dictionaryRepository.update(word.dictionaryId, { num_words: dictionary.words.length })
+    }
   }
 
   async startKeywordGeneration(companyId: number, payload: unknown) {

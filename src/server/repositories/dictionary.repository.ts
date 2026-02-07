@@ -18,6 +18,7 @@ export function findById(id: number, companyId: number) {
   return prisma.dictionary.findFirst({
     where: { id, companyId },
     include: {
+      company: { select: { name: true } },
       words: {
         include: { definition: true },
         orderBy: [{ letter: 'asc' }, { keyword: 'asc' }],
@@ -41,6 +42,13 @@ export function findWord(dictionaryId: number, wordId: number) {
   })
 }
 
+export function findWordById(wordId: number) {
+  return prisma.word.findUnique({
+    where: { id: wordId },
+    include: { definition: true, dictionary: true },
+  })
+}
+
 export function createWord(data: Prisma.WordUncheckedCreateInput) {
   return prisma.word.create({ data, include: { definition: true } })
 }
@@ -51,6 +59,14 @@ export function updateWord(id: number, data: Prisma.WordUncheckedUpdateInput) {
 
 export function deleteWords(ids: number[]) {
   return prisma.word.deleteMany({ where: { id: { in: ids } } })
+}
+
+export function deleteWord(id: number) {
+  return prisma.word.delete({ where: { id } })
+}
+
+export function deleteDictionary(id: number) {
+  return prisma.dictionary.delete({ where: { id } })
 }
 
 export function findDefinition(wordId: number) {
