@@ -39,7 +39,7 @@ export default function HomePage() {
             </Button>
           </header>
 
-          <div className="py-20">
+          <div className="grid items-center gap-10 py-20 md:grid-cols-[1fr_auto]">
             <div className="max-w-2xl">
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-white/80">Aurora by Nordtools</p>
               <h1 className="mt-4 text-4xl font-semibold leading-tight md:text-5xl">
@@ -55,12 +55,33 @@ export default function HomePage() {
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="secondary" className="bg-white/15 text-white hover:bg-white/25">
-                  <Link href="/app/blog">See Demo</Link>
-                </Button>
               </div>
             </div>
 
+            {/* Try Demo circle */}
+            <Link href="/app/blog" className="group hidden md:flex">
+              <svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg" className="transition-transform duration-500 ease-out group-hover:scale-105">
+                <circle cx="150" cy="150" r="145" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeDasharray="8 6" className="transition-all duration-500 group-hover:fill-[rgba(255,255,255,0.2)] group-hover:stroke-[rgba(255,255,255,0.5)]" />
+                <text x="150" y="143" textAnchor="middle" fill="white" fontSize="28" fontWeight="600" fontFamily="Segoe UI, system-ui, sans-serif" opacity="0.95">Try Demo</text>
+                <text x="150" y="172" textAnchor="middle" fill="white" fontSize="14" fontFamily="Segoe UI, system-ui, sans-serif" opacity="0.55">See Aurora in action</text>
+                <path d="M140 192 L160 204 L140 216Z" fill="rgba(255,255,255,0.6)" className="transition-all duration-300 group-hover:fill-white" />
+              </svg>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-secondary/50">
+        <div className="mx-auto max-w-4xl px-6 py-20 text-center">
+          <h2 className="text-3xl font-semibold">See what Aurora generates</h2>
+          <p className="mt-3 text-muted-foreground">Read a real AI-generated blog post — fully structured, SEO-optimized, and ready to publish.</p>
+          <div className="mt-8 flex justify-center">
+            <Button asChild className="h-16 rounded-sm px-12 text-lg font-semibold">
+              <Link href="/app/blog">
+                Read a sample post
+                <ArrowRight className="h-5 w-5" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -78,28 +99,6 @@ export default function HomePage() {
               <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
             </article>
           ))}
-        </div>
-      </section>
-
-      <section className="bg-secondary/50">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <div className="mb-10 text-center">
-            <h2 className="text-3xl font-semibold">How it works</h2>
-            <p className="mt-3 text-muted-foreground">A simple 3-step workflow for consistently shipping better content.</p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            {['Create', 'Optimize', 'Publish'].map((step, index) => (
-              <div key={step} className="rounded-sm border border-border bg-card p-6">
-                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Step {index + 1}</p>
-                <h3 className="mt-2 text-xl font-semibold">{step}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {step === 'Create' && 'Generate structured drafts in your brand tone from a prompt, keyword, or campaign goal.'}
-                  {step === 'Optimize' && 'Enhance SEO, readability, and structure with AI recommendations before publishing.'}
-                  {step === 'Publish' && 'Schedule and distribute content across channels, then measure what performs best.'}
-                </p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
