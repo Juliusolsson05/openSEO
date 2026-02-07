@@ -98,6 +98,28 @@ export default function PublishingApiDocsPage() {
           <p><Badge variant="outline">blog.post.upload</Badge> Sent when upload/export-to-endpoint is executed.</p>
           <p><Badge variant="outline">blog.post.export</Badge> Sent for third-party export endpoints.</p>
           <p><Badge variant="outline">post.upsert</Badge> Recommended inbound event for client → Aurora sync.</p>
+          <p><Badge variant="outline">post.delete</Badge> Inbound delete contract.</p>
+          <p><Badge variant="outline">dictionary.upsert</Badge> Inbound/outbound dictionary contract.</p>
+          <p><Badge variant="outline">dictionary.delete</Badge> Inbound dictionary delete contract.</p>
+          <p><Badge variant="outline">dictionary.term.upsert</Badge> Inbound term upsert contract.</p>
+          <p><Badge variant="outline">dictionary.term.delete</Badge> Inbound term delete contract.</p>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-sm border-border bg-white">
+        <CardHeader>
+          <CardTitle>Contract endpoints</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-1 text-sm text-muted-foreground">
+          <p><code>POST /api/v1/publishing/sync/posts/all</code></p>
+          <p><code>POST /api/v1/publishing/sync/dictionaries/all</code></p>
+          <p><code>GET /api/v1/publishing/jobs/{'{jobId}'}</code></p>
+          <p><code>POST /api/v1/publishing/inbound/post/upsert</code></p>
+          <p><code>POST /api/v1/publishing/inbound/post/delete</code></p>
+          <p><code>POST /api/v1/publishing/inbound/dictionary/upsert</code></p>
+          <p><code>POST /api/v1/publishing/inbound/dictionary/delete</code></p>
+          <p><code>POST /api/v1/publishing/inbound/dictionary/term/upsert</code></p>
+          <p><code>POST /api/v1/publishing/inbound/dictionary/term/delete</code></p>
         </CardContent>
       </Card>
     </div>
