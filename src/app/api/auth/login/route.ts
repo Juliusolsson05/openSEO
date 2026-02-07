@@ -4,11 +4,18 @@ import { prisma } from '@/lib/prisma'
 import { apiHandler } from '@/server/api/handler'
 import { raw } from '@/server/api/response'
 
-const USER_TYPE_RULES: Record<string, string[]> = {
-  DEMO: ['read:dashboard'],
-  CLIENT: ['read:dashboard', 'read:reports'],
-  AGENCY: ['read:dashboard', 'manage:campaigns', 'manage:reports'],
-  ADMINISTRATOR: ['manage:all'],
+const USER_TYPE_MAP: Record<string, number> = {
+  DEMO: 1,
+  CLIENT: 2,
+  AGENCY: 3,
+  ADMINISTRATOR: 4,
+}
+
+const USER_TYPE_RULES: Record<number, string[]> = {
+  1: [],
+  2: ['view_own_data', 'manage_profile'],
+  3: ['create_clients', 'view_reports'],
+  4: ['admin', 'manage_users', 'access_all'],
 }
 
 export const POST = apiHandler(
@@ -37,12 +44,14 @@ export const POST = apiHandler(
 
     const userEmail = user.email ?? ''
 
+    const userType = USER_TYPE_MAP[user.userType] ?? 1
+
     return raw({
       user: {
         email: userEmail,
-        username: userEmail.split('@')[0] ?? userEmail,
-        user_type: user.userType,
-        abilityRules: USER_TYPE_RULES[user.userType] ?? [],
+        username: user.name ?? userEmail.split('@')[0] ?? userEmail,
+        user_type: userType,
+        abilityRules: USER_TYPE_RULES[userType] ?? [],
         company: user.company
           ? {
               id: user.company.id,

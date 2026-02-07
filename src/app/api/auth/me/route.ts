@@ -2,10 +2,10 @@ import { apiHandler } from '@/server/api/handler'
 import { raw } from '@/server/api/response'
 
 const ABILITY_RULES_BY_TYPE: Record<number, string[]> = {
-  1: ['read:dashboard'],
-  2: ['read:dashboard', 'read:reports'],
-  3: ['read:dashboard', 'manage:campaigns', 'manage:reports'],
-  4: ['manage:all'],
+  1: [],
+  2: ['view_own_data', 'manage_profile'],
+  3: ['create_clients', 'view_reports'],
+  4: ['admin', 'manage_users', 'access_all'],
 }
 
 export const GET = apiHandler(async (ctx) => {
