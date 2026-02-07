@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { searchStockPhotos, type PexelsImage } from '@/lib/blog/images'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 interface Props {
   onSelect: (url: string) => void
@@ -25,14 +27,14 @@ export function StockPhotoControls({ onSelect, initialQuery = '' }: Props) {
     <div className="space-y-3">
       <div className="flex gap-2">
         <Input value={query} onChange={(e) => setQuery(e.target.value)} className="w-full rounded border border-border px-2 py-1 text-sm" placeholder="Search photos" />
-        <button type="button" onClick={onSearch} className="rounded bg-primary px-3 py-1 text-white text-sm">Search</button>
+        <Button type="button" size="sm" onClick={onSearch}>Search</Button>
       </div>
       {loading ? <div className="text-sm text-muted-foreground">Loading...</div> : null}
       <div className="grid grid-cols-2 gap-2">
         {images.map((img) => (
-          <button key={img.id} type="button" onClick={() => onSelect(img.src.original)} className="overflow-hidden rounded border border-border">
+          <Button key={img.id} type="button" variant="outline" onClick={() => onSelect(img.src.original)} className="h-auto overflow-hidden p-0">
             <img src={img.src.medium} alt={img.photographer} className="h-24 w-full object-cover" />
-          </button>
+          </Button>
         ))}
       </div>
     </div>

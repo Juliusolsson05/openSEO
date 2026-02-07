@@ -208,15 +208,19 @@ export default function PostInfoSidepanel({
             </Card>
           </div>
 
-          <div className="rounded-sm border border-border bg-background p-2">
-            <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Focus keyword</p>
-            <p className="mt-1">{post.focus_keyword || '-'}</p>
-          </div>
+          <Card className="rounded-sm border-border bg-background p-2 shadow-none">
+            <CardContent className="p-0">
+              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Focus keyword</p>
+              <p className="mt-1">{post.focus_keyword || '-'}</p>
+            </CardContent>
+          </Card>
 
-          <div className="rounded-sm border border-border bg-background p-2">
-            <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Keyword count</p>
-            <p className="mt-1">{keywordCount}</p>
-          </div>
+          <Card className="rounded-sm border-border bg-background p-2 shadow-none">
+            <CardContent className="p-0">
+              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Keyword count</p>
+              <p className="mt-1">{keywordCount}</p>
+            </CardContent>
+          </Card>
 
           <Label className="flex cursor-pointer items-center gap-2">
             <Checkbox

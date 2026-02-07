@@ -33,14 +33,16 @@ export function IdeogramControls({ prompt, setPrompt, quality, setQuality, magic
           { label: 'Medium (v2 turbo)', value: 2 as const },
           { label: 'High (v2)', value: 3 as const },
         ].map((option) => (
-          <button
+          <Button
             key={option.value}
             type="button"
+            size="sm"
+            variant={quality === option.value ? 'default' : 'outline'}
             onClick={() => setQuality(option.value)}
-            className={`rounded-full border px-3 py-1 text-xs ${quality === option.value ? 'border-primary bg-primary text-white' : 'border-border'}`}
+            className="rounded-full text-xs"
           >
             {option.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -49,14 +51,14 @@ export function IdeogramControls({ prompt, setPrompt, quality, setQuality, magic
         Magic Prompt
       </Label>
 
-      <button
+      <Button
         type="button"
         onClick={onGenerate}
         disabled={!prompt.trim() || isGenerating}
-        className="w-full rounded bg-primary px-4 py-2 text-sm text-white disabled:opacity-60"
+        className="w-full"
       >
         {isGenerating ? 'Generating...' : 'Generate'}
-      </button>
+      </Button>
     </div>
   )
 }
