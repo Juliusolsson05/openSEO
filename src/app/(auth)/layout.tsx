@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import { AuroraLogo } from '@/components/brand/logo'
 
 export default function AuthLayout({
@@ -30,7 +32,13 @@ export default function AuthLayout({
       </div>
 
       {/* Right — form area */}
-      <div className="flex flex-1 items-center justify-center bg-white p-8">
+      <div className="relative flex flex-1 items-center justify-center bg-white p-8">
+        <Link
+          href="/"
+          className="absolute left-8 top-8 text-[12px] font-medium text-muted-foreground hover:text-foreground"
+        >
+          ← Back to Home
+        </Link>
         <div className="w-full max-w-[380px] animate-in">{children}</div>
       </div>
     </div>

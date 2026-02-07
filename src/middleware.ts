@@ -2,22 +2,19 @@ import { NextResponse } from 'next/server'
 
 import { auth } from '@/lib/auth'
 
-const PUBLIC_PATHS = ['/login', '/register', '/forgot-password']
+const PUBLIC_PATHS = ['/', '/login', '/register', '/forgot-password']
+const PUBLIC_PREFIXES = ['/api/', '/preview/', '/share/', '/app']
 
 export default auth((req) => {
   const { pathname } = req.nextUrl
 
-  if (
+  const isPublicPath =
     pathname.startsWith('/api/auth') ||
-    PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))
-  ) {
-    return NextResponse.next()
-  }
+    PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`)) ||
+    PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix))
 
-  if (pathname.startsWith('/dashboard') && !req.auth?.user) {
-    const loginUrl = new URL('/login', req.nextUrl.origin)
-    loginUrl.searchParams.set('callbackUrl', req.nextUrl.href)
-    return NextResponse.redirect(loginUrl)
+  if (isPublicPath) {
+    return NextResponse.next()
   }
 
   const headers = new Headers(req.headers)

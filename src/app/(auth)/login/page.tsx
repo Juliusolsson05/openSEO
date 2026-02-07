@@ -3,7 +3,7 @@
 import { Label } from '@/components/ui/label'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuthStore } from '@/stores/auth-store'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const { login } = useAuthStore()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,7 +26,9 @@ export default function LoginPage() {
 
     try {
       await login(email, password)
-      router.push('/')
+      const callbackUrl = searchParams.get('callbackUrl')
+      const destination = callbackUrl && callbackUrl.startsWith('/') ? callbackUrl : '/blog'
+      router.push(destination)
     } catch {
       setError('Invalid credentials. Please try again.')
     } finally {
