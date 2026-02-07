@@ -39,8 +39,8 @@ export default function HomePage() {
             </Button>
           </header>
 
-          <div className="grid gap-10 py-20 md:grid-cols-2 md:items-center">
-            <div>
+          <div className="py-20">
+            <div className="max-w-2xl">
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-white/80">Aurora by Nordtools</p>
               <h1 className="mt-4 text-4xl font-semibold leading-tight md:text-5xl">
                 AI-Powered Content Engine for teams that publish to win.
@@ -61,66 +61,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Decorative SVG illustration */}
-            <div className="relative hidden md:flex items-center justify-center">
-              <svg viewBox="0 0 440 400" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-[440px]">
-                {/* Soft glow behind center */}
-                <circle cx="220" cy="200" r="90" fill="white" fillOpacity="0.06" />
-                <circle cx="220" cy="200" r="55" fill="white" fillOpacity="0.04" />
-
-                {/* Orbit rings — tilted perspective */}
-                <ellipse cx="220" cy="200" rx="200" ry="90" stroke="white" strokeOpacity="0.07" strokeWidth="1" />
-                <ellipse cx="220" cy="200" rx="150" ry="68" stroke="white" strokeOpacity="0.1" strokeWidth="1" />
-
-                {/* Connector lines — radiate from center */}
-                <line x1="220" y1="165" x2="220" y2="105" stroke="white" strokeOpacity="0.18" strokeWidth="1" />
-                <line x1="252" y1="188" x2="345" y2="148" stroke="white" strokeOpacity="0.18" strokeWidth="1" />
-                <line x1="252" y1="212" x2="355" y2="275" stroke="white" strokeOpacity="0.18" strokeWidth="1" />
-                <line x1="188" y1="212" x2="85" y2="275" stroke="white" strokeOpacity="0.18" strokeWidth="1" />
-                <line x1="188" y1="188" x2="95" y2="148" stroke="white" strokeOpacity="0.18" strokeWidth="1" />
-
-                {/* ── Central node: Aurora A logo ── */}
-                <circle cx="220" cy="200" r="35" fill="white" fillOpacity="0.12" stroke="white" strokeOpacity="0.3" strokeWidth="1.5" />
-                <path d="M220 180l-12 24h6l2-4h8l2 4h6l-12-24zm0 8l3 6h-6l3-6z" fill="white" fillOpacity="0.85" fillRule="evenodd" />
-
-                {/* ── Top: Sparkle / AI ── */}
-                <circle cx="220" cy="80" r="24" fill="white" fillOpacity="0.1" stroke="white" strokeOpacity="0.3" strokeWidth="1.5" />
-                {/* 4-point sparkle */}
-                <path d="M220 70v20M210 80h20" stroke="white" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M214 74l12 12M226 74l-12 12" stroke="white" strokeOpacity="0.4" strokeWidth="1" strokeLinecap="round" />
-
-                {/* ── Top-right: Search / SEO ── */}
-                <circle cx="360" cy="135" r="24" fill="white" fillOpacity="0.1" stroke="white" strokeOpacity="0.3" strokeWidth="1.5" />
-                <circle cx="356" cy="131" r="7" stroke="white" strokeOpacity="0.8" strokeWidth="1.5" fill="none" />
-                <line x1="361" y1="136" x2="369" y2="144" stroke="white" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
-
-                {/* ── Bottom-right: Bar chart / Analytics ── */}
-                <circle cx="370" cy="285" r="24" fill="white" fillOpacity="0.1" stroke="white" strokeOpacity="0.3" strokeWidth="1.5" />
-                <rect x="359" y="283" width="4" height="12" rx="1" fill="white" fillOpacity="0.5" />
-                <rect x="366" y="278" width="4" height="17" rx="1" fill="white" fillOpacity="0.75" />
-                <rect x="373" y="281" width="4" height="14" rx="1" fill="white" fillOpacity="0.6" />
-
-                {/* ── Bottom-left: Globe / Publish ── */}
-                <circle cx="70" cy="285" r="24" fill="white" fillOpacity="0.1" stroke="white" strokeOpacity="0.3" strokeWidth="1.5" />
-                <circle cx="70" cy="285" r="10" stroke="white" strokeOpacity="0.7" strokeWidth="1.2" fill="none" />
-                <ellipse cx="70" cy="285" rx="4" ry="10" stroke="white" strokeOpacity="0.45" strokeWidth="1" fill="none" />
-                <line x1="60" y1="285" x2="80" y2="285" stroke="white" strokeOpacity="0.35" strokeWidth="1" />
-
-                {/* ── Top-left: Tag / Keywords ── */}
-                <circle cx="80" cy="135" r="24" fill="white" fillOpacity="0.1" stroke="white" strokeOpacity="0.3" strokeWidth="1.5" />
-                <rect x="70" y="128" width="14" height="10" rx="2" stroke="white" strokeOpacity="0.75" strokeWidth="1.3" fill="none" />
-                <line x1="84" y1="133" x2="90" y2="133" stroke="white" strokeOpacity="0.75" strokeWidth="1.3" strokeLinecap="round" />
-                <circle cx="75" cy="133" r="1.5" fill="white" fillOpacity="0.7" />
-
-                {/* Floating dots */}
-                <circle cx="155" cy="120" r="2.5" fill="white" fillOpacity="0.15" />
-                <circle cx="295" cy="110" r="2" fill="white" fillOpacity="0.12" />
-                <circle cx="310" cy="240" r="2" fill="white" fillOpacity="0.15" />
-                <circle cx="130" cy="250" r="2.5" fill="white" fillOpacity="0.1" />
-                <circle cx="175" cy="310" r="2" fill="white" fillOpacity="0.08" />
-                <circle cx="270" cy="300" r="1.5" fill="white" fillOpacity="0.1" />
-              </svg>
-            </div>
           </div>
         </div>
       </section>
