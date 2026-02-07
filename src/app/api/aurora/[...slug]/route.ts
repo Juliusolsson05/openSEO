@@ -213,7 +213,7 @@ async function handleAurora(ctx: {
 
   // HEALTH
   if (path === 'health') {
-    return raw({ status: 'ok' })
+    return raw({ detail: 'Not found.' }, 404)
   }
 
   if (path === 'health/celery') {
