@@ -1,20 +1,26 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { Search, Eye, X } from 'lucide-react'
+import { createElement, useMemo, useState } from 'react'
+import { Search, Eye, X, LayoutGrid, List, Sparkles, LayoutTemplate } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Modal } from '@/components/ui/modal'
 import { GENERATE_ELEMENT_TYPES, type ElementType } from '../types'
-import { getPreviewComponent, getExample } from '../registry'
+import { getPreviewComponent, getExample, getIcon } from '../registry'
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSelect: (elementType: ElementType, note?: string) => void
+  onTemplateSelect?: (templateId: string) => void
   loading: boolean
 }
+
+type ViewMode = 'grid' | 'list'
+type SelectMode = 'generate' | 'template'
+
+const TEMPLATES = [{ id: 'call_to_action', label: 'Call to Action' }]
 
 function pretty(type: string) {
   return type
@@ -22,11 +28,14 @@ function pretty(type: string) {
     .replace(/\b\w/g, (m) => m.toUpperCase())
 }
 
-export function ComponentSelectModal({ open, onOpenChange, onSelect, loading }: Props) {
+export function ComponentSelectModal({ open, onOpenChange, onSelect, onTemplateSelect, loading }: Props) {
   const [note, setNote] = useState('')
   const [selected, setSelected] = useState<ElementType | null>(null)
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [previewType, setPreviewType] = useState<ElementType | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [mode, setMode] = useState<SelectMode>('generate')
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -34,80 +43,187 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, loading }: 
     return GENERATE_ELEMENT_TYPES.filter((t) => t.includes(q) || pretty(t).toLowerCase().includes(q))
   }, [search])
 
-  const handleSelect = () => {
-    if (selected) {
+  const handleClose = () => {
+    onOpenChange(false)
+    setSelected(null)
+    setSelectedTemplate(null)
+    setNote('')
+    setSearch('')
+    setMode('generate')
+    setViewMode('grid')
+  }
+
+  const handleConfirm = () => {
+    if (mode === 'generate' && selected) {
       onSelect(selected, note || undefined)
-      setSelected(null)
-      setNote('')
-      setSearch('')
+      handleClose()
+      return
+    }
+
+    if (mode === 'template' && selectedTemplate) {
+      onTemplateSelect?.(selectedTemplate)
+      handleClose()
     }
   }
 
-  const PreviewComponent = previewType ? getPreviewComponent(previewType) : null
   const previewExample = previewType ? getExample(previewType) : null
 
   return (
     <>
-      <Modal open={open} onClose={() => onOpenChange(false)} zClass="z-[70]">
-        <div className="bg-background rounded-sm border border-border w-full max-w-4xl p-5 max-h-[85vh] overflow-y-auto">
+      <Modal open={open} onClose={handleClose} zClass="z-[70]">
+        <div className="bg-background rounded-sm border border-[#dbe6f3] w-full max-w-5xl p-5 max-h-[85vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[16px] font-semibold">Add Element</h2>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onOpenChange(false)}>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleClose}>
               <X className="h-4 w-4" />
             </Button>
           </div>
 
-          <div className="relative mb-4">
-            <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <Input className="h-8 pl-8" placeholder="Search elements" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <div className="inline-flex rounded-sm border border-[#dbe6f3] p-1 mb-4 bg-[#f7fbff]">
+            <Button
+              type="button"
+              size="sm"
+              variant={mode === 'generate' ? 'default' : 'ghost'}
+              className="h-8 text-xs"
+              onClick={() => setMode('generate')}
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1" /> Generate
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={mode === 'template' ? 'default' : 'ghost'}
+              className="h-8 text-xs"
+              onClick={() => setMode('template')}
+            >
+              <LayoutTemplate className="h-3.5 w-3.5 mr-1" /> Template
+            </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mb-4">
-            {filtered.map((type) => (
-              <div
-                key={type}
-                role="button"
-                tabIndex={0}
-                className={`text-left border rounded-sm p-2.5 transition-colors cursor-pointer ${selected === type ? 'border-primary bg-primary/5' : 'border-border hover:bg-secondary/60'}`}
-                onClick={() => setSelected(type)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelected(type) }}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[12px] font-semibold leading-snug">{pretty(type)}</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setPreviewType(type)
-                    }}
-                  >
-                    <Eye className="h-3.5 w-3.5" />
+          {mode === 'generate' ? (
+            <>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="relative flex-1">
+                  <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <Input className="h-8 pl-8" placeholder="Search elements" value={search} onChange={(e) => setSearch(e.target.value)} />
+                </div>
+                <div className="inline-flex rounded-sm border border-[#dbe6f3] p-0.5 bg-[#f7fbff]">
+                  <Button type="button" size="icon" variant={viewMode === 'grid' ? 'default' : 'ghost'} className="h-7 w-7" onClick={() => setViewMode('grid')}>
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button type="button" size="icon" variant={viewMode === 'list' ? 'default' : 'ghost'} className="h-7 w-7" onClick={() => setViewMode('list')}>
+                    <List className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </div>
-            ))}
-          </div>
 
-          {selected && (
-            <textarea
-              className="w-full min-h-[72px] rounded-sm border border-border bg-background px-3 py-2 text-[13px]"
-              placeholder="Optional generation instructions"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
+                  {filtered.map((type) => {
+                    const Icon = getIcon(type)
+                    return (
+                      <div
+                        key={type}
+                        role="button"
+                        tabIndex={0}
+                        className={`text-left border rounded-sm p-3 transition-all cursor-pointer ${selected === type ? 'border-[#0078D4] bg-[#0078D4]/10 shadow-[0_0_0_1px_#0078D4]' : 'border-[#dbe6f3] hover:border-[#0078D4]/40 hover:bg-[#0078D4]/5'}`}
+                        onClick={() => setSelected(type)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelected(type) }}
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="h-[86px] flex items-center justify-center w-full">
+                            {Icon ? <Icon width={80} height={80} className="shrink-0" /> : null}
+                          </div>
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-[12px] font-semibold leading-snug">{pretty(type)}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-[#0078D4]"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setPreviewType(type)
+                              }}
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="space-y-2 mb-4">
+                  {filtered.map((type) => {
+                    const Icon = getIcon(type)
+                    return (
+                      <div
+                        key={type}
+                        role="button"
+                        tabIndex={0}
+                        className={`border rounded-sm px-3 py-2 transition-all cursor-pointer flex items-center justify-between ${selected === type ? 'border-[#0078D4] bg-[#0078D4]/10 shadow-[0_0_0_1px_#0078D4]' : 'border-[#dbe6f3] hover:border-[#0078D4]/40 hover:bg-[#0078D4]/5'}`}
+                        onClick={() => setSelected(type)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelected(type) }}
+                      >
+                        <div className="flex items-center gap-3">
+                          {Icon ? <Icon width={48} height={48} /> : null}
+                          <span className="text-[13px] font-medium">{pretty(type)}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-[#0078D4]"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setPreviewType(type)
+                          }}
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {selected && (
+                <textarea
+                  className="w-full min-h-[72px] rounded-sm border border-border bg-background px-3 py-2 text-[13px]"
+                  placeholder="Optional generation instructions"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+              )}
+            </>
+          ) : (
+            <div className="space-y-2 mb-4">
+              {TEMPLATES.map((template) => (
+                <button
+                  type="button"
+                  key={template.id}
+                  className={`w-full text-left border rounded-sm px-3 py-2 transition-all ${selectedTemplate === template.id ? 'border-[#0078D4] bg-[#0078D4]/10 shadow-[0_0_0_1px_#0078D4]' : 'border-[#dbe6f3] hover:border-[#0078D4]/40 hover:bg-[#0078D4]/5'}`}
+                  onClick={() => setSelectedTemplate(template.id)}
+                >
+                  <div className="font-medium text-[13px]">{template.label}</div>
+                  <div className="text-[12px] text-muted-foreground">Insert a template-based component flow.</div>
+                </button>
+              ))}
+            </div>
           )}
 
           <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
-            <Button onClick={handleSelect} disabled={!selected || loading}>{loading ? 'Adding...' : 'Add Element'}</Button>
+            <Button variant="outline" onClick={handleClose} disabled={loading}>Cancel</Button>
+            <Button onClick={handleConfirm} disabled={(mode === 'generate' ? !selected : !selectedTemplate) || loading}>
+              {loading ? 'Adding...' : mode === 'generate' ? 'Add Element' : 'Use Template'}
+            </Button>
           </div>
         </div>
       </Modal>
 
-      {previewType && PreviewComponent && previewExample && (
+      {previewType && previewExample && (
         <Modal open={true} onClose={() => setPreviewType(null)} zClass="z-[80]" overlayClass="bg-black/40">
           <Card className="w-full max-w-3xl border-border rounded-sm">
             <CardHeader className="flex-row items-center justify-between py-3">
@@ -117,7 +233,7 @@ export function ComponentSelectModal({ open, onOpenChange, onSelect, loading }: 
               </Button>
             </CardHeader>
             <CardContent className="max-h-[70vh] overflow-y-auto">
-              <PreviewComponent content={previewExample as any} />
+              {createElement(getPreviewComponent(previewType), { content: previewExample as unknown })}
             </CardContent>
           </Card>
         </Modal>
