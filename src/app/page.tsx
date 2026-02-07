@@ -63,70 +63,62 @@ export default function HomePage() {
 
             {/* Decorative SVG illustration */}
             <div className="relative hidden md:flex items-center justify-center">
-              <svg viewBox="0 0 480 420" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-[480px] drop-shadow-2xl">
-                {/* Outer orbit rings */}
-                <ellipse cx="240" cy="210" rx="220" ry="100" stroke="white" strokeOpacity="0.08" strokeWidth="1" />
-                <ellipse cx="240" cy="210" rx="165" ry="75" stroke="white" strokeOpacity="0.12" strokeWidth="1" />
-                <ellipse cx="240" cy="210" rx="110" ry="50" stroke="white" strokeOpacity="0.15" strokeWidth="1" />
+              <svg viewBox="0 0 440 400" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-[440px]">
+                {/* Soft glow behind center */}
+                <circle cx="220" cy="200" r="90" fill="white" fillOpacity="0.06" />
+                <circle cx="220" cy="200" r="55" fill="white" fillOpacity="0.04" />
 
-                {/* Central hub — document/content icon */}
-                <rect x="208" y="170" width="64" height="80" rx="8" fill="white" fillOpacity="0.15" stroke="white" strokeOpacity="0.4" strokeWidth="1.5" />
-                <rect x="220" y="186" width="40" height="3" rx="1.5" fill="white" fillOpacity="0.7" />
-                <rect x="220" y="195" width="32" height="3" rx="1.5" fill="white" fillOpacity="0.5" />
-                <rect x="220" y="204" width="36" height="3" rx="1.5" fill="white" fillOpacity="0.5" />
-                <rect x="220" y="213" width="28" height="3" rx="1.5" fill="white" fillOpacity="0.4" />
-                <rect x="220" y="226" width="40" height="12" rx="3" fill="white" fillOpacity="0.2" stroke="white" strokeOpacity="0.3" strokeWidth="1" />
+                {/* Orbit rings — tilted perspective */}
+                <ellipse cx="220" cy="200" rx="200" ry="90" stroke="white" strokeOpacity="0.07" strokeWidth="1" />
+                <ellipse cx="220" cy="200" rx="150" ry="68" stroke="white" strokeOpacity="0.1" strokeWidth="1" />
 
-                {/* Orbiting node — top: AI/brain */}
-                <circle cx="240" cy="110" r="26" fill="white" fillOpacity="0.12" stroke="white" strokeOpacity="0.35" strokeWidth="1.5" />
-                <path d="M231 110c0-5 4-9 9-9s9 4 9 9" stroke="white" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
-                <circle cx="234" cy="107" r="1.5" fill="white" fillOpacity="0.8" />
-                <circle cx="246" cy="107" r="1.5" fill="white" fillOpacity="0.8" />
-                <path d="M234 115h12" stroke="white" strokeOpacity="0.5" strokeWidth="1" strokeLinecap="round" />
-                {/* Connector line to center */}
-                <line x1="240" y1="136" x2="240" y2="170" stroke="white" strokeOpacity="0.15" strokeWidth="1" strokeDasharray="4 3" />
+                {/* Connector lines — radiate from center */}
+                <line x1="220" y1="165" x2="220" y2="105" stroke="white" strokeOpacity="0.18" strokeWidth="1" />
+                <line x1="252" y1="188" x2="345" y2="148" stroke="white" strokeOpacity="0.18" strokeWidth="1" />
+                <line x1="252" y1="212" x2="355" y2="275" stroke="white" strokeOpacity="0.18" strokeWidth="1" />
+                <line x1="188" y1="212" x2="85" y2="275" stroke="white" strokeOpacity="0.18" strokeWidth="1" />
+                <line x1="188" y1="188" x2="95" y2="148" stroke="white" strokeOpacity="0.18" strokeWidth="1" />
 
-                {/* Orbiting node — right: SEO/search */}
-                <circle cx="400" cy="185" r="26" fill="white" fillOpacity="0.12" stroke="white" strokeOpacity="0.35" strokeWidth="1.5" />
-                <circle cx="396" cy="182" r="8" stroke="white" strokeOpacity="0.8" strokeWidth="1.5" fill="none" />
-                <line x1="402" y1="188" x2="410" y2="196" stroke="white" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
-                {/* Connector */}
-                <line x1="374" y1="192" x2="272" y2="205" stroke="white" strokeOpacity="0.15" strokeWidth="1" strokeDasharray="4 3" />
+                {/* ── Central node: Aurora A logo ── */}
+                <circle cx="220" cy="200" r="35" fill="white" fillOpacity="0.12" stroke="white" strokeOpacity="0.3" strokeWidth="1.5" />
+                <path d="M220 180l-12 24h6l2-4h8l2 4h6l-12-24zm0 8l3 6h-6l3-6z" fill="white" fillOpacity="0.85" fillRule="evenodd" />
 
-                {/* Orbiting node — bottom-right: chart/analytics */}
-                <circle cx="370" cy="300" r="26" fill="white" fillOpacity="0.12" stroke="white" strokeOpacity="0.35" strokeWidth="1.5" />
-                <rect x="358" y="296" width="5" height="14" rx="1" fill="white" fillOpacity="0.5" />
-                <rect x="366" y="290" width="5" height="20" rx="1" fill="white" fillOpacity="0.7" />
-                <rect x="374" y="293" width="5" height="17" rx="1" fill="white" fillOpacity="0.6" />
-                {/* Connector */}
-                <line x1="348" y1="286" x2="265" y2="240" stroke="white" strokeOpacity="0.15" strokeWidth="1" strokeDasharray="4 3" />
+                {/* ── Top: Sparkle / AI ── */}
+                <circle cx="220" cy="80" r="24" fill="white" fillOpacity="0.1" stroke="white" strokeOpacity="0.3" strokeWidth="1.5" />
+                {/* 4-point sparkle */}
+                <path d="M220 70v20M210 80h20" stroke="white" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M214 74l12 12M226 74l-12 12" stroke="white" strokeOpacity="0.4" strokeWidth="1" strokeLinecap="round" />
 
-                {/* Orbiting node — bottom-left: publish/send */}
-                <circle cx="110" cy="300" r="26" fill="white" fillOpacity="0.12" stroke="white" strokeOpacity="0.35" strokeWidth="1.5" />
-                <path d="M100 300l14-8v5h10v6h-10v5z" fill="white" fillOpacity="0.7" />
-                {/* Connector */}
-                <line x1="132" y1="286" x2="215" y2="240" stroke="white" strokeOpacity="0.15" strokeWidth="1" strokeDasharray="4 3" />
+                {/* ── Top-right: Search / SEO ── */}
+                <circle cx="360" cy="135" r="24" fill="white" fillOpacity="0.1" stroke="white" strokeOpacity="0.3" strokeWidth="1.5" />
+                <circle cx="356" cy="131" r="7" stroke="white" strokeOpacity="0.8" strokeWidth="1.5" fill="none" />
+                <line x1="361" y1="136" x2="369" y2="144" stroke="white" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
 
-                {/* Orbiting node — left: keywords/key */}
-                <circle cx="80" cy="185" r="26" fill="white" fillOpacity="0.12" stroke="white" strokeOpacity="0.35" strokeWidth="1.5" />
-                <circle cx="76" cy="180" r="5" stroke="white" strokeOpacity="0.8" strokeWidth="1.5" fill="none" />
-                <line x1="80" y1="184" x2="88" y2="196" stroke="white" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
-                <line x1="84" y1="190" x2="88" y2="188" stroke="white" strokeOpacity="0.6" strokeWidth="1.5" strokeLinecap="round" />
-                {/* Connector */}
-                <line x1="106" y1="192" x2="208" y2="205" stroke="white" strokeOpacity="0.15" strokeWidth="1" strokeDasharray="4 3" />
+                {/* ── Bottom-right: Bar chart / Analytics ── */}
+                <circle cx="370" cy="285" r="24" fill="white" fillOpacity="0.1" stroke="white" strokeOpacity="0.3" strokeWidth="1.5" />
+                <rect x="359" y="283" width="4" height="12" rx="1" fill="white" fillOpacity="0.5" />
+                <rect x="366" y="278" width="4" height="17" rx="1" fill="white" fillOpacity="0.75" />
+                <rect x="373" y="281" width="4" height="14" rx="1" fill="white" fillOpacity="0.6" />
 
-                {/* Floating particles */}
-                <circle cx="160" cy="130" r="3" fill="white" fillOpacity="0.15" />
-                <circle cx="330" cy="140" r="2" fill="white" fillOpacity="0.2" />
-                <circle cx="320" cy="260" r="2.5" fill="white" fillOpacity="0.12" />
-                <circle cx="150" cy="260" r="2" fill="white" fillOpacity="0.18" />
-                <circle cx="190" cy="160" r="1.5" fill="white" fillOpacity="0.1" />
-                <circle cx="290" cy="160" r="1.5" fill="white" fillOpacity="0.1" />
-                <circle cx="200" cy="320" r="2" fill="white" fillOpacity="0.1" />
-                <circle cx="280" cy="320" r="2" fill="white" fillOpacity="0.1" />
+                {/* ── Bottom-left: Globe / Publish ── */}
+                <circle cx="70" cy="285" r="24" fill="white" fillOpacity="0.1" stroke="white" strokeOpacity="0.3" strokeWidth="1.5" />
+                <circle cx="70" cy="285" r="10" stroke="white" strokeOpacity="0.7" strokeWidth="1.2" fill="none" />
+                <ellipse cx="70" cy="285" rx="4" ry="10" stroke="white" strokeOpacity="0.45" strokeWidth="1" fill="none" />
+                <line x1="60" y1="285" x2="80" y2="285" stroke="white" strokeOpacity="0.35" strokeWidth="1" />
 
-                {/* Glow effect behind center */}
-                <circle cx="240" cy="210" r="50" fill="white" fillOpacity="0.04" />
+                {/* ── Top-left: Tag / Keywords ── */}
+                <circle cx="80" cy="135" r="24" fill="white" fillOpacity="0.1" stroke="white" strokeOpacity="0.3" strokeWidth="1.5" />
+                <rect x="70" y="128" width="14" height="10" rx="2" stroke="white" strokeOpacity="0.75" strokeWidth="1.3" fill="none" />
+                <line x1="84" y1="133" x2="90" y2="133" stroke="white" strokeOpacity="0.75" strokeWidth="1.3" strokeLinecap="round" />
+                <circle cx="75" cy="133" r="1.5" fill="white" fillOpacity="0.7" />
+
+                {/* Floating dots */}
+                <circle cx="155" cy="120" r="2.5" fill="white" fillOpacity="0.15" />
+                <circle cx="295" cy="110" r="2" fill="white" fillOpacity="0.12" />
+                <circle cx="310" cy="240" r="2" fill="white" fillOpacity="0.15" />
+                <circle cx="130" cy="250" r="2.5" fill="white" fillOpacity="0.1" />
+                <circle cx="175" cy="310" r="2" fill="white" fillOpacity="0.08" />
+                <circle cx="270" cy="300" r="1.5" fill="white" fillOpacity="0.1" />
               </svg>
             </div>
           </div>
