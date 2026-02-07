@@ -1,5 +1,4 @@
 import { NotFoundError, ValidationError } from '@/server/api/errors'
-import { uploadToCloudinary } from '@/server/ai/blog-elements/upload-to-cloudinary'
 import { generateImage } from '@/server/ai/image/generate-image'
 import * as imageRepository from '@/server/repositories/image.repository'
 
@@ -18,6 +17,28 @@ async function uploadBinaryToCloudinary(file: File, folder: string) {
   const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
     method: 'POST',
     body: form,
+  })
+
+  if (!res.ok) return null
+  const data = (await res.json()) as { secure_url?: string }
+  return data.secure_url ?? null
+}
+
+async function uploadUrlToCloudinary(imageUrl: string, folder: string) {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME
+  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET
+  if (!cloudName || !uploadPreset) return null
+
+  const body = new URLSearchParams({
+    file: imageUrl,
+    upload_preset: uploadPreset,
+    folder,
+  })
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
   })
 
   if (!res.ok) return null
@@ -53,7 +74,7 @@ export class ImageService {
     if (forceUpdate || (coverImage.url ?? '') === DEFAULT_PLACEHOLDER_URL) {
       const img = await generateImage(coverDescription, coverVersion, body.magic_prompt ?? true)
       if ((img as any).url) {
-        const cloudinaryUrl = await uploadToCloudinary((img as any).url)
+        const cloudinaryUrl = await uploadUrlToCloudinary((img as any).url, 'blog_covers')
         if (cloudinaryUrl) coverImage.url = cloudinaryUrl
       }
     }
@@ -66,7 +87,7 @@ export class ImageService {
       if (forceUpdate || (content.url ?? '') === DEFAULT_PLACEHOLDER_URL) {
         const img = await generateImage(description, version, body.magic_prompt ?? true)
         if ((img as any).url) {
-          const cloudinaryUrl = await uploadToCloudinary((img as any).url)
+          const cloudinaryUrl = await uploadUrlToCloudinary((img as any).url, 'blog_covers')
           if (cloudinaryUrl) content.url = cloudinaryUrl
         }
       }
@@ -95,14 +116,19 @@ export class ImageService {
   }
 
   async regenerateImage(companyId: number, payload: unknown) {
-    const body = payload as { post_id?: number; image_number?: number; version?: number; magic_prompt?: boolean; force_prompt?: string }
+    const body = payload as { post_id?: number | string; image_number?: number | string; version?: number | string; magic_prompt?: boolean; force_prompt?: string }
     if (!body.post_id) throw new ValidationError('post_id is required.')
+    if (body.image_number === undefined || body.image_number === null || body.image_number === '') {
+      throw new ValidationError('image_number is required.')
+    }
 
-    const imageNumber = Number(body.image_number ?? 1)
+    const imageNumber = Number(body.image_number)
+    if (!Number.isInteger(imageNumber)) throw new ValidationError('image_number must be an integer.')
     const version = Number(body.version ?? 1)
+    if (!Number.isInteger(version)) throw new ValidationError('version must be an integer between 1 and 3.')
     if (![1, 2, 3].includes(version)) throw new ValidationError('Invalid version. Please select a version between 1 and 3.')
 
-    const post = await imageRepository.findBlogPost(companyId, body.post_id)
+    const post = await imageRepository.findBlogPost(companyId, Number(body.post_id))
     if (!post) throw new NotFoundError('Not found.')
 
     let newUrl: string | null = null
@@ -112,7 +138,7 @@ export class ImageService {
       const description = body.force_prompt || cover.description || ''
       const img = await generateImage(description, version, body.magic_prompt ?? true)
       if ((img as any).url) {
-        newUrl = await uploadToCloudinary((img as any).url)
+        newUrl = await uploadUrlToCloudinary((img as any).url, 'blog_covers')
       }
       if (newUrl) {
         cover.url = newUrl
@@ -127,7 +153,7 @@ export class ImageService {
         const description = body.force_prompt || content.description || ''
         const img = await generateImage(description, version, body.magic_prompt ?? true)
         if ((img as any).url) {
-          newUrl = await uploadToCloudinary((img as any).url)
+          newUrl = await uploadUrlToCloudinary((img as any).url, 'blog_elements')
         }
         if (newUrl) {
           content.url = newUrl
@@ -145,7 +171,7 @@ export class ImageService {
   }
 
   async uploadImage(companyId: number, payload: unknown) {
-    if (!(payload instanceof FormData)) throw new ValidationError('multipart/form-data expected')
+    if (!(payload instanceof FormData)) throw new ValidationError('post_id and image are required.')
 
     const postId = Number(payload.get('post_id'))
     const imageNumber = Number(payload.get('image_number') ?? 1)
@@ -188,25 +214,33 @@ export class ImageService {
     const body = payload as { post_id?: number; image_number?: number; image_url?: string }
     if (!body.post_id || !body.image_url) throw new ValidationError('post_id and image_url are required.')
 
-    const post = await imageRepository.findBlogPost(companyId, body.post_id)
+    const post = await imageRepository.findBlogPost(companyId, Number(body.post_id))
     if (!post) throw new NotFoundError('Not found.')
 
     const imageNumber = Number(body.image_number ?? 1)
-    const uploaded = await uploadToCloudinary(body.image_url)
-    if (!uploaded) throw new ValidationError('Invalid image number or image could not be uploaded.')
 
     if (imageNumber === 1) {
+      const uploaded = await uploadUrlToCloudinary(body.image_url, 'blog_covers')
+      if (!uploaded) throw new ValidationError('Invalid image number or image could not be uploaded.')
       const cover = (post.cover_image as any) || {}
       cover.url = uploaded
       await imageRepository.updateBlogPostCover(post.id, cover)
-    } else {
-      const imgs = post.elements.filter((e) => e.element_type === 'IMAGE')
-      const target = imgs[imageNumber - 2]
-      if (!target) throw new ValidationError('Invalid image number or image could not be uploaded.')
-      const content = (target.content as any) || {}
-      content.url = uploaded
-      await imageRepository.updateElementContent(target.id, content)
+      return {
+        status: `Successfully uploaded and replaced image ${imageNumber} for blog post: ${post.title_text}`,
+        new_url: uploaded,
+      }
     }
+
+    const imgs = post.elements.filter((e) => e.element_type === 'IMAGE')
+    const target = imgs[imageNumber - 2]
+    if (!target) throw new ValidationError('Invalid image number or image could not be uploaded.')
+
+    const uploaded = await uploadUrlToCloudinary(body.image_url, 'blog_elements')
+    if (!uploaded) throw new ValidationError('Invalid image number or image could not be uploaded.')
+
+    const content = (target.content as any) || {}
+    content.url = uploaded
+    await imageRepository.updateElementContent(target.id, content)
 
     return {
       status: `Successfully uploaded and replaced image ${imageNumber} for blog post: ${post.title_text}`,
@@ -217,7 +251,7 @@ export class ImageService {
   async searchStockPhotos(_companyId: number, query: string, page = 1, perPage = 10) {
     if (!query) throw new ValidationError('Search query is required')
     const key = process.env.PEXELS
-    if (!key) throw new ValidationError('Pexels API key is not set')
+    if (!key) throw new Error('Pexels API key is not set')
 
     const url = new URL('https://api.pexels.com/v1/search')
     url.searchParams.set('query', query)
@@ -225,7 +259,7 @@ export class ImageService {
     url.searchParams.set('per_page', String(perPage))
 
     const res = await fetch(url, { headers: { Authorization: key } })
-    if (!res.ok) throw new ValidationError(`Error communicating with Pexels API: ${res.status}`)
+    if (!res.ok) throw new Error(`Error communicating with Pexels API: ${res.status}`)
     const data = (await res.json()) as any
 
     return {
