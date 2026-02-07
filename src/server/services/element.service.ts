@@ -347,7 +347,39 @@ export class ElementService {
     return { created, cta }
   }
 
-  async listTemplates() { throw new Error('TODO: implement listTemplates') }
+  async listTemplates() {
+    // Templates are the distinct element_type values currently used across all posts.
+    // This gives the frontend a palette of known element types for composing new posts.
+    const raw = await prisma.element.findMany({
+      distinct: ['element_type'],
+      select: { element_type: true },
+      orderBy: { element_type: 'asc' },
+    })
+
+    // Merge with the canonical set so the UI always shows the standard types
+    const canonical = [
+      'INTRODUCTION',
+      'PARAGRAPH',
+      'CONCLUSION',
+      'FAQ',
+      'LIST',
+      'CTA',
+      'QUOTE',
+      'TABLE',
+      'IMAGE',
+    ]
+
+    const existing = new Set(raw.map((r) => r.element_type))
+    const merged = [...canonical]
+    for (const r of raw) {
+      if (!canonical.includes(r.element_type)) merged.push(r.element_type)
+    }
+
+    return merged.map((type) => ({
+      element_type: type,
+      in_use: existing.has(type),
+    }))
+  }
 }
 
 export const elementService = new ElementService()
