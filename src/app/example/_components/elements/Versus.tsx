@@ -1,3 +1,5 @@
+import { RichText } from './RichText'
+
 type Props = { title?: string; option_a: { name: string; points: string[] }; option_b: { name: string; points: string[] } }
 
 export function Versus({ title, option_a, option_b }: Props) {
@@ -9,7 +11,9 @@ export function Versus({ title, option_a, option_b }: Props) {
           <p className="mb-3 text-[14px] font-bold text-neutral-900">{option_a.name}</p>
           <ul className="space-y-1.5">
             {option_a.points.map((p, i) => (
-              <li key={i} className="text-[13px] text-neutral-600 leading-relaxed">• {p}</li>
+              <li key={i} className="text-[13px] text-neutral-600 leading-relaxed">
+                <RichText html={p} className="text-[13px] text-neutral-600 leading-relaxed" />
+              </li>
             ))}
           </ul>
         </div>
@@ -17,7 +21,9 @@ export function Versus({ title, option_a, option_b }: Props) {
           <p className="mb-3 text-[14px] font-bold text-neutral-900">{option_b.name}</p>
           <ul className="space-y-1.5">
             {option_b.points.map((p, i) => (
-              <li key={i} className="text-[13px] text-neutral-600 leading-relaxed">• {p}</li>
+              <li key={i} className="text-[13px] text-neutral-600 leading-relaxed">
+                <RichText html={p} className="text-[13px] text-neutral-600 leading-relaxed" />
+              </li>
             ))}
           </ul>
         </div>

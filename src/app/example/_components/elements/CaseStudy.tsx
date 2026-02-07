@@ -1,3 +1,5 @@
+import { RichText } from './RichText'
+
 type Props = { title: string; problem?: string; solution?: string; result?: string }
 
 export function CaseStudy({ title, problem, solution, result }: Props) {
@@ -9,19 +11,19 @@ export function CaseStudy({ title, problem, solution, result }: Props) {
         {problem && (
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-wide text-neutral-400 mb-1">Problem</p>
-            <p className="text-[14px] text-neutral-700 leading-relaxed">{problem}</p>
+            <RichText html={problem} className="text-[14px] text-neutral-700 leading-relaxed" />
           </div>
         )}
         {solution && (
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-wide text-neutral-400 mb-1">Solution</p>
-            <p className="text-[14px] text-neutral-700 leading-relaxed">{solution}</p>
+            <RichText html={solution} className="text-[14px] text-neutral-700 leading-relaxed" />
           </div>
         )}
         {result && (
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-wide text-neutral-400 mb-1">Result</p>
-            <p className="text-[14px] text-neutral-700 leading-relaxed">{result}</p>
+            <RichText html={result} className="text-[14px] text-neutral-700 leading-relaxed" />
           </div>
         )}
       </div>

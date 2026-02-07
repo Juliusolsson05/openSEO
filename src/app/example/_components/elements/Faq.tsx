@@ -1,3 +1,5 @@
+import { RichText } from './RichText'
+
 type FaqItem = { question: string; answer: string }
 
 type FaqProps = {
@@ -15,7 +17,7 @@ export function Faq({ title = 'Frequently asked questions', items }: FaqProps) {
             <summary className="cursor-pointer list-none pr-6 text-sm font-medium text-neutral-900">
               {item.question}
             </summary>
-            <p className="mt-2 text-sm leading-relaxed text-neutral-600">{item.answer}</p>
+            <RichText html={item.answer} className="mt-2 text-sm leading-relaxed text-neutral-600" />
           </details>
         ))}
       </div>

@@ -1,5 +1,7 @@
 import { Check, X } from 'lucide-react'
 
+import { RichText } from './RichText'
+
 type Props = { title?: string; pros: string[]; cons: string[] }
 
 export function ProsAndCons({ title, pros, cons }: Props) {
@@ -13,7 +15,7 @@ export function ProsAndCons({ title, pros, cons }: Props) {
             {pros.map((item, i) => (
               <li key={i} className="flex items-start gap-2 text-[14px] text-neutral-700">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-                {item}
+                <RichText html={item} className="text-[14px] text-neutral-700" />
               </li>
             ))}
           </ul>
@@ -24,7 +26,7 @@ export function ProsAndCons({ title, pros, cons }: Props) {
             {cons.map((item, i) => (
               <li key={i} className="flex items-start gap-2 text-[14px] text-neutral-700">
                 <X className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                {item}
+                <RichText html={item} className="text-[14px] text-neutral-700" />
               </li>
             ))}
           </ul>
