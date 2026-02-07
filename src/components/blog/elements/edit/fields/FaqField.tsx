@@ -76,6 +76,8 @@ export function FaqFieldInput({ field, value, onChange }: Props) {
   const faqFieldConfig: EditField = {
     ...faqArrayField,
     label: field.label,
+    validation: field.validation,
+    required: field.required,
   }
 
   const updateFAQ = (nextValue: any) => {

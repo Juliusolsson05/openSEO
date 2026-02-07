@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { EditFieldRenderer } from '../EditFieldRenderer'
 import type { EditField } from '../../types'
+import { useFieldValidation } from '../useFieldValidation'
+import { cn } from '@/lib/utils'
 
 interface Props {
   field: EditField
@@ -16,6 +18,7 @@ interface Props {
 export function ArrayObjectFieldInput({ field, value, onChange }: Props) {
   const items = Array.isArray(value) ? value : []
   const hasReachedMaxItems = !!field.maxItems && items.length >= field.maxItems
+  const errors = useFieldValidation(field, items)
 
   const createEmptyItem = () => {
     const item: Record<string, any> = {}
@@ -40,47 +43,27 @@ export function ArrayObjectFieldInput({ field, value, onChange }: Props) {
     onChange(updated)
   }
 
-  const validationError =
-    field.required && !items.length
-      ? 'At least one item is required'
-      : field.minItems && items.length < field.minItems
-        ? `Minimum ${field.minItems} items required`
-        : field.maxItems && items.length > field.maxItems
-          ? `Maximum ${field.maxItems} items allowed`
-          : ''
-
   return (
     <div>
       <div className="flex items-center justify-between">
         <Label className="text-sm font-medium text-muted-foreground">{field.label}</Label>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          onClick={addItem}
-          disabled={hasReachedMaxItems}
-        >
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={addItem} disabled={hasReachedMaxItems}>
           <Plus className="h-4 w-4" />
         </Button>
       </div>
 
       {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground mt-1">No items added</p>
+        <p className="mt-1 text-sm text-muted-foreground">No items added</p>
       ) : (
-        <div className="space-y-3 mt-2">
+        <div className="mt-2 space-y-3">
           {items.map((item, index) => (
             <Card key={index} className="p-3">
-              <div className="flex items-center justify-between mb-2">
+              <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <GripVertical className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Item {index + 1}</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive"
-                  onClick={() => removeItem(index)}
-                >
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeItem(index)}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -100,7 +83,15 @@ export function ArrayObjectFieldInput({ field, value, onChange }: Props) {
         </div>
       )}
 
-      {validationError && <p className="text-xs text-destructive mt-1">{validationError}</p>}
+      {errors.length > 0 && (
+        <div className={cn('mt-1 space-y-0.5')}>
+          {errors.map((err, i) => (
+            <p key={i} className="text-[11px] text-destructive">
+              {err}
+            </p>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
