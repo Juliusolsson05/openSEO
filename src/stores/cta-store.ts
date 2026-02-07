@@ -195,7 +195,7 @@ export const useCtaStore = create<CtaState>((set, get) => ({
       // apiPostForm uses POST — the backend edit endpoint uses PUT with FormData
       // We need a raw fetch for PUT + FormData
       const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+        process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'
       const { getCookie } = await import('cookies-next')
       const companyId =
         typeof window !== 'undefined' ? getCookie('companyId') : null

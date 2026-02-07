@@ -16,7 +16,7 @@ const resolveImageUrl = (imageUrl?: string) => {
   if (!imageUrl) return ''
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl
 
-  const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '')
+  const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000').replace(/\/$/, '')
   const normalizedPath = imageUrl.replace(/^\//, '')
 
   return `${baseUrl}/media/${normalizedPath}`
