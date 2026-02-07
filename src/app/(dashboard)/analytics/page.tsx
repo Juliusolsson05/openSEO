@@ -17,6 +17,7 @@ import { KeywordsOverview } from '@/components/analytics/KeywordsOverview'
 import { DictionaryOverview } from '@/components/analytics/DictionaryOverview'
 import { PostMeta } from '@/components/analytics/PostMeta'
 import { AnalyticsOverview } from '@/components/analytics/AnalyticsOverview'
+import { ElementBreakdown } from '@/components/analytics/ElementBreakdown'
 
 function SectionLabel({ children }: { children: string }) {
   return <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{children}</p>
@@ -53,6 +54,7 @@ export default function AnalyticsPage() {
     dictionaryData,
     blogMetaData,
     linkedWords,
+    elementBreakdown,
   } = useAnalyticsStore()
 
   useEffect(() => {
@@ -103,6 +105,9 @@ export default function AnalyticsPage() {
 
           <SectionLabel>GENERAL BREAKDOWN</SectionLabel>
           <GeneralBreakdown generalBlogData={generalBlogData} />
+
+          <SectionLabel>ELEMENT TYPE BREAKDOWN</SectionLabel>
+          <ElementBreakdown elementBreakdown={elementBreakdown} />
 
           <SectionLabel>CATEGORY AND FREQUENCY</SectionLabel>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-12">

@@ -78,12 +78,19 @@ export interface BlogTitle {
   post_linking: number[]
 }
 
+export interface ElementBreakdownResponse {
+  total_posts: number
+  element_counts: Record<string, number>
+  total_elements_per_post: number[]
+}
+
 interface AnalyticsState {
   linkedWords: DictionaryWordCount[]
   dictionaryData: DictionaryGeneralResponse | null
   blogMetaData: BlogMetaResponse | null
   blogTitles: BlogTitle[]
   generalBlogData: BlogGeneralResponse | null
+  elementBreakdown: ElementBreakdownResponse | null
   isLoading: boolean
   error: string | null
   fetchPromise: Promise<void> | null
@@ -104,6 +111,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
   blogMetaData: null,
   blogTitles: [],
   generalBlogData: null,
+  elementBreakdown: null,
   isLoading: false,
   error: null,
   fetchPromise: null,
@@ -125,7 +133,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-        const [dictionaryRes, blogMetaRes, blogTitlesRes, generalBlogRes] = await Promise.all([
+        const [dictionaryRes, blogMetaRes, blogTitlesRes, generalBlogRes, elementsRes] = await Promise.all([
           api<DictionaryGeneralResponse>('/api/aurora/analytics/dictionary/general', {
             params: { include_all_words_links: 'true' },
           }).catch(() => ({ data: null, error: new Error('dictionary failed') })),
@@ -136,9 +144,11 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
           api<BlogGeneralResponse>('/api/aurora/analytics/blog/general', {
             params: { include_recommendations: 'false' },
           }).catch(() => ({ data: null, error: new Error('general failed') })),
+          api<ElementBreakdownResponse>('/api/aurora/analytics/blog/elements')
+            .catch(() => ({ data: null, error: new Error('elements failed') })),
         ])
 
-        const hasAnyData = dictionaryRes.data || blogMetaRes.data || blogTitlesRes.data || generalBlogRes.data
+        const hasAnyData = dictionaryRes.data || blogMetaRes.data || blogTitlesRes.data || generalBlogRes.data || elementsRes.data
         const allFailed = !hasAnyData
 
         set({
@@ -147,6 +157,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
           blogMetaData: blogMetaRes.data ?? null,
           blogTitles: blogTitlesRes.data ?? [],
           generalBlogData: generalBlogRes.data ?? null,
+          elementBreakdown: elementsRes.data ?? null,
           isLoading: false,
           error: allFailed ? 'Could not load analytics data. Please check your connection and try again.' : null,
           fetchPromise: null,
@@ -171,6 +182,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
       blogMetaData: null,
       blogTitles: [],
       generalBlogData: null,
+      elementBreakdown: null,
       isLoading: false,
       error: null,
       fetchPromise: null,

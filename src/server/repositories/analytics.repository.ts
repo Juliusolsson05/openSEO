@@ -450,16 +450,29 @@ export async function getMetaAnalysis(companyId: number) {
 }
 
 export async function getElementCounts(companyId: number) {
-  const grouped = await prisma.blogPostElement.groupBy({
-    by: ['element_type'],
-    where: { blog_post: { companyId } },
-    _count: { _all: true },
-  })
+  const [grouped, posts] = await Promise.all([
+    prisma.blogPostElement.groupBy({
+      by: ['element_type'],
+      where: { blog_post: { companyId } },
+      _count: { _all: true },
+    }),
+    prisma.blogPost.findMany({
+      where: { companyId },
+      select: { id: true, _count: { select: { elements: true } } },
+      orderBy: { id: 'asc' },
+    }),
+  ])
 
-  return grouped.map((entry) => ({
-    elementType: entry.element_type,
-    count: entry._count._all,
-  }))
+  const elementCounts: Record<string, number> = {}
+  for (const entry of grouped) {
+    elementCounts[entry.element_type.toLowerCase()] = entry._count._all
+  }
+
+  return {
+    total_posts: posts.length,
+    element_counts: elementCounts,
+    total_elements_per_post: posts.map((p) => p._count.elements),
+  }
 }
 
 export async function getDictionaryAnalytics(companyId: number, includeAllWordsLinks = false) {
