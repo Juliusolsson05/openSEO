@@ -1,12 +1,18 @@
-import { Prisma } from '@prisma/client'
+import { Prisma, TitleStatus } from '@prisma/client'
 
-import { NotFoundError } from '@/server/api/errors'
+import { prisma } from '@/lib/prisma'
+import { NotFoundError, ValidationError } from '@/server/api/errors'
+import { generateStructure } from '@/server/ai/blog-generation/generate-structure'
+import { generateBlogPost } from '@/server/ai/blog-generation/generate-blog-post'
 import * as blogRepository from '@/server/repositories/blog.repository'
+import { toDbElementType } from '@/server/utils/element-type'
 import type {
   CreateBlogPostInput,
   ListBlogPostsQueryInput,
   UpdateBlogPostInput,
 } from '@/server/validators/blog.validators'
+
+const DEFAULT_IMAGE = 'https://res.cloudinary.com/dl9qdd24e/image/upload/v1732560659/600x400_fqbihy.png'
 
 function slugify(input: string): string {
   return input
@@ -152,16 +158,129 @@ export class BlogService {
     return blogRepository.listFocusKeywords(companyId)
   }
 
-  // TODO: Generation endpoints
-  async generatePostFromTitle(_companyId: number, _titleId: number) {
-    throw new Error('TODO: implement generatePostFromTitle')
+  async generatePostFromTitle(companyId: number, titleId?: number | null) {
+    const company = await prisma.company.findUnique({ where: { id: companyId } })
+    if (!company) throw new NotFoundError('Company not found')
+
+    const title = await prisma.title.findFirst({
+      where: {
+        companyId,
+        status: TitleStatus.TO_BE_GENERATED,
+        ...(titleId ? { id: titleId } : {}),
+      },
+      orderBy: { id: 'asc' },
+      include: { categories: { select: { id: true } } },
+    })
+
+    if (!title) throw new NotFoundError(titleId ? 'Title not found or already generated' : 'No more titles to generate')
+
+    const settings = (company.settings ?? {}) as Record<string, any>
+    const blogSettings = settings['aurora.blog'] ?? {}
+    const allowedElements = blogSettings.initial_generation_elements
+    const structureModel = blogSettings.blog_post_structure_model ?? 'gpt-4o'
+    const contentModel = blogSettings.blog_post_content_model ?? 'gpt-4o-mini'
+
+    const businessDescription = (company.metadata as any)?.business_description ?? ''
+    const businessName = company.name
+    const businessAware = Boolean(businessDescription && businessName)
+
+    const { structure } = await generateStructure(title.title_text, structureModel, allowedElements)
+    const { elements } = await generateBlogPost(
+      title.seo_title ?? title.title_text,
+      title.focus_keyword ?? '',
+      title.title_text,
+      structure,
+      contentModel,
+      businessAware,
+      businessDescription,
+      businessName,
+    )
+
+    let metaDescription: string | null = null
+    let excerpt: string | null = null
+    let coverImage: Record<string, unknown> | null = null
+    const filtered: Array<{ type: string; content: Record<string, unknown> }> = []
+
+    for (const element of elements) {
+      const type = String(element.type ?? '')
+      const content = (element.content ?? {}) as Record<string, unknown>
+      if (type === 'meta_description') metaDescription = (content.text as string) ?? null
+      else if (type === 'excerpt') excerpt = (content.text as string) ?? null
+      else if (type === 'cover_image') coverImage = { ...content, url: DEFAULT_IMAGE }
+      else filtered.push({ type, content })
+    }
+
+    await prisma.$transaction(async (tx) => {
+      const baseSlug = slugify(title.title_text)
+      const slug = await ensureUniqueSlug(baseSlug)
+
+      const post = await tx.blogPost.create({
+        data: {
+          companyId,
+          title_text: title.title_text,
+          slug,
+          seo_title: title.seo_title,
+          focus_keyword: title.focus_keyword,
+          status: TitleStatus.GENERATED,
+          scheduled_date: title.scheduled_date,
+          bulkScheduleId: title.bulkScheduleId,
+          generated_date: new Date(),
+          created_at: title.created_at,
+          meta_description: metaDescription,
+          excerpt,
+          cover_image: (coverImage ?? { url: DEFAULT_IMAGE, description: '' }) as Prisma.InputJsonValue,
+          categories: { connect: title.categories.map((c) => ({ id: c.id })) },
+        },
+      })
+
+      for (let index = 0; index < filtered.length; index += 1) {
+        const dbType = toDbElementType(filtered[index].type)
+        if (!dbType) continue
+        const content = filtered[index].type === 'image'
+          ? { ...filtered[index].content, url: DEFAULT_IMAGE }
+          : filtered[index].content
+
+        await tx.blogPostElement.create({
+          data: {
+            blogPostId: post.id,
+            element_type: dbType,
+            content: content as Prisma.InputJsonValue,
+            order: index,
+          },
+        })
+      }
+
+      await tx.title.update({
+        where: { id: title.id },
+        data: { status: TitleStatus.GENERATED, generated_date: new Date(), blogPostId: post.id },
+      })
+    })
+
+    const nextTitle = await prisma.title.findFirst({
+      where: { companyId, status: TitleStatus.TO_BE_GENERATED },
+      orderBy: { id: 'asc' },
+      select: { id: true },
+    })
+
+    const [remaining, total, generated] = await Promise.all([
+      prisma.title.count({ where: { companyId, status: TitleStatus.TO_BE_GENERATED } }),
+      prisma.title.count({ where: { companyId } }),
+      prisma.title.count({ where: { companyId, status: TitleStatus.GENERATED } }),
+    ])
+
+    return {
+      status: `Generated post for title: ${title.title_text}`,
+      next_post_id: nextTitle?.id ?? null,
+      remaining_posts_count: remaining,
+      total_posts_count: total,
+      generated_posts_count: generated,
+    }
   }
 
   async regeneratePost(_companyId: number, _postId: number) {
-    throw new Error('TODO: implement regeneratePost')
+    throw new ValidationError('Not implemented yet')
   }
 
-  // TODO: Share/sync/export/history endpoints
   async sharePost(_companyId: number, _postId: number) {
     throw new Error('TODO: implement sharePost')
   }

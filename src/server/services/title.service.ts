@@ -1,6 +1,8 @@
-import type { TitleStatus } from '@prisma/client'
+import { TitleStatus } from '@prisma/client'
 
+import { prisma } from '@/lib/prisma'
 import { NotFoundError } from '@/server/api/errors'
+import { generateTitles as generateTitlesAI } from '@/server/ai/titles/generate-titles'
 import * as titleRepository from '@/server/repositories/title.repository'
 
 type ListTitlesQuery = {
@@ -61,7 +63,43 @@ export class TitleService {
     return deleted
   }
 
-  async generateTitles(_companyId: number, _payload: unknown) { throw new Error('TODO: implement generateTitles') }
+  async generateTitles(companyId: number, payload: {
+    businessType?: string
+    keywords?: string[]
+    language?: string
+    amount?: number
+  }) {
+    const company = await prisma.company.findUnique({ where: { id: companyId } })
+    if (!company) throw new NotFoundError('Company not found')
+
+    const businessType = payload.businessType ?? company.business_type
+    const language = payload.language ?? company.language ?? 'en'
+    const amount = payload.amount ?? 10
+    const keywords = payload.keywords ?? (Array.isArray(company.keywords) ? (company.keywords as string[]) : [])
+
+    const industryPrompt = [businessType, ...keywords].filter(Boolean).join(', ')
+    const existingTitles = await prisma.title.findMany({ where: { companyId }, select: { title_text: true } })
+
+    const generated = await generateTitlesAI(industryPrompt, amount, language, existingTitles.map((t) => t.title_text))
+
+    return prisma.$transaction(async (tx) => {
+      const created = [] as Awaited<ReturnType<typeof tx.title.create>>[]
+      for (let i = 1; i <= amount; i += 1) {
+        const item = (generated as Record<string, any>)[`title_${i}`]
+        if (!item?.title_text) continue
+        const title = await titleRepository.createWithClient(tx, {
+          companyId,
+          titleText: item.title_text,
+          seoTitle: item.seo_title,
+          focusKeyword: item.focus_keyword,
+          status: TitleStatus.TO_BE_GENERATED,
+        })
+        created.push(title)
+      }
+      return created
+    })
+  }
+
   async regenerateTitle(_companyId: number, _titleId: number) { throw new Error('TODO: implement regenerateTitle') }
 }
 

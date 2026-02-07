@@ -64,3 +64,25 @@ export function createDefinition(data: Prisma.DictionaryDefinitionUncheckedCreat
 export function updateDefinition(wordId: number, data: Prisma.DictionaryDefinitionUncheckedUpdateInput) {
   return prisma.dictionaryDefinition.update({ where: { wordId }, data })
 }
+
+export function upsertDefinition(
+  wordId: number,
+  data: Omit<Prisma.DictionaryDefinitionUncheckedCreateInput, 'wordId'>,
+) {
+  return prisma.dictionaryDefinition.upsert({
+    where: { wordId },
+    update: data,
+    create: { ...data, wordId },
+  })
+}
+
+export function findByIdAnyCompany(id: number) {
+  return prisma.dictionary.findUnique({
+    where: { id },
+    include: { words: { include: { definition: true } } },
+  })
+}
+
+export function deleteWordsByLetter(dictionaryId: number, letter: string) {
+  return prisma.word.deleteMany({ where: { dictionaryId, letter } })
+}

@@ -1,3 +1,6 @@
+import { prisma } from '@/lib/prisma'
+import { generateCategories as generateCategoriesAI } from '@/server/ai/categories/generate-categories'
+import { categorizeTitles as categorizeTitlesAI } from '@/server/ai/categories/categorize-titles'
 import { NotFoundError, ValidationError } from '@/server/api/errors'
 import * as categoryRepository from '@/server/repositories/category.repository'
 
@@ -50,7 +53,51 @@ export class CategoryService {
     return categoryRepository.bulkDelete(ids)
   }
 
-  async generateCategories(_companyId: number, _payload: unknown) { throw new Error('TODO: implement generateCategories') }
+  async generateCategories(companyId: number) {
+    const titles = await prisma.title.findMany({ where: { companyId }, select: { title_text: true } })
+    if (!titles.length) throw new NotFoundError('No titles found for the specified company.')
+
+    const existing = await prisma.category.findMany({ where: { companyId }, select: { name: true } })
+    const prompt =
+      'These are the categories that we currently have for this company. You can choose to keep the current categories or, if absolutely necessary, add one or two more. Only do this if you believe the category system will become more clear and user-friendly.\n\nCurrent categories:\n' +
+      existing.map((c) => c.name).join('\n') +
+      '\n\nNow, based on the following titles, generate a list of at least 6 categories:'
+
+    const generated = await generateCategoriesAI(titles.map((t) => t.title_text), 'en', 6, prompt)
+
+    const saved: string[] = []
+    await prisma.$transaction(async (tx) => {
+      for (const name of generated) {
+        const result = await categoryRepository.findOrCreateByName(tx, companyId, name)
+        if (result.created) saved.push(name)
+      }
+    })
+
+    return { generated_categories: generated, saved_categories: saved }
+  }
+
+  async categorizeTitles(companyId: number) {
+    const titles = await prisma.title.findMany({ where: { companyId }, select: { id: true, title_text: true } })
+    const categories = await prisma.category.findMany({ where: { companyId }, select: { id: true, name: true } })
+    if (!titles.length || !categories.length) {
+      throw new NotFoundError('No titles or categories found for the specified company.')
+    }
+
+    const categorized = await categorizeTitlesAI(titles, categories)
+
+    await prisma.$transaction(async (tx) => {
+      for (const item of categorized) {
+        const categoryIds = item.categories.map((cat) => cat.id)
+        await tx.title.update({
+          where: { id: item.id },
+          data: { categories: { set: categoryIds.map((id) => ({ id })) } },
+        })
+      }
+    })
+
+    return categorized
+  }
+
   async categorizeTitle(_companyId: number, _titleId: number) { throw new Error('TODO: implement categorizeTitle') }
 }
 

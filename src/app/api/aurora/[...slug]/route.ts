@@ -1,5 +1,5 @@
 import { apiHandler } from '@/server/api/handler'
-import { NotFoundError } from '@/server/api/errors'
+import { NotFoundError, ValidationError } from '@/server/api/errors'
 import { error, raw } from '@/server/api/response'
 import { validate } from '@/server/api/validate'
 import { prisma } from '@/lib/prisma'
@@ -9,6 +9,9 @@ import { categoryService } from '@/server/services/category.service'
 import { ctaService } from '@/server/services/cta.service'
 import { dictionaryService } from '@/server/services/dictionary.service'
 import { elementService } from '@/server/services/element.service'
+import { imageService } from '@/server/services/image.service'
+import { productService } from '@/server/services/product.service'
+import { quilloService } from '@/server/services/quillo.service'
 import { scheduleService } from '@/server/services/schedule.service'
 import { titleService } from '@/server/services/title.service'
 import {
@@ -43,6 +46,7 @@ import {
   updateBulkScheduleSchema,
 } from '@/server/validators/schedule.validators'
 import { createTitleSchema, listTitlesQuerySchema, updateTitleSchema } from '@/server/validators/title.validators'
+import { serializeElement } from '@/server/utils/element-type'
 
 function getSlugParts(params: Record<string, unknown>): string[] {
   const raw = params.slug
@@ -145,7 +149,10 @@ async function handleAurora(ctx: {
   }
 
   if (path === 'blog/posts/generate') {
-    return aiNotMigrated()
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const titleId = Number(body.post_id ?? body.title_id ?? body.postId ?? body.titleId)
+    const result = await blogService.generatePostFromTitle(ctx.companyId, Number.isFinite(titleId) && titleId > 0 ? titleId : null)
+    return raw(result)
   }
 
   if (path === 'blog/posts/regenerate') {
@@ -170,9 +177,45 @@ async function handleAurora(ctx: {
   if (path === 'blog/posts/share') return notImplementedYet()
   if (path === 'blog/posts/sync/recommended') return aiNotMigrated()
   if (path === 'blog/posts/sync/keywords') return aiNotMigrated()
-  if (path === 'blog/posts/upload') return notImplementedYet()
+  if (path === 'blog/posts/upload') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const postId = Number(body.post_id)
+    const post = await blogService.getPost(postId, ctx.companyId)
+    const remoteId = `stub-${postId}-${Date.now()}`
+    const existingPublish = await prisma.blogPublish.findFirst({ where: { blogPostId: postId } })
+    if (existingPublish) {
+      await prisma.blogPublish.update({ where: { id: existingPublish.id }, data: { remote_id: remoteId } })
+    } else {
+      await prisma.blogPublish.create({ data: { blogPostId: postId, remote_id: remoteId } })
+    }
+    return raw({
+      status: `Successfully prepared post upload for title: ${post.title_text}`,
+      wordpress_response: { wp_post_id: remoteId, stub: true },
+    })
+  }
   if (path === 'blog/posts/upload/all') return notImplementedYet()
-  if (path === 'blog/posts/export') return notImplementedYet()
+  if (path === 'blog/posts/export') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const postId = Number(body.post_id)
+    const post = await blogService.getPost(postId, ctx.companyId)
+    const categories = (post.categories ?? []).map((c: any) => c.name)
+    return raw({
+      post: {
+        id: post.id,
+        title_text: post.title_text,
+        slug: post.slug,
+        seo_title: post.seo_title,
+        focus_keyword: post.focus_keyword,
+        excerpt: post.excerpt,
+        meta_description: post.meta_description,
+        cover_image: post.cover_image,
+        last_updated: post.last_updated,
+        categories,
+      },
+      processed_content: post,
+      raw_content: post,
+    })
+  }
   if (path === 'blog/posts/export/all') return notImplementedYet()
   if (path === 'blog/posts/export/third-party') return notImplementedYet()
   if (path === 'blog/posts/elements/get/code-clusters') return notImplementedYet()
@@ -231,10 +274,70 @@ async function handleAurora(ctx: {
   // ELEMENT OPERATIONS
   if (path === 'blog/posts/elements/template/create') return notImplementedYet()
   if (path === 'blog/posts/elements/template/use') return notImplementedYet()
-  if (path === 'blog/posts/elements/regenerate') return aiNotMigrated()
-  if (path === 'blog/posts/elements/add') return aiNotMigrated()
-  if (path === 'blog/posts/elements/enhance') return aiNotMigrated()
-  if (path === 'blog/posts/elements/humanize') return aiNotMigrated()
+  if (path === 'blog/posts/elements/regenerate') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const blogPostId = Number(body.blog_post_id ?? body.blogPostId)
+    const blogElementId = Number(body.blog_element_id ?? body.blogElementId)
+    const regenerationNote = String(body.regeneration_note ?? body.regenerationNote ?? '')
+    const newElementType = (body.new_element_type ?? body.newElementType) as string | undefined
+    const newElementCount = Number(body.new_element_count ?? body.newElementCount ?? 1)
+
+    if (!blogPostId || !blogElementId || !regenerationNote) {
+      throw new ValidationError('blog_post_id, blog_element_id and regeneration_note are required')
+    }
+
+    const elements = await elementService.regenerateElementByContext(ctx.companyId, {
+      blogPostId,
+      blogElementId,
+      regenerationNote,
+      newElementType,
+      newElementCount,
+    })
+
+    return raw({
+      status: 'Blog element(s) regenerated successfully.',
+      regenerated_elements: elements.map(serializeElement),
+    })
+  }
+  if (path === 'blog/posts/elements/add') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const blogPostId = Number(body.blog_post_id ?? body.blogPostId)
+    const elementId = Number(body.element_id ?? body.elementId)
+    const elementType = String(body.element_type ?? body.elementType ?? '')
+    const generationNote = String(body.generation_note ?? body.generationNote ?? '')
+
+    if (!blogPostId || !elementId || !elementType || !generationNote) {
+      throw new ValidationError('blog_post_id, element_id, element_type, and generation_note are required')
+    }
+
+    const created = await elementService.addGeneratedElement(ctx.companyId, {
+      blogPostId,
+      elementId,
+      elementType,
+      generationNote,
+    })
+    return raw(serializeElement(created), 201)
+  }
+  if (path === 'blog/posts/elements/enhance' || path === 'blog/posts/elements/enhance-readability') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const blogPostId = Number(body.blog_post_id ?? body.blogPostId)
+    const blogElementId = Number(body.blog_element_id ?? body.blogElementId)
+    const updated = await elementService.enhanceElementByContext(ctx.companyId, blogPostId, blogElementId)
+    return raw({
+      status: 'Blog element readability enhanced successfully.',
+      enhanced_element: updated.content,
+    })
+  }
+  if (path === 'blog/posts/elements/humanize') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const blogPostId = Number(body.blog_post_id ?? body.blogPostId)
+    const blogElementId = Number(body.blog_element_id ?? body.blogElementId)
+    const updated = await elementService.humanizeElementByContext(ctx.companyId, blogPostId, blogElementId)
+    return raw({
+      status: 'Blog element language humanized successfully.',
+      humanized_element: updated.content,
+    })
+  }
   if (path === 'blog/posts/elements/add-cta') return notImplementedYet()
 
   // TITLES
@@ -245,7 +348,14 @@ async function handleAurora(ctx: {
   }
 
   if (path === 'blog/titles/generate') {
-    return aiNotMigrated()
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const created = await titleService.generateTitles(ctx.companyId, {
+      businessType: (body.business_type ?? body.businessType) as string | undefined,
+      keywords: (body.keywords as string[] | undefined) ?? undefined,
+      language: (body.language as string | undefined) ?? undefined,
+      amount: Number(body.amount ?? 10),
+    })
+    return raw(created)
   }
 
   if (path.match(/^blog\/titles\/update\/\d+$/)) {
@@ -265,12 +375,14 @@ async function handleAurora(ctx: {
     return aiNotMigrated()
   }
 
-  if (path === 'blog/titles/categories/generate') {
-    return aiNotMigrated()
+  if (path === 'blog/titles/categories/generate' || path === 'blog/categories/generate') {
+    const data = await categoryService.generateCategories(ctx.companyId)
+    return raw(data)
   }
 
-  if (path === 'blog/titles/categories/categorize') {
-    return aiNotMigrated()
+  if (path === 'blog/titles/categories/categorize' || path === 'blog/categories/categorize') {
+    const data = await categoryService.categorizeTitles(ctx.companyId)
+    return raw(data)
   }
 
   // CATEGORIES
@@ -423,27 +535,67 @@ async function handleAurora(ctx: {
   }
 
   // IMAGES
-  if (path === 'blog/images/generate') return aiNotMigrated()
-  if (path === 'blog/images/regenerate') return aiNotMigrated()
+  if (path === 'blog/images/generate') {
+    const result = await imageService.generateImages(ctx.companyId, ctx.body)
+    return raw(result)
+  }
+  if (path === 'blog/images/regenerate') {
+    const result = await imageService.regenerateImage(ctx.companyId, ctx.body)
+    return raw(result)
+  }
 
   if (path === 'blog/images/save/edit') return notImplementedYet()
-  if (path === 'blog/images/upload') return notImplementedYet()
-  if (path === 'blog/images/stock_photos/search') return notImplementedYet()
-  if (path === 'blog/images/stock_photos/use') return notImplementedYet()
+  if (path === 'blog/images/upload') {
+    const result = await imageService.uploadImage(ctx.companyId, ctx.body)
+    return raw(result)
+  }
+  if (path === 'blog/images/stock_photos/search') {
+    const query = ctx.searchParams.get('query') ?? ''
+    const page = Number(ctx.searchParams.get('page') ?? 1)
+    const perPage = Number(ctx.searchParams.get('per_page') ?? 10)
+    const result = await imageService.searchStockPhotos(ctx.companyId, query, page, perPage)
+    return raw(result)
+  }
+  if (path === 'blog/images/stock_photos/use') {
+    const result = await imageService.useStockPhoto(ctx.companyId, ctx.body)
+    return raw(result)
+  }
 
   // QUILLO AI
-  if (path === 'blog/quillo/analyze') return aiNotMigrated()
-  if (path === 'blog/quillo/analyze/chat') return aiNotMigrated()
-  if (path === 'blog/quillo/post/facebook') return aiNotMigrated()
-  if (path === 'blog/quillo/post/autopilot') return aiNotMigrated()
+  if (path === 'blog/quillo/analyze') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const blogPostId = Number(body.blog_post_id)
+    const result = await quilloService.analyzePost(ctx.companyId, blogPostId)
+    return raw(result)
+  }
+  if (path === 'blog/quillo/analyze/chat') {
+    const result = await quilloService.chat(ctx.companyId, ctx.body)
+    return raw(result)
+  }
+  if (path === 'blog/quillo/post/facebook') {
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const blogPostId = Number(body.blog_post_id)
+    const result = await quilloService.generateFacebookPost(ctx.companyId, blogPostId)
+    return raw(result)
+  }
+  if (path === 'blog/quillo/post/autopilot') {
+    const result = await quilloService.runAutopilot(ctx.companyId, ctx.body)
+    return raw(result, 501)
+  }
 
   if (path.match(/^blog\/quillo\/post\/autopilot-status\/[^/]+$/)) {
     const taskId = slug[4]
     return taskNotMigrated(taskId)
   }
 
-  if (path === 'company/quillo') return notImplementedYet()
-  if (path === 'company/quillo/analyze') return aiNotMigrated()
+  if (path === 'company/quillo') {
+    const result = await quilloService.getCompanyAnalysis(ctx.companyId)
+    return raw(result)
+  }
+  if (path === 'company/quillo/analyze') {
+    const result = await quilloService.analyzeCompany(ctx.companyId)
+    return raw(result)
+  }
 
   // DICTIONARY
   if (path === 'dictionary/dictionaries') {
@@ -491,12 +643,30 @@ async function handleAurora(ctx: {
     return raw(result)
   }
 
-  if (path === 'dictionary/generation/keywords/start') return aiNotMigrated()
-  if (path === 'dictionary/generation/keywords/review') return aiNotMigrated()
-  if (path === 'dictionary/generation/keywords/end') return aiNotMigrated()
-  if (path === 'dictionary/generation/definition/generate') return aiNotMigrated()
-  if (path === 'dictionary/generation/keyword/new') return aiNotMigrated()
-  if (path === 'dictionary/generation/definition/new') return aiNotMigrated()
+  if (path === 'dictionary/generation/keywords/start') {
+    const result = await dictionaryService.startKeywordGeneration(ctx.companyId, ctx.body)
+    return raw(result, 201)
+  }
+  if (path === 'dictionary/generation/keywords/review') {
+    const result = await dictionaryService.reviewKeywords(ctx.companyId, ctx.body)
+    return raw(result)
+  }
+  if (path === 'dictionary/generation/keywords/end') {
+    const result = await dictionaryService.completeKeywordGeneration(ctx.companyId, ctx.body)
+    return raw(result)
+  }
+  if (path === 'dictionary/generation/definition/generate') {
+    const result = await dictionaryService.generateDefinition(ctx.companyId, ctx.body)
+    return raw(result)
+  }
+  if (path === 'dictionary/generation/keyword/new') {
+    const result = await dictionaryService.generateNewKeyword(ctx.companyId, ctx.body)
+    return raw(result)
+  }
+  if (path === 'dictionary/generation/definition/new') {
+    const result = await dictionaryService.generateNewKeywordDefinition(ctx.companyId, ctx.body)
+    return raw(result)
+  }
 
   if (path === 'dictionary/dictionary/upload') return notImplementedYet()
   if (path === 'dictionary/dictionary/upload/all') return notImplementedYet()
@@ -509,8 +679,14 @@ async function handleAurora(ctx: {
   }
 
   // PRODUCTS
-  if (path === 'ecommerce/products/import') return notImplementedYet()
-  if (path === 'ecommerce/blog/populate-product-recommendations') return aiNotMigrated()
+  if (path === 'ecommerce/products/import') {
+    return raw({ detail: 'Products import task queue not migrated' }, 501)
+  }
+  if (path === 'ecommerce/blog/populate-product-recommendations') {
+    const postId = Number(ctx.searchParams.get('blog_post_id') ?? 0) || undefined
+    const result = await productService.populateRecommendations(ctx.companyId, postId)
+    return raw(result)
+  }
 
   // ANALYTICS
   if (path === 'analytics/blog/readability') {

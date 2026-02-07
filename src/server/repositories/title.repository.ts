@@ -15,6 +15,7 @@ type CreateTitleArgs = {
   seoTitle?: string
   focusKeyword?: string
   categoryIds?: number[]
+  status?: TitleStatus
 }
 
 type UpdateTitleArgs = {
@@ -33,9 +34,15 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, '')
 }
 
-function uniqueSlug(base: string) {
+async function uniqueSlug(client: Prisma.TransactionClient | typeof prisma, base: string) {
   const cleaned = slugify(base) || 'title'
-  return `${cleaned}-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+  let idx = 0
+  while (true) {
+    const candidate = idx === 0 ? cleaned : `${cleaned}-${idx}`
+    const exists = await client.title.findUnique({ where: { slug: candidate }, select: { id: true } })
+    if (!exists) return candidate
+    idx += 1
+  }
 }
 
 function buildWhere(companyId: number, filters: Omit<FindManyFilters, 'page' | 'pageSize'>): Prisma.TitleWhereInput {
@@ -76,14 +83,16 @@ export async function findById(id: number, companyId: number) {
   })
 }
 
-export async function create(data: CreateTitleArgs) {
-  return prisma.title.create({
+export async function createWithClient(client: Prisma.TransactionClient | typeof prisma, data: CreateTitleArgs) {
+  const slug = await uniqueSlug(client, data.titleText)
+  return client.title.create({
     data: {
       companyId: data.companyId,
       title_text: data.titleText,
       seo_title: data.seoTitle,
       focus_keyword: data.focusKeyword,
-      slug: uniqueSlug(data.titleText),
+      slug,
+      ...(data.status ? { status: data.status } : {}),
       ...(data.categoryIds?.length
         ? {
             categories: {
@@ -96,28 +105,35 @@ export async function create(data: CreateTitleArgs) {
   })
 }
 
+export async function create(data: CreateTitleArgs) {
+  return createWithClient(prisma, data)
+}
+
 export async function update(id: number, data: UpdateTitleArgs) {
-  return prisma.title.update({
-    where: { id },
-    data: {
-      ...(data.titleText !== undefined
-        ? {
-            title_text: data.titleText,
-            slug: uniqueSlug(data.titleText),
-          }
-        : {}),
-      ...(data.seoTitle !== undefined ? { seo_title: data.seoTitle } : {}),
-      ...(data.focusKeyword !== undefined ? { focus_keyword: data.focusKeyword } : {}),
-      ...(data.status !== undefined ? { status: data.status } : {}),
-      ...(data.categoryIds !== undefined
-        ? {
-            categories: {
-              set: data.categoryIds.map((categoryId) => ({ id: categoryId })),
-            },
-          }
-        : {}),
-    },
-    include: { categories: true },
+  return prisma.$transaction(async (tx) => {
+    const slug = data.titleText ? await uniqueSlug(tx, data.titleText) : undefined
+    return tx.title.update({
+      where: { id },
+      data: {
+        ...(data.titleText !== undefined
+          ? {
+              title_text: data.titleText,
+              ...(slug ? { slug } : {}),
+            }
+          : {}),
+        ...(data.seoTitle !== undefined ? { seo_title: data.seoTitle } : {}),
+        ...(data.focusKeyword !== undefined ? { focus_keyword: data.focusKeyword } : {}),
+        ...(data.status !== undefined ? { status: data.status } : {}),
+        ...(data.categoryIds !== undefined
+          ? {
+              categories: {
+                set: data.categoryIds.map((categoryId) => ({ id: categoryId })),
+              },
+            }
+          : {}),
+      },
+      include: { categories: true },
+    })
   })
 }
 

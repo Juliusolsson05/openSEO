@@ -2,7 +2,14 @@ import type { BlogPostElementType, Prisma } from '@prisma/client'
 
 import { prisma } from '@/lib/prisma'
 import { NotFoundError, ValidationError } from '@/server/api/errors'
+import { BLOCK_SCHEMAS } from '@/server/ai/constants/block-schemas'
+import { generateCaseStudy } from '@/server/ai/blog-elements/generate-case-study'
+import { generateNewElement } from '@/server/ai/blog-elements/generate-new-element'
+import { regenerateElement } from '@/server/ai/blog-elements/regenerate-element'
+import { enhanceReadability } from '@/server/ai/blog-elements/enhance-readability'
+import { improveLanguage } from '@/server/ai/language/improve-language'
 import * as elementRepository from '@/server/repositories/element.repository'
+import { toAiElementType, toDbElementType } from '@/server/utils/element-type'
 
 type ElementPayload = {
   elementType: BlogPostElementType
@@ -78,9 +85,169 @@ export class ElementService {
     return elementRepository.reorder(blogPostId, elementIds)
   }
 
-  async regenerateElement(_companyId: number, _elementId: number) { throw new Error('TODO: implement regenerateElement') }
-  async enhanceElement(_companyId: number, _elementId: number) { throw new Error('TODO: implement enhanceElement') }
-  async humanizeElement(_companyId: number, _elementId: number) { throw new Error('TODO: implement humanizeElement') }
+  async addGeneratedElement(companyId: number, payload: {
+    blogPostId: number
+    elementId: number
+    elementType: string
+    generationNote: string
+  }) {
+    if (!(payload.elementType in BLOCK_SCHEMAS)) {
+      throw new ValidationError(`Invalid element type. Must be one of: ${Object.keys(BLOCK_SCHEMAS).join(', ')}`)
+    }
+
+    const dbElementType = toDbElementType(payload.elementType)
+    if (!dbElementType) throw new ValidationError(`Element type '${payload.elementType}' is not supported in database enum`)
+
+    const blogPost = await prisma.blogPost.findFirst({
+      where: { id: payload.blogPostId, companyId },
+      include: { elements: { orderBy: { order: 'asc' } } },
+    })
+    if (!blogPost) throw new NotFoundError('Blog post not found')
+
+    const element = blogPost.elements.find((e) => e.id === payload.elementId)
+    if (!element) throw new NotFoundError('Blog post element not found')
+
+    const elementsAbove = blogPost.elements.filter((e) => e.order <= element.order).map((e) => ({
+      type: toAiElementType(e.element_type),
+      content: e.content,
+    }))
+    const elementsBelow = blogPost.elements.filter((e) => e.order > element.order).map((e) => ({
+      type: toAiElementType(e.element_type),
+      content: e.content,
+    }))
+
+    const generatedContent = payload.elementType === 'case_study'
+      ? await generateCaseStudy(blogPost.title_text, blogPost.focus_keyword ?? '')
+      : await generateNewElement(
+          payload.elementType,
+          blogPost.title_text,
+          blogPost.excerpt ?? '',
+          payload.generationNote,
+          elementsAbove,
+          elementsBelow,
+        )
+
+    return prisma.$transaction(async (tx) => {
+      await tx.blogPostElement.updateMany({
+        where: { blogPostId: blogPost.id, order: { gt: element.order } },
+        data: { order: { increment: 1 } },
+      })
+
+      return tx.blogPostElement.create({
+        data: {
+          blogPostId: blogPost.id,
+          element_type: dbElementType,
+          order: element.order + 1,
+          content: generatedContent as Prisma.InputJsonValue,
+        },
+      })
+    })
+  }
+
+  async regenerateElementByContext(companyId: number, payload: {
+    blogPostId: number
+    blogElementId: number
+    regenerationNote: string
+    newElementType?: string | null
+    newElementCount?: number
+  }) {
+    const blogPost = await prisma.blogPost.findFirst({
+      where: { id: payload.blogPostId, companyId },
+      include: { elements: { orderBy: { order: 'asc' } } },
+    })
+    if (!blogPost) throw new NotFoundError('Blog post not found')
+
+    const blogElement = blogPost.elements.find((e) => e.id === payload.blogElementId)
+    if (!blogElement) throw new NotFoundError('Blog post element not found')
+
+    if (payload.newElementType && !(payload.newElementType in BLOCK_SCHEMAS)) {
+      throw new ValidationError(`Invalid element type: ${payload.newElementType}`)
+    }
+
+    const targetType = payload.newElementType ?? toAiElementType(blogElement.element_type)
+    const targetDbType = toDbElementType(targetType)
+    if (!targetDbType) throw new ValidationError(`Element type '${targetType}' is not supported in database enum`)
+
+    const count = Math.max(1, payload.newElementCount ?? 1)
+    const above = blogPost.elements.filter((e) => e.order < blogElement.order).at(-1)
+    const below = blogPost.elements.find((e) => e.order > blogElement.order)
+
+    const regenerated = await regenerateElement(
+      toAiElementType(blogElement.element_type),
+      blogElement.content,
+      blogPost.title_text,
+      blogPost.excerpt ?? '',
+      payload.regenerationNote,
+      above?.content,
+      below?.content,
+      payload.newElementType ?? null,
+      count,
+    )
+
+    if (count === 1) {
+      const updated = await prisma.blogPostElement.update({
+        where: { id: blogElement.id },
+        data: {
+          content: regenerated as Prisma.InputJsonValue,
+          element_type: targetDbType,
+        },
+      })
+      return [updated]
+    }
+
+    if (!Array.isArray(regenerated)) throw new ValidationError('Expected multiple regenerated elements')
+
+    return prisma.$transaction(async (tx) => {
+      const orderGap = count - 1
+      await tx.blogPostElement.updateMany({
+        where: { blogPostId: blogPost.id, order: { gt: blogElement.order } },
+        data: { order: { increment: orderGap } },
+      })
+
+      const created = [] as Awaited<ReturnType<typeof tx.blogPostElement.create>>[]
+      for (let i = 0; i < regenerated.length; i += 1) {
+        const item = await tx.blogPostElement.create({
+          data: {
+            blogPostId: blogPost.id,
+            element_type: targetDbType,
+            content: regenerated[i] as Prisma.InputJsonValue,
+            order: blogElement.order + i,
+          },
+        })
+        created.push(item)
+      }
+
+      await tx.blogPostElement.delete({ where: { id: blogElement.id } })
+      return created
+    })
+  }
+
+  async enhanceElementByContext(companyId: number, blogPostId: number, blogElementId: number) {
+    const blogPost = await prisma.blogPost.findFirst({ where: { id: blogPostId, companyId } })
+    if (!blogPost) throw new NotFoundError('Blog post not found')
+    const blogElement = await prisma.blogPostElement.findFirst({ where: { id: blogElementId, blogPostId } })
+    if (!blogElement) throw new NotFoundError('Blog post element not found')
+
+    const enhanced = await enhanceReadability(toAiElementType(blogElement.element_type), blogElement.content, blogPost.title_text)
+    return prisma.blogPostElement.update({ where: { id: blogElement.id }, data: { content: enhanced as Prisma.InputJsonValue } })
+  }
+
+  async humanizeElementByContext(companyId: number, blogPostId: number, blogElementId: number) {
+    const blogPost = await prisma.blogPost.findFirst({ where: { id: blogPostId, companyId } })
+    if (!blogPost) throw new NotFoundError('Blog post not found')
+    const blogElement = await prisma.blogPostElement.findFirst({ where: { id: blogElementId, blogPostId } })
+    if (!blogElement) throw new NotFoundError('Blog post element not found')
+
+    const improved = await improveLanguage(
+      toAiElementType(blogElement.element_type),
+      blogPost.title_text,
+      (blogElement.content ?? {}) as Record<string, unknown>,
+    )
+
+    const normalized = (improved as any)?.block?.content ?? improved
+    return prisma.blogPostElement.update({ where: { id: blogElement.id }, data: { content: normalized as Prisma.InputJsonValue } })
+  }
+
   async listTemplates() { throw new Error('TODO: implement listTemplates') }
 }
 

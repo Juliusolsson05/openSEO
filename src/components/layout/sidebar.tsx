@@ -19,7 +19,7 @@ import {
   LogOut,
 } from 'lucide-react'
 import { AuroraLogo } from '@/components/brand/logo'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface NavItem {
   title: string
@@ -73,15 +73,30 @@ const navigation: NavSection[] = [
   },
 ]
 
-function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
-  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+function isActiveRoute(href: string, pathname: string) {
+  // Prevent /blog from matching /blog/titles, /blog/scheduling, /blog/cta
+  if (href === '/blog') {
+    return pathname === '/blog' || /^\/blog\/[^/]+(?:\/preview)?$/.test(pathname)
+  }
+
+  // Prevent /settings from matching unrelated settings-like paths
+  if (href === '/settings') {
+    return pathname === '/settings'
+  }
+
+  return pathname === href || pathname.startsWith(href + '/')
+}
+
+function NavLink({ item, pathname, nested = false }: { item: NavItem; pathname: string; nested?: boolean }) {
+  const isActive = isActiveRoute(item.href, pathname)
   const Icon = item.icon
 
   return (
     <Link
       href={item.href}
       className={cn(
-        'group relative flex items-center gap-3 px-4 py-[7px] text-[13px] transition-colors',
+        'group relative flex items-center gap-3 py-[7px] text-[13px] transition-colors',
+        nested ? 'pl-9 pr-4 text-[12px]' : 'px-4',
         isActive
           ? 'bg-sidebar-accent text-white'
           : 'text-sidebar-foreground hover:bg-sidebar-hover'
@@ -98,11 +113,14 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
 }
 
 function NavGroup({ item, pathname }: { item: NavItem; pathname: string }) {
-  const hasActiveChild = item.children?.some(
-    (c) => pathname === c.href || pathname.startsWith(c.href + '/')
-  )
-  const [open, setOpen] = useState(hasActiveChild ?? false)
+  const hasActiveChild = item.children?.some((c) => isActiveRoute(c.href, pathname))
+  const isActive = isActiveRoute(item.href, pathname) || hasActiveChild
+  const [open, setOpen] = useState(isActive ?? false)
   const Icon = item.icon
+
+  useEffect(() => {
+    if (isActive) setOpen(true)
+  }, [isActive])
 
   return (
     <div>
@@ -110,8 +128,8 @@ function NavGroup({ item, pathname }: { item: NavItem; pathname: string }) {
         onClick={() => setOpen(!open)}
         className={cn(
           'group flex w-full items-center gap-3 px-4 py-[7px] text-[13px] transition-colors',
-          hasActiveChild
-            ? 'text-white'
+          isActive
+            ? 'text-white bg-sidebar-accent'
             : 'text-sidebar-foreground hover:bg-sidebar-hover'
         )}
       >
@@ -128,7 +146,7 @@ function NavGroup({ item, pathname }: { item: NavItem; pathname: string }) {
       {open && (
         <div className="bg-[rgba(0,0,0,0.15)]">
           {item.children?.map((child) => (
-            <NavLink key={child.href} item={child} pathname={pathname} />
+            <NavLink key={child.href} item={child} pathname={pathname} nested />
           ))}
         </div>
       )}

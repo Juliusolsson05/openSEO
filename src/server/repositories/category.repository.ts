@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client'
+
 import { prisma } from '@/lib/prisma'
 
 type CreateCategoryArgs = {
@@ -16,9 +18,15 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, '')
 }
 
-function uniqueSlug(base: string, companyId: number) {
+async function uniqueSlug(client: Prisma.TransactionClient | typeof prisma, base: string, companyId: number) {
   const cleaned = slugify(base) || 'category'
-  return `${cleaned}-${companyId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+  let idx = 0
+  while (true) {
+    const candidate = idx === 0 ? `${cleaned}-${companyId}` : `${cleaned}-${companyId}-${idx}`
+    const exists = await client.category.findUnique({ where: { slug: candidate }, select: { id: true } })
+    if (!exists) return candidate
+    idx += 1
+  }
 }
 
 export async function findMany(companyId: number) {
@@ -40,13 +48,24 @@ export async function findById(id: number) {
   return prisma.category.findUnique({ where: { id } })
 }
 
+export async function findOrCreateByName(client: Prisma.TransactionClient, companyId: number, name: string) {
+  const existing = await client.category.findFirst({ where: { companyId, name } })
+  if (existing) return { created: false, category: existing }
+  const slug = await uniqueSlug(client, name, companyId)
+  const category = await client.category.create({ data: { companyId, name, slug } })
+  return { created: true, category }
+}
+
 export async function create(companyId: number, data: CreateCategoryArgs) {
-  return prisma.category.create({
-    data: {
-      companyId,
-      name: data.name,
-      slug: uniqueSlug(data.name, companyId),
-    },
+  return prisma.$transaction(async (tx) => {
+    const slug = await uniqueSlug(tx, data.name, companyId)
+    return tx.category.create({
+      data: {
+        companyId,
+        name: data.name,
+        slug,
+      },
+    })
   })
 }
 
@@ -54,16 +73,19 @@ export async function update(id: number, data: UpdateCategoryArgs) {
   const existing = await prisma.category.findUnique({ where: { id } })
   if (!existing) return null
 
-  return prisma.category.update({
-    where: { id },
-    data: {
-      ...(data.name !== undefined
-        ? {
-            name: data.name,
-            slug: uniqueSlug(data.name, existing.companyId ?? 0),
-          }
-        : {}),
-    },
+  return prisma.$transaction(async (tx) => {
+    const slug = data.name !== undefined ? await uniqueSlug(tx, data.name, existing.companyId ?? 0) : undefined
+    return tx.category.update({
+      where: { id },
+      data: {
+        ...(data.name !== undefined
+          ? {
+              name: data.name,
+              ...(slug ? { slug } : {}),
+            }
+          : {}),
+      },
+    })
   })
 }
 
