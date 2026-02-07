@@ -1,0 +1,553 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// --- Enums ---
+
+enum UserType {
+  DEMO
+  CLIENT
+  AGENCY
+  ADMINISTRATOR
+}
+
+enum TitleStatus {
+  TO_BE_GENERATED
+  APPROVED
+  REJECTED
+  GENERATED
+}
+
+enum TitleOperation {
+  NONE
+  POST_SYNCING
+  KEYWORD_SYNCING
+}
+
+enum BlogPostElementType {
+  INTRODUCTION
+  CONCLUSION
+  FAQ
+  IMAGE
+  PARAGRAPH
+  LIST_PARAGRAPH
+  NUMBERED_LIST_PARAGRAPH
+  QUOTE
+  LIST_FEATURED_SNIPPET_BLOCK
+  FEATURED_SNIPPET_BLOCK
+  GLOSSARY
+  PRODUCT_RECOMMENDATIONS
+}
+
+enum BlogElementTemplateType {
+  INTRODUCTION
+  CONCLUSION
+  FAQ
+  IMAGE
+  PARAGRAPH
+  LIST_PARAGRAPH
+  NUMBERED_LIST_PARAGRAPH
+  QUOTE
+  LIST_FEATURED_SNIPPET_BLOCK
+  FEATURED_SNIPPET_BLOCK
+  GLOSSARY
+  PRODUCT_RECOMMENDATIONS
+  CTA
+}
+
+enum DictionaryStatus {
+  IN_PROGRESS
+  KEYWORD_GENERATION
+  DEFINITION_GENERATION
+  COMPLETED
+}
+
+enum WordPriority {
+  HIGH
+  LOW
+}
+
+/// --- NextAuth + integrated user profile fields ---
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  /// Auth
+  password    String?
+
+  /// Integrated from Django UserProfile
+  firebaseUid String?   @unique
+  userType    UserType  @default(DEMO)
+  companyId   Int?
+  demoExpiry  DateTime?
+
+  company  Company?   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  accounts Account[]
+  sessions Session[]
+
+  @@index([companyId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+/// --- Core company ---
+
+model Company {
+  id            Int      @id @default(autoincrement())
+  name          String
+  business_type String
+  keywords      Json     @default("[]")
+  language      String
+  created_at    DateTime @default(now())
+
+  aurora_enabled Boolean @default(false)
+  pulse_enabled  Boolean @default(false)
+  echo_enabled   Boolean @default(false)
+
+  settings     Json    @default("{}")
+  api_endpoint String?
+  api_key      String?
+  metadata     Json    @default("{\"business_description\":\"\",\"industry_description\":\"\"}")
+
+  users                    User[]
+  categories               Category[]
+  products                 Product[]
+  dictionaries             Dictionary[]
+  analytics_logs           AnalyticsLog[]
+  quillo_post_analyses     QuilloBlogPostAnalysisLog[]
+  quillo_company_analyses  QuilloCompanyAnalysisLog[]
+  campaigns                Campaign[]
+  bulk_schedules           BulkSchedule[]
+  titles                   Title[]
+  blog_posts               BlogPost[]
+}
+
+/// --- Blog ---
+
+model BulkSchedule {
+  id            Int      @id @default(autoincrement())
+  name          String
+  start_date    DateTime?
+  interval_days Int?
+  created_at    DateTime @default(now())
+  companyId     Int?
+
+  company    Company?   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  titles     Title[]
+  blog_posts BlogPost[]
+
+  @@index([companyId])
+}
+
+model Category {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  slug       String   @unique
+  created_at DateTime @default(now())
+  companyId  Int?
+
+  company    Company?    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  titles     Title[]
+  blog_posts BlogPost[]
+
+  @@index([companyId])
+}
+
+model Title {
+  id             Int            @id @default(autoincrement())
+  companyId      Int?
+  title_text     String
+  slug           String         @unique
+  seo_title      String?
+  focus_keyword  String?
+  status         TitleStatus    @default(TO_BE_GENERATED)
+  operation      TitleOperation @default(NONE)
+  scheduled_date DateTime?
+  bulkScheduleId Int?
+  generated_date DateTime?
+  created_at     DateTime       @default(now())
+
+  /// Optional link to generated flattened blog post
+  blogPostId Int?      @unique
+  blogPost   BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: SetNull)
+
+  company       Company?    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bulk_schedule BulkSchedule? @relation(fields: [bulkScheduleId], references: [id], onDelete: SetNull)
+  categories    Category[]
+
+  post_linking_from TitlePostLink[] @relation("TitlePostLinkFrom")
+  post_linking_to   TitlePostLink[] @relation("TitlePostLinkTo")
+
+  @@index([companyId])
+  @@index([status])
+  @@index([operation])
+  @@index([bulkScheduleId])
+}
+
+/// Flattened model: contains all Title + BlogPost fields.
+model BlogPost {
+  id             Int            @id @default(autoincrement())
+  companyId      Int?
+  title_text     String
+  slug           String         @unique
+  seo_title      String?
+  focus_keyword  String?
+  status         TitleStatus    @default(TO_BE_GENERATED)
+  operation      TitleOperation @default(NONE)
+  scheduled_date DateTime?
+  bulkScheduleId Int?
+  generated_date DateTime?
+  created_at     DateTime       @default(now())
+
+  cover_image      Json     @default("{}")
+  meta_description String?
+  excerpt          String?
+  image_generation Boolean  @default(false)
+  keyword_synced   Boolean  @default(false)
+  keyword_linked   Boolean  @default(false)
+  posts_synced     Boolean  @default(false)
+  reviewed         Boolean  @default(false)
+  last_updated     DateTime @updatedAt
+
+  company       Company?      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bulk_schedule BulkSchedule? @relation(fields: [bulkScheduleId], references: [id], onDelete: SetNull)
+
+  categories Category[]
+
+  sourceTitle Title?
+
+  publishes       BlogPublish[]
+  elements        BlogPostElement[]
+  quillo_analyses QuilloBlogPostAnalysisLog[]
+
+  post_linking_from BlogPostPostLink[] @relation("BlogPostPostLinkFrom")
+  post_linking_to   BlogPostPostLink[] @relation("BlogPostPostLinkTo")
+
+  @@index([companyId])
+  @@index([status])
+  @@index([operation])
+  @@index([reviewed])
+  @@index([last_updated])
+  @@index([bulkScheduleId])
+}
+
+model TitlePostLink {
+  fromTitleId Int
+  toTitleId   Int
+
+  fromTitle Title @relation("TitlePostLinkFrom", fields: [fromTitleId], references: [id], onDelete: Cascade)
+  toTitle   Title @relation("TitlePostLinkTo", fields: [toTitleId], references: [id], onDelete: Cascade)
+
+  @@id([fromTitleId, toTitleId])
+  @@index([fromTitleId])
+  @@index([toTitleId])
+}
+
+model BlogPostPostLink {
+  fromBlogPostId Int
+  toBlogPostId   Int
+
+  fromBlogPost BlogPost @relation("BlogPostPostLinkFrom", fields: [fromBlogPostId], references: [id], onDelete: Cascade)
+  toBlogPost   BlogPost @relation("BlogPostPostLinkTo", fields: [toBlogPostId], references: [id], onDelete: Cascade)
+
+  @@id([fromBlogPostId, toBlogPostId])
+  @@index([fromBlogPostId])
+  @@index([toBlogPostId])
+}
+
+model BlogPublish {
+  id             Int      @id @default(autoincrement())
+  blogPostId     Int
+  sync_date      DateTime @default(now())
+  remote_id      String?
+  related_synced Boolean  @default(false)
+
+  blog_post BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+
+  @@index([blogPostId])
+}
+
+model BlogPostElement {
+  id           Int                 @id @default(autoincrement())
+  blogPostId   Int
+  element_type BlogPostElementType
+  order        Int
+  content      Json
+  created_at   DateTime            @default(now())
+
+  blog_post BlogPost          @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  hyperlink ElementHyperlink?
+
+  @@index([blogPostId])
+  @@index([order])
+}
+
+model ElementHyperlink {
+  id                Int      @id @default(autoincrement())
+  blogPostElementId Int      @unique
+  matched_keywords  Json
+  created_at        DateTime @default(now())
+
+  blog_post_element BlogPostElement @relation(fields: [blogPostElementId], references: [id], onDelete: Cascade)
+}
+
+/// --- Products ---
+
+model Product {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String
+  vendor       String
+  product_type String
+  companyId    Int?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  company  Company?         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  variants ProductVariant[]
+  images   ProductImage[]
+  tags     Tag[]
+
+  @@index([title])
+  @@index([vendor])
+  @@index([product_type])
+  @@index([companyId])
+}
+
+model ProductVariant {
+  id                 Int      @id @default(autoincrement())
+  productId          Int
+  title              String
+  sku                String   @unique
+  price              Decimal  @db.Decimal(10, 2)
+  compare_at_price   Decimal? @db.Decimal(10, 2)
+  inventory_quantity Int
+  weight             Decimal? @db.Decimal(10, 2)
+  weight_unit        String?
+  requires_shipping  Boolean  @default(true)
+  taxable            Boolean  @default(true)
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  product Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  images  ProductImage[]
+
+  @@index([productId])
+  @@index([title])
+  @@index([sku])
+}
+
+model ProductImage {
+  id         Int      @id @default(autoincrement())
+  productId  Int
+  variantId  Int?
+  src        String
+  alt_text   String?
+  position   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([variantId])
+}
+
+model Tag {
+  id        Int    @id @default(autoincrement())
+  name      String @unique
+  productId Int
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([name])
+  @@index([productId])
+}
+
+/// --- Dictionary ---
+
+model Dictionary {
+  id             Int              @id @default(autoincrement())
+  title          String
+  subject        String
+  language       String
+  num_words      Int
+  current_letter String           @default("a")
+  status         DictionaryStatus @default(KEYWORD_GENERATION)
+  companyId      Int?
+  faqs           Json             @default("[]")
+  slug           String           @unique @default("dictionary/")
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  words   Word[]
+
+  @@index([companyId])
+}
+
+model Word {
+  id            Int          @id @default(autoincrement())
+  dictionaryId  Int
+  letter        String
+  keyword       String
+  description   String
+  priority      WordPriority @default(HIGH)
+  focus_keyword String?
+
+  dictionary Dictionary            @relation(fields: [dictionaryId], references: [id], onDelete: Cascade)
+  definition DictionaryDefinition?
+
+  @@index([dictionaryId])
+}
+
+model DictionaryDefinition {
+  id                      Int    @id @default(autoincrement())
+  wordId                  Int    @unique
+  title                   String
+  seo_title               String?
+  featured_google_snippet String
+  meta_description        String
+  title1                  String
+  text1                   String
+  title2                  String
+  text2                   String
+  title3                  String
+  text3                   String
+  synonyms                Json   @default("[]")
+  antonyms                Json   @default("[]")
+  usage_examples          Json   @default("[]")
+  related_keywords        Json   @default("[]")
+  faqs                    Json   @default("[]")
+
+  word Word @relation(fields: [wordId], references: [id], onDelete: Cascade)
+}
+
+/// --- Analytics & Quillo ---
+
+model AnalyticsLog {
+  id          Int      @id @default(autoincrement())
+  companyId   Int
+  json_data   Json
+  created_at  DateTime @default(now())
+  last_synced DateTime @default(now())
+
+  company         Company                    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  quillo_analyses QuilloCompanyAnalysisLog[]
+
+  @@index([companyId])
+}
+
+model QuilloBlogPostAnalysisLog {
+  id                   Int      @id @default(autoincrement())
+  companyId            Int
+  blogPostId           Int
+  analysis_data        Json
+  openai_response_data Json?
+  messages             Json     @default("[]")
+  created_at           DateTime @default(now())
+
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  blog_post BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([blogPostId])
+}
+
+model QuilloCompanyAnalysisLog {
+  id             Int      @id @default(autoincrement())
+  companyId      Int
+  analyticsLogId Int?
+  analysis_data  Json
+  created_at     DateTime @default(now())
+
+  company       Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  analytics_log AnalyticsLog? @relation(fields: [analyticsLogId], references: [id], onDelete: SetNull)
+
+  @@index([companyId])
+  @@index([analyticsLogId])
+}
+
+/// --- Templates & CTA ---
+
+model BlogElementTemplate {
+  id           Int                     @id @default(autoincrement())
+  name         String                  @unique
+  slug         String                  @unique
+  element_type BlogElementTemplateType
+  structure    Json
+  created_at   DateTime                @default(now())
+}
+
+model Campaign {
+  id         Int      @id @default(autoincrement())
+  name       String
+  companyId  Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  ctas    CTA[]
+
+  @@index([companyId])
+}
+
+model CTA {
+  id          Int      @id @default(autoincrement())
+  campaignId  Int
+  title       String
+  description String
+  image       String
+  link        String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+}

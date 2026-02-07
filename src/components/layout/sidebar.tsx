@@ -184,7 +184,7 @@ export function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[12px] font-medium text-white truncate">
-              {userData?.username || userData?.email?.split('@')[0] || 'User'}
+              {userData?.name || userData?.email?.split('@')[0] || 'User'}
             </p>
             <p className="text-[11px] text-sidebar-foreground/50 truncate">
               {userData?.company?.name || 'Nordtools'}

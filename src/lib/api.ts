@@ -3,13 +3,13 @@
  * Wraps fetch with:
  *  - baseURL from env
  *  - credentials: 'include' (cookie auth)
- *  - Company-ID header from cookie
+ *  - optional Company-ID header from cookie
  */
 
 import { getCookie } from 'cookies-next'
 
 const getBaseUrl = () =>
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'
 
 interface ApiOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>
@@ -26,7 +26,7 @@ export async function api<T = any>(
 ): Promise<ApiResponse<T>> {
   const baseUrl = getBaseUrl()
 
-  // Read Company-ID from cookie
+  // Optional Company-ID from cookie (session header injection also happens server-side)
   const companyId =
     (typeof window !== 'undefined' ? getCookie('companyId') : null) ?? null
 
@@ -39,14 +39,6 @@ export async function api<T = any>(
     })
     const qs = searchParams.toString()
     if (qs) fullUrl += `?${qs}`
-  }
-
-  // If calling an Aurora endpoint without companyId, fail fast
-  if (url.startsWith('/api/aurora/') && !companyId) {
-    return {
-      data: null,
-      error: new Error('Missing Company-ID (companyId cookie not set yet)'),
-    }
   }
 
   const { params: _, ...fetchOptions } = options

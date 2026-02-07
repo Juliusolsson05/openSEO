@@ -1,18 +1,27 @@
-/**
- * NextAuth v5 configuration — ported from server/api/auth/[...].ts
- * Credentials provider hitting the Django backend.
- */
-
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
+import { PrismaAdapter } from '@auth/prisma-adapter'
+import bcrypt from 'bcryptjs'
+import type { UserType as PrismaUserType } from '@prisma/client'
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  'https://nordwebb-f6ed36c3f560.herokuapp.com'
+import { prisma } from './prisma'
+
+/**
+ * Map Prisma UserType enum → numeric user type (matching Django)
+ */
+const USER_TYPE_MAP: Record<PrismaUserType, number> = {
+  DEMO: 1,
+  CLIENT: 2,
+  AGENCY: 3,
+  ADMINISTRATOR: 4,
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET || 'nordtools-dev-secret-change-in-production',
-
+  session: {
+    strategy: 'jwt',
+  },
   providers: [
     Credentials({
       name: 'Credentials',
@@ -21,63 +30,61 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
+        const email = credentials?.email
+        const password = credentials?.password
 
-        try {
-          const response = await fetch(`${BACKEND_URL}/api/auth/login/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
-          })
-
-          if (!response.ok) {
-            console.error('Login failed:', response.status)
-            return null
-          }
-
-          const data = await response.json()
-
-          return {
-            id: String(data.user?.id || data.id),
-            email: data.user?.email || data.email || credentials.email,
-            name: data.user?.name || data.name || String(credentials.email),
-            accessToken: data.access_token || data.token,
-            company: data.user?.company || null,
-            abilityRules: data.user?.abilityRules || [],
-          }
-        } catch (error) {
-          console.error('Auth error:', error)
+        if (typeof email !== 'string' || typeof password !== 'string') {
           return null
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { email },
+          include: { company: true },
+        })
+
+        if (!user?.password) {
+          return null
+        }
+
+        const isValidPassword = await bcrypt.compare(password, user.password)
+
+        if (!isValidPassword) {
+          return null
+        }
+
+        return {
+          id: String(user.id),
+          email: user.email,
+          name: user.name ?? user.email,
+          userType: USER_TYPE_MAP[user.userType],
+          companyId: user.companyId,
+          company: user.company,
         }
       },
     }),
   ],
-
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        token.email = user.email
-        token.accessToken = (user as any).accessToken
-        token.company = (user as any).company
-        token.abilityRules = (user as any).abilityRules
+        token.userType = user.userType ?? null
+        token.companyId = user.companyId ?? null
+        token.company = user.company
       }
+
       return token
     },
-    session({ session, token }) {
+    async session({ session, token }) {
       if (session.user) {
-        ;(session.user as any).id = token.id
-        ;(session.user as any).accessToken = token.accessToken
-        ;(session.user as any).company = token.company
-        ;(session.user as any).abilityRules = token.abilityRules
+        session.user.id = token.id as string
+        session.user.userType = (token.userType as number | null) ?? null
+        session.user.companyId = (token.companyId as number | null) ?? null
+        session.user.company = (token.company as typeof session.user.company) ?? null
       }
+
       return session
     },
   },
-
   pages: {
     signIn: '/login',
   },

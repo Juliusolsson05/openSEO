@@ -1,0 +1,35 @@
+import type { Prisma } from '@prisma/client'
+
+import * as analyticsRepository from '@/server/repositories/analytics.repository'
+
+export class AnalyticsService {
+  async getReadabilityAnalytics(companyId: number) {
+    return analyticsRepository.getBlogPostReadability(companyId)
+  }
+
+  async getGeneralAnalytics(companyId: number) {
+    return analyticsRepository.getGeneralBlogAnalytics(companyId)
+  }
+
+  async getMetaAnalytics(companyId: number) {
+    return analyticsRepository.getMetaAnalysis(companyId)
+  }
+
+  async getElementAnalytics(companyId: number) {
+    return analyticsRepository.getElementCounts(companyId)
+  }
+
+  async getDictionaryAnalytics(companyId: number) {
+    return analyticsRepository.getDictionaryAnalytics(companyId)
+  }
+
+  async getLatestLog(companyId: number) {
+    return analyticsRepository.getLatestLog(companyId)
+  }
+
+  async createLog(companyId: number, jsonData: Prisma.InputJsonValue) {
+    return analyticsRepository.createLog({ companyId, json_data: jsonData })
+  }
+}
+
+export const analyticsService = new AnalyticsService()

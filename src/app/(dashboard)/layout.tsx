@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuthStore } from '@/stores/auth-store'
+import { useAuthStore, useAuthSessionSync } from '@/stores/auth-store'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Topbar } from '@/components/layout/topbar'
 
@@ -11,12 +11,11 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { isAuthenticated, hydrate } = useAuthStore()
+  const { isAuthenticated } = useAuthStore()
   const router = useRouter()
 
-  useEffect(() => {
-    hydrate()
-  }, [hydrate])
+  // Sync NextAuth session → Zustand store
+  useAuthSessionSync()
 
   useEffect(() => {
     if (!isAuthenticated) {
