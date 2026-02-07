@@ -1,3 +1,11 @@
-import { handlers } from '@/lib/auth'
+import { randomUUID } from 'crypto'
 
-export const GET = handlers.GET
+import { apiHandler } from '@/server/api/handler'
+import { raw } from '@/server/api/response'
+
+export const GET = apiHandler(
+  async () => {
+    return raw({ ok: true, csrfToken: randomUUID() })
+  },
+  { auth: false },
+)

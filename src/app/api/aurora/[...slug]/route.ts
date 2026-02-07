@@ -69,9 +69,21 @@ function matchesPath(path: string, pattern: RegExp | string): boolean {
 
 function enforceMethod(path: string, method: string): ReturnType<typeof raw> | null {
   const methodRules: Array<{ pattern: RegExp | string; allowed: string[] }> = [
-    { pattern: 'blog/titles/categories/bulk-delete', allowed: ['POST'] },
-    { pattern: /^blog\/titles\/categories\/edit\/\d+$/, allowed: ['PUT', 'PATCH'] },
+    { pattern: 'blog/titles', allowed: ['GET'] },
+    { pattern: 'blog/titles/generate', allowed: ['POST'] },
+    { pattern: /^blog\/titles\/regenerate\/\d+$/, allowed: ['POST'] },
     { pattern: /^blog\/titles\/update\/\d+$/, allowed: ['PUT', 'PATCH'] },
+    { pattern: /^blog\/titles\/delete\/\d+$/, allowed: ['DELETE'] },
+    { pattern: 'blog/titles/categories', allowed: ['GET'] },
+    { pattern: 'blog/titles/categories/add', allowed: ['POST'] },
+    { pattern: /^blog\/titles\/categories\/edit\/\d+$/, allowed: ['PUT', 'PATCH'] },
+    { pattern: /^blog\/titles\/categories\/delete\/\d+$/, allowed: ['DELETE'] },
+    { pattern: 'blog/titles/categories/bulk-delete', allowed: ['POST'] },
+    { pattern: 'blog/titles/categories/generate', allowed: ['POST'] },
+    { pattern: 'blog/titles/categories/categorize', allowed: ['POST'] },
+    { pattern: 'blog/categories', allowed: ['GET'] },
+    { pattern: 'blog/categories/generate', allowed: ['POST'] },
+    { pattern: 'blog/categories/categorize', allowed: ['POST'] },
     { pattern: 'blog/posts/delete-element', allowed: ['DELETE'] },
     { pattern: 'blog/posts/elements/add', allowed: ['POST'] },
     { pattern: 'blog/posts/elements/regenerate', allowed: ['POST'] },
