@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { applyHyperlinks } from '../hyperlink-utils'
 
 interface VersusCriterion {
   name: string
@@ -29,7 +30,7 @@ interface VersusContent {
   text_after?: string
 }
 
-export function Versus({ content, blogId, elementId, onContentUpdated, onElementAdded, onElementDeleted }: ElementComponentProps) {
+export function Versus({ content, blogId, elementId, onContentUpdated, onElementAdded, onElementDeleted, hyperlink }: ElementComponentProps) {
   const updateElement = useElementsStore((s) => s.updateElement)
   const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
@@ -194,14 +195,14 @@ export function Versus({ content, blogId, elementId, onContentUpdated, onElement
           {viewContent.title ? (
             <h3
               className="mb-6 text-2xl font-semibold text-foreground"
-              dangerouslySetInnerHTML={{ __html: renderMarkdownInline(viewContent.title) }}
+              dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(viewContent.title, hyperlink, 'title')) }}
             />
           ) : null}
 
           {viewContent.text_before ? (
             <p
               className="my-6 text-[1.05rem] leading-relaxed text-muted-foreground"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_before) }}
+              dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(viewContent.text_before, hyperlink, 'text_before')) }}
             />
           ) : null}
 
@@ -241,7 +242,7 @@ export function Versus({ content, blogId, elementId, onContentUpdated, onElement
           {viewContent.text_after ? (
             <p
               className="my-6 text-[1.05rem] leading-relaxed text-muted-foreground"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_after) }}
+              dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(viewContent.text_after, hyperlink, 'text_after')) }}
             />
           ) : null}
         </div>

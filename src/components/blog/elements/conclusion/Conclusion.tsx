@@ -12,6 +12,7 @@ import { useElementSave } from '@/hooks/use-element-save'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { applyHyperlinks } from '../hyperlink-utils'
 
 type ConclusionContent = {
   title?: string
@@ -25,7 +26,7 @@ const formatConclusionText = (value: string) => {
   return renderMarkdown(text)
 }
 
-export function Conclusion({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
+export function Conclusion({ content, blogId, elementId, onContentUpdated, onElementDeleted, hyperlink }: ElementComponentProps) {
   const updateElement = useElementsStore((s) => s.updateElement)
   const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
@@ -103,7 +104,7 @@ export function Conclusion({ content, blogId, elementId, onContentUpdated, onEle
           <h2 className="mb-3 text-2xl font-semibold">{viewContent.title ?? 'Conclusion'}</h2>
           <div
             className="custom-content my-[15px] text-lg font-light leading-[1.77778] text-foreground"
-            dangerouslySetInnerHTML={{ __html: formatConclusionText(viewContent.text ?? '') }}
+            dangerouslySetInnerHTML={{ __html: formatConclusionText(applyHyperlinks(viewContent.text ?? '', hyperlink, 'text')) }}
           />
         </div>
       )}

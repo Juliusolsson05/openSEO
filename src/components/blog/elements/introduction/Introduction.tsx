@@ -13,6 +13,7 @@ import { useElementSave } from '@/hooks/use-element-save'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { applyHyperlinks } from '../hyperlink-utils'
 
 type IntroductionContent = {
   title?: string
@@ -26,7 +27,7 @@ const formatText = (text: string) => {
   return renderMarkdown(value)
 }
 
-export function Introduction({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
+export function Introduction({ content, blogId, elementId, onContentUpdated, onElementDeleted, hyperlink }: ElementComponentProps) {
   const updateElement = useElementsStore((s) => s.updateElement)
   const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
@@ -105,7 +106,7 @@ export function Introduction({ content, blogId, elementId, onContentUpdated, onE
           </h2>
           <p
             className="my-[15px] text-lg font-light leading-[1.77778] text-foreground [&_em]:font-[450] [&_strong]:font-bold"
-            dangerouslySetInnerHTML={{ __html: formatText(viewContent.text ?? '') }}
+            dangerouslySetInnerHTML={{ __html: formatText(applyHyperlinks(viewContent.text ?? '', hyperlink, 'text')) }}
           />
         </div>
       )}

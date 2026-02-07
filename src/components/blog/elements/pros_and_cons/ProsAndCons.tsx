@@ -11,14 +11,17 @@ import { InlineEditorShell } from '../inline/InlineEditorShell'
 import { useElementDraft } from '@/hooks/use-element-draft'
 import { useElementSave } from '@/hooks/use-element-save'
 import { Input } from '@/components/ui/input'
+import { applyHyperlinks } from '../hyperlink-utils'
 
 interface ProsAndConsContent {
   title?: string
+  text_before?: string
   pros?: string[]
   cons?: string[]
+  text_after?: string
 }
 
-export function ProsAndCons({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
+export function ProsAndCons({ content, blogId, elementId, onContentUpdated, onElementDeleted, hyperlink }: ElementComponentProps) {
   const updateElement = useElementsStore((s) => s.updateElement)
   const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
@@ -71,8 +74,9 @@ export function ProsAndCons({ content, blogId, elementId, onContentUpdated, onEl
   const addCon = () => patch({ cons: [...cons, ''] })
   const removeCon = (index: number) => patch({ cons: cons.filter((_, i) => i !== index) })
 
-  const viewPros = Array.isArray((content as ProsAndConsContent)?.pros) ? (content as ProsAndConsContent).pros! : []
-  const viewCons = Array.isArray((content as ProsAndConsContent)?.cons) ? (content as ProsAndConsContent).cons! : []
+  const data = (content as ProsAndConsContent) ?? {}
+  const viewPros = Array.isArray(data.pros) ? data.pros : []
+  const viewCons = Array.isArray(data.cons) ? data.cons : []
 
   return (
     <BaseElement content={content} blogId={blogId} elementId={elementId} allowEdit onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
@@ -149,9 +153,10 @@ export function ProsAndCons({ content, blogId, elementId, onContentUpdated, onEl
           className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
           onClick={() => isEditModeEnabled && startEditing(elementId)}
         >
-          {(content as ProsAndConsContent)?.title ? (
-            <h3 className="mb-6 text-2xl font-semibold" dangerouslySetInnerHTML={{ __html: renderMarkdownInline((content as ProsAndConsContent).title!) }} />
+          {data.title ? (
+            <h3 className="mb-6 text-2xl font-semibold" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(data.title, hyperlink, 'title')) }} />
           ) : null}
+          {data.text_before ? <p className="my-4" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(data.text_before, hyperlink, 'text_before')) }} /> : null}
           <div className="my-8 grid grid-cols-1 gap-8 md:grid-cols-2">
             <div>
               <h4 className="mb-3 border-b-2 border-emerald-600 pb-2 text-xl font-semibold text-emerald-600">Pros</h4>
@@ -162,6 +167,7 @@ export function ProsAndCons({ content, blogId, elementId, onContentUpdated, onEl
               <ul className="space-y-3">{viewCons.map((con, index) => <li key={index}>✕ <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(con) }} /></li>)}</ul>
             </div>
           </div>
+          {data.text_after ? <p className="my-4" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(data.text_after, hyperlink, 'text_after')) }} /> : null}
         </div>
       )}
     </BaseElement>

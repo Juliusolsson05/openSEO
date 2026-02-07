@@ -12,6 +12,7 @@ import { useElementSave } from '@/hooks/use-element-save'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { applyHyperlinks } from '../hyperlink-utils'
 
 type QuoteContent = {
   text?: string
@@ -21,7 +22,7 @@ type QuoteContent = {
   description?: string
 }
 
-export function Quote({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
+export function Quote({ content, blogId, elementId, onContentUpdated, onElementDeleted, hyperlink }: ElementComponentProps) {
   const updateElement = useElementsStore((s) => s.updateElement)
   const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
@@ -108,10 +109,10 @@ export function Quote({ content, blogId, elementId, onContentUpdated, onElementD
           className={`space-y-2 rounded-lg bg-muted/60 p-6 ${isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}`}
           onClick={() => isEditModeEnabled && startEditing(elementId)}
         >
-          {viewContent.text ? <p className="mb-3" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(viewContent.text) }} /> : null}
-          <p className="text-3xl" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(quote) }} />
-          <p className="mt-4 text-2xl">— <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(author) }} />
-            {description ? <span className="ml-1 text-base font-light" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(description) }} /> : null}
+          {viewContent.text ? <p className="mb-3" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(viewContent.text, hyperlink, 'text')) }} /> : null}
+          <p className="text-3xl" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(quote, hyperlink, 'quote')) }} />
+          <p className="mt-4 text-2xl">— <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(author, hyperlink, 'person')) }} />
+            {description ? <span className="ml-1 text-base font-light" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(description, hyperlink, 'description')) }} /> : null}
           </p>
         </div>
       )}

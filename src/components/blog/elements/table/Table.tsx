@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { applyHyperlinks } from '../hyperlink-utils'
 
 interface TableContent {
   title?: string
@@ -23,7 +24,7 @@ interface TableContent {
   text_after?: string
 }
 
-export function Table({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
+export function Table({ content, blogId, elementId, onContentUpdated, onElementDeleted, hyperlink }: ElementComponentProps) {
   const updateElement = useElementsStore((s) => s.updateElement)
   const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
@@ -170,8 +171,8 @@ export function Table({ content, blogId, elementId, onContentUpdated, onElementD
           className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
           onClick={() => isEditModeEnabled && startEditing(elementId)}
         >
-          <h3 className="mb-6 text-2xl font-semibold" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(viewContent.title ?? '') }} />
-          {viewContent.text_before ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_before) }} /> : null}
+          <h3 className="mb-6 text-2xl font-semibold" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(viewContent.title ?? '', hyperlink, 'title')) }} />
+          {viewContent.text_before ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(viewContent.text_before, hyperlink, 'text_before')) }} /> : null}
           <div className="my-8 overflow-x-auto rounded-lg border shadow-sm">
             <table className="w-full border-separate border-spacing-0">
               <thead>
@@ -192,7 +193,7 @@ export function Table({ content, blogId, elementId, onContentUpdated, onElementD
               </tbody>
             </table>
           </div>
-          {viewContent.text_after ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text_after) }} /> : null}
+          {viewContent.text_after ? <p className="my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(viewContent.text_after, hyperlink, 'text_after')) }} /> : null}
         </div>
       )}
     </BaseElement>

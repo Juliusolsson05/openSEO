@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { createHyperlinkedText, type HyperlinkData } from '../hyperlink-utils'
 
 type FAQItem = { question: string; answer: string }
 type FAQContent = { title?: string; items: FAQItem[] }
@@ -31,7 +32,7 @@ const normalizeContent = (value: unknown): FAQContent => {
   }
 }
 
-export function FAQ({ content, blogId, elementId, onContentUpdated, onElementAdded, onElementDeleted }: ElementComponentProps) {
+export function FAQ({ content, blogId, elementId, onContentUpdated, onElementAdded, onElementDeleted, hyperlink }: ElementComponentProps) {
   const updateElement = useElementsStore((s) => s.updateElement)
   const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
@@ -123,12 +124,20 @@ export function FAQ({ content, blogId, elementId, onContentUpdated, onElementAdd
         >
           <h2 className="mt-12 text-3xl font-semibold tracking-tight">{viewContent.title || 'FAQ'}</h2>
           <div className="space-y-3 mt-4">
-            {viewContent.items.map((item, index) => (
-              <div key={index} className="overflow-hidden rounded-lg border bg-card px-6 py-4">
-                <div className="font-medium" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(item.question) }} />
-                <div className="mt-2 prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: renderMarkdown(item.answer) }} />
-              </div>
-            ))}
+            {viewContent.items.map((item, index) => {
+              const faqKeywords = hyperlink?.matched_keywords as unknown as Array<{ question?: any[]; answer?: any[] }>
+              const qKeywords = faqKeywords?.[index]?.question
+              const aKeywords = faqKeywords?.[index]?.answer
+              const linkedQuestion = Array.isArray(qKeywords) && qKeywords.length ? createHyperlinkedText(item.question, qKeywords) : item.question
+              const linkedAnswer = Array.isArray(aKeywords) && aKeywords.length ? createHyperlinkedText(item.answer, aKeywords) : item.answer
+
+              return (
+                <div key={index} className="overflow-hidden rounded-lg border bg-card px-6 py-4">
+                  <div className="font-medium" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(linkedQuestion) }} />
+                  <div className="mt-2 prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: renderMarkdown(linkedAnswer) }} />
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

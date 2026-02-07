@@ -12,10 +12,11 @@ import { useElementSave } from '@/hooks/use-element-save'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { applyHyperlinks } from '../hyperlink-utils'
 
 type SnippetContent = { title?: string; text?: string }
 
-export function SnippetBlock({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
+export function SnippetBlock({ content, blogId, elementId, onContentUpdated, onElementDeleted, hyperlink }: ElementComponentProps) {
   const updateElement = useElementsStore((s) => s.updateElement)
   const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
@@ -81,8 +82,8 @@ export function SnippetBlock({ content, blogId, elementId, onContentUpdated, onE
           className={`my-[30px] border-[10px] border-primary bg-[rgba(211,211,211,0.44)] p-[45px] space-y-3 ${isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}`}
           onClick={() => isEditModeEnabled && startEditing(elementId)}
         >
-          <h2 className="mb-5 text-[28px] font-medium leading-[40px]" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(viewContent.title ?? '') }} />
-          <p className="text-[18px] leading-[32px]" dangerouslySetInnerHTML={{ __html: renderMarkdown(viewContent.text ?? '') }} />
+          <h2 className="mb-5 text-[28px] font-medium leading-[40px]" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(viewContent.title ?? '', hyperlink, 'title')) }} />
+          <p className="text-[18px] leading-[32px]" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(viewContent.text ?? '', hyperlink, 'text')) }} />
         </div>
       )}
     </BaseElement>

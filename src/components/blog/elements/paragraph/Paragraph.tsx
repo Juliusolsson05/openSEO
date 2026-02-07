@@ -12,59 +12,15 @@ import { useElementSave } from '@/hooks/use-element-save'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-
-type HyperlinkMatch = {
-  keyword: string
-  description: string
-  matched_positions: number[]
-}
+import { applyHyperlinks, type HyperlinkData } from '../hyperlink-utils'
 
 interface ParagraphProps extends ElementComponentProps {
-  hyperlink?: {
-    matched_keywords?: {
-      title?: HyperlinkMatch[]
-      text?: HyperlinkMatch[]
-    }
-  } | null
+  hyperlink?: HyperlinkData
 }
 
 type ParagraphContent = {
   title?: string
   text?: string
-}
-
-const createHyperlinkedText = (text: string, keywords: HyperlinkMatch[]): string => {
-  const keywordMap: Record<string, string> = keywords.reduce((acc, { keyword }) => {
-    acc[keyword.toLowerCase()] = keyword
-    return acc
-  }, {} as Record<string, string>)
-
-  const words = text.split(/(\s+)/)
-
-  const hyperlinkedWords = words.map((word, i) => {
-    const cleanWord = word.toLowerCase().replace(/[^a-z0-9]/gi, '')
-
-    if (keywordMap[cleanWord]) {
-      const nextWord = words[i + 2]
-      const nextCleanWord = nextWord ? nextWord.toLowerCase().replace(/[^a-z0-9]/gi, '') : ''
-
-      if (!keywordMap[nextCleanWord]) {
-        const originalKeyword = keywordMap[cleanWord]
-        const match = word.match(/^([^\w]*)([\w]+)([^\w]*)$/)
-
-        if (match) {
-          const [, before, mainWord, after] = match
-          return `${before}<a href="/example/${originalKeyword}" class="hyperlink">${mainWord}</a>${after}`
-        }
-
-        return `<a href="/example/${originalKeyword}" class="hyperlink">${word}</a>`
-      }
-    }
-
-    return word
-  })
-
-  return hyperlinkedWords.join('')
 }
 
 export function Paragraph({
@@ -115,16 +71,12 @@ export function Paragraph({
 
   const viewContent = (content ?? {}) as ParagraphContent
 
-  const formattedTitle = hyperlink?.matched_keywords?.title?.length
-    ? renderMarkdownInline(createHyperlinkedText(viewContent.title ?? '', hyperlink.matched_keywords.title))
-    : renderMarkdownInline(viewContent.title ?? '')
+  const formattedTitle = renderMarkdownInline(applyHyperlinks(viewContent.title ?? '', hyperlink, 'title'))
 
   let formattedTextInput = viewContent.text ?? ''
   formattedTextInput = formattedTextInput.replace(/(<br\s*\/?>)(?!<br\s*\/?>)/g, '<br/><br/>')
   formattedTextInput = formattedTextInput.replace(/(<br\s*\/?>){3,}/g, '<br/><br/>')
-  if (hyperlink?.matched_keywords?.text?.length) {
-    formattedTextInput = createHyperlinkedText(formattedTextInput, hyperlink.matched_keywords.text)
-  }
+  formattedTextInput = applyHyperlinks(formattedTextInput, hyperlink, 'text')
   const formattedText = renderMarkdown(formattedTextInput)
 
   return (

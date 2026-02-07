@@ -13,6 +13,7 @@ import { useElementSave } from '@/hooks/use-element-save'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { applyHyperlinks, createHyperlinkedText } from '../hyperlink-utils'
 
 type NumberedListParagraphContent = {
   title?: string
@@ -21,7 +22,7 @@ type NumberedListParagraphContent = {
   text_after_list?: string
 }
 
-export function NumberedListParagraph({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
+export function NumberedListParagraph({ content, blogId, elementId, onContentUpdated, onElementDeleted, hyperlink }: ElementComponentProps) {
   const updateElement = useElementsStore((s) => s.updateElement)
   const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
@@ -66,6 +67,11 @@ export function NumberedListParagraph({ content, blogId, elementId, onContentUpd
 
   const view = (content ?? {}) as NumberedListParagraphContent
   const viewItems = Array.isArray(view.list_items) ? view.list_items : []
+
+  const hyperlinkedListItem = (item: string, index: number) => {
+    const kws = (hyperlink?.matched_keywords as any)?.list_items?.[index]
+    return Array.isArray(kws) && kws.length ? createHyperlinkedText(item, kws) : item
+  }
 
   return (
     <BaseElement content={content} blogId={blogId} elementId={elementId} allowEdit={false} onContentUpdated={onContentUpdated} onElementDeleted={onElementDeleted}>
@@ -122,14 +128,14 @@ export function NumberedListParagraph({ content, blogId, elementId, onContentUpd
             className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
             onClick={() => isEditModeEnabled && startEditing(elementId)}
           >
-            <h3 className="mb-[10px] text-[1.5rem] font-medium" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(view.title ?? '') }} />
-            <div className="my-[15px] text-lg font-light" dangerouslySetInnerHTML={{ __html: renderMarkdown(view.text_before_list ?? '') }} />
+            <h3 className="mb-[10px] text-[1.5rem] font-medium" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(applyHyperlinks(view.title ?? '', hyperlink, 'title')) }} />
+            <div className="my-[15px] text-lg font-light" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(view.text_before_list ?? '', hyperlink, 'text_before_list')) }} />
             <ol className="my-[15px] list-decimal pl-5 text-lg font-light">
               {viewItems.map((item, index) => (
-                <li key={index} dangerouslySetInnerHTML={{ __html: renderMarkdownInline(item) }} />
+                <li key={index} dangerouslySetInnerHTML={{ __html: renderMarkdownInline(hyperlinkedListItem(item, index)) }} />
               ))}
             </ol>
-            <div className="my-[15px] text-lg font-light" dangerouslySetInnerHTML={{ __html: renderMarkdown(view.text_after_list ?? '') }} />
+            <div className="my-[15px] text-lg font-light" dangerouslySetInnerHTML={{ __html: renderMarkdown(applyHyperlinks(view.text_after_list ?? '', hyperlink, 'text_after_list')) }} />
           </div>
         )}
       </div>
