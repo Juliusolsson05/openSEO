@@ -3,8 +3,8 @@ import type { Prisma } from '@prisma/client'
 import * as analyticsRepository from '@/server/repositories/analytics.repository'
 
 export class AnalyticsService {
-  async getReadabilityAnalytics(companyId: number) {
-    return analyticsRepository.getBlogPostReadability(companyId)
+  async getReadabilityAnalytics(companyId: number, blogPostId?: number) {
+    return analyticsRepository.getBlogPostReadability(companyId, blogPostId)
   }
 
   async getGeneralAnalytics(companyId: number) {

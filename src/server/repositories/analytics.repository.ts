@@ -39,9 +39,12 @@ function collectReadabilityScores(input: unknown, scores: number[] = []): number
   return scores
 }
 
-export async function getBlogPostReadability(companyId: number) {
+export async function getBlogPostReadability(companyId: number, blogPostId?: number) {
   const elements = await prisma.blogPostElement.findMany({
-    where: { blog_post: { companyId } },
+    where: {
+      blog_post: { companyId },
+      ...(blogPostId ? { blogPostId } : {}),
+    },
     select: { blogPostId: true, content: true },
   })
 

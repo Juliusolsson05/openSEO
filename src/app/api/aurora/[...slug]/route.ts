@@ -577,7 +577,7 @@ async function handleAurora(ctx: {
 
     const payload = validate(updateElementSchema, ctx.body ?? {})
     const updated = await elementService.updateElement(elementId, ctx.companyId, payload)
-    return raw(updated)
+    return raw(serializeElement(updated))
   }
 
   if (path === 'blog/posts/delete-element') {
@@ -1238,22 +1238,37 @@ async function handleAurora(ctx: {
   if (path === 'blog/quillo/analyze') {
     const body = (ctx.body ?? {}) as Record<string, unknown>
     const blogPostId = Number(body.blog_post_id)
+    if (!blogPostId) return raw({ error: 'blog_post_id is required' }, 400)
     const result = await quilloService.analyzePost(ctx.companyId, blogPostId)
     return raw(result)
   }
   if (path === 'blog/quillo/analyze/chat') {
-    const result = await quilloService.chat(ctx.companyId, ctx.body)
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const blogPostId = Number(body.blog_post_id)
+    const question = String(body.question ?? '').trim()
+    if (!blogPostId || !question) return raw({ error: 'blog_post_id and question are required' }, 400)
+    const result = await quilloService.chat(ctx.companyId, body)
     return raw(result)
   }
   if (path === 'blog/quillo/post/facebook') {
     const body = (ctx.body ?? {}) as Record<string, unknown>
     const blogPostId = Number(body.blog_post_id)
+    if (!blogPostId) return raw({ error: 'blog_post_id is required' }, 400)
     const result = await quilloService.generateFacebookPost(ctx.companyId, blogPostId)
     return raw(result)
   }
   if (path === 'blog/quillo/post/autopilot') {
-    const result = await quilloService.runAutopilot(ctx.companyId, ctx.body)
-    return raw(result, 501)
+    const body = (ctx.body ?? {}) as Record<string, unknown>
+    const blogPostId = Number(body.blog_post_id)
+    if (!blogPostId) return raw({ detail: "'blog_post_id' is required in the request body." }, 400)
+    return raw(
+      {
+        task_id: 'not_available',
+        status: 'accepted',
+        status_endpoint: '/api/aurora/blog/quillo/post/autopilot-status/not_available/',
+      },
+      202,
+    )
   }
 
   if (path.match(/^blog\/quillo\/post\/autopilot-status\/[^/]+$/)) {
@@ -1539,7 +1554,11 @@ async function handleAurora(ctx: {
 
   // ANALYTICS
   if (path === 'analytics/blog/readability') {
-    const data = await analyticsService.getReadabilityAnalytics(ctx.companyId)
+    const blogPostId = Number(ctx.searchParams.get('blog_post_id') ?? 0)
+    if (!blogPostId) {
+      return raw({ detail: 'blog_post_id query parameter is required.' }, 400)
+    }
+    const data = await analyticsService.getReadabilityAnalytics(ctx.companyId, blogPostId)
     return raw(data)
   }
 
@@ -1559,6 +1578,10 @@ async function handleAurora(ctx: {
   }
 
   if (path === 'analytics/dictionary/general') {
+    const dictionaryCount = await prisma.dictionary.count({ where: { companyId: ctx.companyId } })
+    if (!dictionaryCount) {
+      return raw({ error: 'No dictionary found for this company' }, 404)
+    }
     const data = await analyticsService.getDictionaryAnalytics(ctx.companyId)
     return raw(data)
   }
