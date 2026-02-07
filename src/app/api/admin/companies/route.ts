@@ -8,8 +8,8 @@ import { prisma } from '@/lib/prisma'
 import { apiHandler } from '@/server/api/handler'
 import { raw } from '@/server/api/response'
 
-export const GET = apiHandler(async ({ session }) => {
-  if (session?.user?.userType !== 4) {
+export const GET = apiHandler(async ({ user }) => {
+  if (user?.userType !== 4) {
     return raw({ error: 'Unauthorized' }, 403)
   }
 
