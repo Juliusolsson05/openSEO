@@ -5,8 +5,8 @@
  * Ported from aurora_dashboard/views/apps/blog/elements/base.vue
  */
 
-import { useState, useCallback, type ReactNode } from 'react'
-import { Pencil, RefreshCw, Sparkles, Heart, Trash2, Plus, Loader2 } from 'lucide-react'
+import { useState, useCallback, useRef, type ReactNode } from 'react'
+import { Pencil, RefreshCw, Sparkles, Heart, Trash2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useElementsStore } from '@/stores/elements-store'
 import { useBlogStore } from '@/stores/blog-store'
@@ -62,6 +62,9 @@ export function BaseElement({
   const elementsStore = useElementsStore()
   const fetchPost = useBlogStore((s) => s.fetchPost)
   const post = useBlogStore((s) => s.post)
+  const insertSkeletonLoader = useBlogStore((s) => s.insertSkeletonLoader)
+  const removeSkeletonLoaderByOperationId = useBlogStore((s) => s.removeSkeletonLoaderByOperationId)
+  const opIdRef = useRef(0)
 
   const handleContentUpdated = useCallback(
     (updatedContent: any) => {
@@ -77,7 +80,15 @@ export function BaseElement({
       new_element_type?: string
       new_element_count?: number
     }) => {
-      setLoading(true)
+      setShowRegenerateModal(false)
+      const opId = ++opIdRef.current
+      // Replace current element with skeleton
+      insertSkeletonLoader(opId, {
+        elementId,
+        type: 'regeneration',
+        status: 'in_progress',
+        elementType: payload.new_element_type,
+      })
       try {
         const result = await elementsStore.regenerateElement({
           blog_post_id: blogId,
@@ -88,41 +99,59 @@ export function BaseElement({
         })
         if (result.success && post) {
           await fetchPost(post.id, true)
+        } else {
+          removeSkeletonLoaderByOperationId(opId)
         }
-      } finally {
-        setLoading(false)
-        setShowRegenerateModal(false)
+      } catch {
+        removeSkeletonLoaderByOperationId(opId)
       }
     },
-    [blogId, elementId, elementsStore, fetchPost, post]
+    [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId]
   )
 
   const handleEnhance = useCallback(async () => {
-    setLoading(true)
+    setShowEnhanceModal(false)
+    const opId = ++opIdRef.current
+    // Replace current element with skeleton (same type)
+    insertSkeletonLoader(opId, {
+      elementId,
+      type: 'enhancement',
+      status: 'in_progress',
+    })
     try {
       const result = await elementsStore.enhanceElement(blogId, elementId)
       if (result.success && post) {
         await fetchPost(post.id, true)
+      } else {
+        removeSkeletonLoaderByOperationId(opId)
       }
-    } finally {
-      setLoading(false)
-      setShowEnhanceModal(false)
+    } catch {
+      removeSkeletonLoaderByOperationId(opId)
     }
-  }, [blogId, elementId, elementsStore, fetchPost, post])
+  }, [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId])
 
   const handleHumanize = useCallback(async () => {
-    setLoading(true)
+    const opId = ++opIdRef.current
+    // Replace current element with skeleton (same type)
+    insertSkeletonLoader(opId, {
+      elementId,
+      type: 'enhancement',
+      status: 'in_progress',
+    })
     try {
       const result = await elementsStore.humanizeElement(blogId, elementId)
       if (result.success && post) {
         await fetchPost(post.id, true)
+      } else {
+        removeSkeletonLoaderByOperationId(opId)
       }
-    } finally {
-      setLoading(false)
+    } catch {
+      removeSkeletonLoaderByOperationId(opId)
     }
-  }, [blogId, elementId, elementsStore, fetchPost, post])
+  }, [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId])
 
   const handleDelete = useCallback(async () => {
+    setShowDeleteModal(false)
     setLoading(true)
     try {
       const result = await elementsStore.deleteElement(blogId, elementId)
@@ -132,13 +161,21 @@ export function BaseElement({
       }
     } finally {
       setLoading(false)
-      setShowDeleteModal(false)
     }
   }, [blogId, elementId, elementsStore, fetchPost, post, onElementDeleted])
 
   const handleAddElement = useCallback(
     async (elementType: ElementType, note?: string) => {
-      setLoading(true)
+      setShowAddElementModal(false)
+      const opId = ++opIdRef.current
+      // Insert skeleton below current element
+      insertSkeletonLoader(opId, {
+        elementId,
+        type: 'new',
+        status: 'in_progress',
+        position: { afterElementId: elementId },
+        elementType,
+      })
       try {
         const result = await elementsStore.addElement({
           blog_post_id: blogId,
@@ -148,13 +185,14 @@ export function BaseElement({
         })
         if (result.success && post) {
           await fetchPost(post.id, true)
+        } else {
+          removeSkeletonLoaderByOperationId(opId)
         }
-      } finally {
-        setLoading(false)
-        setShowAddElementModal(false)
+      } catch {
+        removeSkeletonLoaderByOperationId(opId)
       }
     },
-    [blogId, elementId, elementsStore, fetchPost, post]
+    [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId]
   )
 
   const handleTemplateSelect = useCallback(
@@ -177,13 +215,6 @@ export function BaseElement({
       onMouseEnter={() => setShowAddButton(true)}
       onMouseLeave={() => setShowAddButton(false)}
     >
-      {/* Loading overlay */}
-      {loading && (
-        <div className="absolute inset-0 bg-white/70 dark:bg-black/50 flex items-center justify-center z-10 rounded-lg">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        </div>
-      )}
-
       <div className="flex gap-2">
         {/* Content */}
         <div className="flex-1">{children}</div>
