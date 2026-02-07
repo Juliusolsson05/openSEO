@@ -1,90 +1,23 @@
 'use client'
 
-import { Label } from '@/components/ui/label'
-
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { api, apiPost, apiDelete } from '@/lib/api'
-import { generateImages } from '@/components/blog/actions/generateImages'
 import { useBlogStore } from '@/stores/blog-store'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-
-interface InputField {
-  type: 'text' | 'number' | 'select' | 'switch' | 'hidden'
-  label: string
-  key: string
-  options?: { title: string; value: any }[]
-  default?: any
-  required?: boolean
-}
-
-interface AdminActionSchema {
-  label: string
-  action: string
-  description: string
-  longDescription: string
-  endpoint: string
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE'
-  inputs: InputField[]
-  blocked?: boolean
-}
-
-const adminActions: AdminActionSchema[] = [
-  {
-    label: 'Generate Images',
-    action: 'generateImages',
-    description: 'Create new images for blog posts',
-    longDescription: 'This action generates new images for your blog post using AI.',
-    endpoint: '/api/aurora/blog/images/generate/',
-    method: 'POST',
-    inputs: [
-      { type: 'hidden', label: 'Post ID', key: 'post_id', required: true },
-      { type: 'select', label: 'Quality', key: 'version', options: [{ title: 'Low', value: 1 }, { title: 'Medium', value: 2 }, { title: 'High', value: 3 }], default: 2 },
-      { type: 'hidden', label: 'Force Update', key: 'force', default: false },
-      { type: 'switch', label: 'Use Magic Prompt', key: 'magic_prompt', default: true },
-      { type: 'switch', label: 'Use GPT Prompt', key: 'gpt_prompt', default: true },
-      { type: 'switch', label: 'Quality Thumbnail', key: 'quality_thumbnail', default: false },
-    ],
-  },
-  {
-    label: 'Generate Product Recommendations',
-    action: 'generateProductRecommendations',
-    description: 'Generate product suggestions',
-    longDescription: 'Populate product recommendations for your blog post.',
-    endpoint: '/api/aurora/ecommerce/blog/populate-product-recommendations/',
-    method: 'GET',
-    blocked: true,
-    inputs: [{ type: 'hidden', label: 'Blog Post ID', key: 'blog_post_id', required: true }],
-  },
-  {
-    label: 'Sync Recommended Posts',
-    action: 'syncRecommendedPosts',
-    description: 'Synchronize recommended posts',
-    longDescription: 'Synchronize recommended posts based on AI recommendations.',
-    endpoint: '/api/aurora/blog/posts/sync/recommended/',
-    method: 'POST',
-    inputs: [],
-  },
-  {
-    label: 'Sync Keywords',
-    action: 'syncKeywords',
-    description: 'Sync keywords for this blog post',
-    longDescription: 'Match post content against dictionary words and store element hyperlinks.',
-    endpoint: '/api/aurora/blog/posts/sync/keywords/',
-    method: 'POST',
-    inputs: [
-      { type: 'hidden', label: 'Post ID', key: 'post_id', required: true },
-      { type: 'number', label: 'Dictionary ID', key: 'dictionary_id', required: true },
-    ],
-  },
-]
+import {
+  ImagePlus,
+  Link2,
+  KeyRound,
+  RefreshCw,
+  Trash2,
+  Eye,
+  Upload,
+  Lock,
+  Loader2,
+} from 'lucide-react'
 
 interface Props {
   postId: string | number
@@ -95,254 +28,287 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
   const router = useRouter()
   const { fetchPost } = useBlogStore()
 
-  const [showActionModal, setShowActionModal] = useState(false)
-  const [selectedAction, setSelectedAction] = useState<AdminActionSchema | null>(null)
-  const [formData, setFormData] = useState<Record<string, any>>({})
-  const [isLoading, setIsLoading] = useState(false)
+  const [loadingAction, setLoadingAction] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const [showPublishConfirmation, setShowPublishConfirmation] = useState(false)
-  const [showPublishDetailsDialog, setShowPublishDetailsDialog] = useState(false)
-  const [showRegenerateModal, setShowRegenerateModal] = useState(false)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [showPostDeletedModal, setShowPostDeletedModal] = useState(false)
+  // Dialogs
+  const [showRegenerate, setShowRegenerate] = useState(false)
+  const [showDelete, setShowDelete] = useState(false)
+  const [confirmText, setConfirmText] = useState('')
 
-  const [regenerateConfirmationText, setRegenerateConfirmationText] = useState('')
-  const [deleteConfirmationText, setDeleteConfirmationText] = useState('')
-
-  const [availableDictionaries, setAvailableDictionaries] = useState<any[]>([])
-  const [loadingDictionaries, setLoadingDictionaries] = useState(false)
-  const [publishDetails, setPublishDetails] = useState({ dictionaryId: '', exportMethod: 'elementor' })
-
-  const [message, setMessage] = useState<{ type: 'success' | 'error' | 'warning'; text: string } | null>(null)
-
-  const isPublishDetailsValid = useMemo(() => !!publishDetails.dictionaryId && !!publishDetails.exportMethod && !loadingDictionaries, [publishDetails, loadingDictionaries])
-
-  const fetchDictionaries = async () => {
-    setLoadingDictionaries(true)
-    const { data, error } = await api<{ dictionaries: any[] }>('/api/aurora/dictionary/dictionaries/', { method: 'GET' })
-    if (error) {
-      setMessage({ type: 'error', text: 'Failed to fetch dictionaries. Please try again.' })
-    } else {
-      setAvailableDictionaries(Array.isArray(data?.dictionaries) ? data!.dictionaries : [])
-    }
-    setLoadingDictionaries(false)
-  }
+  // Publish
+  const [showPublish, setShowPublish] = useState(false)
+  const [dictionaries, setDictionaries] = useState<{ id: number; title: string }[]>([])
+  const [publishDictId, setPublishDictId] = useState('')
 
   useEffect(() => {
-    fetchDictionaries()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 4000)
+      return () => clearTimeout(t)
+    }
+  }, [toast])
 
-  const openModal = (action: AdminActionSchema) => {
-    if (action.blocked) return
-    const nextFormData: Record<string, any> = {}
-    action.inputs.forEach((input) => {
-      if (input.key === 'post_id' || input.key === 'blog_post_id') nextFormData[input.key] = Number(postId)
-      else if (input.type === 'number') nextFormData[input.key] = input.default !== undefined ? Number(input.default) : ''
-      else nextFormData[input.key] = input.default !== undefined ? input.default : ''
-    })
-    if (action.action === 'syncRecommendedPosts') nextFormData.post_id = Number(postId)
-    setFormData(nextFormData)
-    setSelectedAction(action)
-    setShowActionModal(true)
-  }
-
-  const handleAction = async () => {
-    if (!selectedAction) return
-    setIsLoading(true)
+  const run = async (action: string, fn: () => Promise<void>) => {
+    setLoadingAction(action)
     try {
-      const payload = { ...formData }
-      selectedAction.inputs.forEach((input) => {
-        if (input.type === 'number' && payload[input.key] !== '') payload[input.key] = Number(payload[input.key])
-      })
-      const request = selectedAction.action === 'generateImages'
-        ? generateImages({
-            post_id: Number(payload.post_id),
-            version: Number(payload.version) as 1 | 2 | 3,
-            force: Boolean(payload.force),
-            magic_prompt: Boolean(payload.magic_prompt),
-            gpt_prompt: Boolean(payload.gpt_prompt),
-            quality_thumbnail: Boolean(payload.quality_thumbnail),
-          })
-        : selectedAction.method === 'POST'
-          ? apiPost(selectedAction.endpoint, payload)
-          : api(selectedAction.endpoint, { method: selectedAction.method, params: selectedAction.method === 'GET' ? payload : undefined, body: selectedAction.method === 'GET' ? undefined : JSON.stringify(payload) })
-      const { error } = await request
-      if (error) throw error
-
-      setMessage({ type: 'success', text: `Action "${selectedAction.label}" executed successfully` })
-      setShowActionModal(false)
+      await fn()
+      setToast({ type: 'success', text: `${action} completed` })
       onRefreshPost?.()
-      await fetchPost(postId, true)
     } catch (e: any) {
-      const txt = String(e?.message || '')
-      setMessage({ type: txt.includes('401') ? 'warning' : 'error', text: txt.includes('401') ? 'Action failed: Invalid credentials.' : `Failed to execute action "${selectedAction.label}".` })
+      setToast({ type: 'error', text: e?.message || `${action} failed` })
     } finally {
-      setIsLoading(false)
+      setLoadingAction(null)
     }
   }
 
-  const handlePublish = async () => {
-    setShowPublishDetailsDialog(false)
-    setIsLoading(true)
+  const actions = [
+    {
+      id: 'images',
+      icon: ImagePlus,
+      label: 'Generate Images',
+      fn: () => run('Generate Images', async () => {
+        const { error } = await apiPost('/api/aurora/blog/images/generate/', { post_id: Number(postId), version: 2, magic_prompt: true, gpt_prompt: true })
+        if (error) throw error
+      }),
+    },
+    {
+      id: 'sync-posts',
+      icon: Link2,
+      label: 'Sync Related Posts',
+      fn: () => run('Sync Posts', async () => {
+        const { error } = await apiPost('/api/aurora/blog/posts/sync/recommended/', { post_id: Number(postId) })
+        if (error) throw error
+      }),
+    },
+    {
+      id: 'sync-keywords',
+      icon: KeyRound,
+      label: 'Sync Keywords',
+      fn: () => run('Sync Keywords', async () => {
+        const { error } = await apiPost('/api/aurora/blog/posts/sync/keywords/', { post_id: Number(postId), dictionary_id: 1 })
+        if (error) throw error
+      }),
+    },
+  ]
+
+  const openPublish = async () => {
+    if (!dictionaries.length) {
+      const { data } = await api<{ dictionaries: any[] }>('/api/aurora/dictionary/dictionaries/')
+      if (data?.dictionaries) setDictionaries(data.dictionaries)
+    }
+    setShowPublish(true)
+  }
+
+  const doPublish = () => run('Publish', async () => {
+    setShowPublish(false)
     const { error } = await apiPost('/api/aurora/blog/posts/upload/', {
       post_id: Number(postId),
-      dictionary_id: Number(publishDetails.dictionaryId),
-      export_method: publishDetails.exportMethod,
+      dictionary_id: Number(publishDictId),
+      export_method: 'elementor',
     })
-    if (error) {
-      setMessage({ type: 'error', text: 'Failed to publish blog post. Please try again.' })
-    } else {
-      setMessage({ type: 'success', text: 'Blog post published successfully!' })
-      onRefreshPost?.()
-      await fetchPost(postId, true)
-    }
-    setIsLoading(false)
-    setPublishDetails({ dictionaryId: '', exportMethod: 'elementor' })
-  }
+    if (error) throw error
+    setPublishDictId('')
+  })
 
-  const handleRegenerate = async () => {
-    setIsLoading(true)
+  const doRegenerate = () => run('Regenerate', async () => {
+    setShowRegenerate(false)
+    setConfirmText('')
     const { error } = await apiPost('/api/aurora/blog/posts/regenerate/', { post_id: Number(postId) })
-    if (error) setMessage({ type: 'error', text: 'Failed to regenerate blog post. Please try again.' })
-    else {
-      setMessage({ type: 'success', text: 'Blog post regenerated successfully!' })
-      onRefreshPost?.()
-      await fetchPost(postId, true)
-    }
-    setIsLoading(false)
-    setShowRegenerateModal(false)
-    setRegenerateConfirmationText('')
-  }
+    if (error) throw error
+  })
 
-  const handleDelete = async () => {
-    setIsLoading(true)
+  const doDelete = () => run('Delete', async () => {
+    setShowDelete(false)
+    setConfirmText('')
     const { error } = await apiDelete(`/api/aurora/blog/posts/delete/${postId}/`)
-    if (error) setMessage({ type: 'error', text: 'Failed to delete blog post. Please try again.' })
-    else setShowPostDeletedModal(true)
-    setIsLoading(false)
-    setShowDeleteModal(false)
-    setDeleteConfirmationText('')
-  }
+    if (error) throw error
+    router.push('/blog')
+  })
+
+  const isLoading = (id: string) => loadingAction === id
 
   return (
-    <Card className="mb-4 rounded border-border bg-white">
-      <CardHeader>
-        <CardTitle>Admin Actions</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2 bg-background text-[13px]">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Actions</p>
-        {adminActions.map((action) => (
-          <Button
-            key={action.action}
-            type="button"
-            variant="outline"
-            onClick={() => openModal(action)}
-            disabled={!!action.blocked}
-            className="flex h-auto w-full items-center justify-between rounded-sm bg-white px-3 py-2 text-left font-normal disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <span>{action.label}</span>
-            {action.blocked ? <Badge variant="warning">BLOCKED</Badge> : null}
-          </Button>
-        ))}
+    <>
+      <Card>
+        <CardContent className="p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-3">
+            ACTIONS
+          </p>
 
-        <Separator className="my-3" />
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Post Actions</p>
-        <Button variant="outline" className="w-full justify-start rounded-sm" onClick={() => setShowRegenerateModal(true)}>Regenerate Post</Button>
-        <Button variant="outline" className="w-full justify-start rounded-sm" onClick={() => setShowDeleteModal(true)}>Delete Post</Button>
-
-        <Button className="mt-4 w-full bg-primary hover:bg-primary-hover" onClick={() => router.push(`/blog/${postId}/preview`)}>Preview</Button>
-        <Button className="w-full" onClick={() => setShowPublishConfirmation(true)}>Publish</Button>
-
-        {message ? <p className={`text-[12px] ${message.type === 'success' ? 'text-green-700' : message.type === 'warning' ? 'text-amber-700' : 'text-red-700'}`}>{message.text}</p> : null}
-      </CardContent>
-
-      <Dialog open={showActionModal && !!selectedAction} onOpenChange={(open) => !open && setShowActionModal(false)}>
-        <DialogContent className="w-full max-w-xl text-[13px]">
-          <DialogHeader>
-            <DialogTitle>{selectedAction?.label}</DialogTitle>
-            <DialogDescription>{selectedAction?.longDescription}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            {selectedAction?.inputs.filter((i) => i.type !== 'hidden').map((input) => (
-              <div key={input.key}>
-                <Label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">{input.label}</Label>
-                {input.type === 'select' ? (
-                  <Select value={String(formData[input.key] ?? "")} onValueChange={(value) => setFormData((p) => ({ ...p, [input.key]: value }))}>
-                    <SelectTrigger className="h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]"><SelectValue placeholder="Select..." /></SelectTrigger>
-                    <SelectContent>{(input.options ?? []).map((o) => <SelectItem key={String(o.value)} value={String(o.value)}>{o.title}</SelectItem>)}</SelectContent>
-                  </Select>
-                ) : input.type === 'switch' ? (
-                  <Checkbox checked={!!formData[input.key]} onCheckedChange={(checked) => setFormData((p) => ({ ...p, [input.key]: checked === true }))} />
+          <div className="space-y-1">
+            {actions.map(({ id, icon: Icon, label, fn }) => (
+              <button
+                key={id}
+                onClick={fn}
+                disabled={!!loadingAction}
+                className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] text-left transition-colors hover:bg-secondary disabled:opacity-50"
+              >
+                {loadingAction === id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-primary shrink-0" />
                 ) : (
-                  <Input type={input.type === 'number' ? 'number' : 'text'} value={formData[input.key] ?? ''} onChange={(e) => setFormData((p) => ({ ...p, [input.key]: e.target.value }))} className="rounded-sm border-border" />
+                  <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 )}
-              </div>
+                <span>{label}</span>
+              </button>
             ))}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowActionModal(false)} disabled={isLoading}>Close</Button>
-            <Button onClick={handleAction} disabled={isLoading}>Execute</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      <Dialog open={showPublishConfirmation} onOpenChange={setShowPublishConfirmation}>
-        <DialogContent className="w-full max-w-xl text-[13px]">
-          <DialogHeader>
-            <DialogTitle>Confirm Publication</DialogTitle>
-            <DialogDescription>Publishing the blog post will make it accessible to the whole world.</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPublishConfirmation(false)}>Cancel</Button>
-            <Button onClick={async () => { setShowPublishConfirmation(false); if (!availableDictionaries.length) await fetchDictionaries(); setShowPublishDetailsDialog(true) }}>Publish</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <div className="my-3 border-t border-border" />
 
-      <Dialog open={showPublishDetailsDialog} onOpenChange={setShowPublishDetailsDialog}>
-        <DialogContent className="w-full max-w-xl text-[13px]">
-          <DialogHeader><DialogTitle>Publish Details</DialogTitle></DialogHeader>
-          <Label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">Select Dictionary</Label>
-          <Select value={publishDetails.dictionaryId} onValueChange={(value) => setPublishDetails((p) => ({ ...p, dictionaryId: value }))} disabled={loadingDictionaries}>
-            <SelectTrigger className="mb-3 h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]"><SelectValue placeholder="Select" /></SelectTrigger>
-            <SelectContent>
-              {availableDictionaries.map((d: any) => <SelectItem key={d.id} value={String(d.id)}>{d.title}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Label className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">Export Method</Label>
-          <Select value={publishDetails.exportMethod} onValueChange={(value) => setPublishDetails((p) => ({ ...p, exportMethod: value }))}>
-            <SelectTrigger className="h-8 w-full rounded-sm border border-border bg-white px-2 text-[13px]"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="elementor">Elementor</SelectItem></SelectContent>
-          </Select>
-          <DialogFooter><Button variant="outline" onClick={() => setShowPublishDetailsDialog(false)}>Cancel</Button><Button onClick={handlePublish} disabled={!isPublishDetailsValid || loadingDictionaries}>Publish</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <div className="space-y-1">
+            <button
+              onClick={() => { setConfirmText(''); setShowRegenerate(true) }}
+              disabled={!!loadingAction}
+              className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] text-left transition-colors hover:bg-secondary disabled:opacity-50"
+            >
+              <RefreshCw className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span>Regenerate Post</span>
+            </button>
+            <button
+              onClick={() => { setConfirmText(''); setShowDelete(true) }}
+              disabled={!!loadingAction}
+              className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] text-left text-destructive transition-colors hover:bg-destructive/5 disabled:opacity-50"
+            >
+              <Trash2 className="h-3.5 w-3.5 shrink-0" />
+              <span>Delete Post</span>
+            </button>
+          </div>
 
-      <Dialog open={showRegenerateModal} onOpenChange={setShowRegenerateModal}>
-        <DialogContent className="w-full max-w-xl text-[13px]">
-          <DialogHeader><DialogTitle>Confirm Regeneration</DialogTitle></DialogHeader>
-          <p>Type <strong>REGENERATE</strong> to confirm.</p>
-          <Input value={regenerateConfirmationText} onChange={(e) => setRegenerateConfirmationText(e.target.value)} />
-          <DialogFooter><Button variant="outline" onClick={() => setShowRegenerateModal(false)}>Cancel</Button><Button onClick={handleRegenerate} disabled={regenerateConfirmationText !== 'REGENERATE'}>Regenerate</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-[12px]"
+              onClick={() => router.push(`/blog/${postId}/preview`)}
+            >
+              <Eye className="h-3 w-3" /> Preview
+            </Button>
+            <Button
+              size="sm"
+              className="gap-1.5 text-[12px]"
+              onClick={openPublish}
+              disabled={!!loadingAction}
+            >
+              <Upload className="h-3 w-3" /> Publish
+            </Button>
+          </div>
 
-      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-        <DialogContent className="w-full max-w-xl text-[13px]">
-          <DialogHeader><DialogTitle>Confirm Deletion</DialogTitle></DialogHeader>
-          <p>Type <strong>DELETE</strong> to confirm.</p>
-          <Input value={deleteConfirmationText} onChange={(e) => setDeleteConfirmationText(e.target.value)} />
-          <DialogFooter><Button variant="outline" onClick={() => setShowDeleteModal(false)}>Cancel</Button><Button variant="destructive" onClick={handleDelete} disabled={deleteConfirmationText !== 'DELETE'}>Delete</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {/* Toast */}
+          {toast && (
+            <p className={`mt-3 text-[11px] leading-tight ${
+              toast.type === 'success' ? 'text-success' : 'text-destructive'
+            }`}>
+              {toast.text}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
-      <Dialog open={showPostDeletedModal} onOpenChange={setShowPostDeletedModal}>
-        <DialogContent className="w-full max-w-xl text-[13px]">
-          <DialogHeader><DialogTitle>Post Deleted</DialogTitle><DialogDescription>The blog post has been deleted successfully.</DialogDescription></DialogHeader>
-          <DialogFooter><Button onClick={() => router.push('/blog')}>Return to Archive</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </Card>
+      {/* Regenerate confirm */}
+      {showRegenerate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowRegenerate(false)}>
+          <div className="w-[400px] rounded-lg border border-border bg-background p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-[15px] font-semibold mb-1">Regenerate Post</h3>
+            <p className="text-[13px] text-muted-foreground mb-4">
+              This will regenerate all content. Type <strong className="text-foreground">REGENERATE</strong> to confirm.
+            </p>
+            <Input
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="REGENERATE"
+              className="mb-4"
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setShowRegenerate(false)}>Cancel</Button>
+              <Button
+                size="sm"
+                disabled={confirmText !== 'REGENERATE' || !!loadingAction}
+                onClick={doRegenerate}
+              >
+                {loadingAction ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
+                Regenerate
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirm */}
+      {showDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowDelete(false)}>
+          <div className="w-[400px] rounded-lg border border-border bg-background p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-[15px] font-semibold mb-1">Delete Post</h3>
+            <p className="text-[13px] text-muted-foreground mb-4">
+              This action is irreversible. Type <strong className="text-foreground">DELETE</strong> to confirm.
+            </p>
+            <Input
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="DELETE"
+              className="mb-4"
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setShowDelete(false)}>Cancel</Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={confirmText !== 'DELETE' || !!loadingAction}
+                onClick={doDelete}
+              >
+                {loadingAction ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Publish flow */}
+      {showPublish && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowPublish(false)}>
+          <div className="w-[400px] rounded-lg border border-border bg-background p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-[15px] font-semibold mb-1">Publish Post</h3>
+            <p className="text-[13px] text-muted-foreground mb-4">
+              Select a dictionary and export method to publish.
+            </p>
+
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 block">Dictionary</label>
+            <select
+              value={publishDictId}
+              onChange={(e) => setPublishDictId(e.target.value)}
+              className="mb-3 h-8 w-full rounded-md border border-border bg-background px-2 text-[13px] focus:border-primary focus:outline-none"
+            >
+              <option value="">Select dictionary…</option>
+              {dictionaries.map((d) => (
+                <option key={d.id} value={String(d.id)}>{d.title}</option>
+              ))}
+            </select>
+
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 block">Export Method</label>
+            <select
+              className="mb-4 h-8 w-full rounded-md border border-border bg-background px-2 text-[13px]"
+              defaultValue="elementor"
+              disabled
+            >
+              <option value="elementor">Elementor</option>
+            </select>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setShowPublish(false)}>Cancel</Button>
+              <Button
+                size="sm"
+                disabled={!publishDictId || !!loadingAction}
+                onClick={doPublish}
+              >
+                {loadingAction ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
+                Publish
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
