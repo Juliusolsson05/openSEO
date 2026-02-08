@@ -11,15 +11,19 @@ import {
 import { Cursor, type Waypoint } from "./components/Cursor";
 import { useElementPosition } from "./hooks/useElementPosition";
 import { COLORS, FPS, WIDTH, HEIGHT, sec } from "./constants";
+import { ShortBlogGenScene } from "./scenes/ShortBlogGenScene";
+import { ShortResultsScene } from "./scenes/ShortResultsScene";
 
 /* ────────────────────────────────────────────
- * Short Action Demo — 15s total
+ * Short Action Demo — 30s total
  * Styled after the Aurora/Nordtools landing page.
  * No sidebar/dashboard chrome.
  *
  *   0-1s    : Quick branded intro
  *   1-7s    : "What is your business?" input scene
- *   7-15s   : Generated titles reveal + selection
+ *   7-14s   : Generated titles reveal + selection
+ *   14-23s  : Cinematic blog post generation
+ *   23-30s  : Animated results / traffic stats
  * ──────────────────────────────────────────── */
 
 const F = "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', sans-serif";
@@ -237,7 +241,7 @@ const InputScene: React.FC = () => {
 };
 
 /* ══════════════════════════════════════════════
- * Scene 3: Generated Titles (8s = 240 frames)
+ * Scene 3: Generated Titles (7s = 210 frames)
  * ══════════════════════════════════════════════ */
 const STAGGER = 14;
 const PICK_LABEL = 120;
@@ -390,8 +394,14 @@ export const ShortDemo: React.FC = () => (
     <Sequence from={sec(1)} durationInFrames={sec(6)}>
       <InputScene />
     </Sequence>
-    <Sequence from={sec(7)} durationInFrames={sec(8)}>
+    <Sequence from={sec(7)} durationInFrames={sec(7)}>
       <TitlesScene />
+    </Sequence>
+    <Sequence from={sec(14)} durationInFrames={sec(9)}>
+      <ShortBlogGenScene />
+    </Sequence>
+    <Sequence from={sec(23)} durationInFrames={sec(7)}>
+      <ShortResultsScene />
     </Sequence>
   </AbsoluteFill>
 );
