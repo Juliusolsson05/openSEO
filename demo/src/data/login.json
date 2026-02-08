@@ -1,0 +1,21 @@
+{
+  "logo": "Aurora",
+  "tagline": "AI-powered content platform",
+  "fields": {
+    "email": {
+      "label": "Email",
+      "placeholder": "admin@nordtools.se",
+      "typingValue": "admin@nordtools.se"
+    },
+    "password": {
+      "label": "Password",
+      "placeholder": "••••••••",
+      "typingValue": "••••••••••"
+    }
+  },
+  "submitLabel": "Sign in",
+  "links": {
+    "register": "Create account",
+    "forgot": "Forgot password?"
+  }
+}
