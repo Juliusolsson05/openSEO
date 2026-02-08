@@ -12,25 +12,42 @@ const backgroundMusic = staticFile("audio/background.mp3");
 export const Video: React.FC = () => {
   const OVERLAP = 10;
   let offset = 0;
-  const scene = (durationSeconds: number, element: React.ReactNode) => {
-    const duration = sec(durationSeconds);
-    const from = offset;
-    offset += duration - OVERLAP;
-    return (
-      <Sequence from={from} durationInFrames={duration}>
-        <SceneFade durationInFrames={duration} overlapFrames={OVERLAP}>
-          {element}
-        </SceneFade>
-      </Sequence>
-    );
-  };
+
+  // Title card → Login: keep the fade transition
+  const titleCardDur = sec(DURATIONS.titleCard);
+  const titleCardFrom = offset;
+  offset += titleCardDur - OVERLAP;
+
+  const loginDur = sec(DURATIONS.login);
+  const loginFrom = offset;
+  offset += loginDur;
+
+  // Login → Titles: no transition, hard cut
+  const titleGenDur = sec(DURATIONS.titleGeneration);
+  const titleGenFrom = offset;
+  offset += titleGenDur;
 
   return (
     <div style={{ width: "100%", height: "100%", background: "#ffffff" }}>
-      <Audio src={backgroundMusic} volume={0.22} />
-      {scene(DURATIONS.titleCard, <TitleCard />)}
-      {scene(DURATIONS.login, <LoginScene />)}
-      {scene(DURATIONS.titleGeneration, <TitleGenerationScene />)}
+      <Audio src={backgroundMusic} volume={0.11} />
+
+      {/* Intro → Login (faded transition) */}
+      <Sequence from={titleCardFrom} durationInFrames={titleCardDur}>
+        <SceneFade durationInFrames={titleCardDur} overlapFrames={OVERLAP}>
+          <TitleCard />
+        </SceneFade>
+      </Sequence>
+      <Sequence from={loginFrom} durationInFrames={loginDur}>
+        <SceneFade durationInFrames={loginDur} overlapFrames={OVERLAP}>
+          <LoginScene />
+        </SceneFade>
+      </Sequence>
+
+      {/* Remaining scenes: hard cuts */}
+      <Sequence from={titleGenFrom} durationInFrames={titleGenDur}>
+        <TitleGenerationScene />
+      </Sequence>
+
       <ProgressBar />
     </div>
   );

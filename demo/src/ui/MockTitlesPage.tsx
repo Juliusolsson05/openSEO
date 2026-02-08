@@ -146,18 +146,18 @@ const Spinner: React.FC<{ size?: number }> = ({ size = 14 }) => {
  * MAIN COMPONENT
  * ───────────────────────────────────────────────── */
 
-/** Timeline constants — all in local frames */
+/** Timeline constants — all in local frames (28s = 840 frames) */
 const T = {
-  FORM_APPEAR: 22,
-  TYPING_START: 30,
-  TYPING_END: 90,
-  BTN_PRESS: 95,
-  LOADING_START: 96,
-  LOADING_END: 140,
-  FORM_FOLD: 141,
-  TITLES_START: 155,
-  TITLE_STAGGER: 6,
-  STATS_ANIMATE: 155,
+  FORM_APPEAR: 64,     // form slides in after "New Titles" click
+  TYPING_START: 152,   // start typing business description
+  TYPING_END: 296,     // finish typing
+  BTN_PRESS: 316,      // "Generate Titles" button press
+  LOADING_START: 320,  // spinner appears
+  LOADING_END: 450,    // loading ends
+  FORM_FOLD: 452,      // form folds away
+  TITLES_START: 500,   // new title rows start appearing
+  TITLE_STAGGER: 14,   // frames between each row entrance
+  STATS_ANIMATE: 500,  // stat counters start ticking
 };
 
 export const MockTitlesPage: React.FC = () => {
@@ -184,8 +184,9 @@ export const MockTitlesPage: React.FC = () => {
 
   const showForm = frame >= T.FORM_APPEAR;
   const formOpacity = showForm ? interpolate(formProgress, [0, 1], [0, 1]) - interpolate(formFoldProgress, [0, 1], [0, 1]) : 0;
+  const FORM_OPEN_H = 104;
   const formHeight = showForm
-    ? interpolate(formProgress, [0, 1], [0, 72]) - interpolate(formFoldProgress, [0, 1], [0, 72])
+    ? interpolate(formProgress, [0, 1], [0, FORM_OPEN_H]) - interpolate(formFoldProgress, [0, 1], [0, FORM_OPEN_H])
     : 0;
 
   /* ── Button press animation ── */
@@ -204,7 +205,7 @@ export const MockTitlesPage: React.FC = () => {
   const statsAnimating = frame >= T.STATS_ANIMATE;
 
   /* ── "New Titles" button highlight ── */
-  const newTitlesBtnHighlight = frame >= 15 && frame < T.FORM_APPEAR;
+  const newTitlesBtnHighlight = frame >= 48 && frame < T.FORM_APPEAR;
 
   /* ── Visible rows: existing + conditionally new ── */
   const existingTitles = titlesData.existingTitles.slice(0, 7); // Show first 7 rows
@@ -550,7 +551,28 @@ export const MockTitlesPage: React.FC = () => {
                   </div>
                 </div>
                 <div style={{ width: 80, fontSize: 12, color: COLORS.mutedForeground }}>{title.created}</div>
-                <div style={{ width: 100 }} />
+                <div style={{ width: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {title.status === 1 && (
+                    <div
+                      style={{
+                        height: 26,
+                        padding: "0 10px",
+                        borderRadius: 2,
+                        background: COLORS.primary,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: "#FFFFFF",
+                        fontFamily: F,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Generate
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -593,7 +615,27 @@ export const MockTitlesPage: React.FC = () => {
               </div>
             </div>
             <div style={{ width: 80, fontSize: 12, color: COLORS.mutedForeground }}>{title.created}</div>
-            <div style={{ width: 100 }} />
+            <div style={{ width: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {title.status === 1 && (
+                <div
+                  style={{
+                    height: 26,
+                    padding: "0 10px",
+                    borderRadius: 2,
+                    background: COLORS.primary,
+                    display: "flex",
+                    alignItems: "center",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "#FFFFFF",
+                    fontFamily: F,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Generate
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>
