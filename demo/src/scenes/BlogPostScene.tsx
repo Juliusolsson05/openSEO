@@ -1,5 +1,5 @@
-import React from "react";
-import { interpolate, useCurrentFrame, Easing } from "remotion";
+import React, { useLayoutEffect, useRef, useState } from "react";
+import { interpolate, useCurrentFrame, Easing, useCurrentScale } from "remotion";
 import { BrowserFrame } from "../components/BrowserFrame";
 import { Cursor, type Waypoint } from "../components/Cursor";
 import { HEIGHT, COLORS } from "../constants";
@@ -51,6 +51,22 @@ const modalElements = [
 
 export const BlogPostScene: React.FC = () => {
   const frame = useCurrentFrame();
+  const scale = useCurrentScale({ dontThrowIfOutsideOfRemotion: true });
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [targets, setTargets] = useState<Record<string, { x: number; y: number } | null>>({
+    editSwitch: null,
+    introduction: null,
+    plusButton: null,
+    modalCaseStudy: null,
+    modalAddButton: null,
+  });
+  const frozenTargetsRef = useRef<Record<string, { x: number; y: number } | null>>({
+    editSwitch: null,
+    introduction: null,
+    plusButton: null,
+    modalCaseStudy: null,
+    modalAddButton: null,
+  });
 
   /* ── Scroll ── */
   let scrollY: number;
@@ -88,29 +104,99 @@ export const BlogPostScene: React.FC = () => {
   // Case Study card selected in modal after cursor clicks it
   const caseStudySelected = frame >= 750;
 
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const rootRect = root.getBoundingClientRect();
+    const queryPos = (name: string) => {
+      const el = root.querySelector(`[data-cursor-target="${name}"]`) as HTMLElement | null;
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return {
+        x: (r.left - rootRect.left + r.width / 2) / scale,
+        y: (r.top - rootRect.top + r.height / 2) / scale,
+      };
+    };
+
+    let changed = false;
+    const frozen = frozenTargetsRef.current;
+
+    // Capture each target once around the interaction window and keep it stable.
+    if (!frozen.editSwitch && frame >= 470) {
+      const p = queryPos("editSwitch");
+      if (p) {
+        frozen.editSwitch = p;
+        changed = true;
+      }
+    }
+
+    if (!frozen.introduction && frame >= 520) {
+      const p = queryPos("introduction");
+      if (p) {
+        frozen.introduction = p;
+        changed = true;
+      }
+    }
+
+    if (!frozen.plusButton && showAddButton && frame >= 655) {
+      const p = queryPos("plusButton");
+      if (p) {
+        frozen.plusButton = p;
+        changed = true;
+      }
+    }
+
+    if (!frozen.modalCaseStudy && addModalOpen && frame >= 725) {
+      const p = queryPos("modalCaseStudy");
+      if (p) {
+        frozen.modalCaseStudy = p;
+        changed = true;
+      }
+    }
+
+    if (!frozen.modalAddButton && addModalOpen && caseStudySelected && frame >= 765) {
+      const p = queryPos("modalAddButton");
+      if (p) {
+        frozen.modalAddButton = p;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      setTargets({ ...frozen });
+    }
+  }, [frame, scale, addModalOpen, showAddButton, caseStudySelected]);
+
+  const editTarget = targets.editSwitch ?? { x: EDIT_SWITCH_X, y: EDIT_SWITCH_Y };
+  const introTarget = targets.introduction ?? { x: INTRO_X, y: INTRO_Y - scrollY };
+  const plusTarget = targets.plusButton ?? { x: PLUS_X, y: PLUS_Y - scrollY };
+  const caseStudyTarget = targets.modalCaseStudy ?? { x: MODAL_CASE_X, y: MODAL_CASE_Y };
+  const modalAddTarget = targets.modalAddButton ?? { x: MODAL_ADD_BTN_X, y: MODAL_ADD_BTN_Y };
+
   /* ── Cursor ── */
   const waypoints: Waypoint[] = [
     { frame: 0,    x: 860,            y: 450 },
     { frame: 340,  x: 900,            y: 500 },
     { frame: 430,  x: 1300,           y: 300 },
     // Edit mode toggle
-    { frame: 480,  x: EDIT_SWITCH_X,  y: EDIT_SWITCH_Y },
-    { frame: 502,  x: EDIT_SWITCH_X,  y: EDIT_SWITCH_Y, click: true },
+    { frame: 480,  x: editTarget.x,   y: editTarget.y },
+    { frame: 502,  x: editTarget.x,   y: editTarget.y, click: true },
     // Click intro
-    { frame: 530,  x: INTRO_X,        y: INTRO_Y },
-    { frame: 543,  x: INTRO_X,        y: INTRO_Y, click: true },
+    { frame: 530,  x: introTarget.x,  y: introTarget.y },
+    { frame: 543,  x: introTarget.x,  y: introTarget.y, click: true },
     // Typing drift
-    { frame: 580,  x: INTRO_X - 20,   y: INTRO_Y + 8 },
-    { frame: 630,  x: INTRO_X + 10,   y: INTRO_Y + 5 },
+    { frame: 580,  x: introTarget.x - 20, y: introTarget.y + 8 },
+    { frame: 630,  x: introTarget.x + 10, y: introTarget.y + 5 },
     // Plus button
-    { frame: 660,  x: PLUS_X,         y: PLUS_Y },
-    { frame: 678,  x: PLUS_X,         y: PLUS_Y, click: true },
+    { frame: 660,  x: plusTarget.x,   y: plusTarget.y },
+    { frame: 678,  x: plusTarget.x,   y: plusTarget.y, click: true },
     // Select Case Study in modal
-    { frame: 730,  x: MODAL_CASE_X,   y: MODAL_CASE_Y },
-    { frame: 748,  x: MODAL_CASE_X,   y: MODAL_CASE_Y, click: true },
+    { frame: 730,  x: caseStudyTarget.x, y: caseStudyTarget.y },
+    { frame: 748,  x: caseStudyTarget.x, y: caseStudyTarget.y, click: true },
     // Click "Add Element" button
-    { frame: 770,  x: MODAL_ADD_BTN_X, y: MODAL_ADD_BTN_Y },
-    { frame: 785,  x: MODAL_ADD_BTN_X, y: MODAL_ADD_BTN_Y, click: true },
+    { frame: 770,  x: modalAddTarget.x, y: modalAddTarget.y },
+    { frame: 785,  x: modalAddTarget.x, y: modalAddTarget.y, click: true },
     // Watch generation
     { frame: 850,  x: INTRO_X + 60,   y: 550 },
     { frame: 1080, x: INTRO_X + 50,   y: 540 },
@@ -118,7 +204,7 @@ export const BlogPostScene: React.FC = () => {
 
   return (
     <BrowserFrame url="app.nordtools.com/blog/42/edit" pad={0}>
-      <div style={{ width: "100%", height: "100%", position: "relative" }}>
+      <div ref={rootRef} style={{ width: "100%", height: "100%", position: "relative" }}>
         <DashboardShell pageTitle="Edit Post" sidebarActiveItem="Blog Posts">
           <div style={{
             margin: -32,
@@ -181,12 +267,16 @@ export const BlogPostScene: React.FC = () => {
                   const selected = caseStudySelected && el === "Case Study";
                   const Icon = ELEMENT_ICONS[el];
                   return (
-                    <div key={el} style={{
-                      border: `1.5px solid ${selected ? COLORS.primary : COLORS.border}`,
-                      background: selected ? "#EBF3FE" : "#FFFFFF",
-                      borderRadius: 4, padding: 14, cursor: "pointer",
-                      boxShadow: selected ? `0 0 0 2px ${COLORS.primary}30` : "none",
-                    }}>
+                    <div
+                      key={el}
+                      data-cursor-target={el === "Case Study" ? "modalCaseStudy" : undefined}
+                      style={{
+                        border: `1.5px solid ${selected ? COLORS.primary : COLORS.border}`,
+                        background: selected ? "#EBF3FE" : "#FFFFFF",
+                        borderRadius: 4, padding: 14, cursor: "pointer",
+                        boxShadow: selected ? `0 0 0 2px ${COLORS.primary}30` : "none",
+                      }}
+                    >
                       <div style={{ height: 70, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
                         {Icon ? <Icon width={70} height={70} /> : null}
                       </div>
@@ -202,11 +292,14 @@ export const BlogPostScene: React.FC = () => {
               {/* Footer buttons */}
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
                 <div style={{ border: `1px solid ${COLORS.border}`, borderRadius: 4, padding: "7px 16px", fontSize: 13, color: COLORS.foreground }}>Cancel</div>
-                <div style={{
-                  background: caseStudySelected ? COLORS.primary : "#D4D4D4",
-                  color: "#FFF", borderRadius: 4, padding: "7px 16px",
-                  fontSize: 13, fontWeight: 600,
-                }}>Add Element</div>
+                <div
+                  data-cursor-target="modalAddButton"
+                  style={{
+                    background: caseStudySelected ? COLORS.primary : "#D4D4D4",
+                    color: "#FFF", borderRadius: 4, padding: "7px 16px",
+                    fontSize: 13, fontWeight: 600,
+                  }}
+                >Add Element</div>
               </div>
             </div>
           </div>

@@ -97,7 +97,7 @@ export const MockBlogPostPage: React.FC<{
             </ElementReveal>
 
             <ElementReveal frame={f} revealAt={R.INTRO} skeletonType="text">
-              <div style={{ position: "relative", borderRadius: 6, outline: introSelected ? `2px solid ${COLORS.primary}` : "none", outlineOffset: 4 }}>
+              <div data-cursor-target="introduction" style={{ position: "relative", borderRadius: 6, outline: introSelected ? `2px solid ${COLORS.primary}` : "none", outlineOffset: 4 }}>
                 {introSelected && (
                   <>
                     <div style={{ position: "absolute", top: -28, left: 0, display: "flex", gap: 2, padding: "4px 6px", background: COLORS.primary, borderRadius: "4px 4px 0 0", zIndex: 20 }}>
@@ -124,7 +124,7 @@ export const MockBlogPostPage: React.FC<{
 
                 {/* Real app UX: plus add button appears below hovered/selected element */}
                 {showAddButton && (
-                  <div style={{ position: "absolute", left: "50%", bottom: -18, transform: "translateX(-50%)", width: 32, height: 32, borderRadius: 999, border: `1px solid ${COLORS.border}`, background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(0,0,0,0.1)", zIndex: 30 }}>
+                  <div data-cursor-target="plusButton" style={{ position: "absolute", left: "50%", bottom: -18, transform: "translateX(-50%)", width: 32, height: 32, borderRadius: 999, border: `1px solid ${COLORS.border}`, background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(0,0,0,0.1)", zIndex: 30 }}>
                     <span style={{ fontSize: 18, color: COLORS.foreground, lineHeight: 1 }}>+</span>
                   </div>
                 )}

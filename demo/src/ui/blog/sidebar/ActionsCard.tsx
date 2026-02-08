@@ -95,7 +95,7 @@ export const ActionsCard: React.FC<{ editMode?: boolean }> = ({ editMode = false
         </p>
       </div>
       {/* Switch toggle */}
-      <div style={{
+      <div data-cursor-target="editSwitch" style={{
         width: 36, height: 20, borderRadius: 10,
         background: editMode ? COLORS.primary : "#D4D4D4",
         position: "relative", flexShrink: 0,
