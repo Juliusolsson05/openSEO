@@ -5,6 +5,7 @@ import { Cursor, type Waypoint } from "../components/Cursor";
 import { HEIGHT, COLORS } from "../constants";
 import { DashboardShell } from "../ui/DashboardShell";
 import { MockBlogPostPage } from "../ui/blog/MockBlogPostPage";
+import { ELEMENT_ICONS } from "../ui/blog/ElementIcons";
 
 /* ────────────────────────────────────────────
  * Blog Post Scene — 36s (1080 frames @ 30fps)
@@ -178,6 +179,7 @@ export const BlogPostScene: React.FC = () => {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
                 {modalElements.map((el) => {
                   const selected = caseStudySelected && el === "Case Study";
+                  const Icon = ELEMENT_ICONS[el];
                   return (
                     <div key={el} style={{
                       border: `1.5px solid ${selected ? COLORS.primary : COLORS.border}`,
@@ -185,11 +187,8 @@ export const BlogPostScene: React.FC = () => {
                       borderRadius: 4, padding: 14, cursor: "pointer",
                       boxShadow: selected ? `0 0 0 2px ${COLORS.primary}30` : "none",
                     }}>
-                      {/* Icon placeholder */}
-                      <div style={{ height: 48, background: selected ? "#DEECF9" : "#F5F5F5", borderRadius: 4, marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <span style={{ fontSize: 20, opacity: 0.4 }}>
-                          {el === "Paragraph" ? "¶" : el === "Table" ? "⊞" : el === "FAQ" ? "?" : el === "Checklist" ? "☑" : el === "Case Study" ? "📋" : el === "Statistic" ? "📊" : el === "Timeline" ? "⏱" : "⚖"}
-                        </span>
+                      <div style={{ height: 70, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+                        {Icon ? <Icon width={70} height={70} /> : null}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                         <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: COLORS.foreground }}>{el}</p>
