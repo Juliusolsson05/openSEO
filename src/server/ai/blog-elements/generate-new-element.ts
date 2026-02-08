@@ -15,7 +15,7 @@ export async function generateNewElement(
   const functionParameters = generateElementFunctionParameters(elementType);
 
   const response = await getOpenAIClient().chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-5-mini',
     messages: [
       {
         role: 'system',

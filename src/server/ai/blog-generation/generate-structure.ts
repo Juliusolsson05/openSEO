@@ -9,7 +9,7 @@ import { parseToolArguments } from '@/server/ai/utils';
 
 export async function generateStructure(
   titleText: string,
-  model = 'gpt-4o',
+  model = 'gpt-5.2',
   allowedElements?: Record<string, boolean>,
 ): Promise<{ structure: Record<string, unknown>; usage: unknown }> {
   const filteredCommonElements =

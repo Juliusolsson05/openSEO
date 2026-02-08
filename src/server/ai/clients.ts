@@ -17,7 +17,7 @@ export function getAnthropicClient(): Anthropic {
 }
 
 export const MODELS = {
-  OPENAI_DEFAULT: 'gpt-4o-mini',
-  OPENAI_SMART: 'gpt-4o',
+  OPENAI_DEFAULT: 'gpt-5-mini',
+  OPENAI_SMART: 'gpt-5.2',
   ANTHROPIC_DEFAULT: 'claude-sonnet-4-5-20250929',
 } as const;

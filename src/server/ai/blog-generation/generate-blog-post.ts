@@ -7,7 +7,7 @@ export async function generateBlogPost(
   focusKeyword: string,
   title: string,
   structure: Record<string, unknown>,
-  model = 'gpt-4o-mini',
+  model = 'gpt-5-mini',
   businessAware = false,
   businessDescription?: string,
   businessName?: string,

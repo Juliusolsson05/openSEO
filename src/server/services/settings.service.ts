@@ -143,8 +143,8 @@ export class SettingsService {
         tone_of_voice: String(generation.tone_of_voice ?? ''),
         auto_internal_linking: Boolean(generation.auto_internal_linking ?? true),
         default_post_length: Number(generation.default_post_length ?? 1200),
-        blog_post_structure_model: String(generation.blog_post_structure_model ?? 'gpt-4o'),
-        blog_post_content_model: String(generation.blog_post_content_model ?? 'gpt-4o-mini'),
+        blog_post_structure_model: String(generation.blog_post_structure_model ?? 'gpt-5.2'),
+        blog_post_content_model: String(generation.blog_post_content_model ?? 'gpt-5-mini'),
         initial_generation_elements: asObject(generation.initial_generation_elements),
       },
       publishing: {

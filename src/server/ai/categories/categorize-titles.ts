@@ -41,7 +41,7 @@ export async function categorizeTitles(
     };
 
     const response = await getOpenAIClient().chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-5.2',
       messages: [
         {
           role: 'system',

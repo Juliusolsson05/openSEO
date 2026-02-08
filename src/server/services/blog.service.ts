@@ -196,8 +196,8 @@ export class BlogService {
     const settings = (company.settings ?? {}) as Record<string, any>
     const blogSettings = settings['aurora.blog'] ?? {}
     const allowedElements = blogSettings.initial_generation_elements ?? DEFAULT_GENERATION_ELEMENTS
-    const structureModel = blogSettings.blog_post_structure_model ?? 'gpt-4o'
-    const contentModel = blogSettings.blog_post_content_model ?? 'gpt-4o-mini'
+    const structureModel = blogSettings.blog_post_structure_model ?? 'gpt-5.2'
+    const contentModel = blogSettings.blog_post_content_model ?? 'gpt-5-mini'
 
     const businessDescription = (company.metadata as any)?.business_description ?? ''
     const businessName = company.name
@@ -330,8 +330,8 @@ export class BlogService {
 
     const settings = ((await prisma.company.findUnique({ where: { id: companyId }, select: { settings: true } }))?.settings ?? {}) as Record<string, any>
     const blogSettings = settings['aurora.blog'] ?? {}
-    const structureModel = blogSettings.blog_post_structure_model ?? 'gpt-4o'
-    const contentModel = blogSettings.blog_post_content_model ?? 'gpt-4o-mini'
+    const structureModel = blogSettings.blog_post_structure_model ?? 'gpt-5.2'
+    const contentModel = blogSettings.blog_post_content_model ?? 'gpt-5-mini'
     const allowedElements = blogSettings.initial_generation_elements ?? DEFAULT_GENERATION_ELEMENTS
 
     const { structure } = await generateStructure(blogPost.title_text, structureModel, allowedElements)

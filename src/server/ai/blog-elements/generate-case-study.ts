@@ -50,7 +50,7 @@ export async function generateCaseStudy(blogTitle: string, focusKeyword: string)
   };
 
   const response = await getOpenAIClient().chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-5-mini',
     messages: [
       {
         role: 'system',
