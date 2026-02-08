@@ -744,3 +744,69 @@ model ExampleWord {
   @@index([dictionaryId])
   @@map("example_words")
 }
+
+/// --- Versus / Comparison Pages ---
+
+model ComparisonTool {
+  id              Int      @id @default(autoincrement())
+  name            String   @unique           // "Jasper AI"
+  slug            String   @unique           // "jasper"
+  tagline         String?
+  website_url     String?
+  logo_url        String?
+  description     String   @default("")
+
+  pricing         Json     @default("[]")    // [{ plan, price, features[] }]
+  features        Json     @default("[]")    // string[]
+  pros            Json     @default("[]")    // string[]
+  cons            Json     @default("[]")    // string[]
+  ratings         Json     @default("{}")    // { g2?, capterra?, trustpilot? }
+  target_audience String?
+
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  comparisons_a   Comparison[] @relation("ComparisonToolA")
+  comparisons_b   Comparison[] @relation("ComparisonToolB")
+}
+
+model Comparison {
+  id               Int      @id @default(autoincrement())
+  slug             String   @unique           // "jasper-vs-copy-ai"
+  tool_a_id        Int
+  tool_b_id        Int
+
+  // SEO
+  title            String?                    // "Jasper vs Copy.ai (2026)"
+  meta_description String?
+
+  // Publishing
+  published        Boolean  @default(false)
+  published_at     DateTime?
+
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  tool_a           ComparisonTool @relation("ComparisonToolA", fields: [tool_a_id], references: [id], onDelete: Cascade)
+  tool_b           ComparisonTool @relation("ComparisonToolB", fields: [tool_b_id], references: [id], onDelete: Cascade)
+  elements         ComparisonElement[]
+
+  @@unique([tool_a_id, tool_b_id])
+  @@index([tool_a_id])
+  @@index([tool_b_id])
+  @@index([published])
+}
+
+model ComparisonElement {
+  id              Int      @id @default(autoincrement())
+  comparisonId    Int
+  element_type    String                    // see types below
+  order           Int
+  content         Json                      // shape depends on element_type
+  created_at      DateTime @default(now())
+
+  comparison      Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+
+  @@index([comparisonId])
+  @@index([order])
+}
