@@ -18,8 +18,7 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-5 md:flex">
-          <Link href="/site/blog" className="text-[13px] text-neutral-600 hover:text-blue-600">Blog</Link>
-          <Link href="/site/dictionary" className="text-[13px] text-neutral-600 hover:text-blue-600">Dictionary</Link>
+          <Link href="/landing" className="text-[13px] text-neutral-600 hover:text-blue-600">Landing</Link>
           <Link href="/example" className="text-[13px] text-neutral-600 hover:text-blue-600">Example</Link>
         </nav>
 
@@ -35,8 +34,7 @@ export function SiteHeader() {
 
       {open && (
         <div className="md:hidden border-t border-neutral-200 bg-white px-6 py-3 space-y-2">
-          <Link href="/site/blog" className="block text-[13px] text-neutral-600">Blog</Link>
-          <Link href="/site/dictionary" className="block text-[13px] text-neutral-600">Dictionary</Link>
+          <Link href="/landing" className="block text-[13px] text-neutral-600">Landing</Link>
           <Link href="/example" className="block text-[13px] text-neutral-600">Example</Link>
         </div>
       )}
