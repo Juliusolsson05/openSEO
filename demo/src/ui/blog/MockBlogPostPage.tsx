@@ -21,7 +21,7 @@ export const MockBlogPostPage: React.FC = () => (
   <div style={{ display: "flex", flexDirection: "column", height: "100%", background: COLORS.background, fontFamily: F, position: "relative" }}>
     <SubToolbar title="The Future of Small Businesses: Embracing AI Tools for Growth" published />
 
-    <div style={{ display: "flex", flex: 1, gap: 24, padding: "0 24px 24px", overflow: "hidden" }}>
+    <div style={{ display: "flex", flex: 1, gap: 24, padding: "0 24px 24px", overflow: "hidden", maxWidth: 1152, margin: "0 auto", width: "100%" }}>
       <div style={{ flex: 1, minWidth: 0, overflowY: "auto" }}>
         <div style={{ borderRadius: 8, border: `1px solid ${COLORS.border}`, background: COLORS.card, padding: 24 }}>
           <h1 style={{ fontSize: 22, fontWeight: 600, lineHeight: 1.3, color: COLORS.foreground, margin: "0 0 20px", fontFamily: F }}>

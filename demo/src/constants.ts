@@ -4,10 +4,11 @@ export const HEIGHT = 1080;
 
 /** Scene durations in seconds */
 export const DURATIONS = {
-  titleCard: 3,
+  intro: 15,
   login: 16,
   titleGeneration: 28,
   blogPost: 20,
+  outro: 8,
 } as const;
 
 export const TOTAL_DURATION = Object.values(DURATIONS).reduce((a, b) => a + b, 0);

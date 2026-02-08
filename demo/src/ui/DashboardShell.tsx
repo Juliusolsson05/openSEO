@@ -12,8 +12,9 @@ import { MockTopbar } from "./MockTopbar";
 
 export const DashboardShell: React.FC<{
   pageTitle?: string;
+  sidebarActiveItem?: string;
   children: React.ReactNode;
-}> = ({ pageTitle = "Titles", children }) => (
+}> = ({ pageTitle = "Titles", sidebarActiveItem = "Titles", children }) => (
   <div
     style={{
       width: WIDTH,
@@ -29,7 +30,7 @@ export const DashboardShell: React.FC<{
     }}
   >
     {/* Sidebar */}
-    <MockSidebar />
+    <MockSidebar activeItem={sidebarActiveItem} />
 
     {/* Main content area */}
     <div
