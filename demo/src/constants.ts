@@ -6,6 +6,7 @@ export const HEIGHT = 1080;
 export const DURATIONS = {
   titleCard: 3,
   login: 6,
+  titleGeneration: 10,
 } as const;
 
 export const TOTAL_DURATION = Object.values(DURATIONS).reduce((a, b) => a + b, 0);

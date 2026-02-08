@@ -3,6 +3,7 @@ import React from "react";
 import { sec, DURATIONS } from "./constants";
 import { TitleCard } from "./scenes/TitleCard";
 import { LoginScene } from "./scenes/LoginScene";
+import { TitleGenerationScene } from "./scenes/TitleGenerationScene";
 import { ProgressBar } from "./components/ProgressBar";
 import { SceneFade } from "./components/SceneFade";
 
@@ -29,6 +30,7 @@ export const Video: React.FC = () => {
       <Audio src={backgroundMusic} volume={0.22} />
       {scene(DURATIONS.titleCard, <TitleCard />)}
       {scene(DURATIONS.login, <LoginScene />)}
+      {scene(DURATIONS.titleGeneration, <TitleGenerationScene />)}
       <ProgressBar />
     </div>
   );
