@@ -18,6 +18,7 @@ import {
   Shield,
   ChevronDown,
   LogOut,
+  ExternalLink,
 } from 'lucide-react'
 import { AuroraLogo } from '@/components/brand/logo'
 import { Button } from '@/components/ui/button'
@@ -210,6 +211,7 @@ export function Sidebar() {
               ADMIN
             </p>
             <NavLink item={{ title: 'Users', href: '/admin/users', icon: Shield }} pathname={pathname} />
+            <NavLink item={{ title: 'Example Site', href: '/example', icon: ExternalLink }} pathname={pathname} />
           </div>
         ) : null}
       </nav>
