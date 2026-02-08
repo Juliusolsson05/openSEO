@@ -25,9 +25,10 @@ import { ELEMENT_ICONS } from "../ui/blog/ElementIcons";
  *   880–1080  Case study generated, hold
  * ──────────────────────────────────────────── */
 
-const SCROLL_MAX = 2000;
-const SCROLL_REST = 280;
-const SCROLL_CASE_STUDY = 520; // scroll further to reveal new element
+// Tuned for more natural motion and to keep right-sidebar edit toggle visible.
+const SCROLL_MAX = 1880;
+const SCROLL_REST = 120;
+const SCROLL_CASE_STUDY = 360;
 
 /* Layout coords (BrowserFrame content space) */
 const EDIT_SWITCH_X = 1612;
@@ -68,27 +69,40 @@ export const BlogPostScene: React.FC = () => {
     modalAddButton: null,
   });
 
-  /* ── Scroll ── */
+  /* ── Scroll (human-like: accelerate → coast → settle) ── */
   let scrollY: number;
-  if (frame <= 340) {
-    scrollY = interpolate(frame, [1, 340], [0, SCROLL_MAX], {
-      extrapolateLeft: "clamp", extrapolateRight: "clamp",
-      easing: Easing.out(Easing.ease),
+  if (frame <= 280) {
+    // Main downward read pass
+    scrollY = interpolate(frame, [0, 280], [0, SCROLL_MAX - 120], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+      easing: Easing.inOut(Easing.cubic),
+    });
+  } else if (frame <= 340) {
+    // Small continuation / coast
+    scrollY = interpolate(frame, [280, 340], [SCROLL_MAX - 120, SCROLL_MAX], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+      easing: Easing.out(Easing.cubic),
     });
   } else if (frame <= 380) {
+    // Breath at bottom
     scrollY = SCROLL_MAX;
-  } else if (frame <= 460) {
-    scrollY = interpolate(frame, [380, 460], [SCROLL_MAX, SCROLL_REST], {
-      extrapolateLeft: "clamp", extrapolateRight: "clamp",
-      easing: Easing.inOut(Easing.ease),
+  } else if (frame <= 490) {
+    // Return to edit area with smooth deceleration
+    scrollY = interpolate(frame, [380, 490], [SCROLL_MAX, SCROLL_REST], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+      easing: Easing.inOut(Easing.cubic),
     });
   } else if (frame <= 800) {
     scrollY = SCROLL_REST;
-  } else if (frame <= 840) {
-    // Scroll down to reveal the new case study element
-    scrollY = interpolate(frame, [800, 840], [SCROLL_REST, SCROLL_CASE_STUDY], {
-      extrapolateLeft: "clamp", extrapolateRight: "clamp",
-      easing: Easing.inOut(Easing.ease),
+  } else if (frame <= 900) {
+    // Scroll down to reveal inserted case study
+    scrollY = interpolate(frame, [800, 900], [SCROLL_REST, SCROLL_CASE_STUDY], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+      easing: Easing.inOut(Easing.cubic),
     });
   } else {
     scrollY = SCROLL_CASE_STUDY;
@@ -123,7 +137,7 @@ export const BlogPostScene: React.FC = () => {
     const frozen = frozenTargetsRef.current;
 
     // Capture each target once around the interaction window and keep it stable.
-    if (!frozen.editSwitch && frame >= 470) {
+    if (!frozen.editSwitch && frame >= 495) {
       const p = queryPos("editSwitch");
       if (p) {
         frozen.editSwitch = p;
