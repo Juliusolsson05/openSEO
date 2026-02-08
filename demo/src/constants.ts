@@ -7,7 +7,7 @@ export const DURATIONS = {
   intro: 15,
   login: 16,
   titleGeneration: 28,
-  blogPost: 20,
+  blogPost: 30,
   outro: 8,
 } as const;
 

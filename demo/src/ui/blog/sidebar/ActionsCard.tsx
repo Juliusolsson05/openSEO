@@ -63,7 +63,7 @@ const ActionRow: React.FC<{ icon: React.ReactNode; label: string; danger?: boole
   </div>
 );
 
-export const ActionsCard: React.FC = () => (
+export const ActionsCard: React.FC<{ editMode?: boolean }> = ({ editMode = false }) => (
   <div style={{
     borderRadius: 8, border: `1px solid ${COLORS.border}`,
     background: COLORS.card, padding: 16, marginBottom: 16,
@@ -94,14 +94,15 @@ export const ActionsCard: React.FC = () => (
           Enable inline element editing
         </p>
       </div>
-      {/* Switch (OFF state) */}
+      {/* Switch toggle */}
       <div style={{
-        width: 36, height: 20, borderRadius: 10, background: "#D4D4D4",
+        width: 36, height: 20, borderRadius: 10,
+        background: editMode ? COLORS.primary : "#D4D4D4",
         position: "relative", flexShrink: 0,
       }}>
         <div style={{
           width: 16, height: 16, borderRadius: "50%", background: "#FFFFFF",
-          position: "absolute", top: 2, left: 2,
+          position: "absolute", top: 2, left: editMode ? 18 : 2,
           boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
         }} />
       </div>

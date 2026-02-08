@@ -36,21 +36,25 @@ const F = "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica N
  * 600 frames total (20s @ 30fps)
  */
 const R = {
-  TITLE:        0,    // title is always visible
-  IMAGE:       15,    // cover image generates first
-  TOC:         55,    // table of contents appears
-  INTRO:       95,    // introduction generates
-  PARA_1:     145,    // first paragraph
-  PARA_2:     200,    // second paragraph
-  LIST:       260,    // list paragraph
-  STAT:       320,    // statistic donut
-  PARA_3:     370,    // third paragraph
-  CHECKLIST:  420,    // checklist
-  FAQ:        480,    // FAQ
-  CONCLUSION: 540,    // conclusion
+  TITLE:        0,
+  IMAGE:       10,
+  TOC:         40,
+  INTRO:       65,
+  PARA_1:     100,
+  PARA_2:     140,
+  LIST:       180,
+  STAT:       220,
+  PARA_3:     255,
+  CHECKLIST:  290,
+  FAQ:        330,
+  CONCLUSION: 370,
 };
 
-export const MockBlogPostPage: React.FC<{ frame?: number }> = ({ frame }) => {
+export const MockBlogPostPage: React.FC<{
+  frame?: number;
+  editMode?: boolean;
+  introSelected?: boolean;
+}> = ({ frame, editMode = false, introSelected = false }) => {
   // If no frame, show everything (static mode)
   const f = frame ?? 9999;
 
@@ -78,10 +82,36 @@ export const MockBlogPostPage: React.FC<{ frame?: number }> = ({ frame }) => {
 
             {/* Introduction */}
             <ElementReveal frame={f} revealAt={R.INTRO} skeletonType="text">
-              <Introduction content={{
-                heading: "Introduction",
-                body: "Small businesses are navigating rapid digital change. AI tools now make it possible to automate repetitive work, uncover customer insights, and make faster decisions without enterprise-sized teams.",
-              }} />
+              <div style={{
+                position: "relative",
+                borderRadius: 6,
+                outline: introSelected ? `2px solid ${COLORS.primary}` : "none",
+                outlineOffset: 4,
+                transition: "outline 0.15s",
+              }}>
+                {introSelected && (
+                  <div style={{
+                    position: "absolute", top: -28, left: 0,
+                    display: "flex", gap: 2, padding: "4px 6px",
+                    background: COLORS.primary, borderRadius: "4px 4px 0 0",
+                    zIndex: 20,
+                  }}>
+                    {["B", "I", "U", "🔗", "📝"].map((btn, i) => (
+                      <div key={i} style={{
+                        width: 24, height: 22, display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 11, fontWeight: i < 3 ? 700 : 400, color: "#FFFFFF",
+                        borderRadius: 2, cursor: "pointer",
+                      }}>
+                        {btn}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <Introduction content={{
+                  heading: "Introduction",
+                  body: "Small businesses are navigating rapid digital change. AI tools now make it possible to automate repetitive work, uncover customer insights, and make faster decisions without enterprise-sized teams.",
+                }} />
+              </div>
             </ElementReveal>
 
             {/* Paragraph 1 */}
@@ -178,7 +208,7 @@ export const MockBlogPostPage: React.FC<{ frame?: number }> = ({ frame }) => {
 
         {/* Right sidebar — always visible */}
         <div style={{ width: 256, flexShrink: 0, overflowY: "auto" }}>
-          <ActionsCard />
+          <ActionsCard editMode={editMode} />
           <PostDetailsCard details={{
             elements: 16,
             created: "Feb 7, 2026",
