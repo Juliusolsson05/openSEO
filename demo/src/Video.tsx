@@ -4,6 +4,7 @@ import { sec, DURATIONS } from "./constants";
 import { TitleCard } from "./scenes/TitleCard";
 import { LoginScene } from "./scenes/LoginScene";
 import { TitleGenerationScene } from "./scenes/TitleGenerationScene";
+import { BlogPostScene } from "./scenes/BlogPostScene";
 import { ProgressBar } from "./components/ProgressBar";
 import { SceneFade } from "./components/SceneFade";
 
@@ -22,10 +23,15 @@ export const Video: React.FC = () => {
   const loginFrom = offset;
   offset += loginDur;
 
-  // Login → Titles: no transition, hard cut
+  // Login → Titles: hard cut
   const titleGenDur = sec(DURATIONS.titleGeneration);
   const titleGenFrom = offset;
   offset += titleGenDur;
+
+  // Titles → Blog Post: hard cut
+  const blogPostDur = sec(DURATIONS.blogPost);
+  const blogPostFrom = offset;
+  offset += blogPostDur;
 
   return (
     <div style={{ width: "100%", height: "100%", background: "#ffffff" }}>
@@ -46,6 +52,10 @@ export const Video: React.FC = () => {
       {/* Remaining scenes: hard cuts */}
       <Sequence from={titleGenFrom} durationInFrames={titleGenDur}>
         <TitleGenerationScene />
+      </Sequence>
+
+      <Sequence from={blogPostFrom} durationInFrames={blogPostDur}>
+        <BlogPostScene />
       </Sequence>
 
       <ProgressBar />

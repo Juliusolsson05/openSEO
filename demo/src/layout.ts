@@ -107,6 +107,59 @@ const TABLE_ROW_H = 42;
 const TABLE_CX = CONTENT_X + CONTENT_W / 2;                  // 1080
 const TABLE_CY = TABLE_TOP + TABLE_HEADER_H + TABLE_ROW_H * 2.5; // ≈ 555
 
+/* ── Blog Post page layout ──
+ * DashboardShell: Sidebar 240px + Topbar 48px.
+ * MockBlogPostPage has its own SubToolbar (48px).
+ * Content area: flex with 24px gap.
+ * Main column: flex-1, card with 24px padding.
+ * Right sidebar: 256px.
+ */
+const BLOG_CONTENT_X = SIDEBAR_W;                              // 240
+const BLOG_SUBTOOLBAR_H = 48;
+const BLOG_CONTENT_Y = BROWSER_TITLE_BAR + TOPBAR_H + BLOG_SUBTOOLBAR_H; // 136
+const BLOG_MAIN_PAD = 24;
+const BLOG_RIGHT_SIDEBAR_W = 256;
+const BLOG_GAP = 24;
+const BLOG_MAIN_W = 1920 - SIDEBAR_W - BLOG_RIGHT_SIDEBAR_W - BLOG_GAP - BLOG_MAIN_PAD * 2; // ~1376
+
+// Main content column left edge (with page padding)
+const BLOG_MAIN_LEFT = BLOG_CONTENT_X + BLOG_MAIN_PAD;         // 264
+const BLOG_MAIN_CX = BLOG_MAIN_LEFT + BLOG_MAIN_W / 2;        // ~952
+
+// Title: top of card content
+const BLOG_TITLE_Y = BLOG_CONTENT_Y + BLOG_MAIN_PAD + 20;     // ~180
+
+// Cover image: below title (title ~30px + margin 20px)
+const BLOG_COVER_Y = BLOG_TITLE_Y + 30 + 24 + 170;            // ~404 (center of 340px image)
+
+// Table of contents: below cover image
+const BLOG_TOC_Y = BLOG_COVER_Y + 170 + 32 + 60;              // ~666
+
+// Mid content (around statistic/list area) — further down the page
+const BLOG_MID_Y = BLOG_TOC_Y + 200;                           // ~866
+
+// Right sidebar center
+const BLOG_SIDEBAR_X = 1920 - BLOG_MAIN_PAD - BLOG_RIGHT_SIDEBAR_W / 2; // ~1768
+const BLOG_SIDEBAR_Y = BLOG_CONTENT_Y + 120;                   // ~256
+
+// Publish button: bottom of actions card, right column of 2-col grid
+const BLOG_PUBLISH_X = BLOG_SIDEBAR_X + 50;                    // ~1818
+const BLOG_PUBLISH_Y = BLOG_SIDEBAR_Y + 220;                   // ~476
+
+// FAQ area: well below mid content
+const BLOG_FAQ_Y = BLOG_MID_Y + 250;                           // ~1116 (scrolled area)
+
+export const BLOG_TARGETS = {
+  center: { x: 1920 / 2, y: 1080 / 2 },
+  title: { x: BLOG_MAIN_CX, y: BLOG_TITLE_Y },
+  coverImage: { x: BLOG_MAIN_CX, y: BLOG_COVER_Y },
+  toc: { x: BLOG_MAIN_CX, y: BLOG_TOC_Y },
+  midContent: { x: BLOG_MAIN_CX, y: BLOG_MID_Y },
+  sidebar: { x: BLOG_SIDEBAR_X, y: BLOG_SIDEBAR_Y },
+  publishBtn: { x: BLOG_PUBLISH_X, y: BLOG_PUBLISH_Y },
+  faqArea: { x: BLOG_MAIN_CX, y: BLOG_FAQ_Y },
+} as const;
+
 export const TITLES_TARGETS = {
   /** Center of full composition */
   center: { x: 1920 / 2, y: 1080 / 2 },

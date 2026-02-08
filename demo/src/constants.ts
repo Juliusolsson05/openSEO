@@ -7,6 +7,7 @@ export const DURATIONS = {
   titleCard: 3,
   login: 16,
   titleGeneration: 28,
+  blogPost: 20,
 } as const;
 
 export const TOTAL_DURATION = Object.values(DURATIONS).reduce((a, b) => a + b, 0);
