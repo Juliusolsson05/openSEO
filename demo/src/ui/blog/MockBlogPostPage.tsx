@@ -97,7 +97,7 @@ export const MockBlogPostPage: React.FC<{
             </ElementReveal>
 
             <ElementReveal frame={f} revealAt={R.INTRO} skeletonType="text">
-              <div data-cursor-target="introduction" style={{ position: "relative", borderRadius: 6, outline: introSelected ? `2px solid ${COLORS.primary}` : "none", outlineOffset: 4 }}>
+              <div style={{ position: "relative", borderRadius: 6, outline: introSelected ? `2px solid ${COLORS.primary}` : "none", outlineOffset: 4 }}>
                 {introSelected && (
                   <>
                     <div style={{ position: "absolute", top: -28, left: 0, display: "flex", gap: 2, padding: "4px 6px", background: COLORS.primary, borderRadius: "4px 4px 0 0", zIndex: 20 }}>
@@ -112,14 +112,16 @@ export const MockBlogPostPage: React.FC<{
                 )}
 
                 {introSelected ? (
-                  <section style={{ marginTop: 36 }}>
+                  <section data-cursor-target="introduction" style={{ marginTop: 36 }}>
                     <h2 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: COLORS.foreground, fontFamily: F }}>Introduction</h2>
                     <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 6, border: `1px solid ${COLORS.primary}`, background: "#F8FBFF", fontSize: 17, fontWeight: 300, lineHeight: 1.75, color: COLORS.foreground, minHeight: 130 }}>
                       {typedBody}{showCaret ? <span style={{ color: COLORS.primary }}>|</span> : null}
                     </div>
                   </section>
                 ) : (
-                  <Introduction content={{ heading: "Introduction", body: baseBody }} />
+                  <div data-cursor-target="introduction">
+                    <Introduction content={{ heading: "Introduction", body: baseBody }} />
+                  </div>
                 )}
 
                 {/* Real app UX: plus add button appears below hovered/selected element */}
