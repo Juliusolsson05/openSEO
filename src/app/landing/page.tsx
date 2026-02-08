@@ -41,6 +41,8 @@ function Nav() {
             { label: 'See it in action', href: '#demo' },
             { label: 'How it works', href: '#how-it-works' },
             { label: 'Features', href: '#features' },
+            { label: 'Blog', href: '/site/blog' },
+            { label: 'Dictionary', href: '/site/dictionary' },
             { label: 'Example', href: '/example' },
           ].map((item) => (
             <a
@@ -76,6 +78,8 @@ function Nav() {
           {['How it works', 'Features'].map((item) => (
             <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} onClick={() => setOpen(false)} className="block py-2 text-[13px]" style={{ color: '#616161' }}>{item}</a>
           ))}
+          <Link href="/site/blog" onClick={() => setOpen(false)} className="block py-2 text-[13px]" style={{ color: '#616161' }}>Blog</Link>
+          <Link href="/site/dictionary" onClick={() => setOpen(false)} className="block py-2 text-[13px]" style={{ color: '#616161' }}>Dictionary</Link>
           <Link href="/example" onClick={() => setOpen(false)} className="block py-2 text-[13px]" style={{ color: '#616161' }}>Example</Link>
           <Link href="/register" className="mt-3 block py-2 text-center text-[13px] font-semibold text-white" style={{ background: '#0078D4', borderRadius: 2 }}>
             Try Aurora free
