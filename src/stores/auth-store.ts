@@ -86,11 +86,24 @@ export const useAuthStore = create<AuthState>((set) => ({
     })
 
     if (user.companyId !== null && user.companyId !== undefined) {
-      setCookie('companyId', String(user.companyId), {
-        sameSite: 'lax',
-        secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
-        maxAge: 60 * 60 * 24 * 365,
-      })
+      // Don't overwrite admin's company switch cookie
+      if (user.userType === USER_TYPES.Administrator) {
+        const existing = getCookie('companyId')
+        const existingId = existing ? Number(existing) : NaN
+        if (!Number.isInteger(existingId) || existingId <= 0) {
+          setCookie('companyId', String(user.companyId), {
+            sameSite: 'lax',
+            secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
+            maxAge: 60 * 60 * 24 * 365,
+          })
+        }
+      } else {
+        setCookie('companyId', String(user.companyId), {
+          sameSite: 'lax',
+          secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
+          maxAge: 60 * 60 * 24 * 365,
+        })
+      }
     }
 
     return user

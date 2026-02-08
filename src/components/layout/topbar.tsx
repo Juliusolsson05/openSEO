@@ -86,36 +86,48 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
   const isAdmin = userData?.userType === USER_TYPES.Administrator
 
   const [companies, setCompanies] = useState<CompanyListItem[]>([])
+  const [companiesLoaded, setCompaniesLoaded] = useState(false)
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(() => {
-    const fromCookie = typeof window !== 'undefined' ? Number(getCookie('companyId') ?? '') : NaN
+    if (typeof window === 'undefined') return null
+    const fromCookie = Number(getCookie('companyId') ?? '')
     if (Number.isInteger(fromCookie) && fromCookie > 0) return fromCookie
-    return userData?.companyId ?? null
+    return null
   })
 
+  // Fetch companies for admin
   useEffect(() => {
     if (!isAdmin) return
-    setTimeout(() => {
-      void (async () => {
-        const { data } = await api<{ companies: CompanyListItem[] } | CompanyListItem[]>('/api/admin/companies')
-        const items = Array.isArray(data) ? data : (data?.companies ?? [])
-        setCompanies(items)
-      })()
-    }, 0)
+    let cancelled = false
+    ;(async () => {
+      const { data } = await api<{ companies: CompanyListItem[] } | CompanyListItem[]>('/api/admin/companies')
+      if (cancelled) return
+      const items = Array.isArray(data) ? data : (data?.companies ?? [])
+      setCompanies(items)
+      setCompaniesLoaded(true)
+    })()
+    return () => { cancelled = true }
   }, [isAdmin])
 
+  // Validate selectedCompanyId once companies are loaded
   useEffect(() => {
-    if (isAdmin) {
-      const cookieCompanyId = Number(getCookie('companyId') ?? '')
-      if (Number.isInteger(cookieCompanyId) && cookieCompanyId > 0 && cookieCompanyId !== selectedCompanyId) {
-        setTimeout(() => setSelectedCompanyId(cookieCompanyId), 0)
-        return
+    if (!isAdmin || !companiesLoaded || companies.length === 0) return
+
+    const currentId = selectedCompanyId
+    const isValid = currentId !== null && companies.some((c) => c.id === currentId)
+
+    if (!isValid) {
+      // Fall back to user's own company if it's in the list, otherwise first company
+      const fallback = companies.find((c) => c.id === userData?.companyId) ?? companies[0]
+      if (fallback) {
+        setSelectedCompanyId(fallback.id)
+        setCookie('companyId', String(fallback.id), {
+          sameSite: 'lax',
+          secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
+          maxAge: 60 * 60 * 24 * 365,
+        })
       }
     }
-
-    if (userData?.companyId && userData.companyId !== selectedCompanyId) {
-      setTimeout(() => setSelectedCompanyId(userData.companyId), 0)
-    }
-  }, [isAdmin, userData?.companyId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isAdmin, companiesLoaded, companies, selectedCompanyId, userData?.companyId])
 
   const switchCompany = (companyId: number) => {
     setSelectedCompanyId(companyId)
@@ -124,7 +136,7 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
       secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
       maxAge: 60 * 60 * 24 * 365,
     })
-    window.location.reload()
+    router.refresh()
   }
 
   const [searchFocused, setSearchFocused] = useState(false)
@@ -248,7 +260,7 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
         <span className="text-[13px] font-semibold text-foreground">{title}</span>
       </div>
 
-      {isAdmin && companies.length > 0 && (
+      {isAdmin && companiesLoaded && companies.length > 0 && (
         <div className="flex items-center gap-1.5 ml-2">
           <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
           <select

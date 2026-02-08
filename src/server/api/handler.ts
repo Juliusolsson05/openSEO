@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { Session } from 'next-auth'
 
 import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 import { AppError, ForbiddenError, UnauthorizedError } from '@/server/api/errors'
 import { error as errorResponse } from '@/server/api/response'
 import { createRequestId } from '@/server/api/request-id'
@@ -74,7 +75,15 @@ export function apiHandler(handler: RouteHandler, options: ApiHandlerOptions = {
         if (user.userType === 4 && requestedCompanyHeader) {
           const requestedCompanyId = Number(requestedCompanyHeader)
           if (Number.isInteger(requestedCompanyId) && requestedCompanyId > 0) {
-            companyId = requestedCompanyId
+            // Verify company exists before trusting the header
+            const companyExists = await prisma.company.findUnique({
+              where: { id: requestedCompanyId },
+              select: { id: true },
+            })
+            if (companyExists) {
+              companyId = requestedCompanyId
+            }
+            // If company doesn't exist, fall through to user's own companyId
           }
         }
 

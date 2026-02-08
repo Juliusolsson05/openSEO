@@ -18,7 +18,18 @@ export default auth((req) => {
   }
 
   const headers = new Headers(req.headers)
-  const companyId = req.auth?.user?.companyId
+  let companyId = req.auth?.user?.companyId ?? null
+
+  // For admin users, prefer the companyId cookie (set by company picker)
+  if (req.auth?.user?.userType === 4) {
+    const cookieValue = req.cookies.get('companyId')?.value
+    if (cookieValue) {
+      const cookieCompanyId = Number(cookieValue)
+      if (Number.isInteger(cookieCompanyId) && cookieCompanyId > 0) {
+        companyId = cookieCompanyId
+      }
+    }
+  }
 
   if (companyId !== null && companyId !== undefined) {
     headers.set('Company-ID', String(companyId))
