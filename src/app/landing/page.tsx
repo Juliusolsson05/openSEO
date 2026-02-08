@@ -483,8 +483,8 @@ function Footer() {
 
           {[
             { title: 'Product', links: [{ label: 'Features', href: '#features' }, { label: 'Example site', href: '/example' }, { label: 'API docs', href: '#' }] },
-            { title: 'Company', links: [{ label: 'About Nordtools', href: '#' }, { label: 'Blog', href: '#' }, { label: 'Contact', href: '#' }] },
-            { title: 'Legal', links: [{ label: 'Privacy', href: '#' }, { label: 'Terms', href: '#' }, { label: 'Cookies', href: '#' }] },
+            { title: 'Company', links: [{ label: 'About Nordtools', href: '/landing/about' }, { label: 'Blog', href: '/example/blog' }, { label: 'Contact', href: '/landing/contact' }] },
+            { title: 'Legal', links: [{ label: 'Privacy', href: '/landing/privacy' }, { label: 'Terms', href: '/landing/terms' }, { label: 'Cookies', href: '/landing/cookies' }] },
           ].map((col) => (
             <div key={col.title}>
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] mb-3" style={{ color: '#A0A0A0' }}>{col.title}</p>

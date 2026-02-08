@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { CookieConsent } from './_components/CookieConsent'
 
 export const metadata: Metadata = {
   title: 'Aurora by Nordtools — AI-Powered Content at Scale',
@@ -6,5 +7,10 @@ export const metadata: Metadata = {
 }
 
 export default function LandingLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      <CookieConsent />
+    </>
+  )
 }
