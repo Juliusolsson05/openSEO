@@ -58,7 +58,6 @@ export const MockBlogPostPage: React.FC<{
   editMode = false,
   introSelected = false,
   showAddButton = false,
-  addModalOpen = false,
   caseStudyGenerating = false,
   caseStudyInserted = false,
 }) => {
@@ -191,37 +190,6 @@ export const MockBlogPostPage: React.FC<{
           <PostInfoCard info={{ seoTitle: "Embrace AI Tools for Growth: The Future of Small Businesses", metaDescription: "Discover how AI tools for small businesses can streamline operations, enhance customer experiences, and drive sustainable growth in today's digital landscape." }} />
         </div>
       </div>
-
-      {addModalOpen && (
-        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 80 }}>
-          <div style={{ width: 820, borderRadius: 6, border: `1px solid ${COLORS.border}`, background: "#FFFFFF", padding: 16 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <p style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Add Element</p>
-              <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.mutedForeground }}>×</div>
-            </div>
-            <div style={{ display: "inline-flex", border: `1px solid ${COLORS.border}`, borderRadius: 4, padding: 2, background: "#F5F5F5", marginBottom: 12 }}>
-              <div style={{ padding: "6px 10px", background: COLORS.primary, color: "#FFF", borderRadius: 3, fontSize: 12, fontWeight: 600 }}>✨ Generate</div>
-              <div style={{ padding: "6px 10px", color: COLORS.mutedForeground, fontSize: 12 }}>Template</div>
-            </div>
-            <div style={{ height: 32, border: `1px solid ${COLORS.border}`, borderRadius: 4, marginBottom: 12, display: "flex", alignItems: "center", padding: "0 10px", color: COLORS.mutedForeground, fontSize: 12 }}>Search elements</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-              {modalElements.map((el) => {
-                const selected = el === "Case Study";
-                return (
-                  <div key={el} style={{ border: `1px solid ${selected ? COLORS.primary : COLORS.border}`, background: selected ? "#EAF4FF" : "#FFF", borderRadius: 4, padding: 12, minHeight: 88 }}>
-                    <div style={{ height: 40, background: "#F5F5F5", borderRadius: 4, marginBottom: 8 }} />
-                    <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: COLORS.foreground }}>{el}</p>
-                  </div>
-                );
-              })}
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 }}>
-              <div style={{ border: `1px solid ${COLORS.border}`, borderRadius: 4, padding: "6px 12px", fontSize: 12 }}>Cancel</div>
-              <div style={{ background: COLORS.primary, color: "#FFF", borderRadius: 4, padding: "6px 12px", fontSize: 12, fontWeight: 600 }}>Add Element</div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <QuilloFab />
     </div>
