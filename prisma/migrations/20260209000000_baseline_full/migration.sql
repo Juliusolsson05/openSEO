@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
 CREATE TYPE "UserType" AS ENUM ('DEMO', 'CLIENT', 'AGENCY', 'ADMINISTRATOR');
 
@@ -8,16 +11,19 @@ CREATE TYPE "TitleStatus" AS ENUM ('TO_BE_GENERATED', 'APPROVED', 'REJECTED', 'G
 CREATE TYPE "TitleOperation" AS ENUM ('NONE', 'POST_SYNCING', 'KEYWORD_SYNCING');
 
 -- CreateEnum
-CREATE TYPE "BlogPostElementType" AS ENUM ('INTRODUCTION', 'CONCLUSION', 'FAQ', 'IMAGE', 'PARAGRAPH', 'LIST_PARAGRAPH', 'NUMBERED_LIST_PARAGRAPH', 'QUOTE', 'LIST_FEATURED_SNIPPET_BLOCK', 'FEATURED_SNIPPET_BLOCK', 'GLOSSARY', 'PRODUCT_RECOMMENDATIONS');
-
--- CreateEnum
-CREATE TYPE "BlogElementTemplateType" AS ENUM ('INTRODUCTION', 'CONCLUSION', 'FAQ', 'IMAGE', 'PARAGRAPH', 'LIST_PARAGRAPH', 'NUMBERED_LIST_PARAGRAPH', 'QUOTE', 'LIST_FEATURED_SNIPPET_BLOCK', 'FEATURED_SNIPPET_BLOCK', 'GLOSSARY', 'PRODUCT_RECOMMENDATIONS', 'CTA');
-
--- CreateEnum
 CREATE TYPE "DictionaryStatus" AS ENUM ('IN_PROGRESS', 'KEYWORD_GENERATION', 'DEFINITION_GENERATION', 'COMPLETED');
 
 -- CreateEnum
 CREATE TYPE "WordPriority" AS ENUM ('HIGH', 'LOW');
+
+-- CreateEnum
+CREATE TYPE "SyncJobType" AS ENUM ('POSTS_PUSH_ALL', 'POSTS_PUSH_ONE', 'DICTIONARY_PUSH_ALL', 'DICTIONARY_PUSH_ONE', 'POSTS_PULL', 'DICTIONARY_PULL');
+
+-- CreateEnum
+CREATE TYPE "SyncJobStatus" AS ENUM ('QUEUED', 'RUNNING', 'COMPLETED', 'FAILED');
+
+-- CreateEnum
+CREATE TYPE "SyncEntityType" AS ENUM ('POST', 'DICTIONARY', 'TERM');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -77,7 +83,9 @@ CREATE TABLE "Company" (
     "business_type" TEXT NOT NULL,
     "keywords" JSONB NOT NULL DEFAULT '[]',
     "language" TEXT NOT NULL,
+    "website_url" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "aurora_enabled" BOOLEAN NOT NULL DEFAULT false,
     "pulse_enabled" BOOLEAN NOT NULL DEFAULT false,
     "echo_enabled" BOOLEAN NOT NULL DEFAULT false,
@@ -85,6 +93,7 @@ CREATE TABLE "Company" (
     "api_endpoint" TEXT,
     "api_key" TEXT,
     "metadata" JSONB NOT NULL DEFAULT '{"business_description":"","industry_description":""}',
+    "profile" JSONB,
 
     CONSTRAINT "Company_pkey" PRIMARY KEY ("id")
 );
@@ -154,6 +163,9 @@ CREATE TABLE "BlogPost" (
     "posts_synced" BOOLEAN NOT NULL DEFAULT false,
     "reviewed" BOOLEAN NOT NULL DEFAULT false,
     "last_updated" TIMESTAMP(3) NOT NULL,
+    "share_token" TEXT,
+    "share_enabled" BOOLEAN NOT NULL DEFAULT false,
+    "share_expires_at" TIMESTAMP(3),
 
     CONSTRAINT "BlogPost_pkey" PRIMARY KEY ("id")
 );
@@ -175,6 +187,19 @@ CREATE TABLE "BlogPostPostLink" (
 );
 
 -- CreateTable
+CREATE TABLE "ShareLink" (
+    "id" SERIAL NOT NULL,
+    "postId" INTEGER NOT NULL,
+    "token" TEXT NOT NULL,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
+    "expiresAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ShareLink_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "BlogPublish" (
     "id" SERIAL NOT NULL,
     "blogPostId" INTEGER NOT NULL,
@@ -189,7 +214,7 @@ CREATE TABLE "BlogPublish" (
 CREATE TABLE "BlogPostElement" (
     "id" SERIAL NOT NULL,
     "blogPostId" INTEGER NOT NULL,
-    "element_type" "BlogPostElementType" NOT NULL,
+    "element_type" TEXT NOT NULL,
     "order" INTEGER NOT NULL,
     "content" JSONB NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -355,7 +380,7 @@ CREATE TABLE "BlogElementTemplate" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
-    "element_type" "BlogElementTemplateType" NOT NULL,
+    "element_type" TEXT NOT NULL,
     "structure" JSONB NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -385,6 +410,198 @@ CREATE TABLE "CTA" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "CTA_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PublishingApiKey" (
+    "id" SERIAL NOT NULL,
+    "companyId" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "key_prefix" TEXT NOT NULL,
+    "key_hash" TEXT NOT NULL,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "last_used_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "revoked_at" TIMESTAMP(3),
+
+    CONSTRAINT "PublishingApiKey_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SyncJob" (
+    "id" TEXT NOT NULL,
+    "companyId" INTEGER NOT NULL,
+    "type" "SyncJobType" NOT NULL,
+    "status" "SyncJobStatus" NOT NULL DEFAULT 'QUEUED',
+    "payload" JSONB NOT NULL DEFAULT '{}',
+    "summary" JSONB NOT NULL DEFAULT '{}',
+    "error" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "started_at" TIMESTAMP(3),
+    "finished_at" TIMESTAMP(3),
+
+    CONSTRAINT "SyncJob_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SyncDelivery" (
+    "id" TEXT NOT NULL,
+    "companyId" INTEGER NOT NULL,
+    "syncJobId" TEXT,
+    "entity_type" "SyncEntityType" NOT NULL,
+    "entity_id" TEXT NOT NULL,
+    "event_type" TEXT NOT NULL,
+    "event_id" TEXT NOT NULL,
+    "endpoint" TEXT NOT NULL,
+    "request_body" JSONB NOT NULL,
+    "response_body" JSONB,
+    "status_code" INTEGER,
+    "success" BOOLEAN NOT NULL DEFAULT false,
+    "attempts" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "delivered_at" TIMESTAMP(3),
+
+    CONSTRAINT "SyncDelivery_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SyncConflict" (
+    "id" TEXT NOT NULL,
+    "companyId" INTEGER NOT NULL,
+    "entity_type" "SyncEntityType" NOT NULL,
+    "local_entity_id" TEXT NOT NULL,
+    "remote_entity_id" TEXT,
+    "local_snapshot" JSONB NOT NULL,
+    "remote_snapshot" JSONB NOT NULL,
+    "resolution" TEXT,
+    "resolved_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "SyncConflict_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "InboundEvent" (
+    "id" TEXT NOT NULL,
+    "companyId" INTEGER NOT NULL,
+    "event_id" TEXT NOT NULL,
+    "event_type" TEXT NOT NULL,
+    "payload" JSONB NOT NULL,
+    "processed" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "processed_at" TIMESTAMP(3),
+
+    CONSTRAINT "InboundEvent_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "example_posts" (
+    "id" TEXT NOT NULL,
+    "companyId" INTEGER NOT NULL,
+    "auroraId" INTEGER,
+    "slug" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "excerpt" TEXT NOT NULL DEFAULT '',
+    "coverImage" TEXT NOT NULL DEFAULT '',
+    "publishedAt" TEXT NOT NULL,
+    "seoTitle" TEXT,
+    "focusKeyword" TEXT,
+    "metaDescription" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'published',
+    "syncedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "example_posts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "example_elements" (
+    "id" TEXT NOT NULL,
+    "auroraId" TEXT,
+    "postId" TEXT NOT NULL,
+    "order" INTEGER NOT NULL,
+    "elementType" TEXT NOT NULL,
+    "content" JSONB NOT NULL,
+
+    CONSTRAINT "example_elements_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "example_dictionaries" (
+    "id" TEXT NOT NULL,
+    "companyId" INTEGER NOT NULL,
+    "auroraId" INTEGER,
+    "name" TEXT NOT NULL,
+    "description" TEXT NOT NULL DEFAULT '',
+    "subject" TEXT,
+    "language" TEXT,
+    "syncedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "example_dictionaries_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "example_words" (
+    "id" TEXT NOT NULL,
+    "auroraId" TEXT,
+    "dictionaryId" TEXT NOT NULL,
+    "keyword" TEXT NOT NULL,
+    "letter" TEXT,
+    "description" TEXT,
+    "focusKeyword" TEXT,
+    "definition" JSONB NOT NULL DEFAULT '{}',
+
+    CONSTRAINT "example_words_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ComparisonTool" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "tagline" TEXT,
+    "website_url" TEXT,
+    "logo_url" TEXT,
+    "description" TEXT NOT NULL DEFAULT '',
+    "pricing" JSONB NOT NULL DEFAULT '[]',
+    "features" JSONB NOT NULL DEFAULT '[]',
+    "pros" JSONB NOT NULL DEFAULT '[]',
+    "cons" JSONB NOT NULL DEFAULT '[]',
+    "ratings" JSONB NOT NULL DEFAULT '{}',
+    "target_audience" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ComparisonTool_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Comparison" (
+    "id" SERIAL NOT NULL,
+    "slug" TEXT NOT NULL,
+    "tool_a_id" INTEGER NOT NULL,
+    "tool_b_id" INTEGER NOT NULL,
+    "title" TEXT,
+    "meta_description" TEXT,
+    "published" BOOLEAN NOT NULL DEFAULT false,
+    "published_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Comparison_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ComparisonElement" (
+    "id" SERIAL NOT NULL,
+    "comparisonId" INTEGER NOT NULL,
+    "element_type" TEXT NOT NULL,
+    "order" INTEGER NOT NULL,
+    "content" JSONB NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ComparisonElement_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -464,6 +681,9 @@ CREATE INDEX "Title_bulkScheduleId_idx" ON "Title"("bulkScheduleId");
 CREATE UNIQUE INDEX "BlogPost_slug_key" ON "BlogPost"("slug");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "BlogPost_share_token_key" ON "BlogPost"("share_token");
+
+-- CreateIndex
 CREATE INDEX "BlogPost_companyId_idx" ON "BlogPost"("companyId");
 
 -- CreateIndex
@@ -492,6 +712,12 @@ CREATE INDEX "BlogPostPostLink_fromBlogPostId_idx" ON "BlogPostPostLink"("fromBl
 
 -- CreateIndex
 CREATE INDEX "BlogPostPostLink_toBlogPostId_idx" ON "BlogPostPostLink"("toBlogPostId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ShareLink_token_key" ON "ShareLink"("token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ShareLink_postId_key" ON "ShareLink"("postId");
 
 -- CreateIndex
 CREATE INDEX "BlogPublish_blogPostId_idx" ON "BlogPublish"("blogPostId");
@@ -582,6 +808,96 @@ CREATE INDEX "Campaign_companyId_idx" ON "Campaign"("companyId");
 
 -- CreateIndex
 CREATE INDEX "CTA_campaignId_idx" ON "CTA"("campaignId");
+
+-- CreateIndex
+CREATE INDEX "PublishingApiKey_companyId_idx" ON "PublishingApiKey"("companyId");
+
+-- CreateIndex
+CREATE INDEX "PublishingApiKey_is_active_idx" ON "PublishingApiKey"("is_active");
+
+-- CreateIndex
+CREATE INDEX "SyncJob_companyId_idx" ON "SyncJob"("companyId");
+
+-- CreateIndex
+CREATE INDEX "SyncJob_status_idx" ON "SyncJob"("status");
+
+-- CreateIndex
+CREATE INDEX "SyncJob_type_idx" ON "SyncJob"("type");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "SyncDelivery_event_id_key" ON "SyncDelivery"("event_id");
+
+-- CreateIndex
+CREATE INDEX "SyncDelivery_companyId_idx" ON "SyncDelivery"("companyId");
+
+-- CreateIndex
+CREATE INDEX "SyncDelivery_syncJobId_idx" ON "SyncDelivery"("syncJobId");
+
+-- CreateIndex
+CREATE INDEX "SyncDelivery_event_type_idx" ON "SyncDelivery"("event_type");
+
+-- CreateIndex
+CREATE INDEX "SyncConflict_companyId_idx" ON "SyncConflict"("companyId");
+
+-- CreateIndex
+CREATE INDEX "SyncConflict_entity_type_idx" ON "SyncConflict"("entity_type");
+
+-- CreateIndex
+CREATE INDEX "InboundEvent_companyId_idx" ON "InboundEvent"("companyId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "InboundEvent_companyId_event_id_key" ON "InboundEvent"("companyId", "event_id");
+
+-- CreateIndex
+CREATE INDEX "example_posts_companyId_idx" ON "example_posts"("companyId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "example_posts_companyId_slug_key" ON "example_posts"("companyId", "slug");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "example_posts_companyId_auroraId_key" ON "example_posts"("companyId", "auroraId");
+
+-- CreateIndex
+CREATE INDEX "example_elements_postId_idx" ON "example_elements"("postId");
+
+-- CreateIndex
+CREATE INDEX "example_dictionaries_companyId_idx" ON "example_dictionaries"("companyId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "example_dictionaries_companyId_auroraId_key" ON "example_dictionaries"("companyId", "auroraId");
+
+-- CreateIndex
+CREATE INDEX "example_words_dictionaryId_idx" ON "example_words"("dictionaryId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "example_words_dictionaryId_keyword_key" ON "example_words"("dictionaryId", "keyword");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ComparisonTool_name_key" ON "ComparisonTool"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ComparisonTool_slug_key" ON "ComparisonTool"("slug");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Comparison_slug_key" ON "Comparison"("slug");
+
+-- CreateIndex
+CREATE INDEX "Comparison_tool_a_id_idx" ON "Comparison"("tool_a_id");
+
+-- CreateIndex
+CREATE INDEX "Comparison_tool_b_id_idx" ON "Comparison"("tool_b_id");
+
+-- CreateIndex
+CREATE INDEX "Comparison_published_idx" ON "Comparison"("published");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Comparison_tool_a_id_tool_b_id_key" ON "Comparison"("tool_a_id", "tool_b_id");
+
+-- CreateIndex
+CREATE INDEX "ComparisonElement_comparisonId_idx" ON "ComparisonElement"("comparisonId");
+
+-- CreateIndex
+CREATE INDEX "ComparisonElement_order_idx" ON "ComparisonElement"("order");
 
 -- CreateIndex
 CREATE INDEX "_CategoryToTitle_B_index" ON "_CategoryToTitle"("B");
@@ -686,6 +1002,39 @@ ALTER TABLE "Campaign" ADD CONSTRAINT "Campaign_companyId_fkey" FOREIGN KEY ("co
 ALTER TABLE "CTA" ADD CONSTRAINT "CTA_campaignId_fkey" FOREIGN KEY ("campaignId") REFERENCES "Campaign"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "PublishingApiKey" ADD CONSTRAINT "PublishingApiKey_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SyncJob" ADD CONSTRAINT "SyncJob_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SyncDelivery" ADD CONSTRAINT "SyncDelivery_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SyncDelivery" ADD CONSTRAINT "SyncDelivery_syncJobId_fkey" FOREIGN KEY ("syncJobId") REFERENCES "SyncJob"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SyncConflict" ADD CONSTRAINT "SyncConflict_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "InboundEvent" ADD CONSTRAINT "InboundEvent_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "example_elements" ADD CONSTRAINT "example_elements_postId_fkey" FOREIGN KEY ("postId") REFERENCES "example_posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "example_words" ADD CONSTRAINT "example_words_dictionaryId_fkey" FOREIGN KEY ("dictionaryId") REFERENCES "example_dictionaries"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Comparison" ADD CONSTRAINT "Comparison_tool_a_id_fkey" FOREIGN KEY ("tool_a_id") REFERENCES "ComparisonTool"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Comparison" ADD CONSTRAINT "Comparison_tool_b_id_fkey" FOREIGN KEY ("tool_b_id") REFERENCES "ComparisonTool"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ComparisonElement" ADD CONSTRAINT "ComparisonElement_comparisonId_fkey" FOREIGN KEY ("comparisonId") REFERENCES "Comparison"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "_CategoryToTitle" ADD CONSTRAINT "_CategoryToTitle_A_fkey" FOREIGN KEY ("A") REFERENCES "Category"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -696,3 +1045,4 @@ ALTER TABLE "_BlogPostToCategory" ADD CONSTRAINT "_BlogPostToCategory_A_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "_BlogPostToCategory" ADD CONSTRAINT "_BlogPostToCategory_B_fkey" FOREIGN KEY ("B") REFERENCES "Category"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
