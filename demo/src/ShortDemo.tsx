@@ -13,17 +13,21 @@ import { useElementPosition } from "./hooks/useElementPosition";
 import { COLORS, FPS, WIDTH, HEIGHT, sec } from "./constants";
 import { ShortBlogGenScene } from "./scenes/ShortBlogGenScene";
 import { ShortResultsScene } from "./scenes/ShortResultsScene";
+import { ShortNetworkScene } from "./scenes/ShortNetworkScene";
+import { ShortOutroScene } from "./scenes/ShortOutroScene";
 
 /* ────────────────────────────────────────────
- * Short Action Demo — 30s total
+ * Short Action Demo — 47s total
  * Styled after the Aurora/Nordtools landing page.
  * No sidebar/dashboard chrome.
  *
  *   0-1s    : Quick branded intro
  *   1-7s    : "What is your business?" input scene
  *   7-14s   : Generated titles reveal + selection
- *   14-23s  : Cinematic blog post generation
- *   23-30s  : Animated results / traffic stats
+ *   14-28s  : Cinematic blog post generation (14s)
+ *   28-33s  : Animated results / traffic stats (5s)
+ *   33-38s  : Network graph — "Built for Dynamic Content" (5s)
+ *   38-43s  : Outro — Aurora branding + CTA (5s)
  * ──────────────────────────────────────────── */
 
 const F = "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', sans-serif";
@@ -397,11 +401,17 @@ export const ShortDemo: React.FC = () => (
     <Sequence from={sec(7)} durationInFrames={sec(7)}>
       <TitlesScene />
     </Sequence>
-    <Sequence from={sec(14)} durationInFrames={sec(9)}>
+    <Sequence from={sec(14)} durationInFrames={sec(14)}>
       <ShortBlogGenScene />
     </Sequence>
-    <Sequence from={sec(23)} durationInFrames={sec(7)}>
+    <Sequence from={sec(28)} durationInFrames={sec(5)}>
       <ShortResultsScene />
+    </Sequence>
+    <Sequence from={sec(33)} durationInFrames={sec(5)}>
+      <ShortNetworkScene />
+    </Sequence>
+    <Sequence from={sec(38)} durationInFrames={sec(5)}>
+      <ShortOutroScene />
     </Sequence>
   </AbsoluteFill>
 );
