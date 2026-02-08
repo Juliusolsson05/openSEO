@@ -63,15 +63,42 @@ interface Props {
 export function OnboardingTour({ userId, enabled, onFinish }: Props) {
   const [run, setRun] = useState(enabled)
   const [stepIndex, setStepIndex] = useState(0)
+  const [targetsReady, setTargetsReady] = useState(false)
 
   // Sync with parent — restart when enabled flips to true
   useEffect(() => {
-    if (!enabled) return
-    const t = setTimeout(() => {
-      setStepIndex(0)
-      setRun(true)
-    }, 0)
-    return () => clearTimeout(t)
+    if (!enabled) {
+      setRun(false)
+      setTargetsReady(false)
+      return
+    }
+
+    let cancelled = false
+
+    const checkTargets = () => {
+      const allReady = STEPS.every((step) => {
+        if (typeof step.target !== 'string') return false
+        return !!document.querySelector(step.target)
+      })
+
+      if (cancelled) return
+
+      if (allReady) {
+        setTargetsReady(true)
+        setStepIndex(0)
+        setRun(true)
+      } else {
+        setTargetsReady(false)
+        window.setTimeout(checkTargets, 100)
+      }
+    }
+
+    window.setTimeout(checkTargets, 0)
+
+    return () => {
+      cancelled = true
+      setRun(false)
+    }
   }, [enabled])
 
   const handleCallback = useCallback(
@@ -92,6 +119,11 @@ export function OnboardingTour({ userId, enabled, onFinish }: Props) {
         return
       }
 
+      if (type === 'error:target_not_found') {
+        setRun(false)
+        return
+      }
+
       if (type === 'step:after') {
         if (action === ACTIONS.PREV) {
           setStepIndex(index - 1)
@@ -103,7 +135,7 @@ export function OnboardingTour({ userId, enabled, onFinish }: Props) {
     [userId, onFinish],
   )
 
-  if (!enabled && !run) return null
+  if (!enabled || !run || !targetsReady) return null
 
   return (
     <Joyride
