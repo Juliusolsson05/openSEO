@@ -7,6 +7,7 @@ import { TitleGenerationScene } from "./scenes/TitleGenerationScene";
 import { BlogPostScene } from "./scenes/BlogPostScene";
 import { OutroScene } from "./scenes/OutroScene";
 import { ProgressBar } from "./components/ProgressBar";
+import { GuideBox } from "./components/GuideBox";
 
 const backgroundMusic = staticFile("audio/background.mp3");
 
@@ -57,6 +58,7 @@ export const Video: React.FC = () => {
         <OutroScene />
       </Sequence>
 
+      <GuideBox />
       <ProgressBar />
     </div>
   );
