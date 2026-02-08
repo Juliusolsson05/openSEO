@@ -1,4 +1,4 @@
-import { getOpenAIClient } from '@/server/ai/clients';
+import { getOpenAIClient, MODELS } from '@/server/ai/clients';
 import { parseToolArguments } from '@/server/ai/utils';
 
 export async function generateTitles(
@@ -39,7 +39,7 @@ export async function generateTitles(
   };
 
   const response = await getOpenAIClient().chat.completions.create({
-    model: 'gpt-5-mini',
+    model: MODELS.OPENAI_DEFAULT,
     messages: [
       { role: 'system', content: systemMessage },
       {

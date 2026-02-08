@@ -1,4 +1,4 @@
-import { getOpenAIClient } from '@/server/ai/clients';
+import { getOpenAIClient, MODELS } from '@/server/ai/clients';
 import { generateElementFunctionParameters } from '@/server/ai/blog-elements/generate-function-parameters';
 import { fetchLogoUrl } from '@/server/ai/blog-elements/fetch-logo-url';
 import { uploadToCloudinary } from '@/server/ai/blog-elements/upload-to-cloudinary';
@@ -15,7 +15,7 @@ export async function generateNewElement(
   const functionParameters = generateElementFunctionParameters(elementType);
 
   const response = await getOpenAIClient().chat.completions.create({
-    model: 'gpt-5-mini',
+    model: MODELS.OPENAI_DEFAULT,
     messages: [
       {
         role: 'system',

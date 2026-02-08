@@ -1,4 +1,4 @@
-import { getOpenAIClient } from '@/server/ai/clients';
+import { getOpenAIClient, MODELS } from '@/server/ai/clients';
 import {
   COMMON_ELEMENTS,
   MANDATORY_ELEMENTS,
@@ -9,7 +9,7 @@ import { parseToolArguments } from '@/server/ai/utils';
 
 export async function generateStructure(
   titleText: string,
-  model = 'gpt-5.2',
+  model = MODELS.OPENAI_SMART,
   allowedElements?: Record<string, boolean>,
 ): Promise<{ structure: Record<string, unknown>; usage: unknown }> {
   const filteredCommonElements =

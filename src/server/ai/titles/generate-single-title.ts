@@ -1,4 +1,4 @@
-import { getOpenAIClient } from '@/server/ai/clients';
+import { getOpenAIClient, MODELS } from '@/server/ai/clients';
 import { parseToolArguments } from '@/server/ai/utils';
 
 export async function generateSingleTitle(
@@ -16,7 +16,7 @@ export async function generateSingleTitle(
   }
 
   const response = await getOpenAIClient().chat.completions.create({
-    model: 'gpt-4-turbo-preview',
+    model: MODELS.OPENAI_DEFAULT,
     messages: [
       { role: 'system', content: systemMessage },
       {

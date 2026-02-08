@@ -1,4 +1,4 @@
-import { getOpenAIClient } from '@/server/ai/clients';
+import { getOpenAIClient, MODELS } from '@/server/ai/clients';
 import { parseToolArguments } from '@/server/ai/utils';
 
 export async function generateCategories(
@@ -15,7 +15,7 @@ export async function generateCategories(
   if (additionalPrompt) systemMessage = `${additionalPrompt}\n\n${systemMessage}`;
 
   const response = await getOpenAIClient().chat.completions.create({
-    model: 'gpt-5.2',
+    model: MODELS.OPENAI_SMART,
     messages: [
       { role: 'system', content: systemMessage },
       {

@@ -8,6 +8,8 @@
 import { getOpenAIClient, MODELS } from '@/server/ai/clients'
 import type { ScrapedPage } from './scraper'
 
+// Uses MODELS.OPENAI_SMART for high-quality structured extraction
+
 export type CompanyProfile = {
   /** 2-3 sentence summary of what the company does */
   business_description: string

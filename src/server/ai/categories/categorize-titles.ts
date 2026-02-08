@@ -1,4 +1,4 @@
-import { getOpenAIClient } from '@/server/ai/clients';
+import { getOpenAIClient, MODELS } from '@/server/ai/clients';
 import { parseToolArguments } from '@/server/ai/utils';
 
 type Category = { id: number; name: string };
@@ -41,7 +41,7 @@ export async function categorizeTitles(
     };
 
     const response = await getOpenAIClient().chat.completions.create({
-      model: 'gpt-5.2',
+      model: MODELS.OPENAI_SMART,
       messages: [
         {
           role: 'system',

@@ -1,6 +1,7 @@
 import { Prisma, TitleStatus } from '@prisma/client'
 
 import { prisma } from '@/lib/prisma'
+import { MODELS } from '@/server/ai/clients'
 import { NotFoundError, ValidationError } from '@/server/api/errors'
 import { generateStructure } from '@/server/ai/blog-generation/generate-structure'
 import { generateBlogPost } from '@/server/ai/blog-generation/generate-blog-post'
@@ -196,8 +197,8 @@ export class BlogService {
     const settings = (company.settings ?? {}) as Record<string, any>
     const blogSettings = settings['aurora.blog'] ?? {}
     const allowedElements = blogSettings.initial_generation_elements ?? DEFAULT_GENERATION_ELEMENTS
-    const structureModel = blogSettings.blog_post_structure_model ?? 'gpt-5.2'
-    const contentModel = blogSettings.blog_post_content_model ?? 'gpt-5-mini'
+    const structureModel = blogSettings.blog_post_structure_model ?? MODELS.OPENAI_SMART
+    const contentModel = blogSettings.blog_post_content_model ?? MODELS.OPENAI_DEFAULT
 
     const businessDescription = (company.metadata as any)?.business_description ?? ''
     const businessName = company.name
@@ -330,8 +331,8 @@ export class BlogService {
 
     const settings = ((await prisma.company.findUnique({ where: { id: companyId }, select: { settings: true } }))?.settings ?? {}) as Record<string, any>
     const blogSettings = settings['aurora.blog'] ?? {}
-    const structureModel = blogSettings.blog_post_structure_model ?? 'gpt-5.2'
-    const contentModel = blogSettings.blog_post_content_model ?? 'gpt-5-mini'
+    const structureModel = blogSettings.blog_post_structure_model ?? MODELS.OPENAI_SMART
+    const contentModel = blogSettings.blog_post_content_model ?? MODELS.OPENAI_DEFAULT
     const allowedElements = blogSettings.initial_generation_elements ?? DEFAULT_GENERATION_ELEMENTS
 
     const { structure } = await generateStructure(blogPost.title_text, structureModel, allowedElements)

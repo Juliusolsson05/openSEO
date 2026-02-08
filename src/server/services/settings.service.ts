@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 
 import { prisma } from '@/lib/prisma'
+import { MODELS } from '@/server/ai/clients'
 import { NotFoundError, ValidationError } from '@/server/api/errors'
 
 type JsonObject = Record<string, unknown>
@@ -143,8 +144,8 @@ export class SettingsService {
         tone_of_voice: String(generation.tone_of_voice ?? ''),
         auto_internal_linking: Boolean(generation.auto_internal_linking ?? true),
         default_post_length: Number(generation.default_post_length ?? 1200),
-        blog_post_structure_model: String(generation.blog_post_structure_model ?? 'gpt-5.2'),
-        blog_post_content_model: String(generation.blog_post_content_model ?? 'gpt-5-mini'),
+        blog_post_structure_model: String(generation.blog_post_structure_model ?? MODELS.OPENAI_SMART),
+        blog_post_content_model: String(generation.blog_post_content_model ?? MODELS.OPENAI_DEFAULT),
         initial_generation_elements: asObject(generation.initial_generation_elements),
       },
       publishing: {

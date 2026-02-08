@@ -1,4 +1,4 @@
-import { getOpenAIClient } from '@/server/ai/clients';
+import { getOpenAIClient, MODELS } from '@/server/ai/clients';
 import { generateBlogFunctionParameters } from '@/server/ai/blog-elements/generate-function-parameters';
 import { parseToolArguments } from '@/server/ai/utils';
 
@@ -7,7 +7,7 @@ export async function generateBlogPost(
   focusKeyword: string,
   title: string,
   structure: Record<string, unknown>,
-  model = 'gpt-5-mini',
+  model = MODELS.OPENAI_DEFAULT,
   businessAware = false,
   businessDescription?: string,
   businessName?: string,
