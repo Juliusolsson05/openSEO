@@ -12,7 +12,12 @@ import { Badge } from '@/components/ui/badge'
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react'
 
 type SyncJobStatus = 'accepted' | 'running' | 'completed' | 'failed' | 'not_available'
-type CompanyCredentials = { api_endpoint?: string | null; api_key?: string | null }
+type PublishingSettingsResponse = {
+  settings?: {
+    api_endpoint?: string | null
+    has_api_key?: boolean
+  }
+}
 export default function PublishingPage() {
   const [publishingEndpoint, setPublishingEndpoint] = useState('')
   const [apiKey, setApiKey] = useState('')
@@ -26,10 +31,11 @@ export default function PublishingPage() {
 
   const loadCompanyData = async () => {
     setIsLoading(true)
-    const { data } = await api<CompanyCredentials>('/api/nordtools/company/get')
-    if (data) {
-      setPublishingEndpoint(data.api_endpoint ?? '')
-      setHasExistingKey(Boolean(data.api_key))
+    const { data } = await api<PublishingSettingsResponse>('/api/v1/settings/publishing')
+    const payload = data?.settings
+    if (payload) {
+      setPublishingEndpoint(payload.api_endpoint ?? '')
+      setHasExistingKey(Boolean(payload.has_api_key))
     }
     setIsLoading(false)
   }
@@ -45,9 +51,12 @@ export default function PublishingPage() {
     setStatus(null)
     setIsSaving(true)
 
-    const { error } = await apiPost('/api/nordtools/company/credentials/update', {
-      api_endpoint: publishingEndpoint,
-      api_key: apiKey || undefined,
+    const { error } = await api('/api/v1/settings/publishing', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        api_endpoint: publishingEndpoint,
+        ...(apiKey ? { api_key: apiKey } : {}),
+      }),
     })
 
     if (error) {
@@ -85,7 +94,7 @@ export default function PublishingPage() {
     }
 
     setActiveJobId(jobId)
-    setJobState((inner.status as SyncJobStatus) ?? 'accepted')
+    setJobState((inner?.status as SyncJobStatus) ?? 'accepted')
     setStatus({ type: 'success', message: `${kind === 'posts' ? 'Post' : 'Dictionary'} sync started.` })
     setIsSyncing(null)
   }

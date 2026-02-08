@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Eye, Save, Loader2, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { api, apiPost } from '@/lib/api'
+import { api } from '@/lib/api'
 
 import '@/components/blog/elements'
 import {
@@ -90,8 +90,7 @@ export default function ElementsPage() {
     setLoading(true)
     try {
       const { data } = await api<{ settings: Record<string, any> }>(
-        '/api/nordtools/settings',
-        { params: { category: 'aurora.blog' } },
+        '/api/v1/settings/generation',
       )
       const saved = data?.settings?.initial_generation_elements
       if (saved && typeof saved === 'object') {
@@ -133,10 +132,10 @@ export default function ElementsPage() {
   const save = async () => {
     setSaving(true)
     try {
-      const { error } = await apiPost(
-        '/api/nordtools/settings/update?category=aurora.blog',
-        { settings: { initial_generation_elements: toRecord(settings) } },
-      )
+      const { error } = await api('/api/v1/settings/generation', {
+        method: 'PATCH',
+        body: JSON.stringify({ initial_generation_elements: toRecord(settings) }),
+      })
       if (error) throw error
       setToast({ message: 'Element settings saved', variant: 'success' })
       setDirty(false)
