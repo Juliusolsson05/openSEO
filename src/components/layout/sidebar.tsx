@@ -16,13 +16,11 @@ import {
   BookOpen,
   Target,
   Shield,
-  ChevronDown,
   LogOut,
   ExternalLink,
 } from 'lucide-react'
 import { AuroraLogo } from '@/components/brand/logo'
 import { Button } from '@/components/ui/button'
-import { useEffect, useState } from 'react'
 
 interface NavItem {
   title: string
@@ -63,17 +61,9 @@ const navigation: NavSection[] = [
   {
     heading: 'SETTINGS',
     items: [
-      {
-        title: 'Settings',
-        href: '/settings',
-        icon: Settings,
-        tourId: 'nav-settings',
-        children: [
-          { title: 'General', href: '/settings', icon: Settings },
-          { title: 'Company Profile', href: '/company-profile', icon: Building2 },
-          { title: 'Publishing', href: '/publishing', icon: Upload },
-        ],
-      },
+      { title: 'Company Profile', href: '/company-profile', icon: Building2 },
+      { title: 'Settings', href: '/settings', icon: Settings, tourId: 'nav-settings' },
+      { title: 'Publishing', href: '/publishing', icon: Upload },
     ],
   },
 ]
@@ -119,52 +109,6 @@ function NavLink({ item, pathname, nested = false }: { item: NavItem; pathname: 
   )
 }
 
-function NavGroup({ item, pathname }: { item: NavItem; pathname: string }) {
-  const hasActiveChild = item.children?.some((c) => isActiveRoute(c.href, pathname))
-  const isActive = isActiveRoute(item.href, pathname) || hasActiveChild
-  const [open, setOpen] = useState(isActive ?? false)
-  const Icon = item.icon
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (isActive) setOpen(true)
-  }, [isActive])
-
-  return (
-    <div>
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={() => setOpen(!open)}
-        data-tour={item.tourId}
-        className={cn(
-          'group h-auto w-full justify-start gap-3 rounded-none px-4 py-[7px] text-[13px] transition-colors',
-          isActive
-            ? 'text-white bg-sidebar-accent hover:bg-sidebar-accent'
-            : 'text-sidebar-foreground hover:bg-sidebar-hover'
-        )}
-      >
-        <Icon className="h-4 w-4 shrink-0 opacity-80" />
-        <span>{item.title}</span>
-        <ChevronDown
-          className={cn(
-            'ml-auto h-3 w-3 opacity-50 transition-transform duration-200',
-            open && 'rotate-180'
-          )}
-        />
-      </Button>
-
-      {open && (
-        <div className="bg-[rgba(0,0,0,0.15)]">
-          {item.children?.map((child) => (
-            <NavLink key={child.href} item={child} pathname={pathname} nested />
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 export function Sidebar() {
   const pathname = usePathname()
   const { userData, logout } = useAuthStore()
@@ -195,13 +139,9 @@ export function Sidebar() {
                 {section.heading}
               </p>
             )}
-            {section.items.map((item) =>
-              item.children ? (
-                <NavGroup key={item.href} item={item} pathname={pathname} />
-              ) : (
-                <NavLink key={item.href} item={item} pathname={pathname} />
-              )
-            )}
+            {section.items.map((item) => (
+              <NavLink key={item.href} item={item} pathname={pathname} />
+            ))}
           </div>
         ))}
 

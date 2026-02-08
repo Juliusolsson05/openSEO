@@ -1,13 +1,14 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { api, apiPost } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Globe, Loader2, RefreshCw, Sparkles } from 'lucide-react'
+import { Globe, Loader2, RefreshCw, Sparkles, X } from 'lucide-react'
+import { Label } from '@/components/ui/label'
 
 type CompanyProfile = {
   business_description: string
@@ -35,21 +36,49 @@ type ProfileResponse = {
 type AnalyzeResponse = { task_id: string; status: string }
 type TaskStatus = { status: string; logs?: unknown[]; error?: string | null }
 
+const languageOptions = ['en', 'sv', 'de', 'fr', 'es', 'it', 'nl', 'no', 'da', 'fi']
+
+const emptyProfile: CompanyProfile = {
+  business_description: '',
+  industry: '',
+  target_audience: '',
+  tone_of_voice: [],
+  products_services: [],
+  key_terminology: [],
+  content_topics: [],
+  differentiators: [],
+  detected_language: 'en',
+}
+
 export default function CompanyProfilePage() {
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
   const [websiteUrl, setWebsiteUrl] = useState('')
-  const [profile, setProfile] = useState<CompanyProfile | null>(null)
+  const [profile, setProfile] = useState<CompanyProfile>(emptyProfile)
   const [companyName, setCompanyName] = useState('')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analyzeTaskId, setAnalyzeTaskId] = useState<string | null>(null)
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
+  const hasProfileData = useMemo(() => {
+    return Boolean(
+      profile.business_description ||
+      profile.industry ||
+      profile.target_audience ||
+      profile.tone_of_voice.length ||
+      profile.products_services.length ||
+      profile.key_terminology.length ||
+      profile.content_topics.length ||
+      profile.differentiators.length,
+    )
+  }, [profile])
 
   const load = async () => {
     setIsLoading(true)
     const { data } = await api<ProfileResponse>('/api/v1/company/profile')
     if (data) {
       setWebsiteUrl(data.website_url ?? '')
-      setProfile(data.profile ?? null)
+      setProfile(data.profile ? { ...emptyProfile, ...data.profile } : { ...emptyProfile, detected_language: data.language ?? 'en' })
       setCompanyName(data.name ?? '')
     }
     setIsLoading(false)
@@ -59,7 +88,6 @@ export default function CompanyProfilePage() {
     setTimeout(() => { void load() }, 0)
   }, [])
 
-  // Poll analyze task
   useEffect(() => {
     if (!analyzeTaskId) return
     const interval = setInterval(async () => {
@@ -69,7 +97,7 @@ export default function CompanyProfilePage() {
         setIsAnalyzing(false)
         setAnalyzeTaskId(null)
         setStatus({ type: 'success', message: 'Website analyzed successfully.' })
-        void load() // Reload profile
+        void load()
       } else if (data.status === 'failed') {
         setIsAnalyzing(false)
         setAnalyzeTaskId(null)
@@ -100,11 +128,29 @@ export default function CompanyProfilePage() {
     }
   }
 
+  const handleSave = async (e: FormEvent) => {
+    e.preventDefault()
+    setIsSaving(true)
+    setStatus(null)
+
+    const { error } = await api('/api/v1/company/profile', {
+      method: 'PATCH',
+      body: JSON.stringify({ profile }),
+    })
+
+    if (error) {
+      setStatus({ type: 'error', message: error.message || 'Failed to save company profile.' })
+    } else {
+      setStatus({ type: 'success', message: 'Company profile updated.' })
+    }
+
+    setIsSaving(false)
+  }
+
   return (
     <div className="space-y-4" style={{ fontSize: 13 }}>
       <h1 className="text-xl font-semibold">Company Profile</h1>
 
-      {/* Website URL + Analyze */}
       <Card className="rounded-sm border-border bg-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -122,14 +168,11 @@ export default function CompanyProfilePage() {
                 placeholder="https://example.com"
                 className="h-9"
               />
-              <p className="text-[11px] text-muted-foreground">
-                We&apos;ll analyze your website to build a company profile that shapes all generated content.
-              </p>
             </div>
             <Button type="submit" disabled={isAnalyzing || !websiteUrl.trim()} className="gap-1.5">
               {isAnalyzing ? (
                 <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Analyzing...</>
-              ) : profile ? (
+              ) : hasProfileData ? (
                 <><RefreshCw className="h-3.5 w-3.5" /> Re-analyze</>
               ) : (
                 <><Sparkles className="h-3.5 w-3.5" /> Analyze Website</>
@@ -147,7 +190,6 @@ export default function CompanyProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Extracted Profile */}
       {isLoading ? (
         <Card className="rounded-sm border-border bg-white">
           <CardContent className="p-6 space-y-3">
@@ -156,43 +198,88 @@ export default function CompanyProfilePage() {
             <Skeleton className="h-20 w-full" />
           </CardContent>
         </Card>
-      ) : profile ? (
-        <>
-          <Card className="rounded-sm border-border bg-white">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{companyName}</span>
-                <div className="flex gap-2">
-                  <Badge variant="outline">{profile.industry}</Badge>
-                  <Badge variant="outline">{profile.detected_language.toUpperCase()}</Badge>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <ProfileSection title="Business Description" text={profile.business_description} />
-              <ProfileSection title="Target Audience" text={profile.target_audience} />
-
-              <div className="grid grid-cols-2 gap-4">
-                <TagList title="Tone of Voice" items={profile.tone_of_voice} />
-                <TagList title="Products & Services" items={profile.products_services} />
-                <TagList title="Key Terminology" items={profile.key_terminology} />
-                <TagList title="Content Topics" items={profile.content_topics} />
-                <TagList title="Differentiators" items={profile.differentiators} />
+      ) : (
+        <Card className="rounded-sm border-border bg-white">
+          <CardHeader>
+            <CardTitle>{companyName || 'Company'}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSave} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Business Description</Label>
+                <textarea
+                  value={profile.business_description}
+                  onChange={(e) => setProfile((prev) => ({ ...prev, business_description: e.target.value }))}
+                  rows={4}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-[13px]"
+                />
               </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Industry</Label>
+                  <Input
+                    value={profile.industry}
+                    onChange={(e) => setProfile((prev) => ({ ...prev, industry: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Detected Language</Label>
+                  <select
+                    value={profile.detected_language}
+                    onChange={(e) => setProfile((prev) => ({ ...prev, detected_language: e.target.value }))}
+                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-[13px]"
+                  >
+                    {languageOptions.map((lang) => <option key={lang} value={lang}>{lang.toUpperCase()}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Target Audience</Label>
+                <textarea
+                  value={profile.target_audience}
+                  onChange={(e) => setProfile((prev) => ({ ...prev, target_audience: e.target.value }))}
+                  rows={3}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-[13px]"
+                />
+              </div>
+
+              <EditableTagField
+                label="Tone of Voice"
+                items={profile.tone_of_voice}
+                onChange={(items) => setProfile((prev) => ({ ...prev, tone_of_voice: items }))}
+              />
+              <EditableTagField
+                label="Products & Services"
+                items={profile.products_services}
+                onChange={(items) => setProfile((prev) => ({ ...prev, products_services: items }))}
+              />
+              <EditableTagField
+                label="Key Terminology"
+                items={profile.key_terminology}
+                onChange={(items) => setProfile((prev) => ({ ...prev, key_terminology: items }))}
+              />
+              <EditableTagField
+                label="Content Topics"
+                items={profile.content_topics}
+                onChange={(items) => setProfile((prev) => ({ ...prev, content_topics: items }))}
+              />
+              <EditableTagField
+                label="Differentiators"
+                items={profile.differentiators}
+                onChange={(items) => setProfile((prev) => ({ ...prev, differentiators: items }))}
+              />
+
+              <Button type="submit" disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Profile'}</Button>
 
               {profile._scraped_at && (
                 <p className="text-[11px] text-muted-foreground">
                   Last analyzed: {new Date(profile._scraped_at).toLocaleString()} · {profile._pages_analyzed} pages
                 </p>
               )}
-            </CardContent>
-          </Card>
-        </>
-      ) : (
-        <Card className="rounded-sm border-border bg-white">
-          <CardContent className="py-12 text-center">
-            <p className="text-[14px] font-semibold">No profile yet</p>
-            <p className="text-[13px] text-muted-foreground mt-1">Enter your website URL above and click Analyze to get started.</p>
+            </form>
           </CardContent>
         </Card>
       )}
@@ -200,24 +287,54 @@ export default function CompanyProfilePage() {
   )
 }
 
-function ProfileSection({ title, text }: { title: string; text: string }) {
-  if (!text) return null
-  return (
-    <div className="space-y-1">
-      <h3 className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">{title}</h3>
-      <p className="text-[13px] text-foreground leading-relaxed">{text}</p>
-    </div>
-  )
-}
+function EditableTagField({
+  label,
+  items,
+  onChange,
+}: {
+  label: string
+  items: string[]
+  onChange: (next: string[]) => void
+}) {
+  const [value, setValue] = useState('')
 
-function TagList({ title, items }: { title: string; items: string[] }) {
-  if (!items.length) return null
+  const addTag = () => {
+    const nextValue = value.trim()
+    if (!nextValue || items.includes(nextValue)) return
+    onChange([...items, nextValue])
+    setValue('')
+  }
+
   return (
     <div className="space-y-1.5">
-      <h3 className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">{title}</h3>
+      <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</Label>
+      <div className="flex gap-2">
+        <Input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              addTag()
+            }
+          }}
+          placeholder={`Add ${label.toLowerCase()}...`}
+        />
+        <Button type="button" variant="outline" onClick={addTag}>Add</Button>
+      </div>
       <div className="flex flex-wrap gap-1.5">
         {items.map((item) => (
-          <Badge key={item} variant="outline" className="text-[11px]">{item}</Badge>
+          <Badge key={item} variant="outline" className="flex items-center gap-1 text-[11px]">
+            {item}
+            <button
+              type="button"
+              onClick={() => onChange(items.filter((tag) => tag !== item))}
+              className="inline-flex"
+              aria-label={`Remove ${item}`}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
         ))}
       </div>
     </div>
