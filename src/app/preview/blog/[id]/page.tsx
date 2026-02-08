@@ -211,7 +211,7 @@ export default function BlogPreviewPage() {
 
                 <ContextPreview content={{ elements: post.elements }} elements={post.elements} />
 
-                <div className="space-y-4">
+                <div>
                   {post.elements.map((element) => (
                     <div key={element.id} id={`section-${element.id}`} className="scroll-mt-24">
                       <ElementRenderer

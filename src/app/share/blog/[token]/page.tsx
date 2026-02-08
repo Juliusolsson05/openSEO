@@ -113,7 +113,7 @@ export default async function SharedBlogPage({ params }: { params: Promise<{ tok
               </div>
             ) : null}
 
-            <div className="space-y-4">
+            <div>
               {post.elements.map((element) => {
                 const Preview = getPreviewComponent(element.element_type as any)
                 return <Preview key={element.id} content={element.content} />

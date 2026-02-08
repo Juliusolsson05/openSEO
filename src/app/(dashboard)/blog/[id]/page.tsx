@@ -124,7 +124,7 @@ export default function BlogPostPage() {
               )}
 
               <InlineEditProvider>
-                <div className="space-y-2">
+                <div>
                   <ContextPreview
                     content={{ elements: post.elements }}
                     elements={post.elements as any}
