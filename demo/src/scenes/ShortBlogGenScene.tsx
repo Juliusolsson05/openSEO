@@ -81,20 +81,9 @@ type RevealBlockProps = {
   style?: React.CSSProperties;
 };
 
-const GridOverlay: React.FC = () => {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        backgroundImage:
-          "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)",
-        backgroundSize: "40px 40px",
-        opacity: 0.35,
-      }}
-    />
-  );
-};
+const GridOverlay: React.FC = () => (
+  <div style={{ position: "absolute", inset: 0, opacity: 0.06, backgroundImage: "linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+);
 
 const SkeletonLine: React.FC<{ frame: number; width: string; height?: number }> = ({
   frame,
@@ -247,10 +236,6 @@ export const ShortBlogGenScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const fadeFromWhite = interpolate(frame, [0, 10], [1, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
 
   const cardEntrance = spring({
     frame: Math.max(0, frame - 10),
@@ -290,7 +275,7 @@ export const ShortBlogGenScene: React.FC = () => {
   return (
     <AbsoluteFill
       style={{
-        background: "linear-gradient(135deg, #0A1628 0%, #162238 100%)",
+        background: "linear-gradient(135deg, #002050 0%, #0078D4 100%)",
         fontFamily: F,
         display: "flex",
         justifyContent: "center",
@@ -298,6 +283,9 @@ export const ShortBlogGenScene: React.FC = () => {
       }}
     >
       <GridOverlay />
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.00) 50%)" }} />
+      <div style={{ position: "absolute", top: -100, right: -60, width: 340, height: 340, transform: "rotate(12deg)", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" }} />
+      <div style={{ position: "absolute", bottom: -80, left: -60, width: 260, height: 260, transform: "rotate(-8deg)", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.015)" }} />
 
       <div
         style={{
@@ -306,7 +294,7 @@ export const ShortBlogGenScene: React.FC = () => {
           borderRadius: 16,
           background: COLORS.card,
           boxShadow:
-            "0 30px 80px rgba(2,12,27,0.45), 0 10px 30px rgba(2,12,27,0.30), 0 2px 8px rgba(2,12,27,0.20)",
+            "0 30px 80px rgba(0,20,60,0.5), 0 10px 30px rgba(0,20,60,0.35), 0 2px 8px rgba(0,20,60,0.25)",
           transform: `translateY(${cardY}px)`,
           opacity: cardOpacity,
           overflow: "hidden",
@@ -624,16 +612,6 @@ export const ShortBlogGenScene: React.FC = () => {
         </div>
       </div>
 
-      {/* Initial cinematic fade from white */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: "#FFFFFF",
-          opacity: fadeFromWhite,
-          pointerEvents: "none",
-        }}
-      />
     </AbsoluteFill>
   );
 };

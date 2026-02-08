@@ -390,28 +390,32 @@ const TitlesScene: React.FC = () => {
 /* ══════════════════════════════════════════════
  * Main Composition
  * ══════════════════════════════════════════════ */
-export const ShortDemo: React.FC = () => (
-  <AbsoluteFill style={{ background: "#FFFFFF" }}>
-    <Sequence from={0} durationInFrames={sec(1)}>
-      <IntroScene />
-    </Sequence>
-    <Sequence from={sec(1)} durationInFrames={sec(6)}>
-      <InputScene />
-    </Sequence>
-    <Sequence from={sec(7)} durationInFrames={sec(7)}>
-      <TitlesScene />
-    </Sequence>
-    <Sequence from={sec(14)} durationInFrames={sec(10)}>
-      <ShortBlogGenScene />
-    </Sequence>
-    <Sequence from={sec(24)} durationInFrames={sec(4)}>
-      <ShortResultsScene />
-    </Sequence>
-    <Sequence from={sec(28)} durationInFrames={sec(4)}>
-      <ShortNetworkScene />
-    </Sequence>
-    <Sequence from={sec(32)} durationInFrames={sec(4)}>
-      <ShortOutroScene />
-    </Sequence>
-  </AbsoluteFill>
-);
+export const ShortDemo: React.FC = () => {
+  const O = 8; // overlap frames for smoother transitions
+
+  return (
+    <AbsoluteFill style={{ background: "#0A1628" }}>
+      <Sequence from={0} durationInFrames={sec(1) + O}>
+        <IntroScene />
+      </Sequence>
+      <Sequence from={sec(1)} durationInFrames={sec(6) + O}>
+        <InputScene />
+      </Sequence>
+      <Sequence from={sec(7)} durationInFrames={sec(7) + O}>
+        <TitlesScene />
+      </Sequence>
+      <Sequence from={sec(14)} durationInFrames={sec(10) + O}>
+        <ShortBlogGenScene />
+      </Sequence>
+      <Sequence from={sec(24)} durationInFrames={sec(4) + O}>
+        <ShortResultsScene />
+      </Sequence>
+      <Sequence from={sec(28)} durationInFrames={sec(4) + O}>
+        <ShortNetworkScene />
+      </Sequence>
+      <Sequence from={sec(32)} durationInFrames={sec(4)}>
+        <ShortOutroScene />
+      </Sequence>
+    </AbsoluteFill>
+  );
+};
