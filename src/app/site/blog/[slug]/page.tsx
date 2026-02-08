@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
-import { PostRenderer } from '@/app/example/_components/PostRenderer'
+import { SitePostRenderer } from '@/app/site/_components/SitePostRenderer'
 import { getPost, getPosts } from '@/server/public-content/data'
 
 type PageProps = { params: Promise<{ slug: string }> }
@@ -56,7 +56,7 @@ export default async function SiteBlogPostPage({ params }: PageProps) {
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_240px]">
         <article>
-          <PostRenderer elements={post.elements} />
+          <SitePostRenderer elements={post.elements} />
         </article>
         <aside className="hidden lg:block">
           <TableOfContents elements={post.elements} />

@@ -1,7 +1,7 @@
-import { DictionaryIndex } from '@/app/example/_components/DictionaryIndex'
+import { SiteDictionaryIndex } from '@/app/site/_components/SiteDictionaryIndex'
 import { getDictionary } from '@/server/public-content/data'
 
 export default async function SiteDictionaryPage() {
   const dictionary = await getDictionary()
-  return <DictionaryIndex dictionary={dictionary} />
+  return <SiteDictionaryIndex dictionary={dictionary} />
 }

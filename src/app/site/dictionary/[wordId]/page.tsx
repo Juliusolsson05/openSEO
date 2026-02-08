@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { WordRenderer } from '@/app/example/_components/WordRenderer'
+import { SiteWordRenderer } from '@/app/site/_components/SiteWordRenderer'
 import { getDictionary, getWord } from '@/server/public-content/data'
 
 type PageProps = { params: Promise<{ wordId: string }> }
@@ -23,7 +23,7 @@ export default async function SiteDictionaryWordPage({ params }: PageProps) {
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <WordRenderer word={word} />
+        <SiteWordRenderer word={word} />
 
         <aside className="space-y-6">
           <div className="rounded-xl border border-neutral-200 p-4">
