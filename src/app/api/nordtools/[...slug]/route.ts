@@ -107,7 +107,12 @@ const routeHandler = apiHandler(async (ctx) => {
   }
 
   if (path === 'company/metadata/scrape') {
-    return withDeprecationHeaders(raw({ task_id: 'not_available', status: 'not_available', detail: 'Task queue not migrated' }, 501))
+    const { analyzeWebsiteAsync } = await import('@/server/services/website-analyzer')
+    const company = await getCompany(ctx.companyId)
+    const url = (ctx.body as Record<string, unknown>)?.website_url ?? company.website_url
+    if (!url) return withDeprecationHeaders(raw({ detail: 'No website_url provided or configured' }, 400))
+    const result = analyzeWebsiteAsync(ctx.companyId, String(url))
+    return withDeprecationHeaders(raw(result, 202))
   }
 
   if (path === 'settings/get') {

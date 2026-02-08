@@ -116,7 +116,9 @@ model Company {
   business_type String
   keywords      Json     @default("[]")
   language      String
+  website_url   String?
   created_at    DateTime @default(now())
+  updated_at    DateTime @default(now()) @updatedAt
 
   aurora_enabled Boolean @default(false)
   pulse_enabled  Boolean @default(false)
@@ -126,6 +128,9 @@ model Company {
   api_endpoint String?
   api_key      String?
   metadata     Json    @default("{\"business_description\":\"\",\"industry_description\":\"\"}")
+
+  /// Structured company profile extracted from website by AI
+  profile      Json?
 
   users                    User[]
   categories               Category[]

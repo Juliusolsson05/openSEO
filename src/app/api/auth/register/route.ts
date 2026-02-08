@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs'
 import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/prisma'
+import { analyzeWebsiteAsync } from '@/server/services/website-analyzer'
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -59,14 +60,21 @@ export async function POST(req: Request) {
         business_type: companyName,
         language: 'en',
         keywords: [],
+        website_url: companyUrl,
         settings: {
           onboarding: {
-            website_url: companyUrl,
             completed_at: new Date().toISOString(),
           },
         },
       },
     })
+
+    // Fire-and-forget: scrape website and build company profile
+    try {
+      analyzeWebsiteAsync(company.id, companyUrl)
+    } catch {
+      // Non-blocking — profile extraction failure shouldn't break registration
+    }
 
     await prisma.user.update({
       where: { id: invited.id },
