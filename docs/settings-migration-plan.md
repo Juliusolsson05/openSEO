@@ -62,6 +62,7 @@
 - Make `/api/nordtools/*` settings routes wrappers or deprecate.
 - Remove dead legacy branches after usage drops to zero.
 - Add deprecation headers + sunset date.
+- Keep compatibility wrappers until all dashboard pages and automations are confirmed on `/api/v1/settings/*`.
 
 ## Safety Checklist
 

@@ -164,6 +164,7 @@ export default function SettingsPage() {
       <Card className="rounded-sm border-border bg-white">
         <CardHeader>
           <CardTitle>Settings Panels</CardTitle>
+          <p className="text-[12px] text-muted-foreground">Use dedicated pages for deeper domain settings: <Link href="/company-profile" className="text-primary hover:underline">Company Profile</Link> · <Link href="/publishing" className="text-primary hover:underline">Publishing</Link> · <Link href="/elements" className="text-primary hover:underline">Elements</Link></p>
         </CardHeader>
         <CardContent className="space-y-3">
           <details className="rounded-sm border border-border" open>
