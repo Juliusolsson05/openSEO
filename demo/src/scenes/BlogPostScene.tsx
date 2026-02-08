@@ -2,27 +2,28 @@ import React from "react";
 import {
   interpolate,
   useCurrentFrame,
-  useVideoConfig,
   Easing,
 } from "remotion";
 import { BrowserFrame } from "../components/BrowserFrame";
-import { HEIGHT, WIDTH, COLORS } from "../constants";
+import { HEIGHT } from "../constants";
 import { DashboardShell } from "../ui/DashboardShell";
 import { MockBlogPostPage } from "../ui/blog/MockBlogPostPage";
 
 /* ────────────────────────────────────────────
  * Blog Post Scene — 20s (600 frames @ 30fps)
  *
- * Simple slow scroll from top to bottom.
- * No camera zoom, no cursor, no clicks.
- * Just showcasing the blog post content.
+ * Elements generate live as the page scrolls
+ * down at a medium pace. Each element starts
+ * as a skeleton and crossfades to real content
+ * just before it scrolls into view.
+ *
+ * Scroll distance is tuned so the conclusion
+ * is visible near the end.
  * ──────────────────────────────────────────── */
 
-// How far down to scroll (px). The blog content is taller than viewport,
-// so we scroll the inner content area.
-const SCROLL_DISTANCE = 1800;
-const HOLD_START = 30;   // hold at top for 1s
-const HOLD_END = 570;    // stop scrolling, hold at bottom for 1s
+const SCROLL_DISTANCE = 2000;
+const HOLD_START = 20;   // brief hold at top
+const HOLD_END = 570;    // stop scrolling near end
 
 export const BlogPostScene: React.FC = () => {
   const frame = useCurrentFrame();
@@ -44,10 +45,9 @@ export const BlogPostScene: React.FC = () => {
         pageTitle="Edit Post"
         sidebarActiveItem="Blog Posts"
       >
-        {/* Undo DashboardShell's 32px padding, fill full area */}
         <div style={{
           margin: -32,
-          height: HEIGHT - 48 - 40, /* viewport minus topbar minus browser title bar */
+          height: HEIGHT - 48 - 40,
           overflow: "hidden",
           position: "relative",
         }}>
@@ -56,7 +56,7 @@ export const BlogPostScene: React.FC = () => {
             top: 0, left: 0, right: 0,
             transform: `translateY(${-scrollY}px)`,
           }}>
-            <MockBlogPostPage />
+            <MockBlogPostPage frame={frame} />
           </div>
         </div>
       </DashboardShell>
