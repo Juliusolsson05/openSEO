@@ -17,6 +17,8 @@ const generalPatchSchema = z.object({
   language: z.string().min(2).max(16).optional(),
   business_type: z.string().max(255).optional(),
   keywords: z.array(z.string()).optional(),
+  business_description: z.string().max(10000).optional(),
+  industry_description: z.string().max(10000).optional(),
 })
 
 const generationPatchSchema = z.object({
@@ -175,6 +177,7 @@ export class SettingsService {
 
     if (domain === 'general') {
       const general = patch as z.infer<typeof generalPatchSchema>
+      const metadata = normalizeMetadata(company.metadata)
       await prisma.company.update({
         where: { id: companyId },
         data: {
@@ -182,6 +185,21 @@ export class SettingsService {
           ...(general.language !== undefined ? { language: general.language } : {}),
           ...(general.business_type !== undefined ? { business_type: general.business_type } : {}),
           ...(general.keywords !== undefined ? { keywords: general.keywords } : {}),
+          ...(
+            general.business_description !== undefined || general.industry_description !== undefined
+              ? {
+                  metadata: {
+                    ...metadata,
+                    ...(general.business_description !== undefined
+                      ? { business_description: general.business_description }
+                      : {}),
+                    ...(general.industry_description !== undefined
+                      ? { industry_description: general.industry_description }
+                      : {}),
+                  } as Prisma.InputJsonValue,
+                }
+              : {}
+          ),
         },
       })
     } else if (domain === 'publishing') {

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { apiHandler } from '@/server/api/handler'
 import { NotFoundError, ValidationError } from '@/server/api/errors'
 import { error, raw } from '@/server/api/response'
+import { settingsService } from '@/server/services/settings.service'
 
 function getSlugParts(params: Record<string, unknown>): string[] {
   const value = params.slug
@@ -230,11 +231,13 @@ const routeHandler = apiHandler(async (ctx) => {
   const path = slug.join('/')
 
   if (path === 'company/get') {
-    const company = await getCompany(ctx.companyId)
+    const publishing = await settingsService.getDomain(ctx.companyId, 'publishing')
+    const general = await settingsService.getDomain(ctx.companyId, 'general')
     return raw({
-      ...company,
-      id: company.id,
-      name: company.name,
+      id: general.company_id,
+      name: (general.settings as Record<string, unknown>).name,
+      api_endpoint: (publishing.settings as Record<string, unknown>).api_endpoint,
+      api_key: (publishing.settings as Record<string, unknown>).has_api_key ? '***' : null,
     })
   }
 
@@ -247,25 +250,30 @@ const routeHandler = apiHandler(async (ctx) => {
       throw new ValidationError('api_endpoint is required')
     }
 
-    await prisma.company.update({
-      where: { id: ctx.companyId },
-      data: {
-        api_key: apiKey || null,
-        api_endpoint: apiEndpoint,
-      },
-      select: { id: true },
+    await settingsService.updateDomain(ctx.companyId, 'publishing', {
+      api_endpoint: apiEndpoint,
+      ...(apiKey ? { api_key: apiKey } : {}),
     })
 
     return raw({ detail: 'Publishing credentials updated successfully.' })
   }
 
   if (path === 'company/metadata') {
-    const company = await getCompany(ctx.companyId)
-    const metadata = asObject(company.metadata)
+    const body = asObject(ctx.body)
+
+    if (Object.keys(body).length > 0) {
+      await settingsService.updateDomain(ctx.companyId, 'general', {
+        ...(body.business_description !== undefined ? { business_description: String(body.business_description) } : {}),
+        ...(body.industry_description !== undefined ? { industry_description: String(body.industry_description) } : {}),
+      })
+    }
+
+    const general = await settingsService.getDomain(ctx.companyId, 'general')
+    const settings = general.settings as Record<string, unknown>
 
     return raw({
-      business_description: String(metadata.business_description ?? ''),
-      industry_description: String(metadata.industry_description ?? ''),
+      business_description: String(settings.business_description ?? ''),
+      industry_description: String(settings.industry_description ?? ''),
     })
   }
 
@@ -291,9 +299,21 @@ const routeHandler = apiHandler(async (ctx) => {
     const category = ctx.searchParams.get('category')
     if (!category) throw new ValidationError('Missing required query parameter: category')
 
+    if (category === 'aurora.blog') {
+      const domain = await settingsService.getDomain(ctx.companyId, 'generation')
+      return raw({ settings: domain.settings })
+    }
+    if (category === 'aurora.extensions') {
+      const domain = await settingsService.getDomain(ctx.companyId, 'integrations')
+      return raw({ settings: domain.settings })
+    }
+    if (category === 'aurora.blog.quillo') {
+      const domain = await settingsService.getDomain(ctx.companyId, 'quillo')
+      return raw({ settings: domain.settings })
+    }
+
     const company = await getCompany(ctx.companyId)
     const settings = asObject(company.settings)
-
     return raw({ settings: asObject(settings[category]) })
   }
 
@@ -304,10 +324,21 @@ const routeHandler = apiHandler(async (ctx) => {
     const body = asObject(ctx.body)
     const nextSettings = asObject(body.settings)
 
+    if (category === 'aurora.blog') {
+      const updated = await settingsService.updateDomain(ctx.companyId, 'generation', nextSettings)
+      return raw({ settings: updated.settings })
+    }
+    if (category === 'aurora.extensions') {
+      const updated = await settingsService.updateDomain(ctx.companyId, 'integrations', nextSettings)
+      return raw({ settings: updated.settings })
+    }
+    if (category === 'aurora.blog.quillo') {
+      const updated = await settingsService.updateDomain(ctx.companyId, 'quillo', nextSettings)
+      return raw({ settings: updated.settings })
+    }
+
     const company = await getCompany(ctx.companyId)
     const settings = asObject(company.settings)
-
-    // Deep-merge into existing category settings so we don't clobber sibling keys
     const existingCategory = asObject(settings[category])
     const merged = { ...existingCategory, ...nextSettings }
 

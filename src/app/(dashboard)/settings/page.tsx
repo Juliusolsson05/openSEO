@@ -11,9 +11,13 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 
-type CompanyMetadata = {
-  business_description?: string
-  industry_description?: string
+type GeneralSettingsResponse = {
+  settings?: {
+    business_description?: string
+    industry_description?: string
+    api_endpoint?: string | null
+    has_api_key?: boolean
+  }
 }
 
 type InboundKey = {
@@ -28,62 +32,64 @@ type InboundKeyCreateResponse = InboundKey & {
   key?: string
 }
 
-const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i
-
 export default function SettingsPage() {
-  const [websiteUrl, setWebsiteUrl] = useState('')
+  const [businessDescription, setBusinessDescription] = useState('')
+  const [industryDescription, setIndustryDescription] = useState('')
   const [isLoading, setIsLoading] = useState(true)
-  const [isSubmittingUrl, setIsSubmittingUrl] = useState(false)
+  const [isSubmittingProfile, setIsSubmittingProfile] = useState(false)
   const [isSavingApi, setIsSavingApi] = useState(false)
-  const [companyData, setCompanyData] = useState<CompanyMetadata | null>(null)
   const [publishingEndpoint, setPublishingEndpoint] = useState('')
+  const [hasExistingApiKey, setHasExistingApiKey] = useState(false)
   const [apiKey, setApiKey] = useState('')
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [inboundKeys, setInboundKeys] = useState<InboundKey[]>([])
   const [newInboundKeyName, setNewInboundKeyName] = useState('')
   const [newInboundKeyValue, setNewInboundKeyValue] = useState<string | null>(null)
 
-  const hasCompanyData = Boolean(
-    companyData?.business_description?.trim() || companyData?.industry_description?.trim()
-  )
-
-  const isValidUrl = urlRegex.test(websiteUrl)
-
-  const fetchCompanyMetadata = async () => {
+  const fetchSettings = async () => {
     setIsLoading(true)
-    const { data, error } = await api<CompanyMetadata>('/api/nordtools/company/metadata', {
-      method: 'GET',
-    })
 
-    if (error) {
-      setCompanyData(null)
-      setStatus({ type: 'error', message: error.message || 'Error fetching company metadata.' })
+    const [generalRes, publishingRes] = await Promise.all([
+      api<GeneralSettingsResponse>('/api/v1/settings/general'),
+      api<GeneralSettingsResponse>('/api/v1/settings/publishing'),
+    ])
+
+    if (generalRes.error) {
+      setStatus({ type: 'error', message: generalRes.error.message || 'Error fetching company metadata.' })
     } else {
-      setCompanyData(data)
+      setBusinessDescription(String(generalRes.data?.settings?.business_description ?? ''))
+      setIndustryDescription(String(generalRes.data?.settings?.industry_description ?? ''))
+    }
+
+    if (!publishingRes.error) {
+      setPublishingEndpoint(String(publishingRes.data?.settings?.api_endpoint ?? ''))
+      setHasExistingApiKey(Boolean(publishingRes.data?.settings?.has_api_key))
     }
 
     setIsLoading(false)
   }
 
-  const submitUrl = async (e: FormEvent) => {
+  const submitProfile = async (e: FormEvent) => {
     e.preventDefault()
-    if (!isValidUrl) return
 
     setStatus(null)
-    setIsSubmittingUrl(true)
+    setIsSubmittingProfile(true)
 
-    const { data, error } = await apiPost<CompanyMetadata>('/api/nordtools/company/metadata', {
-      url: websiteUrl,
+    const { error } = await api('/api/v1/settings/general', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        business_description: businessDescription,
+        industry_description: industryDescription,
+      }),
     })
 
     if (error) {
       setStatus({ type: 'error', message: error.message || 'Failed to update company profile.' })
     } else {
-      setCompanyData(data)
       setStatus({ type: 'success', message: 'Company profile updated successfully.' })
     }
 
-    setIsSubmittingUrl(false)
+    setIsSubmittingProfile(false)
   }
 
   const submitApiForm = async (e: FormEvent) => {
@@ -91,15 +97,19 @@ export default function SettingsPage() {
     setStatus(null)
     setIsSavingApi(true)
 
-    const { error } = await apiPost('/api/nordtools/company/credentials/update', {
-      api_endpoint: publishingEndpoint,
-      api_key: apiKey,
+    const { error } = await api('/api/v1/settings/publishing', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        api_endpoint: publishingEndpoint,
+        ...(apiKey ? { api_key: apiKey } : {}),
+      }),
     })
 
     if (error) {
       setStatus({ type: 'error', message: error.message || 'Failed to update API credentials.' })
     } else {
       setStatus({ type: 'success', message: 'API credentials updated successfully.' })
+      if (apiKey) setHasExistingApiKey(true)
       setApiKey('')
     }
 
@@ -123,7 +133,9 @@ export default function SettingsPage() {
       return
     }
 
-    const payload = data?.data ?? data
+    const payload = data && typeof data === 'object' && 'data' in data
+      ? (data.data as InboundKeyCreateResponse)
+      : (data as InboundKeyCreateResponse | null)
     setNewInboundKeyValue(payload?.key ?? null)
     setNewInboundKeyName('')
     setStatus({ type: 'success', message: 'Inbound key created. Copy it now.' })
@@ -141,7 +153,7 @@ export default function SettingsPage() {
 
 
   useEffect(() => {
-    fetchCompanyMetadata()
+    fetchSettings()
     fetchInboundKeys()
   }, [])
 
@@ -165,38 +177,38 @@ export default function SettingsPage() {
                   <Skeleton className="h-14 w-full" />
                   <Skeleton className="h-14 w-full" />
                 </div>
-              ) : hasCompanyData ? (
-                <div className="space-y-2">
-                  <details className="rounded-sm border border-border bg-background/30">
-                    <summary className="cursor-pointer px-3 py-2 text-[11px] uppercase tracking-wide">
-                      Business Description
-                    </summary>
-                    <div className="border-t border-border bg-white px-3 py-2 whitespace-pre-wrap">
-                      {companyData?.business_description || 'No business description available.'}
-                    </div>
-                  </details>
-
-                  <details className="rounded-sm border border-border bg-background/30">
-                    <summary className="cursor-pointer px-3 py-2 text-[11px] uppercase tracking-wide">
-                      Industry Description
-                    </summary>
-                    <div className="border-t border-border bg-white px-3 py-2 whitespace-pre-wrap">
-                      {companyData?.industry_description || 'No industry description available.'}
-                    </div>
-                  </details>
-                </div>
               ) : (
-                <form onSubmit={submitUrl} className="space-y-3">
+                <form onSubmit={submitProfile} className="space-y-3">
                   <p className="text-muted-foreground">
-                    Teach AI about your business for personalized content. Enter your website URL to get started.
+                    Keep your business and industry context updated so generation stays accurate.
                   </p>
-                  <Input
-                    value={websiteUrl}
-                    onChange={(e) => setWebsiteUrl(e.target.value)}
-                    placeholder="https://example.com"
-                  />
-                  <Button type="submit" disabled={!isValidUrl || isSubmittingUrl}>
-                    {isSubmittingUrl ? 'Submitting...' : 'Get Started'}
+
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                      Business Description
+                    </Label>
+                    <textarea
+                      value={businessDescription}
+                      onChange={(e) => setBusinessDescription(e.target.value)}
+                      rows={5}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-[13px]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                      Industry Description
+                    </Label>
+                    <textarea
+                      value={industryDescription}
+                      onChange={(e) => setIndustryDescription(e.target.value)}
+                      rows={5}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-[13px]"
+                    />
+                  </div>
+
+                  <Button type="submit" disabled={isSubmittingProfile}>
+                    {isSubmittingProfile ? 'Saving...' : 'Save profile'}
                   </Button>
                 </form>
               )}
@@ -222,13 +234,13 @@ export default function SettingsPage() {
 
                 <div className="space-y-1.5">
                   <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    API Key
+                    API Key {hasExistingApiKey && !apiKey && <span className="text-success">(set)</span>}
                   </Label>
                   <Input
                     type="password"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    required
+                    placeholder={hasExistingApiKey ? '••••••• (leave blank to keep current)' : 'Enter API key'}
                   />
                 </div>
 

@@ -1,78 +1,69 @@
 'use client'
 
-import { Label } from '@/components/ui/label'
-
 import { FormEvent, useEffect, useState } from 'react'
-import { api, apiPost } from '@/lib/api'
+
+import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 
-type CompanyMetadata = {
-  business_description?: string
-  industry_description?: string
+type GeneralSettings = {
+  settings?: {
+    name?: string
+    language?: string
+    business_type?: string
+    business_description?: string
+    industry_description?: string
+  }
 }
 
-const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i
-
 export default function CompanyProfilePage() {
-  const [websiteUrl, setWebsiteUrl] = useState('')
   const [isLoading, setIsLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [companyData, setCompanyData] = useState<CompanyMetadata | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [businessDescription, setBusinessDescription] = useState('')
+  const [industryDescription, setIndustryDescription] = useState('')
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
-  const hasCompanyData = Boolean(
-    companyData?.business_description?.trim() || companyData?.industry_description?.trim()
-  )
-
-  const isValidUrl = urlRegex.test(websiteUrl)
-
-  const fetchCompanyMetadata = async () => {
+  const load = async () => {
     setIsLoading(true)
-    const { data, error } = await api<CompanyMetadata>('/api/nordtools/company/metadata', {
-      method: 'GET',
-    })
+    const { data, error } = await api<GeneralSettings>('/api/v1/settings/general')
 
     if (error) {
-      setStatus({ type: 'error', message: error.message || 'Failed to fetch metadata.' })
-      setCompanyData(null)
+      setStatus({ type: 'error', message: error.message || 'Failed to load company profile.' })
     } else {
-      setCompanyData(data)
+      const settings = data?.settings
+      setBusinessDescription(String(settings?.business_description ?? ''))
+      setIndustryDescription(String(settings?.industry_description ?? ''))
     }
 
     setIsLoading(false)
   }
 
   useEffect(() => {
-    fetchCompanyMetadata()
+    void load()
   }, [])
 
-  const submitUrl = async (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!isValidUrl) return
-
     setStatus(null)
-    setIsSubmitting(true)
+    setIsSaving(true)
 
-    const { data, error } = await apiPost<CompanyMetadata>(
-      '/api/nordtools/company/metadata/scrape',
-      {
-        website_url: websiteUrl,
-      }
-    )
+    const { error } = await api('/api/v1/settings/general', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        business_description: businessDescription,
+        industry_description: industryDescription,
+      }),
+    })
 
     if (error) {
-      setStatus({ type: 'error', message: error.message || 'Failed to submit URL.' })
-      setCompanyData(null)
+      setStatus({ type: 'error', message: error.message || 'Failed to save company profile.' })
     } else {
-      setCompanyData(data)
-      setStatus({ type: 'success', message: 'Metadata scraped and updated successfully.' })
+      setStatus({ type: 'success', message: 'Company profile updated.' })
     }
 
-    setIsSubmitting(false)
+    setIsSaving(false)
   }
 
   return (
@@ -86,49 +77,36 @@ export default function CompanyProfilePage() {
         <CardContent className="space-y-4">
           {isLoading ? (
             <div className="space-y-2">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
-            </div>
-          ) : hasCompanyData ? (
-            <div className="space-y-3">
-              <details className="rounded-sm border border-border bg-background/30">
-                <summary className="cursor-pointer px-3 py-2 text-[11px] uppercase tracking-wide">
-                  Business Description
-                </summary>
-                <div className="border-t border-border bg-white px-3 py-2 whitespace-pre-wrap">
-                  {companyData?.business_description || 'No business description available.'}
-                </div>
-              </details>
-
-              <details className="rounded-sm border border-border bg-background/30">
-                <summary className="cursor-pointer px-3 py-2 text-[11px] uppercase tracking-wide">
-                  Industry Description
-                </summary>
-                <div className="border-t border-border bg-white px-3 py-2 whitespace-pre-wrap">
-                  {companyData?.industry_description || 'No industry description available.'}
-                </div>
-              </details>
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
             </div>
           ) : (
-            <form onSubmit={submitUrl} className="space-y-4">
-              <p className="text-muted-foreground">
-                Teach AI about your business for personalized content. Enter your website URL to get started.
-              </p>
-
+            <form onSubmit={submit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                  Website URL
-                </Label>
-                <Input
-                  value={websiteUrl}
-                  onChange={(e) => setWebsiteUrl(e.target.value)}
-                  placeholder="https://example.com"
+                <label className="text-[11px] uppercase tracking-wide text-muted-foreground">Business Description</label>
+                <textarea
+                  value={businessDescription}
+                  onChange={(e) => setBusinessDescription(e.target.value)}
+                  rows={6}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-[13px]"
+                  placeholder="Describe what your company does, your audience, and positioning."
                 />
               </div>
 
-              <Button type="submit" disabled={!isValidUrl || isSubmitting}>
-                {isSubmitting ? 'Submitting...' : 'Get Started'}
+              <div className="space-y-1.5">
+                <label className="text-[11px] uppercase tracking-wide text-muted-foreground">Industry Description</label>
+                <textarea
+                  value={industryDescription}
+                  onChange={(e) => setIndustryDescription(e.target.value)}
+                  rows={6}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-[13px]"
+                  placeholder="Describe your industry context, terminology, and constraints."
+                />
+              </div>
+
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save Profile'}
               </Button>
             </form>
           )}
