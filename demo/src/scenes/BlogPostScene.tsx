@@ -80,7 +80,7 @@ export const BlogPostScene: React.FC = () => {
 
   /* ── State flags ── */
   const editModeOn      = frame >= 505;
-  const introSelected   = frame >= 545;
+  const introSelected   = frame >= 545 && frame < 640;
   const showAddButton   = frame >= 650 && frame < 700;
   const addModalOpen    = frame >= 700 && frame < 790;
   const caseStudyGen    = frame >= 800 && frame < 880;
