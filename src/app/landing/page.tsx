@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { AuroraLogo } from '@/components/brand/logo'
+import { Presentation } from './_components/Presentation'
 
 /* ── Nav ──────────────────────────────────────────────────── */
 
@@ -37,6 +38,7 @@ function Nav() {
 
         <nav className="hidden items-center gap-0 md:flex">
           {[
+            { label: 'See it in action', href: '#demo' },
             { label: 'How it works', href: '#how-it-works' },
             { label: 'Features', href: '#features' },
             { label: 'Example', href: '/example' },
@@ -70,6 +72,7 @@ function Nav() {
 
       {open && (
         <div className="bg-white px-6 py-4 md:hidden" style={{ borderTop: '1px solid #E6E6E6' }}>
+          <a href="#demo" onClick={() => setOpen(false)} className="block py-2 text-[13px]" style={{ color: '#616161' }}>See it in action</a>
           {['How it works', 'Features'].map((item) => (
             <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} onClick={() => setOpen(false)} className="block py-2 text-[13px]" style={{ color: '#616161' }}>{item}</a>
           ))}
@@ -123,7 +126,7 @@ function Hero() {
               Generate your first post free <ArrowRight className="h-3.5 w-3.5" />
             </Link>
             <a
-              href="#how-it-works"
+              href="#demo"
               className="inline-flex items-center gap-2 px-5 py-2.5 text-[13px] font-medium text-white/80"
               style={{ border: '1px solid rgba(255,255,255,0.25)', borderRadius: 2 }}
             >
@@ -511,6 +514,7 @@ export default function LandingPage() {
     <div className="min-h-screen antialiased" style={{ background: '#FFFFFF', color: '#1A1A1A', fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', sans-serif" }}>
       <Nav />
       <Hero />
+      <Presentation />
       <HowItWorks />
       <Features />
       <ElementShowcase />
