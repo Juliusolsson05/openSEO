@@ -13,6 +13,8 @@ const STATUS_TO_NUMBER: Record<TitleStatus, number> = {
 }
 
 function serializeTitle(t: Record<string, unknown>) {
+  const blogPost = t.blogPost as { id?: number } | null | undefined
+
   return {
     ...t,
     status: STATUS_TO_NUMBER[(t.status as TitleStatus)] ?? 1,
@@ -20,6 +22,7 @@ function serializeTitle(t: Record<string, unknown>) {
     generatedDate: t.generated_date,
     scheduledDate: t.scheduled_date,
     company: t.companyId,
+    postId: typeof blogPost?.id === 'number' ? blogPost.id : null,
   }
 }
 
@@ -64,7 +67,12 @@ const handler = apiHandler(async (ctx) => {
   const [data, total] = await Promise.all([
     prisma.title.findMany({
       where,
-      include: { categories: true, bulk_schedule: true, _count: { select: { categories: true } } },
+      include: {
+        categories: true,
+        bulk_schedule: true,
+        blogPost: { select: { id: true } },
+        _count: { select: { categories: true } },
+      },
       orderBy: { created_at: 'desc' },
       skip: (query.page - 1) * query.pageSize,
       take: query.pageSize,

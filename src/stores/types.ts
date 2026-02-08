@@ -155,7 +155,8 @@ export interface BlogTitle {
   dateCreated: string
   scheduledDate?: string
   bulkTag?: string
-  categories?: string[]
+  categories?: Category[]
   generatedDate?: string
+  postId?: number | null
   company: number
 }
