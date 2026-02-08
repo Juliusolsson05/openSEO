@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { apiHandler } from '@/server/api/handler'
 import { NotFoundError, ValidationError } from '@/server/api/errors'
 import { error, raw } from '@/server/api/response'
-import { settingsService } from '@/server/services/settings.service'
+import { SETTINGS_SCHEMA_CATALOG, settingsService } from '@/server/services/settings.service'
 
 function getSlugParts(params: Record<string, unknown>): string[] {
   const value = params.slug
@@ -43,194 +43,15 @@ async function getCompany(companyId: number) {
   return company
 }
 
-const SETTINGS_STRUCTURE = {
-  'aurora.blog': {
-    category: 'aurora.blog',
-    label: 'Blog',
-    description: 'Core Aurora blog generation settings.',
-    fields: [
-      {
-        key: 'default_language',
-        metadata: {
-          type: 'select',
-          label: 'Default language',
-          description: 'Language used when generating new content.',
-          default: 'en',
-          options: [
-            { label: 'English', value: 'en' },
-            { label: 'Swedish', value: 'sv' },
-            { label: 'Norwegian', value: 'no' },
-            { label: 'Danish', value: 'da' },
-            { label: 'German', value: 'de' },
-          ],
-          required: true,
-        },
-      },
-      {
-        key: 'tone_of_voice',
-        metadata: {
-          type: 'textarea',
-          label: 'Tone of voice',
-          description: 'General writing style instructions used across generated posts.',
-          default: '',
-          placeholder: 'Helpful, concise, and professional…',
-        },
-      },
-      {
-        key: 'auto_internal_linking',
-        metadata: {
-          type: 'boolean',
-          label: 'Enable internal linking',
-          description: 'Automatically inject internal links where relevant.',
-          default: true,
-        },
-      },
-      {
-        key: 'default_post_length',
-        metadata: {
-          type: 'number',
-          label: 'Default post length (words)',
-          description: 'Target word count for generated blog posts.',
-          default: 1200,
-          min: 300,
-          max: 5000,
-          step: 50,
-        },
-      },
-    ],
-  },
-  'aurora.extensions': {
-    category: 'aurora.extensions',
-    label: 'Extensions',
-    description: 'Feature and integration toggles for Aurora.',
-    fields: [
-      {
-        key: 'wordpress_enabled',
-        metadata: {
-          type: 'boolean',
-          label: 'WordPress integration',
-          description: 'Enable WordPress upload and sync capabilities.',
-          default: false,
-        },
-      },
-      {
-        key: 'shopify_enabled',
-        metadata: {
-          type: 'boolean',
-          label: 'Shopify integration',
-          description: 'Enable Shopify product import for recommendations.',
-          default: false,
-        },
-      },
-      {
-        key: 'quillo_enabled',
-        metadata: {
-          type: 'boolean',
-          label: 'Enable Quillo AI',
-          description: 'Enable Quillo analysis and social post generation features.',
-          default: true,
-        },
-      },
-    ],
-  },
-  'aurora.blog.quillo': {
-    category: 'aurora.blog.quillo',
-    label: 'Quillo',
-    description: 'Quillo-specific prompts and generation controls.',
-    fields: [
-      {
-        key: 'brand_voice_prompt',
-        metadata: {
-          type: 'textarea',
-          label: 'Brand voice prompt',
-          description: 'Prompt prepended when Quillo generates social snippets.',
-          default: '',
-          placeholder: 'Write in a clear and upbeat style…',
-        },
-      },
-      {
-        key: 'autopilot_enabled',
-        metadata: {
-          type: 'boolean',
-          label: 'Enable Quillo autopilot',
-          description: 'Allow automated Quillo workflows where supported.',
-          default: false,
-        },
-      },
-      {
-        key: 'default_channels',
-        metadata: {
-          type: 'multiselect',
-          label: 'Default channels',
-          description: 'Channels selected by default when creating Quillo posts.',
-          default: ['facebook'],
-          options: [
-            { label: 'Facebook', value: 'facebook' },
-            { label: 'LinkedIn', value: 'linkedin' },
-            { label: 'X / Twitter', value: 'twitter' },
-          ],
-        },
-      },
-    ],
-  },
-  'aurora.blog.model_controls': {
-    category: 'aurora.blog.model_controls',
-    label: 'Model controls',
-    description: 'Advanced model behavior tuning for blog generation.',
-    fields: [
-      {
-        key: 'model',
-        metadata: {
-          type: 'select',
-          label: 'Model',
-          description: 'Model identifier used for generation tasks.',
-          default: 'gpt-4o-mini',
-          options: [
-            { label: 'GPT-4o mini', value: 'gpt-4o-mini' },
-            { label: 'GPT-4o', value: 'gpt-4o' },
-          ],
-          required: true,
-        },
-      },
-      {
-        key: 'temperature',
-        metadata: {
-          type: 'number',
-          label: 'Temperature',
-          description: 'Lower values are more deterministic, higher are more creative.',
-          default: 0.7,
-          min: 0,
-          max: 2,
-          step: 0.1,
-        },
-      },
-      {
-        key: 'top_p',
-        metadata: {
-          type: 'number',
-          label: 'Top P',
-          description: 'Nucleus sampling threshold.',
-          default: 1,
-          min: 0,
-          max: 1,
-          step: 0.05,
-        },
-      },
-      {
-        key: 'max_tokens',
-        metadata: {
-          type: 'number',
-          label: 'Max tokens',
-          description: 'Maximum token budget for generation output.',
-          default: 2048,
-          min: 256,
-          max: 8192,
-          step: 64,
-        },
-      },
-    ],
-  },
+const CATEGORY_TO_DOMAIN = {
+  'aurora.blog': 'generation',
+  'aurora.extensions': 'integrations',
+  'aurora.blog.quillo': 'quillo',
 } as const
+
+function resolveDomain(category: string) {
+  return CATEGORY_TO_DOMAIN[category as keyof typeof CATEGORY_TO_DOMAIN] ?? null
+}
 
 const routeHandler = apiHandler(async (ctx) => {
   if (!ctx.companyId) throw new NotFoundError('Missing company context')
@@ -292,14 +113,26 @@ const routeHandler = apiHandler(async (ctx) => {
   if (path === 'settings/get') {
     const category = ctx.searchParams.get('category')
     if (category) {
-      const selected = SETTINGS_STRUCTURE[category as keyof typeof SETTINGS_STRUCTURE]
-      if (!selected) throw new ValidationError(`Unknown settings category: ${category}`)
-      return withDeprecationHeaders(raw(selected))
+      const domain = resolveDomain(category)
+      if (!domain) throw new ValidationError(`Unknown settings category: ${category}`)
+
+      const selected = SETTINGS_SCHEMA_CATALOG[domain]
+      return withDeprecationHeaders(raw({
+        category,
+        label: domain,
+        description: selected.description,
+        fields: selected.writable_fields,
+      }))
     }
 
     return withDeprecationHeaders(raw({
-      categories: Object.keys(SETTINGS_STRUCTURE),
-      settings: Object.values(SETTINGS_STRUCTURE),
+      categories: Object.keys(CATEGORY_TO_DOMAIN),
+      settings: Object.entries(CATEGORY_TO_DOMAIN).map(([legacyCategory, domain]) => ({
+        category: legacyCategory,
+        label: domain,
+        description: SETTINGS_SCHEMA_CATALOG[domain].description,
+        fields: SETTINGS_SCHEMA_CATALOG[domain].writable_fields,
+      })),
     }))
   }
 
@@ -307,17 +140,10 @@ const routeHandler = apiHandler(async (ctx) => {
     const category = ctx.searchParams.get('category')
     if (!category) throw new ValidationError('Missing required query parameter: category')
 
-    if (category === 'aurora.blog') {
-      const domain = await settingsService.getDomain(ctx.companyId, 'generation')
-      return withDeprecationHeaders(raw({ settings: domain.settings }))
-    }
-    if (category === 'aurora.extensions') {
-      const domain = await settingsService.getDomain(ctx.companyId, 'integrations')
-      return withDeprecationHeaders(raw({ settings: domain.settings }))
-    }
-    if (category === 'aurora.blog.quillo') {
-      const domain = await settingsService.getDomain(ctx.companyId, 'quillo')
-      return withDeprecationHeaders(raw({ settings: domain.settings }))
+    const domain = resolveDomain(category)
+    if (domain) {
+      const selected = await settingsService.getDomain(ctx.companyId, domain)
+      return withDeprecationHeaders(raw({ settings: selected.settings }))
     }
 
     const company = await getCompany(ctx.companyId)
@@ -332,16 +158,9 @@ const routeHandler = apiHandler(async (ctx) => {
     const body = asObject(ctx.body)
     const nextSettings = asObject(body.settings)
 
-    if (category === 'aurora.blog') {
-      const updated = await settingsService.updateDomain(ctx.companyId, 'generation', nextSettings)
-      return withDeprecationHeaders(raw({ settings: updated.settings }))
-    }
-    if (category === 'aurora.extensions') {
-      const updated = await settingsService.updateDomain(ctx.companyId, 'integrations', nextSettings)
-      return withDeprecationHeaders(raw({ settings: updated.settings }))
-    }
-    if (category === 'aurora.blog.quillo') {
-      const updated = await settingsService.updateDomain(ctx.companyId, 'quillo', nextSettings)
+    const domain = resolveDomain(category)
+    if (domain) {
+      const updated = await settingsService.updateDomain(ctx.companyId, domain, nextSettings)
       return withDeprecationHeaders(raw({ settings: updated.settings }))
     }
 
