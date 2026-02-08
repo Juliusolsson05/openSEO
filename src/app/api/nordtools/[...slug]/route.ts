@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client'
+import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/prisma'
 import { apiHandler } from '@/server/api/handler'
@@ -13,8 +14,15 @@ function getSlugParts(params: Record<string, unknown>): string[] {
   return []
 }
 
+function withDeprecationHeaders(response: NextResponse) {
+  response.headers.set('deprecation', 'true')
+  response.headers.set('sunset', '2026-12-31T23:59:59Z')
+  response.headers.set('link', '</docs/settings-migration-plan.md>; rel="deprecation"')
+  return response
+}
+
 function methodNotImplemented(path: string) {
-  return error(`Endpoint not implemented yet: /api/nordtools/${path}`, 501)
+  return withDeprecationHeaders(error(`Endpoint not implemented yet: /api/nordtools/${path}`, 501))
 }
 
 function asObject(value: unknown): Record<string, unknown> {
@@ -233,12 +241,12 @@ const routeHandler = apiHandler(async (ctx) => {
   if (path === 'company/get') {
     const publishing = await settingsService.getDomain(ctx.companyId, 'publishing')
     const general = await settingsService.getDomain(ctx.companyId, 'general')
-    return raw({
+    return withDeprecationHeaders(raw({
       id: general.company_id,
       name: (general.settings as Record<string, unknown>).name,
       api_endpoint: (publishing.settings as Record<string, unknown>).api_endpoint,
       api_key: (publishing.settings as Record<string, unknown>).has_api_key ? '***' : null,
-    })
+    }))
   }
 
   if (path === 'company/credentials/update') {
@@ -255,7 +263,7 @@ const routeHandler = apiHandler(async (ctx) => {
       ...(apiKey ? { api_key: apiKey } : {}),
     })
 
-    return raw({ detail: 'Publishing credentials updated successfully.' })
+    return withDeprecationHeaders(raw({ detail: 'Publishing credentials updated successfully.' }))
   }
 
   if (path === 'company/metadata') {
@@ -271,14 +279,14 @@ const routeHandler = apiHandler(async (ctx) => {
     const general = await settingsService.getDomain(ctx.companyId, 'general')
     const settings = general.settings as Record<string, unknown>
 
-    return raw({
+    return withDeprecationHeaders(raw({
       business_description: String(settings.business_description ?? ''),
       industry_description: String(settings.industry_description ?? ''),
-    })
+    }))
   }
 
   if (path === 'company/metadata/scrape') {
-    return raw({ task_id: 'not_available', status: 'not_available', detail: 'Task queue not migrated' }, 501)
+    return withDeprecationHeaders(raw({ task_id: 'not_available', status: 'not_available', detail: 'Task queue not migrated' }, 501))
   }
 
   if (path === 'settings/get') {
@@ -286,13 +294,13 @@ const routeHandler = apiHandler(async (ctx) => {
     if (category) {
       const selected = SETTINGS_STRUCTURE[category as keyof typeof SETTINGS_STRUCTURE]
       if (!selected) throw new ValidationError(`Unknown settings category: ${category}`)
-      return raw(selected)
+      return withDeprecationHeaders(raw(selected))
     }
 
-    return raw({
+    return withDeprecationHeaders(raw({
       categories: Object.keys(SETTINGS_STRUCTURE),
       settings: Object.values(SETTINGS_STRUCTURE),
-    })
+    }))
   }
 
   if (path === 'settings') {
@@ -301,20 +309,20 @@ const routeHandler = apiHandler(async (ctx) => {
 
     if (category === 'aurora.blog') {
       const domain = await settingsService.getDomain(ctx.companyId, 'generation')
-      return raw({ settings: domain.settings })
+      return withDeprecationHeaders(raw({ settings: domain.settings }))
     }
     if (category === 'aurora.extensions') {
       const domain = await settingsService.getDomain(ctx.companyId, 'integrations')
-      return raw({ settings: domain.settings })
+      return withDeprecationHeaders(raw({ settings: domain.settings }))
     }
     if (category === 'aurora.blog.quillo') {
       const domain = await settingsService.getDomain(ctx.companyId, 'quillo')
-      return raw({ settings: domain.settings })
+      return withDeprecationHeaders(raw({ settings: domain.settings }))
     }
 
     const company = await getCompany(ctx.companyId)
     const settings = asObject(company.settings)
-    return raw({ settings: asObject(settings[category]) })
+    return withDeprecationHeaders(raw({ settings: asObject(settings[category]) }))
   }
 
   if (path === 'settings/update') {
@@ -326,15 +334,15 @@ const routeHandler = apiHandler(async (ctx) => {
 
     if (category === 'aurora.blog') {
       const updated = await settingsService.updateDomain(ctx.companyId, 'generation', nextSettings)
-      return raw({ settings: updated.settings })
+      return withDeprecationHeaders(raw({ settings: updated.settings }))
     }
     if (category === 'aurora.extensions') {
       const updated = await settingsService.updateDomain(ctx.companyId, 'integrations', nextSettings)
-      return raw({ settings: updated.settings })
+      return withDeprecationHeaders(raw({ settings: updated.settings }))
     }
     if (category === 'aurora.blog.quillo') {
       const updated = await settingsService.updateDomain(ctx.companyId, 'quillo', nextSettings)
-      return raw({ settings: updated.settings })
+      return withDeprecationHeaders(raw({ settings: updated.settings }))
     }
 
     const company = await getCompany(ctx.companyId)
@@ -353,7 +361,7 @@ const routeHandler = apiHandler(async (ctx) => {
       select: { settings: true },
     })
 
-    return raw({ settings: asObject(asObject(updated.settings)[category]) })
+    return withDeprecationHeaders(raw({ settings: asObject(asObject(updated.settings)[category]) }))
   }
 
   return methodNotImplemented(path)

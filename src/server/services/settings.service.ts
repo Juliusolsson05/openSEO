@@ -9,6 +9,29 @@ type JsonObject = Record<string, unknown>
 
 export const SETTINGS_VERSION = 1
 
+export const SETTINGS_SCHEMA_CATALOG = {
+  general: {
+    description: 'Company identity and metadata used by generation context.',
+    writable_fields: ['name', 'language', 'business_type', 'keywords', 'business_description', 'industry_description'],
+  },
+  generation: {
+    description: 'Blog generation controls and model selections.',
+    writable_fields: ['default_language', 'tone_of_voice', 'auto_internal_linking', 'default_post_length', 'blog_post_structure_model', 'blog_post_content_model', 'initial_generation_elements'],
+  },
+  publishing: {
+    description: 'Outbound publishing endpoint and auth key.',
+    writable_fields: ['api_endpoint', 'api_key'],
+  },
+  integrations: {
+    description: 'Feature toggles and external integration flags.',
+    writable_fields: ['wordpress_enabled', 'shopify_enabled', 'quillo_enabled', 'aurora_enabled', 'pulse_enabled', 'echo_enabled'],
+  },
+  quillo: {
+    description: 'Quillo-specific generation defaults.',
+    writable_fields: ['brand_voice_prompt', 'autopilot_enabled', 'default_channels'],
+  },
+} as const
+
 export const settingsDomainSchema = z.enum(['general', 'generation', 'publishing', 'integrations', 'quillo'])
 export type SettingsDomain = z.infer<typeof settingsDomainSchema>
 

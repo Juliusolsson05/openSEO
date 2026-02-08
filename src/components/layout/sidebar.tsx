@@ -211,7 +211,15 @@ export function Sidebar() {
               ADMIN
             </p>
             <NavLink item={{ title: 'Users', href: '/admin/users', icon: Shield }} pathname={pathname} />
-            <NavLink item={{ title: 'Example Site', href: '/example', icon: ExternalLink }} pathname={pathname} />
+            <a
+              href="/example"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative flex items-center gap-3 py-[7px] px-4 text-[13px] transition-colors text-sidebar-foreground hover:bg-sidebar-hover"
+            >
+              <ExternalLink className="h-4 w-4 shrink-0 opacity-80" />
+              <span>Example Site</span>
+            </a>
           </div>
         ) : null}
       </nav>
