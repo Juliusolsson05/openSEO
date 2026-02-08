@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { Search, Bell, FileText, Tags, BookOpen, Package, HelpCircle, Building2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { setCookie } from 'cookies-next'
+import { getCookie, setCookie } from 'cookies-next'
 
 import { api } from '@/lib/api'
 import { useAuthStore, USER_TYPES } from '@/stores/auth-store'
@@ -86,7 +86,11 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
   const isAdmin = userData?.userType === USER_TYPES.Administrator
 
   const [companies, setCompanies] = useState<CompanyListItem[]>([])
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(userData?.companyId ?? null)
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(() => {
+    const fromCookie = typeof window !== 'undefined' ? Number(getCookie('companyId') ?? '') : NaN
+    if (Number.isInteger(fromCookie) && fromCookie > 0) return fromCookie
+    return userData?.companyId ?? null
+  })
 
   useEffect(() => {
     if (!isAdmin) return
@@ -100,16 +104,25 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
   }, [isAdmin])
 
   useEffect(() => {
+    if (isAdmin) {
+      const cookieCompanyId = Number(getCookie('companyId') ?? '')
+      if (Number.isInteger(cookieCompanyId) && cookieCompanyId > 0 && cookieCompanyId !== selectedCompanyId) {
+        setTimeout(() => setSelectedCompanyId(cookieCompanyId), 0)
+        return
+      }
+    }
+
     if (userData?.companyId && userData.companyId !== selectedCompanyId) {
       setTimeout(() => setSelectedCompanyId(userData.companyId), 0)
     }
-  }, [userData?.companyId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isAdmin, userData?.companyId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const switchCompany = (companyId: number) => {
     setSelectedCompanyId(companyId)
     setCookie('companyId', String(companyId), {
       sameSite: 'lax',
       secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
+      maxAge: 60 * 60 * 24 * 365,
     })
     window.location.reload()
   }

@@ -70,6 +70,14 @@ export function apiHandler(handler: RouteHandler, options: ApiHandlerOptions = {
         user = session.user
         companyId = user.companyId ?? null
 
+        const requestedCompanyHeader = req.headers.get('Company-ID')
+        if (user.userType === 4 && requestedCompanyHeader) {
+          const requestedCompanyId = Number(requestedCompanyHeader)
+          if (Number.isInteger(requestedCompanyId) && requestedCompanyId > 0) {
+            companyId = requestedCompanyId
+          }
+        }
+
         if (companyId === null) {
           throw new ForbiddenError('User is not associated with a company')
         }

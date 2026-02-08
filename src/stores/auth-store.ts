@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { create } from 'zustand'
 import { getSession, signIn, signOut, useSession } from 'next-auth/react'
-import { setCookie, deleteCookie } from 'cookies-next'
+import { setCookie, deleteCookie, getCookie } from 'cookies-next'
 
 export const USER_TYPES = {
   Demo: 1,
@@ -89,6 +89,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       setCookie('companyId', String(user.companyId), {
         sameSite: 'lax',
         secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
+        maxAge: 60 * 60 * 24 * 365,
       })
     }
 
@@ -131,10 +132,21 @@ export function useAuthSessionSync() {
       company: session.user.company,
     })
 
-    if (session.user.companyId !== null && session.user.companyId !== undefined) {
-      setCookie('companyId', String(session.user.companyId), {
+    const sessionCompanyId = session.user.companyId
+    const isAdmin = session.user.userType === USER_TYPES.Administrator
+    const cookieCompanyIdRaw = getCookie('companyId')
+    const cookieCompanyId = cookieCompanyIdRaw ? Number(cookieCompanyIdRaw) : null
+
+    // Keep admin company switch sticky across refreshes.
+    if (isAdmin && cookieCompanyId && Number.isInteger(cookieCompanyId) && cookieCompanyId > 0) {
+      return
+    }
+
+    if (sessionCompanyId !== null && sessionCompanyId !== undefined) {
+      setCookie('companyId', String(sessionCompanyId), {
         sameSite: 'lax',
         secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
+        maxAge: 60 * 60 * 24 * 365,
       })
     }
   }, [session, setUser, status])
