@@ -140,10 +140,22 @@ export const MockBlogPostPage: React.FC<{
                   <CaseStudy
                     content={{
                       title: "How Vink Cut Content Production Time by 62%",
-                      company: "Vink E-commerce",
-                      challenge: "The marketing team spent too much time drafting and revising blog content manually, delaying publication schedules.",
-                      solution: "They used Aurora to generate complete first drafts with structured sections, then used inline editing and Autopilot to polish weak areas.",
-                      result: "Content production time dropped by 62%, publishing cadence doubled, and organic traffic grew by 34% in 8 weeks.",
+                      clientName: "Vink E-commerce",
+                      industry: "E-commerce & Retail",
+                      companyWebsite: "https://vink.se",
+                      headerColor: "#1E40AF",
+                      challenge: "The marketing team spent too much time drafting and revising blog content manually, delaying publication schedules and limiting output.",
+                      solution: "They used Aurora to generate complete first drafts with structured sections, then leveraged inline editing and Autopilot to polish weak areas automatically.",
+                      results: [
+                        "Content production time dropped by 62%",
+                        "Publishing cadence doubled from 4 to 8 posts/month",
+                        "Organic traffic grew by 34% in 8 weeks",
+                        "Team reallocated 15 hrs/week to strategy work",
+                      ],
+                      testimonial: {
+                        quote: "Aurora changed how our team approaches content. What used to take a full day now takes under two hours.",
+                        author: "Erik Lindqvist, Head of Marketing at Vink",
+                      },
                     }}
                   />
                 )}
