@@ -18,7 +18,7 @@ const RemotionRoot: React.FC = () => {
       <Composition
         id="ShortDemo"
         component={ShortDemo}
-        durationInFrames={sec(43)}
+        durationInFrames={sec(36)}
         fps={FPS}
         width={WIDTH}
         height={HEIGHT}
