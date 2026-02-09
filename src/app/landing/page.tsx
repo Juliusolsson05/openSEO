@@ -486,8 +486,8 @@ function Footer() {
           </div>
 
           {[
-            { title: 'Product', links: [{ label: 'Features', href: '#features' }, { label: 'Compare tools', href: '/landing/compare' }, { label: 'Example site', href: '/example' }] },
-            { title: 'Company', links: [{ label: 'About Nordtools', href: '/landing/about' }, { label: 'Blog', href: '/example/blog' }, { label: 'Contact', href: '/landing/contact' }] },
+            { title: 'Product', links: [{ label: 'Features', href: '#features' }, { label: 'Compare tools', href: '/landing/compare' }, { label: 'Example site', href: '/example' }, { label: 'Blog', href: '/site/blog' }, { label: 'Dictionary', href: '/site/dictionary' }] },
+            { title: 'Company', links: [{ label: 'About Nordtools', href: '/landing/about' }, { label: 'Blog', href: '/site/blog' }, { label: 'Contact', href: '/landing/contact' }] },
             { title: 'Legal', links: [{ label: 'Privacy', href: '/landing/privacy' }, { label: 'Terms', href: '/landing/terms' }, { label: 'Cookies', href: '/landing/cookies' }] },
           ].map((col) => (
             <div key={col.title}>
