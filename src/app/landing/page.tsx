@@ -9,86 +9,15 @@ import {
   Globe,
   BookOpen,
   CalendarDays,
-  Menu,
-  X,
   ChevronRight,
   Sparkles,
   Layers,
   Code2,
   Plug,
 } from 'lucide-react'
-import { useState } from 'react'
 import { AuroraLogo } from '@/components/brand/logo'
 import { Presentation } from './_components/Presentation'
 
-/* ── Nav ──────────────────────────────────────────────────── */
-
-function Nav() {
-  const [open, setOpen] = useState(false)
-
-  return (
-    <header className="fixed top-0 z-50 w-full bg-white" style={{ borderBottom: '1px solid #E6E6E6' }}>
-      <div className="mx-auto flex h-12 max-w-[1080px] items-center justify-between px-6">
-        <Link href="/landing" className="flex items-center gap-2">
-          <AuroraLogo size={22} />
-          <span className="text-[14px] font-semibold" style={{ color: '#1A1A1A', letterSpacing: '-0.01em' }}>Aurora</span>
-          <div className="hidden sm:block h-4 w-px mx-1" style={{ background: '#E1E1E1' }} />
-          <span className="hidden sm:inline text-[11px]" style={{ color: '#A0A0A0' }}>by Nordtools</span>
-        </Link>
-
-        <nav className="hidden items-center gap-0 md:flex">
-          {[
-            { label: 'See it in action', href: '#demo' },
-            { label: 'How it works', href: '#how-it-works' },
-            { label: 'Features', href: '#features' },
-            { label: 'Blog', href: '/site/blog' },
-            { label: 'Dictionary', href: '/site/dictionary' },
-            { label: 'Example', href: '/example' },
-          ].map((item) => (
-            <a
-              key={item.label}
-              href={item.href}
-              className="px-3 py-1 text-[13px]"
-              style={{ color: '#616161' }}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="hidden items-center gap-4 md:flex">
-          <Link href="/login" className="text-[13px]" style={{ color: '#0078D4' }}>Sign in</Link>
-          <Link
-            href="/register"
-            className="text-[13px] font-semibold text-white px-4 py-[6px]"
-            style={{ background: '#0078D4', borderRadius: 2 }}
-          >
-            Try Aurora free
-          </Link>
-        </div>
-
-        <button className="md:hidden" style={{ color: '#616161' }} onClick={() => setOpen(!open)}>
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-      </div>
-
-      {open && (
-        <div className="bg-white px-6 py-4 md:hidden" style={{ borderTop: '1px solid #E6E6E6' }}>
-          <a href="#demo" onClick={() => setOpen(false)} className="block py-2 text-[13px]" style={{ color: '#616161' }}>See it in action</a>
-          {['How it works', 'Features'].map((item) => (
-            <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} onClick={() => setOpen(false)} className="block py-2 text-[13px]" style={{ color: '#616161' }}>{item}</a>
-          ))}
-          <Link href="/site/blog" onClick={() => setOpen(false)} className="block py-2 text-[13px]" style={{ color: '#616161' }}>Blog</Link>
-          <Link href="/site/dictionary" onClick={() => setOpen(false)} className="block py-2 text-[13px]" style={{ color: '#616161' }}>Dictionary</Link>
-          <Link href="/example" onClick={() => setOpen(false)} className="block py-2 text-[13px]" style={{ color: '#616161' }}>Example</Link>
-          <Link href="/register" className="mt-3 block py-2 text-center text-[13px] font-semibold text-white" style={{ background: '#0078D4', borderRadius: 2 }}>
-            Try Aurora free
-          </Link>
-        </div>
-      )}
-    </header>
-  )
-}
 
 /* ── Hero ─────────────────────────────────────────────────── */
 
@@ -469,54 +398,12 @@ function CTA() {
 
 /* ── Footer ───────────────────────────────────────────────── */
 
-function Footer() {
-  return (
-    <footer className="py-10" style={{ background: '#FFFFFF', borderTop: '1px solid #E6E6E6' }}>
-      <div className="mx-auto max-w-[1080px] px-6">
-        <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
-          <div>
-            <Link href="/landing" className="flex items-center gap-2">
-              <AuroraLogo size={20} />
-              <span className="text-[13px] font-semibold" style={{ color: '#1A1A1A' }}>Aurora</span>
-            </Link>
-            <p className="mt-3 text-[11px] leading-[1.6]" style={{ color: '#A0A0A0' }}>
-              AI-powered content generation
-              by Nordtools.
-            </p>
-          </div>
-
-          {[
-            { title: 'Product', links: [{ label: 'Features', href: '#features' }, { label: 'Compare tools', href: '/landing/compare' }, { label: 'Example site', href: '/example' }, { label: 'Blog', href: '/site/blog' }, { label: 'Dictionary', href: '/site/dictionary' }] },
-            { title: 'Company', links: [{ label: 'About Nordtools', href: '/landing/about' }, { label: 'Blog', href: '/site/blog' }, { label: 'Contact', href: '/landing/contact' }] },
-            { title: 'Legal', links: [{ label: 'Privacy', href: '/landing/privacy' }, { label: 'Terms', href: '/landing/terms' }, { label: 'Cookies', href: '/landing/cookies' }] },
-          ].map((col) => (
-            <div key={col.title}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] mb-3" style={{ color: '#A0A0A0' }}>{col.title}</p>
-              <ul className="space-y-1.5">
-                {col.links.map((link) => (
-                  <li key={link.label}>
-                    <a href={link.href} className="text-[12px]" style={{ color: '#616161' }}>{link.label}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-8 pt-5 text-[11px]" style={{ borderTop: '1px solid #E6E6E6', color: '#A0A0A0' }}>
-          © {new Date().getFullYear()} Nordtools. All rights reserved.
-        </div>
-      </div>
-    </footer>
-  )
-}
 
 /* ── Page ──────────────────────────────────────────────────── */
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen antialiased" style={{ background: '#FFFFFF', color: '#1A1A1A', fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', sans-serif" }}>
-      <Nav />
+    <>
       <Hero />
       <Presentation />
       <HowItWorks />
@@ -524,7 +411,6 @@ export default function LandingPage() {
       <ElementShowcase />
       <BeforeAfter />
       <CTA />
-      <Footer />
-    </div>
+    </>
   )
 }

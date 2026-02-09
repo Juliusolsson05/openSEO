@@ -1,18 +1,25 @@
 import type { Metadata } from 'next'
-import { SiteHeader } from './_components/SiteHeader'
-import { SiteFooter } from './_components/SiteFooter'
+import { MarketingHeader } from '@/components/marketing/MarketingHeader'
+import { MarketingFooter } from '@/components/marketing/MarketingFooter'
 
 export const metadata: Metadata = {
-  title: 'Aurora Site',
-  description: 'Aurora-generated blog and dictionary.',
+  title: 'Aurora Blog & Dictionary',
+  description: 'Aurora-generated blog posts and SEO dictionary.',
 }
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-white text-neutral-900">
-      <SiteHeader />
-      <main className="pt-14">{children}</main>
-      <SiteFooter />
+    <div
+      className="min-h-screen antialiased"
+      style={{
+        background: '#FFFFFF',
+        color: '#1A1A1A',
+        fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', sans-serif",
+      }}
+    >
+      <MarketingHeader />
+      <main className="pt-12">{children}</main>
+      <MarketingFooter />
     </div>
   )
 }

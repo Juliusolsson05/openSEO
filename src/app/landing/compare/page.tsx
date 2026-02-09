@@ -7,20 +7,7 @@ export default async function ComparePage() {
 
   return (
     <>
-      {/* Nav */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 50, background: '#fff', borderBottom: '1px solid #E6E6E6' }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 48, padding: '0 24px' }}>
-          <Link href="/landing" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-            <AuroraLogo size={22} />
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#1A1A1A', letterSpacing: '-0.01em' }}>Aurora</span>
-            <div style={{ height: 16, width: 1, margin: '0 4px', background: '#E1E1E1' }} />
-            <span style={{ fontSize: 11, color: '#A0A0A0' }}>by Nordtools</span>
-          </Link>
-          <Link href="/landing" style={{ fontSize: 13, color: '#0078D4', textDecoration: 'none' }}>← Back to Aurora</Link>
-        </div>
-      </header>
-
-      {/* Hero */}
+            {/* Hero */}
       <section style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #002050 0%, #0078D4 100%)' }}>
         <div style={{ position: 'absolute', inset: 0, opacity: 0.06, backgroundImage: 'linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
         <div style={{ position: 'relative', zIndex: 10, maxWidth: 1080, margin: '0 auto', padding: '64px 24px 56px', textAlign: 'center' }}>
@@ -80,17 +67,6 @@ export default async function ComparePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer style={{ padding: '32px 24px', background: '#FFFFFF', borderTop: '1px solid #E6E6E6' }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 11, color: '#A0A0A0' }}>© 2026 Nordtools. All rights reserved.</span>
-          <div style={{ display: 'flex', gap: 20 }}>
-            <Link href="/landing" style={{ fontSize: 12, color: '#616161', textDecoration: 'none' }}>Aurora Home</Link>
-            <Link href="/landing/compare" style={{ fontSize: 12, color: '#616161', textDecoration: 'none' }}>All Comparisons</Link>
-            <Link href="/landing/privacy" style={{ fontSize: 12, color: '#616161', textDecoration: 'none' }}>Privacy</Link>
-          </div>
-        </div>
-      </footer>
     </>
   )
 }

@@ -1,7 +1,5 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import type { Metadata } from 'next'
-import { AuroraLogo } from '@/components/brand/logo'
 import { getComparisonBySlug } from '../_lib/data'
 import { CompareHero } from '../_components/CompareHero'
 import { ComparisonElementRenderer } from '../_components/ComparisonElementRenderer'
@@ -29,16 +27,7 @@ export default async function ComparisonPage({ params }: PageProps) {
 
   return (
     <>
-      {/* Nav */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 50, background: '#fff', borderBottom: '1px solid #E6E6E6' }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 48, padding: '0 24px' }}>
-          <Link href="/landing" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-            <AuroraLogo size={22} />
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#1A1A1A', letterSpacing: '-0.01em' }}>Aurora</span>
-          </Link>
-          <Link href="/landing/compare" style={{ fontSize: 13, color: '#0078D4', textDecoration: 'none' }}>← All comparisons</Link>
-        </div>
-      </header>
+
 
       {/* Hero */}
       <CompareHero toolA={toolA} toolB={toolB} title={comparison.title} updatedAt={comparison.updated_at} />
@@ -57,15 +46,7 @@ export default async function ComparisonPage({ params }: PageProps) {
       </main>
 
       {/* Footer */}
-      <footer style={{ padding: '32px 24px', background: '#FFFFFF', borderTop: '1px solid #E6E6E6' }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 11, color: '#A0A0A0' }}>© 2026 Nordtools. All rights reserved.</span>
-          <div style={{ display: 'flex', gap: 20 }}>
-            <Link href="/landing" style={{ fontSize: 12, color: '#616161', textDecoration: 'none' }}>Aurora Home</Link>
-            <Link href="/landing/compare" style={{ fontSize: 12, color: '#616161', textDecoration: 'none' }}>All Comparisons</Link>
-          </div>
-        </div>
-      </footer>
+
     </>
   )
 }
