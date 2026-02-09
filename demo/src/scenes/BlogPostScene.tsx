@@ -391,21 +391,20 @@ export const BlogPostScene: React.FC = () => {
           </div>
         )}
 
+        <Cursor waypoints={waypoints} />
+
+        {/* Dark fade overlay for smooth transition into outro */}
+        {endFade > 0 && (
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(135deg, #002050 0%, #0078D4 100%)",
+            opacity: endFade,
+            pointerEvents: "none",
+            zIndex: 120,
+          }} />
+        )}
       </div>
     </BrowserFrame>
-
-    <Cursor waypoints={waypoints} />
-
-    {/* Dark fade overlay for smooth transition into outro */}
-    {endFade > 0 && (
-      <div style={{
-        position: "absolute", inset: 0,
-        background: "linear-gradient(135deg, #002050 0%, #0078D4 100%)",
-        opacity: endFade,
-        pointerEvents: "none",
-        zIndex: 120,
-      }} />
-    )}
     </CameraRig>
   );
 };
