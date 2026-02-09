@@ -8,7 +8,9 @@ export const DURATIONS = {
   login: 16,
   titleGeneration: 28,
   blogPost: 36,
-  outro: 8,
+  publishedBlog: 8,
+  trafficGrowth: 6,
+  outro: 5,
 } as const;
 
 export const TOTAL_DURATION = Object.values(DURATIONS).reduce((a, b) => a + b, 0);

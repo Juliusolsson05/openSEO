@@ -5,6 +5,8 @@ import { TitleCard } from "./scenes/TitleCard";
 import { LoginScene } from "./scenes/LoginScene";
 import { TitleGenerationScene } from "./scenes/TitleGenerationScene";
 import { BlogPostScene } from "./scenes/BlogPostScene";
+import { PublishedBlogScene } from "./scenes/PublishedBlogScene";
+import { TrafficGrowthScene } from "./scenes/TrafficGrowthScene";
 import { OutroScene } from "./scenes/OutroScene";
 import { ProgressBar } from "./components/ProgressBar";
 import { GuideBox } from "./components/GuideBox";
@@ -30,6 +32,14 @@ export const Video: React.FC = () => {
   const blogPostFrom = offset;
   offset += blogPostDur;
 
+  const publishedBlogDur = sec(DURATIONS.publishedBlog);
+  const publishedBlogFrom = offset;
+  offset += publishedBlogDur;
+
+  const trafficGrowthDur = sec(DURATIONS.trafficGrowth);
+  const trafficGrowthFrom = offset;
+  offset += trafficGrowthDur;
+
   const outroDur = sec(DURATIONS.outro);
   const outroFrom = offset;
   offset += outroDur;
@@ -52,6 +62,14 @@ export const Video: React.FC = () => {
 
       <Sequence from={blogPostFrom} durationInFrames={blogPostDur}>
         <BlogPostScene />
+      </Sequence>
+
+      <Sequence from={publishedBlogFrom} durationInFrames={publishedBlogDur}>
+        <PublishedBlogScene />
+      </Sequence>
+
+      <Sequence from={trafficGrowthFrom} durationInFrames={trafficGrowthDur}>
+        <TrafficGrowthScene />
       </Sequence>
 
       <Sequence from={outroFrom} durationInFrames={outroDur}>

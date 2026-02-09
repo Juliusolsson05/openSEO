@@ -139,11 +139,7 @@ export const BlogPostScene: React.FC = () => {
   // Publish button pressed state
   const publishPressed  = frame >= 1042;
 
-  /* ── Fade to outro ── */
-  const endFade = interpolate(frame, [1050, 1080], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
+  /* No fade — hard cut to next scene */
 
   /* ── Camera: subtle zoom toward publish area at end ── */
   const { fps } = useVideoConfig();
@@ -392,17 +388,6 @@ export const BlogPostScene: React.FC = () => {
         )}
 
         <Cursor waypoints={waypoints} />
-
-        {/* Dark fade overlay for smooth transition into outro */}
-        {endFade > 0 && (
-          <div style={{
-            position: "absolute", inset: 0,
-            background: "linear-gradient(135deg, #002050 0%, #0078D4 100%)",
-            opacity: endFade,
-            pointerEvents: "none",
-            zIndex: 120,
-          }} />
-        )}
       </div>
     </BrowserFrame>
     </CameraRig>

@@ -18,7 +18,9 @@ const introFrom = 0;
 const loginFrom = introFrom + sec(DURATIONS.intro);
 const titlesFrom = loginFrom + sec(DURATIONS.login);
 const blogFrom = titlesFrom + sec(DURATIONS.titleGeneration);
-const outroFrom = blogFrom + sec(DURATIONS.blogPost);
+const publishedBlogFrom = blogFrom + sec(DURATIONS.blogPost);
+const trafficFrom = publishedBlogFrom + sec(DURATIONS.publishedBlog);
+const outroFrom = trafficFrom + sec(DURATIONS.trafficGrowth);
 
 const steps: GuideStep[] = [
   {
@@ -44,7 +46,12 @@ const steps: GuideStep[] = [
   { from: blogFrom + 330, to: blogFrom + 520, scene: "Blog Editor", title: "Refine introduction", body: "Improve clarity and messaging in-context.", index: 3, total: 6 },
   { from: blogFrom + 520, to: blogFrom + 700, scene: "Blog Editor", title: "Add a new content block", body: "Insert elements exactly where they improve flow.", index: 4, total: 6 },
   { from: blogFrom + 700, to: blogFrom + 900, scene: "Blog Editor", title: "Generate Case Study section", body: "Aurora drafts a data-backed case study instantly.", index: 5, total: 6 },
-  { from: blogFrom + 900, to: outroFrom, scene: "Blog Editor", title: "Review and finalize", body: "Validate output and prepare for publish.", index: 6, total: 6 },
+  { from: blogFrom + 900, to: publishedBlogFrom, scene: "Blog Editor", title: "Publish the post", body: "One click to go live on your website.", index: 6, total: 6 },
+
+  { from: publishedBlogFrom, to: publishedBlogFrom + sec(4), scene: "Live Website", title: "Published to your blog", body: "The post appears instantly on your live website.", index: 1, total: 2 },
+  { from: publishedBlogFrom + sec(4), to: trafficFrom, scene: "Live Website", title: "Live and indexed", body: "SEO-optimized content ready for organic discovery.", index: 2, total: 2 },
+
+  { from: trafficFrom, to: outroFrom, scene: "Results", title: "Real traffic growth", body: "Organic sessions climb as content compounds.", index: 1, total: 1 },
 
   {
     from: outroFrom,
