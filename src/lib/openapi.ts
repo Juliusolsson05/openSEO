@@ -251,20 +251,26 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         type: 'object',
         properties: {
           id: { type: 'integer' },
-          name: { type: 'string' },
-          description: { type: 'string', nullable: true },
+          title: { type: 'string' },
+          subject: { type: 'string' },
           language: { type: 'string' },
-          word_count: { type: 'integer' },
+          num_words: { type: 'integer' },
+          total_words: { type: 'integer', description: 'num_words × 26' },
+          in_progress: { type: 'boolean' },
+          current_letter: { type: 'string' },
+          status: { type: 'string' },
         },
       },
       Word: {
         type: 'object',
         properties: {
           id: { type: 'integer' },
-          word: { type: 'string' },
-          definition: { type: 'string', nullable: true },
-          synonyms: { type: 'array', items: { type: 'string' } },
-          usage_example: { type: 'string', nullable: true },
+          letter: { type: 'string' },
+          keyword: { type: 'string' },
+          description: { type: 'string', nullable: true },
+          priority: { type: 'string', enum: ['HIGH', 'LOW'] },
+          focus_keyword: { type: 'string', nullable: true },
+          definition: { type: 'object', nullable: true },
         },
       },
       BulkSchedule: {
@@ -272,11 +278,10 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         properties: {
           id: { type: 'integer' },
           name: { type: 'string' },
-          schedule_type: { type: 'string' },
-          start_date: { type: 'string', format: 'date-time' },
-          end_date: { type: 'string', format: 'date-time', nullable: true },
+          start_date: { type: 'string', format: 'date-time', nullable: true },
           interval_days: { type: 'integer', nullable: true },
-          titles_count: { type: 'integer' },
+          created_at: { type: 'string', format: 'date-time' },
+          companyId: { type: 'integer', nullable: true },
         },
       },
       PublishingApiKey: {
@@ -334,11 +339,13 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         type: 'object',
         properties: {
           id: { type: 'integer' },
-          name: { type: 'string' },
-          type: { type: 'string' },
-          content: { type: 'string' },
-          button_text: { type: 'string', nullable: true },
-          button_url: { type: 'string', nullable: true },
+          campaignId: { type: 'integer' },
+          title: { type: 'string' },
+          description: { type: 'string' },
+          image: { type: 'string', description: 'Cloudinary image URL' },
+          link: { type: 'string' },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
         },
       },
       CTACampaign: {
@@ -346,6 +353,9 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         properties: {
           id: { type: 'integer' },
           name: { type: 'string' },
+          companyId: { type: 'integer' },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
           ctas: { type: 'array', items: { $ref: '#/components/schemas/CTA' } },
         },
       },
@@ -787,7 +797,32 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         summary: 'Generate a shareable link for a post',
         operationId: 'shareBlogPost',
         requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['post_id'], properties: { post_id: { type: 'integer' } } } } } },
-        responses: { '200': jsonResponse({ type: 'object', properties: { url: { type: 'string' } } }) },
+        responses: { '200': jsonResponse({ type: 'object' }) },
+      },
+    },
+    '/aurora/blog/share': {
+      get: {
+        tags: ['Blog Posts'],
+        summary: 'Get share link status for a post',
+        operationId: 'getShareStatus',
+        parameters: [{ name: 'post_id', in: 'query', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': jsonResponse({ type: 'object', properties: { share_enabled: { type: 'boolean' }, share_token: { type: 'string', nullable: true }, share_url: { type: 'string', nullable: true }, share_expires_at: { type: 'string', format: 'date-time', nullable: true } } }),
+        },
+      },
+      post: {
+        tags: ['Blog Posts'],
+        summary: 'Create/enable a shareable link for a post',
+        operationId: 'createShareLink',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['post_id'], properties: { post_id: { type: 'integer' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', properties: { share_token: { type: 'string' }, share_url: { type: 'string' } } }) },
+      },
+      delete: {
+        tags: ['Blog Posts'],
+        summary: 'Disable share link for a post',
+        operationId: 'disableShareLink',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['post_id'], properties: { post_id: { type: 'integer' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', properties: { success: { type: 'boolean' } } }) },
       },
     },
     '/aurora/blog/posts/history': {
@@ -976,25 +1011,81 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
 
     /* ======================== BLOG CTA ======================== */
     '/aurora/blog/cta/list': {
-      get: { tags: ['Blog CTA'], summary: 'List CTAs', operationId: 'listCtas', responses: { '200': jsonResponse({ type: 'array', items: { $ref: '#/components/schemas/CTA' } }) } },
+      get: {
+        tags: ['Blog CTA'],
+        summary: 'List CTA campaigns with nested CTAs',
+        description: 'Returns campaigns (not individual CTAs). Each campaign includes its CTAs array.',
+        operationId: 'listCtas',
+        responses: { '200': jsonResponse({ type: 'array', items: { $ref: '#/components/schemas/CTACampaign' } }) },
+      },
     },
     '/aurora/blog/cta/create': {
-      post: { tags: ['Blog CTA'], summary: 'Create a CTA', operationId: 'createCta', responses: { '200': jsonResponse({ $ref: '#/components/schemas/CTA' }) } },
+      post: {
+        tags: ['Blog CTA'],
+        summary: 'Create a CTA',
+        description: 'Accepts JSON or multipart/form-data (for image upload).',
+        operationId: 'createCta',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { type: 'object', required: ['campaignId', 'title', 'description', 'link'], properties: { campaignId: { type: 'integer' }, title: { type: 'string' }, description: { type: 'string' }, link: { type: 'string' }, image: { type: 'string', description: 'Image URL (if not uploading)' }, generateImage: { type: 'boolean', description: 'Auto-generate image with AI' } } },
+            },
+            'multipart/form-data': {
+              schema: { type: 'object', properties: { campaign_id: { type: 'integer' }, title: { type: 'string' }, description: { type: 'string' }, link: { type: 'string' }, image: { type: 'string', format: 'binary' }, generate_image: { type: 'string' } } },
+            },
+          },
+        },
+        responses: { '201': jsonResponse({ $ref: '#/components/schemas/CTA' }) },
+      },
     },
     '/aurora/blog/cta/edit/{id}': {
-      put: { tags: ['Blog CTA'], summary: 'Update a CTA', operationId: 'updateCta', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ $ref: '#/components/schemas/CTA' }) } },
+      put: {
+        tags: ['Blog CTA'],
+        summary: 'Update a CTA',
+        operationId: 'updateCta',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { type: 'object', properties: { title: { type: 'string' }, description: { type: 'string' }, link: { type: 'string' }, campaignId: { type: 'integer' }, image: { type: 'string' }, generateImage: { type: 'boolean' } } },
+            },
+          },
+        },
+        responses: { '200': jsonResponse({ $ref: '#/components/schemas/CTA' }) },
+      },
     },
     '/aurora/blog/cta/delete/{id}': {
       delete: { tags: ['Blog CTA'], summary: 'Delete a CTA', operationId: 'deleteCta', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ type: 'object', properties: { deleted: { type: 'boolean' } } }) } },
     },
     '/aurora/blog/cta/add-cta': {
-      post: { tags: ['Blog CTA'], summary: 'Add CTA to post', operationId: 'addCtaToPost', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Blog CTA'],
+        summary: 'Add CTA to post as an element',
+        operationId: 'addCtaToPost',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['blog_post_id', 'element_id', 'cta_id'], properties: { blog_post_id: { type: 'integer' }, element_id: { type: 'integer', description: 'Reference element (CTA inserted after it)' }, cta_id: { type: 'integer' } } } } } },
+        responses: { '200': jsonResponse({ $ref: '#/components/schemas/ContentElement' }) },
+      },
     },
     '/aurora/blog/cta/campaign/create': {
-      post: { tags: ['Blog CTA'], summary: 'Create CTA campaign', operationId: 'createCtaCampaign', responses: { '200': jsonResponse({ $ref: '#/components/schemas/CTACampaign' }) } },
+      post: {
+        tags: ['Blog CTA'],
+        summary: 'Create CTA campaign',
+        operationId: 'createCtaCampaign',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['name'], properties: { name: { type: 'string' } } } } } },
+        responses: { '200': jsonResponse({ $ref: '#/components/schemas/CTACampaign' }) },
+      },
     },
     '/aurora/blog/cta/campaign/edit/{id}': {
-      put: { tags: ['Blog CTA'], summary: 'Update CTA campaign', operationId: 'updateCtaCampaign', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ $ref: '#/components/schemas/CTACampaign' }) } },
+      put: {
+        tags: ['Blog CTA'],
+        summary: 'Update CTA campaign',
+        operationId: 'updateCtaCampaign',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' } } } } } },
+        responses: { '200': jsonResponse({ $ref: '#/components/schemas/CTACampaign' }) },
+      },
     },
     '/aurora/blog/cta/campaign/delete/{id}': {
       delete: { tags: ['Blog CTA'], summary: 'Delete CTA campaign', operationId: 'deleteCtaCampaign', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ type: 'object', properties: { deleted: { type: 'boolean' } } }) } },
@@ -1002,29 +1093,101 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
 
     /* ======================== BLOG SCHEDULE ======================== */
     '/aurora/blog/schedule/bulk': {
-      get: { tags: ['Blog Schedule'], summary: 'List bulk schedules', operationId: 'listBulkSchedules', responses: { '200': jsonResponse({ type: 'array', items: { $ref: '#/components/schemas/BulkSchedule' } }) } },
-      post: { tags: ['Blog Schedule'], summary: 'Create bulk schedule', operationId: 'createBulkScheduleDefault', responses: { '200': jsonResponse({ $ref: '#/components/schemas/BulkSchedule' }) } },
+      get: {
+        tags: ['Blog Schedule'],
+        summary: 'List bulk schedules',
+        operationId: 'listBulkSchedules',
+        responses: {
+          '200': jsonResponse({
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                name: { type: 'string' },
+                start_date: { type: 'string', format: 'date-time', nullable: true },
+                interval_days: { type: 'integer', nullable: true },
+                created_at: { type: 'string', format: 'date-time' },
+                companyId: { type: 'integer', nullable: true },
+                _count: { type: 'object', properties: { titles: { type: 'integer' }, blog_posts: { type: 'integer' } } },
+              },
+            },
+          }),
+        },
+      },
+      post: {
+        tags: ['Blog Schedule'],
+        summary: 'Create bulk schedule',
+        operationId: 'createBulkScheduleDefault',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['name'], properties: { name: { type: 'string' }, startDate: { type: 'string', format: 'date-time' }, intervalDays: { type: 'integer' } } } } } },
+        responses: { '201': jsonResponse({ $ref: '#/components/schemas/BulkSchedule' }) },
+      },
     },
     '/aurora/blog/schedule/bulk/create': {
-      post: { tags: ['Blog Schedule'], summary: 'Create a bulk schedule', operationId: 'createBulkSchedule', responses: { '200': jsonResponse({ $ref: '#/components/schemas/BulkSchedule' }) } },
+      post: {
+        tags: ['Blog Schedule'],
+        summary: 'Create a bulk schedule',
+        operationId: 'createBulkSchedule',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['name'], properties: { name: { type: 'string' }, startDate: { type: 'string', format: 'date-time' }, intervalDays: { type: 'integer' } } } } } },
+        responses: { '201': jsonResponse({ $ref: '#/components/schemas/BulkSchedule' }) },
+      },
     },
     '/aurora/blog/schedule/bulk/assign': {
-      post: { tags: ['Blog Schedule'], summary: 'Assign titles to a schedule', operationId: 'assignToSchedule', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Blog Schedule'],
+        summary: 'Assign titles to a schedule',
+        operationId: 'assignToSchedule',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['titleIds', 'bulkScheduleId'], properties: { titleIds: { type: 'array', items: { type: 'integer' } }, bulkScheduleId: { type: 'integer' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', properties: { count: { type: 'integer', description: 'Number of titles updated' } } }) },
+      },
     },
     '/aurora/blog/schedule/bulk/remove': {
-      post: { tags: ['Blog Schedule'], summary: 'Remove titles from schedule', operationId: 'removeFromSchedule', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Blog Schedule'],
+        summary: 'Remove titles from schedule',
+        operationId: 'removeFromSchedule',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['titleIds'], properties: { titleIds: { type: 'array', items: { type: 'integer' } } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', properties: { count: { type: 'integer' } } }) },
+      },
     },
     '/aurora/blog/schedule/bulk/update/{id}': {
-      put: { tags: ['Blog Schedule'], summary: 'Update a bulk schedule', operationId: 'updateBulkSchedule', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ $ref: '#/components/schemas/BulkSchedule' }) } },
+      put: {
+        tags: ['Blog Schedule'],
+        summary: 'Update a bulk schedule',
+        operationId: 'updateBulkSchedule',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' }, startDate: { type: 'string', format: 'date-time', nullable: true }, intervalDays: { type: 'integer', nullable: true } } } } } },
+        responses: { '200': jsonResponse({ $ref: '#/components/schemas/BulkSchedule' }) },
+      },
     },
     '/aurora/blog/schedule/interval': {
-      post: { tags: ['Blog Schedule'], summary: 'Set scheduling interval', operationId: 'setScheduleInterval', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Blog Schedule'],
+        summary: 'Schedule titles by interval',
+        operationId: 'scheduleByInterval',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['titleIds', 'startDate', 'intervalDays'], properties: { titleIds: { type: 'array', items: { type: 'integer' } }, startDate: { type: 'string', format: 'date-time' }, intervalDays: { type: 'integer', minimum: 1 } } } } } },
+        responses: { '200': jsonResponse({ type: 'array', items: { type: 'object', description: 'Updated title objects' } }) },
+      },
     },
     '/aurora/blog/schedule/post/{id}': {
-      post: { tags: ['Blog Schedule'], summary: 'Schedule a specific post', operationId: 'schedulePost', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Blog Schedule'],
+        summary: 'Schedule a specific post',
+        operationId: 'schedulePost',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['date'], properties: { date: { type: 'string', format: 'date-time' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', description: 'Updated blog post with scheduled_date' }) },
+      },
     },
     '/aurora/blog/schedule/reschedule/{id}': {
-      put: { tags: ['Blog Schedule'], summary: 'Reschedule a post', operationId: 'reschedulePost', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ type: 'object' }) } },
+      put: {
+        tags: ['Blog Schedule'],
+        summary: 'Reschedule a post',
+        operationId: 'reschedulePost',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['date'], properties: { date: { type: 'string', format: 'date-time' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', description: 'Updated blog post with new scheduled_date' }) },
+      },
     },
 
     /* ======================== BLOG ANALYTICS ======================== */
@@ -1102,56 +1265,227 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
 
     /* ======================== DICTIONARY ======================== */
     '/aurora/dictionary/dictionaries': {
-      get: { tags: ['Dictionary'], summary: 'List dictionaries', operationId: 'listDictionaries', responses: { '200': jsonResponse({ type: 'array', items: { $ref: '#/components/schemas/Dictionary' } }) } },
+      get: {
+        tags: ['Dictionary'],
+        summary: 'List dictionaries',
+        operationId: 'listDictionaries',
+        parameters: [
+          pageParam,
+          { name: 'itemsPerPage', in: 'query', schema: { type: 'integer', default: 20 }, description: 'Alias for pageSize' },
+          { name: 'q', in: 'query', schema: { type: 'string' }, description: 'Search query' },
+        ],
+        responses: {
+          '200': jsonResponse({
+            type: 'object',
+            properties: {
+              dictionaries: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'integer' },
+                    title: { type: 'string' },
+                    subject: { type: 'string' },
+                    language: { type: 'string' },
+                    num_words: { type: 'integer' },
+                    total_words: { type: 'integer', description: 'num_words × 26' },
+                    in_progress: { type: 'boolean' },
+                    current_letter: { type: 'string' },
+                    status: { type: 'string' },
+                  },
+                },
+              },
+              total: { type: 'integer' },
+              page: { type: 'integer' },
+              pageSize: { type: 'integer' },
+            },
+          }),
+        },
+      },
     },
     '/aurora/dictionary/dictionary/{dictionaryId}': {
-      get: { tags: ['Dictionary'], summary: 'Get dictionary with words', operationId: 'getDictionary', parameters: [{ name: 'dictionaryId', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ $ref: '#/components/schemas/Dictionary' }) } },
+      get: {
+        tags: ['Dictionary'],
+        summary: 'Get dictionary with words',
+        operationId: 'getDictionary',
+        parameters: [{ name: 'dictionaryId', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': jsonResponse({
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              title: { type: 'string' },
+              subject: { type: 'string' },
+              language: { type: 'string' },
+              num_words: { type: 'integer' },
+              current_letter: { type: 'string' },
+              status: { type: 'string' },
+              company: { type: 'string', nullable: true },
+              words: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'integer' },
+                    letter: { type: 'string' },
+                    keyword: { type: 'string' },
+                    description: { type: 'string', nullable: true },
+                    priority: { type: 'integer', description: '1=HIGH, 2=LOW' },
+                    has_definition: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          }),
+        },
+      },
     },
     '/aurora/dictionary/dictionary/{dictionaryId}/word/{wordId}': {
       get: { tags: ['Dictionary'], summary: 'Get a single word', operationId: 'getWord', parameters: [{ name: 'dictionaryId', in: 'path', required: true, schema: { type: 'integer' } }, { name: 'wordId', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ $ref: '#/components/schemas/Word' }) } },
     },
     '/aurora/dictionary/modify/{id}': {
-      put: { tags: ['Dictionary'], summary: 'Update a dictionary', operationId: 'updateDictionary', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ $ref: '#/components/schemas/Dictionary' }) } },
-      delete: { tags: ['Dictionary'], summary: 'Delete a dictionary', operationId: 'deleteDictionary', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ type: 'object', properties: { deleted: { type: 'boolean' } } }) } },
+      put: {
+        tags: ['Dictionary'],
+        summary: 'Update a dictionary',
+        operationId: 'updateDictionary',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { title: { type: 'string' }, subject: { type: 'string' }, language: { type: 'string' }, num_words: { type: 'integer' } } } } } },
+        responses: {
+          '200': jsonResponse({
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              title: { type: 'string' },
+              subject: { type: 'string' },
+              language: { type: 'string' },
+              num_words: { type: 'integer' },
+              current_letter: { type: 'string' },
+              status: { type: 'string' },
+              company: { type: 'string', nullable: true },
+            },
+          }),
+        },
+      },
+      delete: {
+        tags: ['Dictionary'],
+        summary: 'Delete a dictionary',
+        operationId: 'deleteDictionary',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: { '204': { description: 'Dictionary deleted (no content)' } },
+      },
     },
     '/aurora/dictionary/modify/word/{id}': {
       put: { tags: ['Dictionary'], summary: 'Update a word', operationId: 'updateWord', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ $ref: '#/components/schemas/Word' }) } },
       delete: { tags: ['Dictionary'], summary: 'Delete a word', operationId: 'deleteWord', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ type: 'object', properties: { deleted: { type: 'boolean' } } }) } },
     },
     '/aurora/dictionary/dictionary/words/delete': {
-      post: { tags: ['Dictionary'], summary: 'Bulk delete words', operationId: 'bulkDeleteWords', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Dictionary'],
+        summary: 'Bulk delete words',
+        operationId: 'bulkDeleteWords',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['dictionaryId', 'ids'], properties: { dictionaryId: { type: 'integer' }, ids: { type: 'array', items: { type: 'integer' } } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', properties: { detail: { type: 'string' }, new_word_count: { type: 'integer' } } }) },
+      },
     },
     '/aurora/dictionary/dictionary/export': {
-      post: { tags: ['Dictionary'], summary: 'Export dictionary', operationId: 'exportDictionary', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Dictionary'],
+        summary: 'Export a single word from a dictionary',
+        operationId: 'exportDictionaryWord',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['dictionary_id', 'word'], properties: { dictionary_id: { type: 'integer' }, word: { type: 'string' } } } } } },
+        responses: {
+          '200': jsonResponse({ type: 'object', properties: { dictionary_info: { type: 'object' }, word_data: { type: 'object' } } }),
+          '404': jsonResponse({ type: 'object', properties: { detail: { type: 'string' } } }, 'Word not found or no definition'),
+        },
+      },
     },
     '/aurora/dictionary/dictionary/export/all': {
-      post: { tags: ['Dictionary'], summary: 'Export all dictionaries', operationId: 'exportAllDictionaries', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Dictionary'],
+        summary: 'Export all words from a dictionary',
+        operationId: 'exportAllDictionaryWords',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['dictionary_id'], properties: { dictionary_id: { type: 'integer' } } } } } },
+        responses: {
+          '200': jsonResponse({ type: 'object', properties: { dictionary_info: { type: 'object' }, words: { type: 'array', items: { type: 'object' } }, stats: { type: 'object', properties: { total_words: { type: 'integer' }, words_with_definitions: { type: 'integer' }, words_with_complete_data: { type: 'integer' } } } } }),
+        },
+      },
     },
     '/aurora/dictionary/dictionary/upload': {
-      post: { tags: ['Dictionary'], summary: 'Upload/publish a dictionary', operationId: 'uploadDictionary', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Dictionary'],
+        summary: 'Publish a dictionary to configured endpoint',
+        operationId: 'uploadDictionary',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['dictionary_id'], properties: { dictionary_id: { type: 'integer' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', properties: { status: { type: 'string' }, delivery: { type: 'object', properties: { remote_id: { type: 'string', nullable: true }, endpoint_status: { type: 'integer' } } } } }) },
+      },
     },
     '/aurora/dictionary/dictionary/upload/all': {
-      post: { tags: ['Dictionary'], summary: 'Upload/publish all dictionaries', operationId: 'uploadAllDictionaries', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Dictionary'],
+        summary: 'Publish all dictionaries to configured endpoint',
+        operationId: 'uploadAllDictionaries',
+        responses: { '200': jsonResponse({ type: 'object', properties: { status: { type: 'string' }, synced: { type: 'array', items: { type: 'object' } }, errors: { type: 'array', items: { type: 'object' } }, total: { type: 'integer' } } }) },
+      },
     },
 
     /* ======================== DICTIONARY GENERATION ======================== */
     '/aurora/dictionary/generation/keywords/start': {
-      post: { tags: ['Dictionary Generation'], summary: 'Start keyword generation session', operationId: 'startKeywordGeneration', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Dictionary Generation'],
+        summary: 'Start keyword generation session',
+        operationId: 'startKeywordGeneration',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['title', 'subject', 'language', 'num_words'], properties: { title: { type: 'string' }, subject: { type: 'string' }, language: { type: 'string' }, num_words: { type: 'integer' } } } } } },
+        responses: { '201': jsonResponse({ type: 'object', properties: { session_id: { type: 'integer' }, letter: { type: 'string' }, keywords: { type: 'object', description: 'Map of generated keywords for the letter' } } }) },
+      },
     },
     '/aurora/dictionary/generation/keywords/review': {
-      post: { tags: ['Dictionary Generation'], summary: 'Review generated keywords', operationId: 'reviewKeywords', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Dictionary Generation'],
+        summary: 'Review generated keywords — accept/reject a letter and advance',
+        operationId: 'reviewKeywords',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['session_id', 'letter', 'accepted'], properties: { session_id: { type: 'integer' }, letter: { type: 'string' }, accepted: { type: 'boolean' }, removals: { type: 'array', items: { type: 'integer' }, description: '1-indexed positions to remove' } } } } } },
+        responses: {
+          '200': jsonResponse({ type: 'object', properties: { letter: { type: 'string' }, keywords: { type: 'object' }, message: { type: 'string', description: 'Present when all letters are done' } } }),
+        },
+      },
     },
     '/aurora/dictionary/generation/keywords/end': {
-      post: { tags: ['Dictionary Generation'], summary: 'End keyword generation session', operationId: 'endKeywordGeneration', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Dictionary Generation'],
+        summary: 'Complete keyword generation session',
+        operationId: 'endKeywordGeneration',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['session_id'], properties: { session_id: { type: 'integer' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', description: 'Updated dictionary object with status' }) },
+      },
     },
     '/aurora/dictionary/generation/keyword/new': {
-      post: { tags: ['Dictionary Generation'], summary: 'Generate new keywords', operationId: 'generateKeywords', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Dictionary Generation'],
+        summary: 'Add a new keyword manually',
+        operationId: 'generateNewKeyword',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['session_id', 'word'], properties: { session_id: { type: 'integer' }, word: { type: 'string' }, priority: { type: 'integer', description: '1=HIGH, 2=LOW' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', properties: { word: { type: 'string' }, description: { type: 'string' } } }) },
+      },
     },
     '/aurora/dictionary/generation/definition/generate': {
-      post: { tags: ['Dictionary Generation'], summary: 'Generate definitions for words', operationId: 'generateDefinitions', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Dictionary Generation'],
+        summary: 'Generate definitions for words in a dictionary',
+        operationId: 'generateDefinitions',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['session_id'], properties: { session_id: { type: 'integer' }, word: { type: 'string', description: 'Specific word to generate for (optional)' }, include_priority_two: { type: 'boolean', default: false }, batch_size: { type: 'integer', default: 1, maximum: 20 } } } } } },
+        responses: {
+          '200': jsonResponse({ type: 'object', properties: { generated_definitions: { type: 'array', items: { type: 'object', properties: { word: { type: 'string' }, definition: { type: 'object' } } } }, next_word: { type: 'string', nullable: true }, remaining_definitions_count: { type: 'integer' }, total_words_count: { type: 'integer' }, generated_definitions_count: { type: 'integer' } } }),
+        },
+      },
     },
     '/aurora/dictionary/generation/definition/new': {
-      post: { tags: ['Dictionary Generation'], summary: 'Generate new definition', operationId: 'generateNewDefinition', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Dictionary Generation'],
+        summary: 'Generate definition for a priority-two word',
+        operationId: 'generateNewDefinition',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['session_id'], properties: { session_id: { type: 'integer' }, word: { type: 'string', description: 'Optional specific word to target' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', description: 'Same shape as generateDefinitions response' }) },
+      },
     },
 
     /* ======================== BLOG CATEGORIES ======================== */
@@ -1169,9 +1503,8 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
       get: {
         tags: ['Company'],
         summary: 'Get company profile',
-        description: 'Returns raw (non-enveloped) company profile. **Note:** This endpoint does not use the standard v1 success envelope.',
         operationId: 'getCompanyProfile',
-        responses: { '200': jsonResponse({ $ref: '#/components/schemas/CompanyProfile' }) },
+        responses: { '200': jsonResponse(successEnvelope({ $ref: '#/components/schemas/CompanyProfile' })) },
       },
       patch: {
         tags: ['Company'],

@@ -39,7 +39,7 @@ export const GET = apiHandler(async (ctx) => {
 
   if (!company) throw new NotFoundError('Company not found')
 
-  return raw({
+  return success({
     website_url: company.website_url,
     profile: company.profile,
     name: company.name,
