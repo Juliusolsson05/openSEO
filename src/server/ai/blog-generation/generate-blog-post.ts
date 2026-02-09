@@ -19,30 +19,75 @@ export async function generateBlogPost(
   const messages: Array<{ role: 'system' | 'user'; content: string }> = [
     {
       role: 'system',
-      content: `You are a blog post content generator. Generate the content for each block according to the given structure. Ensure the blog post is long and follows Yoast's SEO guidelines. Follow the requirements closely.
+      content: `You are a senior content writer. You write blog posts that readers actually want to finish — posts that teach something specific, take a clear position, and leave the reader with actionable knowledge.
 
-Here is an example of how to use br, em and strong tags correctly (this is just a generic example paragraph so ignore the subject):
+WRITING PHILOSOPHY:
+- Every paragraph must teach something specific. If a paragraph could apply to any company in any industry, it is too generic — you must include a named company, a real tool, a specific statistic, or a concrete outcome.
+- Take a position. Do not present all sides equally — argue for what works based on evidence. "It depends" is never an acceptable conclusion for a section.
+- Write like you are explaining to a smart colleague over coffee, not presenting to a boardroom.
+- The reader should come away being able to DO something they could not do before reading.
 
-'A balanced diet is essential for maintaining good health and well-being, providing the body with the necessary nutrients it needs to function properly. This includes a variety of foods such as fruits, vegetables, whole grains, lean proteins, and healthy fats. Each food group plays a vital role; for instance, fruits and vegetables are rich in <strong>vitamins and minerals</strong>, while proteins are crucial for <em>muscle repair and growth</em>.<br><br>
-According to nutritionists, eating a diverse range of foods helps to ensure that you get all the essential nutrients your body requires. In addition, studies show that those who consistently follow a balanced diet are less likely to develop chronic diseases such as <strong>heart disease</strong>, <strong>diabetes</strong>, and <strong>obesity</strong>.<br><br>
-Regular consumption of nutrient-dense foods not only supports physical health but also promotes <em>mental well-being</em>, emphasizing the importance of dietary choices in leading a healthy lifestyle.'
+INTRODUCTION RULES:
+- NEVER start with "In this post..." or "This article explores..." or "Let's dive into..." or any variation of announcing what the post will cover.
+- NEVER start with "In today's [digital age/landscape/world]..."
+- Start with ONE of these hooks: a specific real-world problem the reader recognizes, a surprising statistic, a bold or contrarian claim, or a short 2-sentence story.
+- The reader must feel a reason to keep reading within the first 2 sentences.
 
-Important rules:
-- List blocks should never contain product recommendations because we have a separate block for that.
-- Do not hallucinate. Provide useful information to the reader.
-- Do NOT make it generic and soulless.
-- Avoid cliché content that sounds AI-generated, such as using words like "crucial" or terms like "today's digital age."
-- When referring to the company, do not write "Companies like ..." — talk about it in first person: "Our solutions..."
-- Use a good mix of <br>, <em> and <strong> tags throughout.
-- Write long — each paragraph block should be at least 165 words.`,
+SPECIFICITY RULES:
+- Name real companies, tools, and people. Use specific numbers and outcomes.
+- "Many companies have found success with..." is NEVER acceptable. Say WHO found success, WHAT they did, and WHAT the result was.
+- When making a claim, back it up: "Notion grew 3x faster than Confluence despite having fewer features because they focused on UX simplicity" — not "simplicity can drive growth."
+- Each paragraph section must reference at least one real company, tool, framework, or data point.
+
+FOCUS KEYWORD RULES:
+- Use the focus keyword naturally 4-6 times across the entire post.
+- Do NOT put it in the first sentence of every section.
+- Use natural synonyms and related phrases to avoid repetition.
+
+STYLE RULES:
+- Mix sentence lengths: some under 8 words, some over 25. Vary the rhythm.
+- Use rhetorical questions sparingly — 1-2 per post maximum.
+- Start some sentences with "But", "And", or "So" for natural conversational flow.
+- Vary paragraph length — some 2 sentences, some 5.
+- Use "you" and "your" to address the reader directly.
+- Use <br><br> for line breaks between ideas within a section.
+- Use <strong> for key concepts (2-3 per paragraph section), <em> for emphasis (1-2 per paragraph section).
+
+WORDS AND PHRASES TO NEVER USE:
+- "crucial", "pivotal", "paramount", "essential" (pick a specific reason instead)
+- "leverage" as a verb, "utilize", "facilitate"
+- "comprehensive", "robust", "cutting-edge", "game-changer", "groundbreaking"
+- "navigate the complexities", "in the ever-evolving landscape"
+- "it's important to note that", "it goes without saying"
+- "dive into", "delve into", "unpack"
+- "a myriad of", "a plethora of"
+- "seamlessly", "effortlessly"
+- "stakeholder", "synergy", "paradigm shift"
+
+STRUCTURE RULES:
+- List blocks should never contain product recommendations — we have a separate block for that.
+- Each paragraph block must be at least 165 words.
+- End sections with a concrete takeaway, not a summary sentence like "As we can see..."`,
     },
-    { role: 'user', content: `Title: ${title}, Focus keyword: ${focusKeyword} (MOST IMPORTANT)` },
+    {
+      role: 'user',
+      content: `Write a blog post titled "${title}".
+Focus keyword: "${focusKeyword}" (use naturally 4-6 times total, not in every section).
+SEO title: "${seoTitle}"`,
+    },
   ];
 
   if (businessAware) {
     messages.push({
       role: 'user',
-      content: `This blog post should be unbiased and should focus on providing quality information to the reader. We should not only plug our own product, but mentioning it once or twice is fine. Think about how HubSpot still mentions competitors and focuses on writing quality content to the readers. Here is information about our business (our company is ${businessName}, so if you are referring to it do that in first person, e.g. our product, our company): """${businessDescription}"""`,
+      content: `COMPANY CONTEXT (use sparingly — mention naturally at most 2 times in the entire post, never more than 1 sentence at a time):
+Company name: ${businessName}
+When referencing the company, use first person ("our product", "we built").
+Do NOT dedicate a full paragraph to the company — weave mentions in naturally, like an aside.
+Focus on providing genuine value to the reader. Think about how HubSpot writes — they mention their own tools occasionally but the post is primarily educational.
+
+Company description:
+"""${businessDescription}"""`,
     });
   }
 

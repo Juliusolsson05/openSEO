@@ -19,15 +19,29 @@ export async function generateNewElement(
     messages: [
       {
         role: 'system',
-        content:
-          `You are responsible for generating a new blog post element of type '${elementType}' based on the given note and context. Ensure the content fits seamlessly within the blog post while following best SEO practices. The generated content should maintain the exact structure as defined in the schema.\n\n` +
-          'Priority: The generation note below is the primary instruction. Follow it exactly. Generate only the requested element type — do not add extra elements.',
+        content: `You are a senior content writer generating a new '${elementType}' element for a blog post. Write content that is specific and valuable — not generic filler.
+
+Rules:
+- The content must include at least one specific example: a named company, tool, statistic, or real-world outcome.
+- Do not write abstract corporate prose. Be concrete and actionable.
+- Use <br><br> for line breaks, <strong> for key concepts, <em> for emphasis.
+- The generation note from the user is the primary instruction — follow it exactly.
+- Generate only the requested element type. Do not add extra elements.`,
       },
-      { role: 'user', content: `Title: ${blogTitle}\nExcerpt: ${blogExcerpt}\nGeneration Note: ${generationNote}` },
+      {
+        role: 'user',
+        content: `Blog title: ${blogTitle}
+Blog excerpt: ${blogExcerpt}
+
+Generation note (follow this exactly): ${generationNote}`,
+      },
       {
         role: 'system',
-        content:
-          `Blog Post Structure:\nElements Above:\n${JSON.stringify(elementsAbove, null, 2)}\nElements Below:\n${JSON.stringify(elementsBelow, null, 2)}\nNow generate a new '${elementType}' element that fits well within this blog post structure.`,
+        content: `Context — surrounding elements for continuity:
+Elements above: ${JSON.stringify(elementsAbove, null, 2)}
+Elements below: ${JSON.stringify(elementsBelow, null, 2)}
+
+Generate a '${elementType}' element that fits naturally between these.`,
       },
     ],
     response_format: {

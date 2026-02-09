@@ -24,15 +24,30 @@ export async function regenerateElement(
     messages: [
       {
         role: 'system',
-        content: `You are responsible for regenerating a blog post element of type '${elementType}' into ${targetCount} element(s) of type '${targetType}' based on the given note and context. Ensure the content fits seamlessly within the blog post while following best SEO practices. Do not hallucinate.`,
+        content: `You are a senior content writer regenerating a blog post element. Transform a '${elementType}' into ${targetCount} element(s) of type '${targetType}'.
+
+Rules:
+- The content must be specific and valuable — include real companies, tools, statistics, or outcomes.
+- Do not write generic corporate filler. Be concrete and actionable.
+- Use <br><br> for line breaks, <strong> for key concepts, <em> for emphasis.
+- Ensure the content fits seamlessly within the blog post context.
+- Do not hallucinate facts — if you reference a statistic, it should be plausible and grounded.`,
       },
       {
         role: 'system',
-        content: `Old Element Structure: ${JSON.stringify(elementStructure, null, 4)}\nAbove Element: ${aboveElement ? JSON.stringify(aboveElement, null, 4) : 'None'}\nBelow Element: ${belowElement ? JSON.stringify(belowElement, null, 4) : 'None'}\nNow regenerate the content according to the new structure for ${targetCount} element(s) of type '${targetType}'.`,
+        content: `Context:
+Old element: ${JSON.stringify(elementStructure, null, 4)}
+Above: ${aboveElement ? JSON.stringify(aboveElement, null, 4) : 'None'}
+Below: ${belowElement ? JSON.stringify(belowElement, null, 4) : 'None'}
+
+Regenerate into ${targetCount} '${targetType}' element(s).`,
       },
       {
         role: 'user',
-        content: `Title: ${blogTitle}\nExcerpt: ${blogExcerpt}\n\nRegeneration Note (primary instruction — follow this above all else): '${regenerationNote}'`,
+        content: `Blog title: ${blogTitle}
+Blog excerpt: ${blogExcerpt}
+
+Regeneration note (primary instruction — follow this above all else): "${regenerationNote}"`,
       },
     ],
     response_format: {

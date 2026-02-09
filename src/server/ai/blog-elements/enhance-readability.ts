@@ -14,20 +14,23 @@ export async function enhanceReadability(
     messages: [
       {
         role: 'system',
-        content:
-          "You are responsible for enhancing a blog post element to improve its readability. Add em, strong, and br tags to make the content easier to read. Ensure the enhanced content fits seamlessly within the blog post while following best SEO practices. The enhanced content should maintain the exact same structure as the original, without adding nested 'block' or 'content' keys." +
-          '\n\nHere is a before and after example:\n' +
-          'Before:\n' +
-          "'A balanced diet is essential for maintaining good health and well-being, providing the body with the necessary nutrients it needs to function properly. This includes a variety of foods such as fruits, vegetables, whole grains, lean proteins, and healthy fats. Each food group plays a vital role for instance fruits and vegetables are rich in vitamins and minerals, while proteins are important for muscle repair and growth. Regular consumption of nutrient-dense foods not only supports physical health but also promotes mental well-being, emphasizing the importance of dietary choices in leading a healthy lifestyle.'" +
-          '\n\nAfter:\n' +
-          "'A balanced diet is essential for maintaining good health and well-being, providing the body with the necessary nutrients it needs to function properly. This includes a variety of foods such as fruits, vegetables, whole grains, lean proteins, and healthy fats.<br><br>Each food group plays a vital role; for instance, fruits and vegetables are rich in <strong>vitamins and minerals</strong>, while proteins are important for <em>muscle repair and growth</em>.<br><br>Regular consumption of nutrient-dense foods not only supports physical health but also promotes <em>mental well-being</em>, emphasizing the importance of dietary choices in leading a healthy lifestyle.'",
+        content: `You are a content editor improving the readability of a blog post element. Your job is to add HTML formatting tags to make the content easier to scan and read.
+
+What to do:
+- Add <strong> around key concepts and important terms (2-3 per text block).
+- Add <em> around words that deserve emphasis or nuance (1-2 per text block).
+- Add <br><br> between distinct ideas to break up walls of text.
+- Do NOT change the actual words or meaning — only add formatting tags.
+- Do NOT add markdown formatting (no ** or *) — only HTML tags.
+- Maintain the exact same JSON structure as the original.
+
+Example of what good formatting looks like:
+
+Before: "Customer retention is often more cost-effective than acquisition. Companies that invest in onboarding see higher lifetime value. Slack reduced churn by 25% after redesigning their first-week experience, focusing on getting teams to send 2000 messages."
+
+After: "Customer retention is often more cost-effective than acquisition. Companies that invest in onboarding see higher <strong>lifetime value</strong>.<br><br>Slack reduced churn by <strong>25%</strong> after redesigning their first-week experience, focusing on getting teams to send <em>2,000 messages</em> — a threshold they found correlated with long-term retention."`,
       },
-      { role: 'user', content: `Title: ${blogTitle}\nElement Structure: ${JSON.stringify(elementStructure, null, 4)}` },
-      {
-        role: 'system',
-        content:
-          'Now enhance the content by adding em, strong, and br tags to improve readability. Maintain the exact same keys as the original structure.',
-      },
+      { role: 'user', content: `Blog title: ${blogTitle}\nElement to enhance:\n${JSON.stringify(elementStructure, null, 4)}` },
     ],
     response_format: {
       type: 'json_schema',
