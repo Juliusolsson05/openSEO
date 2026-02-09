@@ -383,6 +383,7 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
       post: {
         tags: ['Auth'],
         summary: 'Login with email and password',
+        description: 'Returns user info and sets session cookies (`authjs.session-token`, `access`). No token is returned in the response body.',
         security: [],
         operationId: 'login',
         requestBody: {
@@ -401,7 +402,23 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
           },
         },
         responses: {
-          '200': jsonResponse({ type: 'object', properties: { token: { type: 'string' }, user: { type: 'object' } } }, 'Login successful'),
+          '200': jsonResponse({
+            type: 'object',
+            required: ['user'],
+            properties: {
+              user: {
+                type: 'object',
+                properties: {
+                  email: { type: 'string' },
+                  username: { type: 'string' },
+                  user_type: { type: 'integer', description: '1=DEMO, 2=CLIENT, 3=AGENCY, 4=ADMINISTRATOR' },
+                  abilityRules: { type: 'array', items: { type: 'string' } },
+                  company: { type: 'object', nullable: true, properties: { id: { type: 'integer' }, name: { type: 'string' } } },
+                },
+              },
+            },
+          }, 'Login successful — session cookie set'),
+          '400': jsonResponse({ type: 'object', properties: { detail: { type: 'string' } } }, 'Missing email or password'),
           '401': ref401,
         },
       },
@@ -440,7 +457,22 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         summary: 'Get current user session',
         operationId: 'getMe',
         responses: {
-          '200': jsonResponse({ type: 'object', properties: { user: { type: 'object' }, companyId: { type: 'integer', nullable: true } } }),
+          '200': jsonResponse({
+            type: 'object',
+            required: ['user'],
+            properties: {
+              user: {
+                type: 'object',
+                properties: {
+                  email: { type: 'string' },
+                  username: { type: 'string' },
+                  user_type: { type: 'integer' },
+                  abilityRules: { type: 'array', items: { type: 'string' } },
+                  company: { type: 'object', nullable: true, properties: { id: { type: 'integer' }, name: { type: 'string' } } },
+                },
+              },
+            },
+          }),
           '401': ref401,
         },
       },
@@ -449,10 +481,12 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
       post: {
         tags: ['Auth'],
         summary: 'Refresh session token',
+        description: 'Validates the current session cookie is still valid. Returns `{ ok: true }` on success.',
         security: [],
         operationId: 'refreshToken',
         responses: {
-          '200': jsonResponse({ type: 'object', properties: { token: { type: 'string' } } }),
+          '200': jsonResponse({ type: 'object', properties: { ok: { type: 'boolean', enum: [true] } } }),
+          '401': ref401,
         },
       },
     },
@@ -460,10 +494,11 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
       post: {
         tags: ['Auth'],
         summary: 'Logout and invalidate session',
+        description: 'Clears all session cookies.',
         security: [],
         operationId: 'logout',
         responses: {
-          '200': jsonResponse({ type: 'object', properties: { success: { type: 'boolean' } } }),
+          '200': jsonResponse({ type: 'object', properties: { ok: { type: 'boolean', enum: [true] } } }),
         },
       },
     },
@@ -641,14 +676,24 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
       get: {
         tags: ['Blog Posts'],
         summary: 'List blog posts',
+        description: 'When `post_id` query param is provided, returns that single post. Otherwise returns paginated list with Django-style next/previous URLs.',
         operationId: 'listBlogPosts',
-        parameters: [pageParam, pageSizeParam, searchParam],
+        parameters: [
+          pageParam,
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, minimum: 1, maximum: 100 }, description: 'Items per page (alias for pageSize)' },
+          searchParam,
+          { name: 'post_id', in: 'query', schema: { type: 'integer' }, description: 'If provided, returns a single post by ID' },
+          { name: 'status', in: 'query', schema: { type: 'string' }, description: 'Filter by publish status (or "all")' },
+          { name: 'category_ids', in: 'query', schema: { type: 'string' }, description: 'Comma-separated category IDs' },
+        ],
         responses: {
           '200': jsonResponse({
             type: 'object',
             properties: {
+              result: { type: 'integer', description: 'Total matching posts' },
+              next: { type: 'string', nullable: true, description: 'URL for next page' },
+              previous: { type: 'string', nullable: true, description: 'URL for previous page' },
               data: { type: 'array', items: { $ref: '#/components/schemas/BlogPost' } },
-              total: { type: 'integer' },
             },
           }),
         },
@@ -733,7 +778,7 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         summary: 'Delete a blog post',
         operationId: 'deleteBlogPost',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
-        responses: { '200': jsonResponse({ type: 'object', properties: { deleted: { type: 'boolean' } } }) },
+        responses: { '200': jsonResponse({ type: 'object', properties: { status: { type: 'string' }, deleted_post_id: { type: 'integer' } } }) },
       },
     },
     '/aurora/blog/posts/share': {
@@ -759,7 +804,10 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         tags: ['Blog Posts'],
         summary: 'Get a specific revision',
         operationId: 'getBlogPostRevision',
-        parameters: [{ name: 'revision_id', in: 'query', required: true, schema: { type: 'integer' } }],
+        parameters: [
+          { name: 'post_id', in: 'query', required: true, schema: { type: 'integer' } },
+          { name: 'history_id', in: 'query', required: true, schema: { type: 'integer' } },
+        ],
         responses: { '200': jsonResponse({ type: 'object' }) },
       },
     },
@@ -768,7 +816,7 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         tags: ['Blog Posts'],
         summary: 'Sync focus keywords for a post',
         operationId: 'syncKeywords',
-        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['post_id'], properties: { post_id: { type: 'integer' } } } } } },
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['dictionary_id'], properties: { dictionary_id: { type: 'integer' }, post_id: { type: 'integer', description: 'Optional — sync a single post; omit to sync all' } } } } } },
         responses: { '200': jsonResponse({ type: 'object' }) },
       },
     },
@@ -819,28 +867,79 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
       },
     },
     '/aurora/blog/posts/elements/enhance': {
-      post: { tags: ['Blog Elements'], summary: 'Enhance element with AI', operationId: 'enhanceElement', responses: { '200': jsonResponse({ $ref: '#/components/schemas/ContentElement' }) } },
+      post: {
+        tags: ['Blog Elements'],
+        summary: 'Enhance element with AI',
+        operationId: 'enhanceElement',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['blog_post_id', 'blog_element_id'], properties: { blog_post_id: { type: 'integer' }, blog_element_id: { type: 'integer' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', properties: { status: { type: 'string' }, enhanced_element: { type: 'string', description: 'The enhanced HTML content' } } }) },
+      },
     },
     '/aurora/blog/posts/elements/enhance-readability': {
-      post: { tags: ['Blog Elements'], summary: 'Enhance element readability', operationId: 'enhanceReadability', responses: { '200': jsonResponse({ $ref: '#/components/schemas/ContentElement' }) } },
+      post: {
+        tags: ['Blog Elements'],
+        summary: 'Enhance element readability',
+        operationId: 'enhanceReadability',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['blog_post_id', 'blog_element_id'], properties: { blog_post_id: { type: 'integer' }, blog_element_id: { type: 'integer' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', properties: { status: { type: 'string' }, enhanced_element: { type: 'string' } } }) },
+      },
     },
     '/aurora/blog/posts/elements/humanize': {
-      post: { tags: ['Blog Elements'], summary: 'Humanize AI-generated element', operationId: 'humanizeElement', responses: { '200': jsonResponse({ $ref: '#/components/schemas/ContentElement' }) } },
+      post: {
+        tags: ['Blog Elements'],
+        summary: 'Humanize AI-generated element',
+        operationId: 'humanizeElement',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['blog_post_id', 'blog_element_id'], properties: { blog_post_id: { type: 'integer' }, blog_element_id: { type: 'integer' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', properties: { id: { type: 'integer' }, element_type: { type: 'string' }, order: { type: 'integer' }, content: { type: 'string' }, created_at: { type: 'string', format: 'date-time' } } }) },
+      },
     },
     '/aurora/blog/posts/elements/regenerate': {
-      post: { tags: ['Blog Elements'], summary: 'Regenerate element with AI', operationId: 'regenerateElement', responses: { '200': jsonResponse({ $ref: '#/components/schemas/ContentElement' }) } },
+      post: {
+        tags: ['Blog Elements'],
+        summary: 'Regenerate element with AI',
+        operationId: 'regenerateElement',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['blog_post_id', 'blog_element_id'], properties: { blog_post_id: { type: 'integer' }, blog_element_id: { type: 'integer' }, regeneration_note: { type: 'string' }, new_element_type: { type: 'string' }, new_element_count: { type: 'integer', default: 1 } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', properties: { status: { type: 'string' }, regenerated_elements: { type: 'array', items: { $ref: '#/components/schemas/ContentElement' } } } }) },
+      },
     },
     '/aurora/blog/posts/elements/add': {
-      post: { tags: ['Blog Elements'], summary: 'Add element to a post', operationId: 'addElement', responses: { '200': jsonResponse({ $ref: '#/components/schemas/ContentElement' }) } },
+      post: {
+        tags: ['Blog Elements'],
+        summary: 'Add a generated element to a post',
+        operationId: 'addElement',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['blog_post_id', 'element_id', 'element_type'], properties: { blog_post_id: { type: 'integer' }, element_id: { type: 'integer', description: 'Reference element ID (for ordering)' }, element_type: { type: 'string' }, generation_note: { type: 'string' } } } } } },
+        responses: { '201': jsonResponse({ $ref: '#/components/schemas/ContentElement' }) },
+      },
     },
     '/aurora/blog/posts/elements/add-cta': {
-      post: { tags: ['Blog Elements'], summary: 'Add CTA element to a post', operationId: 'addCtaElement', responses: { '200': jsonResponse({ $ref: '#/components/schemas/ContentElement' }) } },
+      post: {
+        tags: ['Blog Elements'],
+        summary: 'Add CTA element to a post',
+        operationId: 'addCtaElement',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['blog_post_id', 'element_id', 'cta_id'], properties: { blog_post_id: { type: 'integer' }, element_id: { type: 'integer' }, cta_id: { type: 'integer' } } } } } },
+        responses: { '201': jsonResponse({ $ref: '#/components/schemas/ContentElement' }) },
+      },
     },
     '/aurora/blog/posts/elements/template/create': {
-      post: { tags: ['Blog Elements'], summary: 'Create element template', operationId: 'createTemplate', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Blog Elements'],
+        summary: 'Create element template',
+        operationId: 'createTemplate',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['name', 'element_type', 'structure'], properties: { name: { type: 'string' }, element_type: { type: 'string' }, structure: { type: 'object' } } } } } },
+        responses: { '201': jsonResponse({ type: 'object', properties: { message: { type: 'string' }, template: { type: 'object', properties: { id: { type: 'integer' }, name: { type: 'string' }, element_type: { type: 'string' }, structure: { type: 'object' } } } } }) },
+      },
     },
     '/aurora/blog/posts/elements/template/use': {
-      post: { tags: ['Blog Elements'], summary: 'Apply element template to post', operationId: 'useTemplate', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Blog Elements'],
+        summary: 'Apply element template to post',
+        operationId: 'useTemplate',
+        parameters: [
+          { name: 'element_id', in: 'query', required: true, schema: { type: 'integer' } },
+          { name: 'template_id', in: 'query', required: true, schema: { type: 'integer' } },
+        ],
+        responses: { '200': jsonResponse({ type: 'object', properties: { detail: { type: 'string' }, updated_element: { type: 'object', properties: { id: { type: 'integer' }, element_type: { type: 'string' }, content: { type: 'string' }, hyperlink: { type: 'string', nullable: true } } } } }) },
+      },
     },
     '/aurora/blog/posts/elements/get/code-clusters': {
       get: { tags: ['Blog Elements'], summary: 'Get code cluster suggestions', operationId: 'getCodeClusters', responses: { '200': jsonResponse({ type: 'array', items: { type: 'object' } }) } },
@@ -947,19 +1046,52 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
 
     /* ======================== QUILLO ======================== */
     '/aurora/blog/quillo/analyze': {
-      post: { tags: ['Quillo'], summary: 'Analyze blog post with Quillo AI', operationId: 'quilloAnalyze', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Quillo'],
+        summary: 'Analyze blog post with Quillo AI',
+        operationId: 'quilloAnalyze',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['blog_post_id'], properties: { blog_post_id: { type: 'integer' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object' }) },
+      },
     },
     '/aurora/blog/quillo/analyze/chat': {
-      post: { tags: ['Quillo'], summary: 'Chat with Quillo AI about a post', operationId: 'quilloChat', responses: { '200': jsonResponse({ type: 'object' }) } },
+      post: {
+        tags: ['Quillo'],
+        summary: 'Chat with Quillo AI about a post',
+        operationId: 'quilloChat',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['blog_post_id', 'question'], properties: { blog_post_id: { type: 'integer' }, question: { type: 'string' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object' }) },
+      },
     },
     '/aurora/blog/quillo/post/autopilot': {
-      post: { tags: ['Quillo'], summary: 'Start autopilot post generation', operationId: 'quilloAutopilot', responses: { '200': jsonResponse({ type: 'object', properties: { taskId: { type: 'string' } } }) } },
+      post: {
+        tags: ['Quillo'],
+        summary: 'Start autopilot post improvement',
+        operationId: 'quilloAutopilot',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['blog_post_id'], properties: { blog_post_id: { type: 'integer' } } } } } },
+        responses: { '202': jsonResponse({ type: 'object', properties: { task_id: { type: 'string' }, status: { type: 'string' } } }, 'Autopilot task started') },
+      },
     },
     '/aurora/blog/quillo/post/autopilot-status/{taskId}': {
-      get: { tags: ['Quillo'], summary: 'Check autopilot task status', operationId: 'quilloAutopilotStatus', parameters: [{ name: 'taskId', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': jsonResponse({ type: 'object', properties: { status: { type: 'string' }, progress: { type: 'number' } } }) } },
+      get: {
+        tags: ['Quillo'],
+        summary: 'Check autopilot task status',
+        operationId: 'quilloAutopilotStatus',
+        parameters: [{ name: 'taskId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': jsonResponse({ type: 'object', properties: { task_id: { type: 'string' }, status: { type: 'string' }, logs: { type: 'array', items: { type: 'string' } }, error: { type: 'string', nullable: true } } }),
+          '404': jsonResponse({ type: 'object', properties: { task_id: { type: 'string' }, status: { type: 'string', enum: ['not_available'] }, detail: { type: 'string' }, logs: { type: 'array', items: { type: 'string' } } } }, 'Task not found or expired'),
+        },
+      },
     },
     '/aurora/blog/quillo/post/facebook': {
-      post: { tags: ['Quillo'], summary: 'Generate Facebook post from blog', operationId: 'quilloFacebook', responses: { '200': jsonResponse({ type: 'object', properties: { content: { type: 'string' } } }) } },
+      post: {
+        tags: ['Quillo'],
+        summary: 'Generate Facebook post from blog',
+        operationId: 'quilloFacebook',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['blog_post_id'], properties: { blog_post_id: { type: 'integer' } } } } } },
+        responses: { '200': jsonResponse({ type: 'object', properties: { content: { type: 'string' } } }) },
+      },
     },
     '/aurora/company/quillo': {
       get: { tags: ['Quillo'], summary: 'Get company Quillo profile', operationId: 'getCompanyQuillo', responses: { '200': jsonResponse({ type: 'object' }) } },
@@ -1034,8 +1166,47 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
 
     /* ======================== V1 — COMPANY ======================== */
     '/v1/company/profile': {
-      get: { tags: ['Company'], summary: 'Get company profile', operationId: 'getCompanyProfile', responses: { '200': jsonResponse({ $ref: '#/components/schemas/CompanyProfile' }) } },
-      patch: { tags: ['Company'], summary: 'Update company profile', operationId: 'updateCompanyProfile', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['profile'], properties: { profile: { type: 'object' } } } } } }, responses: { '200': jsonResponse(successEnvelope({ $ref: '#/components/schemas/CompanyProfile' })) } },
+      get: {
+        tags: ['Company'],
+        summary: 'Get company profile',
+        description: 'Returns raw (non-enveloped) company profile. **Note:** This endpoint does not use the standard v1 success envelope.',
+        operationId: 'getCompanyProfile',
+        responses: { '200': jsonResponse({ $ref: '#/components/schemas/CompanyProfile' }) },
+      },
+      patch: {
+        tags: ['Company'],
+        summary: 'Update company profile',
+        operationId: 'updateCompanyProfile',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['profile'],
+                properties: {
+                  profile: {
+                    type: 'object',
+                    required: ['business_description', 'industry', 'target_audience', 'tone_of_voice', 'products_services', 'key_terminology', 'content_topics', 'differentiators', 'detected_language'],
+                    properties: {
+                      business_description: { type: 'string' },
+                      industry: { type: 'string' },
+                      target_audience: { type: 'string' },
+                      tone_of_voice: { type: 'array', items: { type: 'string' } },
+                      products_services: { type: 'array', items: { type: 'string' } },
+                      key_terminology: { type: 'array', items: { type: 'string' } },
+                      content_topics: { type: 'array', items: { type: 'string' } },
+                      differentiators: { type: 'array', items: { type: 'string' } },
+                      detected_language: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: { '200': jsonResponse(successEnvelope({ $ref: '#/components/schemas/CompanyProfile' })) },
+      },
     },
     '/v1/company/analyze': {
       post: { tags: ['Company'], summary: 'Analyze company website with AI', operationId: 'analyzeCompany', responses: { '200': jsonResponse({ type: 'object' }) } },
