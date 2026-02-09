@@ -41,6 +41,8 @@ const MODAL_CASE_X = 720;
 const MODAL_CASE_Y = 520;
 const MODAL_ADD_BTN_X = 870;
 const MODAL_ADD_BTN_Y = 630;
+const PUBLISH_BTN_X = 1540;
+const PUBLISH_BTN_Y = 300;
 
 const F = "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', sans-serif";
 
@@ -59,6 +61,7 @@ export const BlogPostScene: React.FC = () => {
     plusButton: null,
     modalCaseStudy: null,
     modalAddButton: null,
+    publishButton: null,
   });
   const frozenTargetsRef = useRef<Record<string, { x: number; y: number } | null>>({
     editSwitch: null,
@@ -66,6 +69,7 @@ export const BlogPostScene: React.FC = () => {
     plusButton: null,
     modalCaseStudy: null,
     modalAddButton: null,
+    publishButton: null,
   });
 
   /* ── Scroll (human-like: accelerate → coast → settle) ── */
@@ -176,6 +180,14 @@ export const BlogPostScene: React.FC = () => {
       }
     }
 
+
+    if (!frozen.publishButton && frame >= 980) {
+      const p = queryPos("publishButton");
+      if (p) {
+        frozen.publishButton = p;
+        changed = true;
+      }
+    }
     if (changed) {
       setTargets({ ...frozen });
     }
@@ -186,6 +198,23 @@ export const BlogPostScene: React.FC = () => {
   const plusTarget = targets.plusButton ?? { x: PLUS_X, y: PLUS_Y - scrollY };
   const caseStudyTarget = targets.modalCaseStudy ?? { x: MODAL_CASE_X, y: MODAL_CASE_Y };
   const modalAddTarget = targets.modalAddButton ?? { x: MODAL_ADD_BTN_X, y: MODAL_ADD_BTN_Y };
+  const publishTarget = targets.publishButton ?? { x: PUBLISH_BTN_X, y: PUBLISH_BTN_Y };
+
+  // Subtle end pan + zoom toward Publish CTA
+  const camProgress = interpolate(frame, [960, 1045], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.inOut(Easing.cubic),
+  });
+  const camZoom = interpolate(camProgress, [0, 1], [1, 1.14]);
+  const focusX = 1360;
+  const focusY = 300;
+  const camTranslateX = focusX - publishTarget.x * camZoom;
+  const camTranslateY = focusY - publishTarget.y * camZoom;
+  const endFade = interpolate(frame, [1050, 1080], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
 
   /* ── Cursor ── */
   const waypoints: Waypoint[] = [
@@ -210,14 +239,18 @@ export const BlogPostScene: React.FC = () => {
     // Click "Add Element" button
     { frame: 770,  x: modalAddTarget.x, y: modalAddTarget.y },
     { frame: 785,  x: modalAddTarget.x, y: modalAddTarget.y, click: true },
-    // Watch generation
-    { frame: 850,  x: INTRO_X + 60,   y: 550 },
-    { frame: 1080, x: INTRO_X + 50,   y: 540 },
+    // Watch generation then publish
+    { frame: 850,  x: INTRO_X + 60,    y: 550 },
+    { frame: 955,  x: publishTarget.x - 220, y: publishTarget.y + 80 },
+    { frame: 1015, x: publishTarget.x, y: publishTarget.y },
+    { frame: 1032, x: publishTarget.x, y: publishTarget.y, click: true },
+    { frame: 1080, x: publishTarget.x + 20, y: publishTarget.y + 10 },
   ];
 
   return (
     <BrowserFrame url="app.nordtools.com/blog/42/edit" pad={0}>
       <div ref={rootRef} style={{ width: "100%", height: "100%", position: "relative" }}>
+        <div style={{ position: "absolute", inset: 0, transform: `translate(${camTranslateX}px, ${camTranslateY}px) scale(${camZoom})`, transformOrigin: "top left" }}>
         <DashboardShell pageTitle="Edit Post" sidebarActiveItem="Blog Posts">
           <div style={{
             margin: -32,
@@ -319,6 +352,9 @@ export const BlogPostScene: React.FC = () => {
         )}
 
         <Cursor waypoints={waypoints} />
+        </div>
+
+        <div style={{ position: "absolute", inset: 0, background: "#001633", opacity: endFade, pointerEvents: "none", zIndex: 120 }} />
       </div>
     </BrowserFrame>
   );

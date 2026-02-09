@@ -129,12 +129,15 @@ export const ActionsCard: React.FC<{ editMode?: boolean }> = ({ editMode = false
       }}>
         <EyeIcon /> Preview
       </button>
-      <button style={{
-        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-        height: 32, borderRadius: 6, border: "none",
-        background: COLORS.primary, fontSize: 12, fontWeight: 500,
-        color: "#FFFFFF", fontFamily: F, cursor: "pointer",
-      }}>
+      <button
+        data-cursor-target="publishButton"
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+          height: 32, borderRadius: 6, border: "none",
+          background: COLORS.primary, fontSize: 12, fontWeight: 500,
+          color: "#FFFFFF", fontFamily: F, cursor: "pointer",
+        }}
+      >
         <UploadIcon /> Publish
       </button>
     </div>
