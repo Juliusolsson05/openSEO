@@ -126,16 +126,17 @@ function NetworkSvg({
             <circle cx={node.x} cy={node.y} r={r} fill="#0078D4" opacity={0.85}>
               <title>{node.title} (out: {node.outgoing}, in: {node.incoming})</title>
             </circle>
-            {showLabels && (node.incoming >= 2 || node.outgoing >= 3) && (
+            {showLabels && (
               <text
                 x={node.x}
                 y={node.y - r - 3}
                 textAnchor="middle"
-                fontSize="7"
-                fill="#333"
+                fontSize={node.incoming >= 2 || node.outgoing >= 3 ? '8' : '6'}
+                fill={node.incoming >= 2 || node.outgoing >= 3 ? '#1A1A1A' : '#888'}
+                fontWeight={node.incoming >= 2 || node.outgoing >= 3 ? 'bold' : 'normal'}
                 className="pointer-events-none"
               >
-                {node.title.length > 30 ? node.title.slice(0, 28) + '…' : node.title}
+                {node.title.length > 35 ? node.title.slice(0, 33) + '…' : node.title}
               </text>
             )}
           </g>

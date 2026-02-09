@@ -13,9 +13,14 @@ const STATUS_TO_NUMBER: Record<TitleStatus, number> = {
   PUBLISHED: 5,
 }
 
-function serializeTitle(t: Record<string, unknown>) {
+type TitleRow = Record<string, unknown>
+
+function serializeTitle(t: TitleRow, blogPostLinkMap: Map<number, number[]>) {
   const blogPost = t.blogPost as { id?: number } | null | undefined
-  const linkFrom = t.post_linking_from as Array<{ toTitleId: number }> | undefined
+  const blogPostId = typeof blogPost?.id === 'number' ? blogPost.id : null
+
+  // Map BlogPostPostLink edges back to title IDs via the blogPostLinkMap
+  const linkedTitleIds = blogPostId ? (blogPostLinkMap.get(blogPostId) ?? []) : []
 
   return {
     ...t,
@@ -24,8 +29,8 @@ function serializeTitle(t: Record<string, unknown>) {
     generatedDate: t.generated_date,
     scheduledDate: t.scheduled_date,
     company: t.companyId,
-    postId: typeof blogPost?.id === 'number' ? blogPost.id : null,
-    post_linking: (linkFrom ?? []).map((link) => link.toTitleId),
+    postId: blogPostId,
+    post_linking: linkedTitleIds,
   }
 }
 
@@ -74,7 +79,6 @@ const handler = apiHandler(async (ctx) => {
         categories: true,
         bulk_schedule: true,
         blogPost: { select: { id: true } },
-        post_linking_from: { select: { toTitleId: true } },
         _count: { select: { categories: true } },
       },
       orderBy: { created_at: 'desc' },
@@ -84,7 +88,37 @@ const handler = apiHandler(async (ctx) => {
     prisma.title.count({ where }),
   ])
 
-  return raw({ data: data.map((t) => serializeTitle(t as unknown as Record<string, unknown>)), total, page: query.page, pageSize: query.pageSize })
+  // Build a complete blogPostId → title.id reverse lookup for the whole company
+  // (links may point to titles outside the current page)
+  const allTitleMappings = await prisma.title.findMany({
+    where: { companyId: ctx.companyId!, blogPostId: { not: null } },
+    select: { id: true, blogPostId: true },
+  })
+  const blogPostIdToTitleId = new Map<number, number>()
+  for (const t of allTitleMappings) {
+    if (t.blogPostId != null) blogPostIdToTitleId.set(t.blogPostId, t.id)
+  }
+
+  // Fetch BlogPostPostLink edges for blog posts owned by titles on this page
+  const blogPostIds = data.map((t) => t.blogPostId).filter((id): id is number => id != null)
+  const blogPostLinks = blogPostIds.length
+    ? await prisma.blogPostPostLink.findMany({
+        where: { fromBlogPostId: { in: blogPostIds } },
+        select: { fromBlogPostId: true, toBlogPostId: true },
+      })
+    : []
+
+  // Map fromBlogPostId → list of target title IDs
+  const blogPostLinkMap = new Map<number, number[]>()
+  for (const link of blogPostLinks) {
+    const targetTitleId = blogPostIdToTitleId.get(link.toBlogPostId)
+    if (targetTitleId == null) continue
+    const list = blogPostLinkMap.get(link.fromBlogPostId) ?? []
+    list.push(targetTitleId)
+    blogPostLinkMap.set(link.fromBlogPostId, list)
+  }
+
+  return raw({ data: data.map((t) => serializeTitle(t as unknown as TitleRow, blogPostLinkMap)), total, page: query.page, pageSize: query.pageSize })
 })
 
 export const GET = handler
