@@ -1,5 +1,5 @@
 import { getOpenAIClient, MODELS } from '@/server/ai/clients';
-import { parseToolArguments } from '@/server/ai/utils';
+import { parseJsonResponse } from '@/server/ai/utils';
 
 export async function generateCategories(
   titles: string[],
@@ -23,29 +23,26 @@ export async function generateCategories(
         content: `Based on the following titles, generate a list of at least ${minCategories} categories. Provide the categories in ${language}:\n${JSON.stringify(titlesList)}`,
       },
     ],
-    tools: [
-      {
-        type: 'function',
-        function: {
-          name: 'generate_categories',
-          description: 'Generates a list of categories based on the provided blog titles.',
-          parameters: {
-            type: 'object',
-            properties: {
-              categories: {
-                type: 'array',
-                minItems: minCategories,
-                items: { type: 'string', description: 'A relevant category generated from the titles' },
-              },
+    response_format: {
+      type: 'json_schema',
+      json_schema: {
+        name: 'generate_categories',
+        strict: true,
+        schema: {
+          type: 'object',
+          properties: {
+            categories: {
+              type: 'array',
+              items: { type: 'string', description: 'A relevant category generated from the titles' },
             },
-            required: ['categories'],
           },
+          required: ['categories'],
+          additionalProperties: false,
         },
       },
-    ],
-    tool_choice: { type: 'function', function: { name: 'generate_categories' } },
+    },
   });
 
-  const json = JSON.parse(parseToolArguments(response)) as { categories?: string[] };
+  const json = parseJsonResponse<{ categories?: string[] }>(response);
   return json.categories ?? [];
 }

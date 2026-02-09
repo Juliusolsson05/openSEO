@@ -1,5 +1,5 @@
 import { getOpenAIClient, MODELS } from '@/server/ai/clients';
-import { parseToolArguments } from '@/server/ai/utils';
+import { parseJsonResponse } from '@/server/ai/utils';
 
 import type { Category } from '@/types/blog'
 
@@ -19,27 +19,26 @@ export async function categorizeTitles(
     const titlesList = titlesChunk.map((title) => ({ id: title.id, title: title.title_text }));
     const categoriesList = categories.map((category) => ({ id: category.id, name: category.name }));
 
-    const functionParameters = {
-      type: 'object',
-      properties: Object.fromEntries(
-        titlesChunk.map((_, j) => [
-          `title_${j + 1}`,
-          {
-            type: 'object',
-            properties: {
-              id: { type: 'integer', description: `Title ID ${j + 1}` },
-              categories: {
-                type: 'array',
-                items: { type: 'integer', description: 'Category ID' },
-                description: `List of category IDs for title ${j + 1}`,
-              },
-            },
-            required: ['id', 'categories'],
+    const titleProperties: Record<string, any> = {};
+    const requiredKeys: string[] = [];
+
+    for (let j = 0; j < titlesChunk.length; j++) {
+      const key = `title_${j + 1}`;
+      titleProperties[key] = {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', description: `Title ID ${j + 1}` },
+          categories: {
+            type: 'array',
+            items: { type: 'integer', description: 'Category ID' },
+            description: `List of category IDs for title ${j + 1}`,
           },
-        ]),
-      ),
-      required: titlesChunk.map((_, j) => `title_${j + 1}`),
-    };
+        },
+        required: ['id', 'categories'],
+        additionalProperties: false,
+      };
+      requiredKeys.push(key);
+    }
 
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_SMART,
@@ -54,23 +53,22 @@ export async function categorizeTitles(
           content: `Categorize the following titles into these categories: ${JSON.stringify(categoriesList)}\nTitles: ${JSON.stringify(titlesList)}`,
         },
       ],
-      tools: [
-        {
-          type: 'function',
-          function: {
-            name: 'categorize_titles',
-            description: 'Categorizes the provided titles into the provided categories.',
-            parameters: functionParameters,
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'categorize_titles',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: titleProperties,
+            required: requiredKeys,
+            additionalProperties: false,
           },
         },
-      ],
-      tool_choice: { type: 'function', function: { name: 'categorize_titles' } },
+      },
     });
 
-    const categorizedTitles = JSON.parse(parseToolArguments(response)) as Record<
-      string,
-      { id: number; categories: number[] }
-    >;
+    const categorizedTitles = parseJsonResponse<Record<string, { id: number; categories: number[] }>>(response);
 
     const formatted = Object.keys(categorizedTitles).map((key) => ({
       id: categorizedTitles[key].id,

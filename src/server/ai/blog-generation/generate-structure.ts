@@ -5,7 +5,7 @@ import {
   STRUCTURE_SYSTEM_PROMPT,
   STRUCTURE_USER_PROMPT,
 } from '@/server/ai/constants/structure-constants';
-import { parseToolArguments } from '@/server/ai/utils';
+import { parseJsonResponse } from '@/server/ai/utils';
 
 export async function generateStructure(
   titleText: string,
@@ -17,26 +17,6 @@ export async function generateStructure(
       ? COMMON_ELEMENTS
       : COMMON_ELEMENTS.filter((element) => allowedElements[element.type]);
 
-  const functionParameters = {
-    type: 'object',
-    properties: {
-      blocks: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            type: { type: 'string' },
-            order: { type: 'integer' },
-            description: { type: 'string' },
-            requirements: { type: 'string' },
-          },
-          required: ['type', 'order', 'description', 'requirements'],
-        },
-      },
-    },
-    required: ['blocks'],
-  };
-
   const response = await getOpenAIClient().chat.completions.create({
     model,
     messages: [
@@ -47,19 +27,36 @@ export async function generateStructure(
         content: JSON.stringify({ Mandatory: MANDATORY_ELEMENTS, 'Common Elements': filteredCommonElements }, null, 4),
       },
     ],
-    tools: [
-      {
-        type: 'function',
-        function: {
-          name: 'generate_blog_structure',
-          description: 'Generates a blog post structure based on the given title.',
-          parameters: functionParameters,
+    response_format: {
+      type: 'json_schema',
+      json_schema: {
+        name: 'generate_blog_structure',
+        strict: true,
+        schema: {
+          type: 'object',
+          properties: {
+            blocks: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  type: { type: 'string' },
+                  order: { type: 'integer' },
+                  description: { type: 'string' },
+                  requirements: { type: 'string' },
+                },
+                required: ['type', 'order', 'description', 'requirements'],
+                additionalProperties: false,
+              },
+            },
+          },
+          required: ['blocks'],
+          additionalProperties: false,
         },
       },
-    ],
-    tool_choice: { type: 'function', function: { name: 'generate_blog_structure' } },
+    },
   });
 
-  const structure = JSON.parse(parseToolArguments(response)) as Record<string, unknown>;
+  const structure = parseJsonResponse<Record<string, unknown>>(response);
   return { structure, usage: response.usage };
 }

@@ -1,32 +1,7 @@
-import { getAnthropicClient, getOpenAIClient, MODELS } from '../clients';
+import { getOpenAIClient, MODELS } from '../clients';
+import { parseJsonResponse } from '../utils';
 
 import type { ProductTitle } from './generate-motivations';
-
-function generateRecommendationParameters(productAmount: number, includeMotivation: boolean) {
-  const properties = Object.fromEntries(
-    Array.from({ length: productAmount }, (_, idx) => {
-      const key = `recommendation_${idx + 1}`;
-      return [
-        key,
-        {
-          type: 'object',
-          properties: {
-            index: { type: 'integer' },
-            order: { type: 'integer' },
-            ...(includeMotivation ? { motivation: { type: 'string' } } : {}),
-          },
-          required: includeMotivation ? ['index', 'order', 'motivation'] : ['index', 'order'],
-        },
-      ];
-    }),
-  );
-
-  return {
-    type: 'object',
-    properties,
-    required: Object.keys(properties),
-  };
-}
 
 export async function populateRecommendations(
   blogPostTitle: string,
@@ -50,19 +25,48 @@ export async function populateRecommendations(
       },
     ];
 
-    const functionParameters = generateRecommendationParameters(productAmount, includeMotivation);
+    const recProperties: Record<string, any> = {};
+    const requiredKeys: string[] = [];
+
+    for (let i = 0; i < productAmount; i++) {
+      const key = `recommendation_${i + 1}`;
+      const props: Record<string, any> = {
+        index: { type: 'integer' },
+        order: { type: 'integer' },
+      };
+      const req = ['index', 'order'];
+      if (includeMotivation) {
+        props.motivation = { type: 'string' };
+        req.push('motivation');
+      }
+      recProperties[key] = {
+        type: 'object',
+        properties: props,
+        required: req,
+        additionalProperties: false,
+      };
+      requiredKeys.push(key);
+    }
 
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
-      tools: [{
-        type: 'function' as const,
-        function: { name: 'generate_product_recommendations', description: 'Generates product recommendations based on the given themes.', parameters: functionParameters },
-      }],
-      tool_choice: { type: 'function' as const, function: { name: 'generate_product_recommendations' } },
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'generate_product_recommendations',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: recProperties,
+            required: requiredKeys,
+            additionalProperties: false,
+          },
+        },
+      },
     });
 
-    const recommendations = JSON.parse((response.choices[0]?.message?.tool_calls?.[0] as any)?.function?.arguments ?? '{}') as Record<string, { index: number; order: number; motivation?: string }>;
+    const recommendations = parseJsonResponse<Record<string, { index: number; order: number; motivation?: string }>>(response);
 
     if (includeMotivation) {
       const recommendedProducts = Array.from({ length: productAmount }, (_, idx) => {
@@ -88,5 +92,3 @@ export async function populateRecommendations(
     return { error: error instanceof Error ? error.message : String(error) };
   }
 }
-
-void getAnthropicClient;

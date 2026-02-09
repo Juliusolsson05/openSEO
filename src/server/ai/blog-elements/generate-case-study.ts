@@ -1,5 +1,5 @@
 import { getOpenAIClient, MODELS } from '@/server/ai/clients';
-import { parseToolArguments } from '@/server/ai/utils';
+import { parseJsonResponse } from '@/server/ai/utils';
 import { fetchLogoUrl } from '@/server/ai/blog-elements/fetch-logo-url';
 import { uploadToCloudinary } from '@/server/ai/blog-elements/upload-to-cloudinary';
 
@@ -55,40 +55,39 @@ export async function generateCaseStudy(blogTitle: string, focusKeyword: string)
       {
         role: 'system',
         content:
-          'You are an expert content creator specializing in crafting detailed and accurate case studies.\nYou are tasked with generating a case study that fits this blog_title and this focus_keyword. The case study MUST be a real case study, you should NOT make up one. So pick a REAL case study and real information. So WHATEVER you do, DO NOT pick some bullshit example name such as XYZ corp, IT SHOULD BE A REAL case study. If it is not a real case study you destroy our company image.',
+          'You are an expert content creator specializing in crafting detailed and accurate case studies.\nYou are tasked with generating a case study that fits this blog title and focus keyword. The case study should be based on a real company and real information. Pick a well-known, verifiable company relevant to the topic. Do not use placeholder names like "XYZ Corp." Make the header color match the company\'s brand colors.',
       },
       { role: 'user', content: `Blog Title: ${blogTitle}\nFocus Keyword: ${focusKeyword}` },
       {
         role: 'system',
         content:
-          'Generate the case study content following the provided schema. Ensure all required fields are populated with accurate and real-world information.Make the color match the companies logo',
+          'Generate the case study content following the provided schema. Ensure all required fields are populated with accurate and real-world information.',
       },
     ],
-    tools: [
-      {
-        type: 'function',
-        function: {
-          name: 'generate_case_study',
-          description: 'Generates a case study component showcasing real-world examples of success.',
-          parameters: {
-            type: 'object',
-            properties: {
-              block: {
-                type: 'object',
-                properties: { content: caseStudySchema },
-                required: ['content'],
-              },
+    response_format: {
+      type: 'json_schema',
+      json_schema: {
+        name: 'generate_case_study',
+        strict: true,
+        schema: {
+          type: 'object',
+          properties: {
+            block: {
+              type: 'object',
+              properties: { content: caseStudySchema },
+              required: ['content'],
+              additionalProperties: false,
             },
-            required: ['block'],
           },
+          required: ['block'],
+          additionalProperties: false,
         },
       },
-    ],
-    tool_choice: { type: 'function', function: { name: 'generate_case_study' } },
+    },
     max_completion_tokens: 1500,
   });
 
-  let content = JSON.parse(parseToolArguments(response)) as any;
+  let content = parseJsonResponse<any>(response);
   if (content.block?.content) content = content.block.content;
 
   const companyWebsite = content.companyWebsite;

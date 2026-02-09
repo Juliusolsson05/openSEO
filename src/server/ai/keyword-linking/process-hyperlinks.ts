@@ -1,63 +1,63 @@
-import { getAnthropicClient, getOpenAIClient, MODELS } from '../clients';
+import { getOpenAIClient, MODELS } from '../clients';
+import { parseJsonResponse } from '../utils';
 
 export async function processHyperlinks(element: Record<string, unknown>) {
   try {
     const systemMessage =
-      'You are responsible for taking a text paragraph and choosing the three most relevant hyperlink positions to keep. Select hyperlink positions and words that are most relevant to the text to make it more engaging. What only keeping three hyperlinks mean is the following, as you can see we have hyperlinks and we have matched_positions, keeping three hyperlinks is not only to keep three hyperlinks, but over hte whole element we should only have three matched positions, so if we add up the len of all the matched_positions array the result should be max 3.  You must choose at least two hyperlinks, but no more than three in total.';
+      'You are responsible for taking a text paragraph and choosing the most relevant hyperlink positions to keep. Select 2-3 hyperlink positions and words that are most relevant to the text to make it more engaging. Each keyword should have exactly 1 matched position. Total matched positions across all keywords: minimum 2, maximum 3.';
 
     const messages = [
       { role: 'system' as const, content: systemMessage },
       { role: 'user' as const, content: JSON.stringify(element) },
     ];
 
-    const functionParameters = {
-      name: 'hyperlink_response',
-      description: 'Process hyperlinks in the given text',
-      parameters: {
-        type: 'object',
-        properties: {
-          hyperlink: {
-            type: 'object',
-            properties: {
-              matched_keywords: {
-                type: 'object',
-                properties: {
-                  text: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        keyword: { type: 'string' },
-                        description: { type: 'string' },
-                        matched_positions: { type: 'array', items: { type: 'integer' } },
-                      },
-                      required: ['keyword', 'description', 'matched_positions'],
-                    },
-                  },
-                },
-                required: ['text'],
-              },
-            },
-            required: ['matched_keywords'],
-          },
-        },
-        required: ['hyperlink'],
-      },
-    };
-
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
-      tools: [{ type: 'function' as const, function: functionParameters }],
-      tool_choice: { type: 'function' as const, function: { name: 'hyperlink_response' } },
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'hyperlink_response',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: {
+              hyperlink: {
+                type: 'object',
+                properties: {
+                  matched_keywords: {
+                    type: 'object',
+                    properties: {
+                      text: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            keyword: { type: 'string' },
+                            description: { type: 'string' },
+                            matched_positions: { type: 'array', items: { type: 'integer' } },
+                          },
+                          required: ['keyword', 'description', 'matched_positions'],
+                          additionalProperties: false,
+                        },
+                      },
+                    },
+                    required: ['text'],
+                    additionalProperties: false,
+                  },
+                },
+                required: ['matched_keywords'],
+                additionalProperties: false,
+              },
+            },
+            required: ['hyperlink'],
+            additionalProperties: false,
+          },
+        },
+      },
     });
 
-    const toolCall = (response.choices[0]?.message?.tool_calls?.[0] as any)?.function;
-    if (!toolCall) {
-      throw new Error('No function call in the API response');
-    }
-
-    const result = JSON.parse(toolCall.arguments) as { hyperlink?: unknown };
+    const result = parseJsonResponse<{ hyperlink: unknown }>(response);
     if (!result.hyperlink || typeof result.hyperlink !== 'object' || !(result.hyperlink as Record<string, unknown>).matched_keywords) {
       throw new Error('Invalid response structure from API');
     }
@@ -68,5 +68,3 @@ export async function processHyperlinks(element: Record<string, unknown>) {
     return element;
   }
 }
-
-void getAnthropicClient;

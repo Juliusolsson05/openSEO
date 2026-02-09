@@ -2,7 +2,7 @@ import { getOpenAIClient, MODELS } from '@/server/ai/clients';
 import { generateElementFunctionParameters } from '@/server/ai/blog-elements/generate-function-parameters';
 import { fetchLogoUrl } from '@/server/ai/blog-elements/fetch-logo-url';
 import { uploadToCloudinary } from '@/server/ai/blog-elements/upload-to-cloudinary';
-import { parseToolArguments } from '@/server/ai/utils';
+import { parseJsonResponse } from '@/server/ai/utils';
 
 export async function generateNewElement(
   elementType: string,
@@ -12,7 +12,7 @@ export async function generateNewElement(
   elementsAbove: unknown,
   elementsBelow: unknown,
 ): Promise<Record<string, unknown>> {
-  const functionParameters = generateElementFunctionParameters(elementType);
+  const schema = generateElementFunctionParameters(elementType);
 
   const response = await getOpenAIClient().chat.completions.create({
     model: MODELS.OPENAI_DEFAULT,
@@ -20,8 +20,8 @@ export async function generateNewElement(
       {
         role: 'system',
         content:
-          `You are responsible for generating a new blog post element of type '${elementType}' based on the given note and context. Ensure the content fits seamlessly within the blog post while following best SEO practices. The generated content should maintain the exact structure as defined in the function parameters.` +
-          'The generation note is what the user writes, YOU MUST FUCKING follow this , DO NOT add another element, WHAT THE USER WRITES IS WHAT IS IMPORTANT.',
+          `You are responsible for generating a new blog post element of type '${elementType}' based on the given note and context. Ensure the content fits seamlessly within the blog post while following best SEO practices. The generated content should maintain the exact structure as defined in the schema.\n\n` +
+          'Priority: The generation note below is the primary instruction. Follow it exactly. Generate only the requested element type — do not add extra elements.',
       },
       { role: 'user', content: `Title: ${blogTitle}\nExcerpt: ${blogExcerpt}\nGeneration Note: ${generationNote}` },
       {
@@ -30,21 +30,18 @@ export async function generateNewElement(
           `Blog Post Structure:\nElements Above:\n${JSON.stringify(elementsAbove, null, 2)}\nElements Below:\n${JSON.stringify(elementsBelow, null, 2)}\nNow generate a new '${elementType}' element that fits well within this blog post structure.`,
       },
     ],
-    tools: [
-      {
-        type: 'function',
-        function: {
-          name: 'generate_new_element',
-          description: `Generates a new blog post element of type '${elementType}'.`,
-          parameters: functionParameters,
-        },
+    response_format: {
+      type: 'json_schema',
+      json_schema: {
+        name: 'generate_new_element',
+        strict: true,
+        schema,
       },
-    ],
-    tool_choice: { type: 'function', function: { name: 'generate_new_element' } },
+    },
     max_completion_tokens: 1000,
   });
 
-  let generatedElement = JSON.parse(parseToolArguments(response)) as any;
+  let generatedElement = parseJsonResponse<any>(response);
   if (generatedElement.block?.content) generatedElement = generatedElement.block.content;
 
   if (elementType === 'tool_recommendation') {

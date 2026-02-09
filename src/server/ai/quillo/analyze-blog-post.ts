@@ -1,76 +1,10 @@
 import { BLOCK_SCHEMAS } from '../constants/block-schemas';
-import { getAnthropicClient, getOpenAIClient, MODELS } from '../clients';
+import { getOpenAIClient, MODELS } from '../clients';
+import { parseJsonResponse } from '../utils';
 
 import type { ChatMessage } from '@/types/quillo';
 
 export async function analyzeBlogPost(postData: unknown) {
-  const functionParameters = {
-    type: 'object',
-    properties: {
-      overall_analysis: {
-        type: 'object',
-        properties: {
-          overall_score: { type: 'integer', minimum: 1, maximum: 100 },
-          summary: { type: 'string' },
-          strengths: { type: 'array', items: { type: 'string' } },
-          weaknesses: { type: 'array', items: { type: 'string' } },
-        },
-        required: ['overall_score', 'summary', 'strengths', 'weaknesses'],
-      },
-      seo_improvements: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            suggestion: { type: 'string' },
-            reason: { type: 'string' },
-            importance: { type: 'string', enum: ['Low', 'Medium', 'High'] },
-          },
-          required: ['suggestion', 'reason', 'importance'],
-        },
-      },
-      content_improvements: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            element_id: { type: 'integer' },
-            element_type: { type: 'string' },
-            suggestion: { type: 'string' },
-            reason: { type: 'string' },
-            proposed_changes: { type: 'string' },
-          },
-          required: ['element_id', 'element_type', 'suggestion', 'reason', 'proposed_changes'],
-        },
-      },
-      structure_improvements: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            suggestion: { type: 'string' },
-            reason: { type: 'string' },
-            proposed_changes: { type: 'string' },
-          },
-          required: ['suggestion', 'reason', 'proposed_changes'],
-        },
-      },
-      recommended_additions: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            element_type: { type: 'string' },
-            reason: { type: 'string' },
-            proposed_content: { type: 'string' },
-          },
-          required: ['element_type', 'reason', 'proposed_content'],
-        },
-      },
-    },
-    required: ['overall_analysis', 'seo_improvements', 'content_improvements', 'structure_improvements', 'recommended_additions'],
-  } as const;
-
   const messages: ChatMessage[] = [
     {
       role: 'system',
@@ -101,20 +35,90 @@ export async function analyzeBlogPost(postData: unknown) {
   const response = await getOpenAIClient().chat.completions.create({
     model: MODELS.OPENAI_DEFAULT,
     messages,
-    tools: [{
-      type: 'function' as const,
-      function: {
+    response_format: {
+      type: 'json_schema',
+      json_schema: {
         name: 'analyze_blog_post',
-        description: 'Analyzes a blog post and provides structured, comprehensive improvement suggestions',
-        parameters: functionParameters,
+        strict: true,
+        schema: {
+          type: 'object',
+          properties: {
+            overall_analysis: {
+              type: 'object',
+              properties: {
+                overall_score: { type: 'integer' },
+                summary: { type: 'string' },
+                strengths: { type: 'array', items: { type: 'string' } },
+                weaknesses: { type: 'array', items: { type: 'string' } },
+              },
+              required: ['overall_score', 'summary', 'strengths', 'weaknesses'],
+              additionalProperties: false,
+            },
+            seo_improvements: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  suggestion: { type: 'string' },
+                  reason: { type: 'string' },
+                  importance: { type: 'string', enum: ['Low', 'Medium', 'High'] },
+                },
+                required: ['suggestion', 'reason', 'importance'],
+                additionalProperties: false,
+              },
+            },
+            content_improvements: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  element_id: { type: 'integer' },
+                  element_type: { type: 'string' },
+                  suggestion: { type: 'string' },
+                  reason: { type: 'string' },
+                  proposed_changes: { type: 'string' },
+                },
+                required: ['element_id', 'element_type', 'suggestion', 'reason', 'proposed_changes'],
+                additionalProperties: false,
+              },
+            },
+            structure_improvements: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  suggestion: { type: 'string' },
+                  reason: { type: 'string' },
+                  proposed_changes: { type: 'string' },
+                },
+                required: ['suggestion', 'reason', 'proposed_changes'],
+                additionalProperties: false,
+              },
+            },
+            recommended_additions: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  element_type: { type: 'string' },
+                  reason: { type: 'string' },
+                  proposed_content: { type: 'string' },
+                },
+                required: ['element_type', 'reason', 'proposed_content'],
+                additionalProperties: false,
+              },
+            },
+          },
+          required: ['overall_analysis', 'seo_improvements', 'content_improvements', 'structure_improvements', 'recommended_additions'],
+          additionalProperties: false,
+        },
       },
-    }],
-    tool_choice: { type: 'function' as const, function: { name: 'analyze_blog_post' } },
+    },
     max_completion_tokens: 2000,
   });
 
-  const jsonResponse = (response.choices[0]?.message?.tool_calls?.[0] as any)?.function?.arguments ?? '{}';
-  const analysisResult = JSON.parse(jsonResponse);
+  const analysisResult = parseJsonResponse(response);
+  const jsonResponse = response.choices[0]?.message.content ?? '{}';
   messages.push({ role: 'assistant', content: jsonResponse });
 
   return {
@@ -123,5 +127,3 @@ export async function analyzeBlogPost(postData: unknown) {
     messages,
   };
 }
-
-void getAnthropicClient;

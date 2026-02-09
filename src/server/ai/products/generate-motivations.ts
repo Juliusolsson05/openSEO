@@ -1,4 +1,5 @@
-import { getAnthropicClient, getOpenAIClient, MODELS } from '../clients';
+import { getOpenAIClient, MODELS } from '../clients';
+import { parseJsonResponse } from '../utils';
 
 export type ProductTitle = { title: string };
 
@@ -17,32 +18,42 @@ export async function generateMotivations(
       },
     ];
 
-    const functionParameters = {
-      type: 'object',
-      properties: Object.fromEntries(
-        Array.from({ length: productTitles.length }, (_, idx) => [
-          `motivation_${idx + 1}`,
-          {
-            type: 'object',
-            properties: { index: { type: 'integer' }, motivation: { type: 'string' } },
-            required: ['index', 'motivation'],
-          },
-        ]),
-      ),
-      required: Array.from({ length: productTitles.length }, (_, idx) => `motivation_${idx + 1}`),
-    };
+    const motivationProperties: Record<string, any> = {};
+    const requiredKeys: string[] = [];
+
+    for (let i = 0; i < productTitles.length; i++) {
+      const key = `motivation_${i + 1}`;
+      motivationProperties[key] = {
+        type: 'object',
+        properties: {
+          index: { type: 'integer' },
+          motivation: { type: 'string' },
+        },
+        required: ['index', 'motivation'],
+        additionalProperties: false,
+      };
+      requiredKeys.push(key);
+    }
 
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
-      tools: [{
-        type: 'function' as const,
-        function: { name: 'generate_motivations', description: 'Generates motivations for the given product titles.', parameters: functionParameters },
-      }],
-      tool_choice: { type: 'function' as const, function: { name: 'generate_motivations' } },
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'generate_motivations',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: motivationProperties,
+            required: requiredKeys,
+            additionalProperties: false,
+          },
+        },
+      },
     });
 
-    const motivations = JSON.parse((response.choices[0]?.message?.tool_calls?.[0] as any)?.function?.arguments ?? '{}') as Record<string, { index: number; motivation: string }>;
+    const motivations = parseJsonResponse<Record<string, { index: number; motivation: string }>>(response);
     return Array.from({ length: Object.keys(motivations).length }, (_, idx) => {
       const m = motivations[`motivation_${idx + 1}`];
       return {
@@ -55,5 +66,3 @@ export async function generateMotivations(
     return { error: error instanceof Error ? error.message : String(error) };
   }
 }
-
-void getAnthropicClient;

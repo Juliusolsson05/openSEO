@@ -1,4 +1,5 @@
-import { getAnthropicClient, getOpenAIClient, MODELS } from '../clients';
+import { getOpenAIClient, MODELS } from '../clients';
+import { parseJsonResponse } from '../utils';
 
 type MatchedKeyword = { keyword: string; description: string };
 type Content = { text: string };
@@ -20,49 +21,40 @@ export async function selectHyperlinkKeywords(content: Content, matchedKeywords:
       },
     ];
 
-    const functionParameters = {
-      type: 'object',
-      properties: {
-        keywords: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              keyword: { type: 'string' },
-              positions: { type: 'array', items: { type: 'integer' } },
-            },
-            required: ['keyword', 'positions'],
-          },
-        },
-      },
-      required: ['keywords'],
-    };
-
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
-      tools: [
-        {
-          type: 'function' as const,
-          function: {
-            name: 'select_hyperlink_keywords',
-            description: 'Selects the most relevant keywords for hyperlinking in a paragraph.',
-            parameters: functionParameters,
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'select_hyperlink_keywords',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: {
+              keywords: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    keyword: { type: 'string' },
+                    positions: { type: 'array', items: { type: 'integer' } },
+                  },
+                  required: ['keyword', 'positions'],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ['keywords'],
+            additionalProperties: false,
           },
         },
-      ],
-      tool_choice: {
-        type: 'function' as const,
-        function: { name: 'select_hyperlink_keywords' },
       },
     });
 
-    const jsonResponse = (response.choices[0]?.message?.tool_calls?.[0] as any)?.function?.arguments ?? '{}';
-    const selectedKeywords = (JSON.parse(jsonResponse) as { keywords?: unknown[] }).keywords ?? [];
-    return selectedKeywords;
+    const result = parseJsonResponse<{ keywords?: unknown[] }>(response);
+    return result.keywords ?? [];
   } catch (error) {
     return `An error occurred: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
-
-void getAnthropicClient;

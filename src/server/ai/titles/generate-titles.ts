@@ -1,5 +1,5 @@
 import { getOpenAIClient, MODELS } from '@/server/ai/clients';
-import { parseToolArguments } from '@/server/ai/utils';
+import { parseJsonResponse } from '@/server/ai/utils';
 
 export async function generateTitles(
   industry: string,
@@ -8,35 +8,29 @@ export async function generateTitles(
   existingTitles?: string[],
 ): Promise<Record<string, unknown>> {
   let systemMessage =
-    "You are an article title generator. You are responsible for creating catchy, SEO-friendly, and grammatically correct blog titles based on the given industry and number of titles requested by the user. The titles should not be subjective posts but should be posts that could be generated with AI. Ensure the SEO title and focus keyword match Yoast's guidelines. And do NOT make them to cliche and generic, make them actually interesting.";
+    "You are an article title generator. You are responsible for creating catchy, SEO-friendly, and grammatically correct blog titles based on the given industry and number of titles requested by the user. The titles should be objective and informative. Ensure the SEO title and focus keyword match Yoast's guidelines. Do NOT make them too cliché and generic — make them actually interesting.";
 
   if (existingTitles?.length) {
-    const existingTitlesMessage =
-      'This is the titles already generated so DO NOT generate these again: ' + existingTitles.join(', ');
-    systemMessage += ` ${existingTitlesMessage}`;
+    systemMessage += '\n\nThese titles already exist — do NOT generate duplicates:\n' + existingTitles.map((t, i) => `${i + 1}. ${t}`).join('\n');
   }
 
-  const functionParameters = {
-    type: 'object',
-    properties: Object.fromEntries(
-      Array.from({ length: numTitles }, (_, i) => {
-        const n = i + 1;
-        return [
-          `title_${n}`,
-          {
-            type: 'object',
-            properties: {
-              title_text: { type: 'string', description: `Title text ${n}` },
-              seo_title: { type: 'string', description: `SEO title ${n} (must follow Yoast guidelines)` },
-              focus_keyword: { type: 'string', description: `Focus keyword ${n} (must follow Yoast guidelines)` },
-            },
-            required: ['title_text', 'seo_title', 'focus_keyword'],
-          },
-        ];
-      }),
-    ),
-    required: Array.from({ length: numTitles }, (_, i) => `title_${i + 1}`),
-  };
+  const titleProperties: Record<string, any> = {};
+  const requiredKeys: string[] = [];
+
+  for (let i = 1; i <= numTitles; i++) {
+    const key = `title_${i}`;
+    titleProperties[key] = {
+      type: 'object',
+      properties: {
+        title_text: { type: 'string', description: `Title text ${i}` },
+        seo_title: { type: 'string', description: `SEO title ${i} (must follow Yoast guidelines)` },
+        focus_keyword: { type: 'string', description: `Focus keyword ${i} (must follow Yoast guidelines)` },
+      },
+      required: ['title_text', 'seo_title', 'focus_keyword'],
+      additionalProperties: false,
+    };
+    requiredKeys.push(key);
+  }
 
   const response = await getOpenAIClient().chat.completions.create({
     model: MODELS.OPENAI_DEFAULT,
@@ -44,21 +38,23 @@ export async function generateTitles(
       { role: 'system', content: systemMessage },
       {
         role: 'user',
-        content: `Generate ${numTitles} blog titles for the industry: ${industry}. Write the titles in ${language} and make sure that the titles are grammatically correct, professional sounding, and SEO-friendly.`,
+        content: `Generate ${numTitles} blog titles for the industry: ${industry}. Write the titles in ${language}.`,
       },
     ],
-    tools: [
-      {
-        type: 'function',
-        function: {
-          name: 'generate_blog_titles',
-          description: 'Generates blog titles based on the given industry and number of titles.',
-          parameters: functionParameters,
+    response_format: {
+      type: 'json_schema',
+      json_schema: {
+        name: 'generate_blog_titles',
+        strict: true,
+        schema: {
+          type: 'object',
+          properties: titleProperties,
+          required: requiredKeys,
+          additionalProperties: false,
         },
       },
-    ],
-    tool_choice: { type: 'function', function: { name: 'generate_blog_titles' } },
+    },
   });
 
-  return JSON.parse(parseToolArguments(response));
+  return parseJsonResponse(response);
 }

@@ -1,4 +1,5 @@
-import { getAnthropicClient, getOpenAIClient, MODELS } from '../clients';
+import { getOpenAIClient, MODELS } from '../clients';
+import { parseJsonResponse } from '../utils';
 
 export async function generateExplanation(
   subject: string,
@@ -12,86 +13,81 @@ export async function generateExplanation(
       {
         role: 'system' as const,
         content:
-          'You are an expert writer. Generate three paragraphs to explain the given keyword. Each paragraph should have a title and a text body. The explanation should be detailed, informative, and relevant to the given subject and short description. Ensure the text is grammatically correct and professional sounding, but the English should still be relatively easy. The most important part is that the descriptions is HIGHLY SEO friendly and you should also bake in keywords for SEO in the descriptions.You should also write a featured google snippet, this should be a short description that is tailored to be chosen for the featured google snippet for the word.Additionally, provide a list of synonyms, antonyms, usage examples, and related keywords for the word.Finally, provide a meta description and three FAQs with questions and answers related to the keyword.',
+          'You are an expert writer. Generate three paragraphs to explain the given keyword. Each paragraph should have a title and a text body. The explanation should be detailed, informative, and relevant to the given subject and short description. Ensure the text is grammatically correct and professional sounding, but the English should still be relatively easy to read. The most important part is that the descriptions are highly SEO-friendly and you should also naturally include keywords for SEO in the descriptions. You should also write a featured Google snippet — this should be a short description that is tailored to be chosen for the featured Google snippet for the word. Additionally, provide a list of synonyms, antonyms, usage examples, and related keywords for the word. Finally, provide a meta description and three FAQs with questions and answers related to the keyword.',
       },
       {
         role: 'user' as const,
         content:
           `Generate three paragraphs to explain the keyword '${keyword}' for the subject: ${subject}. ` +
-          `Write the explanation in ${language}. The short description of the keyword is: ${shortDescription}. Keep in mind that you should write reativly easy English and make it clear and concise.` +
-          `The foucs keyword we should SEO optimize for is: ${focusKeyword}, but the focus keyword should only be present 12 times in the text. ` +
-          `The SEO search should start with 'What is...' or 'What are...', this is going to be the google featured snippet title for the definition` +
-          `The meta description should NOT be longer then 145 charachters.` +
-          `Also use a couple of <strong> and <em> tags in the text to highlight important words. DO NOT use markdown ** use rich text strong and em. Also break up long paragraphs with double <br> (<br><br>) so that everything is VERY easy to read.` +
+          `Write the explanation in ${language}. The short description of the keyword is: ${shortDescription}. Keep in mind that you should write relatively easy English and make it clear and concise. ` +
+          `The focus keyword we should SEO optimize for is: ${focusKeyword}, but include the focus keyword naturally — do not force it. ` +
+          `The SEO search should start with 'What is...' or 'What are...' — this is going to be the Google featured snippet title for the definition. ` +
+          `The meta description should NOT be longer than 145 characters. ` +
+          `Also use a couple of <strong> and <em> tags in the text to highlight important words. DO NOT use markdown ** — use rich text strong and em. Also break up long paragraphs with double <br> (<br><br>) so that everything is very easy to read. ` +
           'Do not hallucinate, write good content.',
       },
     ];
 
-    const functionParameters = {
-      type: 'object',
-      properties: {
-        seo_search: { type: 'string', description: 'If someone is searching for the definition of this word, what are they most likely to search for?' },
-        featured_google_snippet: { type: 'string', description: "A very short description for the keyword should be PERFECTLY tailored to be in Google's featured snippet." },
-        paragraph_1: {
-          type: 'object',
-          properties: {
-            title: { type: 'string', description: `Title for paragraph 1 (Should be in the style of 'What does ${keyword} mean?')` },
-            text: { type: 'string', description: 'Text body for paragraph 1' },
-          },
-          required: ['title', 'text'],
-        },
-        paragraph_2: {
-          type: 'object',
-          properties: { title: { type: 'string', description: 'Title for paragraph 2' }, text: { type: 'string', description: 'Text body for paragraph 2' } },
-          required: ['title', 'text'],
-        },
-        paragraph_3: {
-          type: 'object',
-          properties: { title: { type: 'string', description: 'Title for paragraph 3' }, text: { type: 'string', description: 'Text body for paragraph 3' } },
-          required: ['title', 'text'],
-        },
-        synonyms: { type: 'array', items: { type: 'string' }, description: 'List of synonyms for the keyword' },
-        antonyms: { type: 'array', items: { type: 'string' }, description: 'List of antonyms for the keyword' },
-        usage_examples: { type: 'array', items: { type: 'string' }, description: 'List of usage examples for the keyword' },
-        related_keywords: { type: 'array', items: { type: 'string' }, description: 'List of related keywords' },
-        meta_description: { type: 'string', description: 'A meta description for the keyword' },
-        seo_title: { type: 'string', description: 'The SEO title for search results.' },
-        faqs: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: { question: { type: 'string' }, answer: { type: 'string' } },
-            required: ['question', 'answer'],
-          },
-          description: 'List of FAQs with questions and answers',
-        },
-      },
-      required: ['seo_search', 'featured_google_snippet', 'paragraph_1', 'paragraph_2', 'paragraph_3', 'synonyms', 'antonyms', 'usage_examples', 'related_keywords', 'meta_description', 'seo_title', 'faqs'],
-    };
-
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
-      tools: [{
-        type: 'function' as const,
-        function: {
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
           name: 'generate_explanation_paragraphs',
-          description:
-            'Generates three paragraphs to explain a given keyword based on the subject and short description, along with synonyms, antonyms, usage examples, related keywords, meta description, and FAQs.',
-          parameters: functionParameters,
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: {
+              seo_search: { type: 'string', description: 'If someone is searching for the definition of this word, what are they most likely to search for?' },
+              featured_google_snippet: { type: 'string', description: "A very short description for the keyword that is perfectly tailored to be in Google's featured snippet." },
+              paragraph_1: {
+                type: 'object',
+                properties: {
+                  title: { type: 'string', description: `Title for paragraph 1 (Should be in the style of 'What does ${keyword} mean?')` },
+                  text: { type: 'string', description: 'Text body for paragraph 1' },
+                },
+                required: ['title', 'text'],
+                additionalProperties: false,
+              },
+              paragraph_2: {
+                type: 'object',
+                properties: { title: { type: 'string', description: 'Title for paragraph 2' }, text: { type: 'string', description: 'Text body for paragraph 2' } },
+                required: ['title', 'text'],
+                additionalProperties: false,
+              },
+              paragraph_3: {
+                type: 'object',
+                properties: { title: { type: 'string', description: 'Title for paragraph 3' }, text: { type: 'string', description: 'Text body for paragraph 3' } },
+                required: ['title', 'text'],
+                additionalProperties: false,
+              },
+              synonyms: { type: 'array', items: { type: 'string' }, description: 'List of synonyms for the keyword' },
+              antonyms: { type: 'array', items: { type: 'string' }, description: 'List of antonyms for the keyword' },
+              usage_examples: { type: 'array', items: { type: 'string' }, description: 'List of usage examples for the keyword' },
+              related_keywords: { type: 'array', items: { type: 'string' }, description: 'List of related keywords' },
+              meta_description: { type: 'string', description: 'A meta description for the keyword' },
+              seo_title: { type: 'string', description: 'The SEO title for search results.' },
+              faqs: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: { question: { type: 'string' }, answer: { type: 'string' } },
+                  required: ['question', 'answer'],
+                  additionalProperties: false,
+                },
+                description: 'List of FAQs with questions and answers',
+              },
+            },
+            required: ['seo_search', 'featured_google_snippet', 'paragraph_1', 'paragraph_2', 'paragraph_3', 'synonyms', 'antonyms', 'usage_examples', 'related_keywords', 'meta_description', 'seo_title', 'faqs'],
+            additionalProperties: false,
+          },
         },
-      }],
-      tool_choice: {
-        type: 'function' as const,
-        function: { name: 'generate_explanation_paragraphs' },
       },
     });
 
-    const toolCall = response.choices[0]?.message?.tool_calls?.[0] as any
-    return JSON.parse(toolCall?.function?.arguments ?? '{}');
+    return parseJsonResponse(response);
   } catch (error) {
     return `An error occurred: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
-
-void getAnthropicClient;
