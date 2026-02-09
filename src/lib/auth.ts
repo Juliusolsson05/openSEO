@@ -20,7 +20,10 @@ const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60 // 30 days
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  secret: process.env.AUTH_SECRET || 'nordtools-dev-secret-change-in-production',
+  secret: process.env.AUTH_SECRET ?? (() => {
+    if (process.env.NODE_ENV === 'production') throw new Error('AUTH_SECRET must be set in production')
+    return 'nordtools-dev-secret-do-not-use-in-production'
+  })(),
   session: {
     strategy: 'jwt',
     maxAge: SESSION_MAX_AGE_SECONDS,

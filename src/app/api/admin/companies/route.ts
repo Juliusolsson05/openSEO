@@ -8,15 +8,11 @@ import { prisma } from '@/lib/prisma'
 import { apiHandler } from '@/server/api/handler'
 import { raw } from '@/server/api/response'
 
-export const GET = apiHandler(async ({ user }) => {
-  if (user?.userType !== 4) {
-    return raw({ error: 'Unauthorized' }, 403)
-  }
-
+export const GET = apiHandler(async () => {
   const companies = await prisma.company.findMany({
     select: { id: true, name: true },
     orderBy: { name: 'asc' },
   })
 
   return raw({ companies })
-})
+}, { admin: true })

@@ -98,6 +98,17 @@ export function apiPut<T = any>(url: string, body: any, options: ApiOptions = {}
 }
 
 /**
+ * PATCH with JSON body shorthand
+ */
+export function apiPatch<T = any>(url: string, body: any, options: ApiOptions = {}) {
+  return api<T>(url, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+    ...options,
+  })
+}
+
+/**
  * DELETE shorthand
  */
 export function apiDelete<T = any>(url: string, options: ApiOptions = {}) {

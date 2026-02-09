@@ -17,13 +17,18 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy only what's needed
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/package-lock.json ./
-COPY --from=builder /app/node_modules ./node_modules
+# Install only production dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+# Re-generate Prisma client for production deps
+COPY prisma ./prisma
+RUN npx prisma generate
+
+# Copy build output and static assets
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/next.config.ts ./
 
 EXPOSE 3000
 

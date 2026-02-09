@@ -17,15 +17,18 @@ const nextConfig: NextConfig = {
   },
 
   // Allow LAN access (e.g. 192.168.x.x:4000)
+  // Note: Allow-Origin: * with Allow-Credentials: true is invalid per spec.
+  // In production, set FRONTEND_URL to the actual origin.
   async headers() {
+    const origin = process.env.FRONTEND_URL || '*'
     return [
       {
         source: '/api/:path*',
         headers: [
-          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Origin', value: origin },
           { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,PATCH,DELETE,OPTIONS' },
           { key: 'Access-Control-Allow-Headers', value: 'Content-Type,Authorization,Company-ID' },
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
+          ...(origin !== '*' ? [{ key: 'Access-Control-Allow-Credentials', value: 'true' }] : []),
         ],
       },
     ]

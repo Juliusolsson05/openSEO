@@ -64,7 +64,7 @@ function toPublicPost(payload: Record<string, unknown>): { post: PublicPost; aur
     id: String(el.id),
     order: el.order,
     element_type: el.element_type,
-    content: typeof el.content === 'string' ? JSON.parse(el.content) : (el.content as Record<string, unknown>),
+    content: typeof el.content === 'string' ? (() => { try { return JSON.parse(el.content as string) } catch { return {} } })() : (el.content as Record<string, unknown>),
   }))
 
   return {
