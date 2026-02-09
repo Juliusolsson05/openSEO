@@ -8,6 +8,8 @@ interface Props {
 }
 
 export function FeatureComparison({ content, toolA, toolB }: Props) {
+  const noteA = content.tool_a_note ?? (content as any).tool_a_notes ?? ''
+  const noteB = content.tool_b_note ?? (content as any).tool_b_notes ?? ''
   return (
     <div
       style={{
@@ -37,7 +39,7 @@ export function FeatureComparison({ content, toolA, toolB }: Props) {
           </p>
           <ScoreBar score={content.tool_a_score} />
           <p style={{ fontSize: 13, color: '#616161', margin: '8px 0 0', lineHeight: 1.5 }}>
-            {content.tool_a_note}
+            {noteA}
           </p>
         </div>
 
@@ -48,7 +50,7 @@ export function FeatureComparison({ content, toolA, toolB }: Props) {
           </p>
           <ScoreBar score={content.tool_b_score} />
           <p style={{ fontSize: 13, color: '#616161', margin: '8px 0 0', lineHeight: 1.5 }}>
-            {content.tool_b_note}
+            {noteB}
           </p>
         </div>
       </div>

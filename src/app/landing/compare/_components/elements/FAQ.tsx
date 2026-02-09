@@ -65,6 +65,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 }
 
 export function FAQ({ content }: Props) {
+  const items = content.items ?? (content as any).questions ?? []
   return (
     <div style={{ marginBottom: 32 }}>
       <h2
@@ -79,7 +80,7 @@ export function FAQ({ content }: Props) {
         Frequently Asked Questions
       </h2>
       <div>
-        {content.items.map((item, i) => (
+        {items.map((item: { question: string; answer: string }, i: number) => (
           <FAQItem key={i} question={item.question} answer={item.answer} />
         ))}
       </div>
