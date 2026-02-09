@@ -1,8 +1,9 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
-import { interpolate, useCurrentFrame, Easing, useCurrentScale } from "remotion";
+import { interpolate, spring, useCurrentFrame, useVideoConfig, Easing, useCurrentScale } from "remotion";
 import { BrowserFrame } from "../components/BrowserFrame";
+import { CameraRig, type CameraState } from "../components/CameraRig";
 import { Cursor, type Waypoint } from "../components/Cursor";
-import { HEIGHT, COLORS } from "../constants";
+import { HEIGHT, WIDTH, COLORS } from "../constants";
 import { DashboardShell } from "../ui/DashboardShell";
 import { MockBlogPostPage } from "../ui/blog/MockBlogPostPage";
 import { ELEMENT_ICONS } from "../ui/blog/ElementIcons";
@@ -143,6 +144,28 @@ export const BlogPostScene: React.FC = () => {
     extrapolateRight: "clamp",
   });
 
+  /* ── Camera: subtle zoom toward publish area at end ── */
+  const { fps } = useVideoConfig();
+  const CAM_FULL: CameraState = { scale: 1.0, focusX: WIDTH / 2, focusY: HEIGHT / 2 };
+  const CAM_PUBLISH: CameraState = { scale: 1.12, focusX: 1400, focusY: 340 };
+
+  let cam: CameraState;
+  if (frame < 1000) {
+    cam = CAM_FULL;
+  } else {
+    const zoomIn = spring({
+      fps,
+      frame: frame - 1000,
+      config: { damping: 30, stiffness: 100, overshootClamping: true },
+      durationInFrames: 40,
+    });
+    cam = {
+      scale: interpolate(zoomIn, [0, 1], [CAM_FULL.scale, CAM_PUBLISH.scale]),
+      focusX: interpolate(zoomIn, [0, 1], [CAM_FULL.focusX, CAM_PUBLISH.focusX]),
+      focusY: interpolate(zoomIn, [0, 1], [CAM_FULL.focusY, CAM_PUBLISH.focusY]),
+    };
+  }
+
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
@@ -261,6 +284,7 @@ export const BlogPostScene: React.FC = () => {
   ];
 
   return (
+    <CameraRig cam={cam}>
     <BrowserFrame url="app.nordtools.com/blog/42/edit" pad={0}>
       <div ref={rootRef} style={{ width: "100%", height: "100%", position: "relative" }}>
         <DashboardShell pageTitle="Edit Post" sidebarActiveItem="Blog Posts">
@@ -378,5 +402,6 @@ export const BlogPostScene: React.FC = () => {
         )}
       </div>
     </BrowserFrame>
+    </CameraRig>
   );
 };
