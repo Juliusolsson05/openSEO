@@ -424,7 +424,9 @@ export class BlogService {
     // Only consider posts that have actually been generated — titles still
     // waiting for content (TO_BE_GENERATED, APPROVED, REJECTED) must not
     // appear as related-post targets.
-    const generatedStatuses = ['GENERATED', 'PUBLISHED'] as const
+    // NOTE: PUBLISHED exists in Prisma schema but not yet migrated to DB.
+    // Add it back here once the migration runs.
+    const generatedStatuses = ['GENERATED'] as const
     const posts = await prisma.blogPost.findMany({
       where: { companyId, status: { in: [...generatedStatuses] } },
       select: { id: true, title_text: true },

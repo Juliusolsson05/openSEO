@@ -209,7 +209,7 @@ export async function getGeneralBlogAnalytics(companyId: number, includeRecommen
         },
       },
       post_linking_from: {
-        where: { toBlogPost: { status: { in: ['GENERATED', 'PUBLISHED'] } } },
+        where: { toBlogPost: { status: { in: ['GENERATED'] } } },
         select: { toBlogPostId: true },
       },
       publishes: { select: { id: true } },

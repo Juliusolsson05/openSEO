@@ -27,7 +27,7 @@ import { ELEMENT_ICONS } from "../ui/blog/ElementIcons";
 // Tuned for more natural motion and to keep right-sidebar edit toggle visible.
 const SCROLL_MAX = 1880;
 const SCROLL_REST = 120;
-const SCROLL_CASE_STUDY = 560;
+const SCROLL_CASE_STUDY = 860;
 
 /* Layout coords (BrowserFrame content space) */
 const EDIT_SWITCH_X = 1612;
@@ -96,9 +96,9 @@ export const BlogPostScene: React.FC = () => {
     });
   } else if (frame <= 800) {
     scrollY = SCROLL_REST;
-  } else if (frame <= 920) {
-    // Scroll down further to clearly reveal inserted case study
-    scrollY = interpolate(frame, [800, 920], [SCROLL_REST, SCROLL_CASE_STUDY], {
+  } else if (frame <= 940) {
+    // Scroll down much further to clearly reveal inserted case study
+    scrollY = interpolate(frame, [800, 940], [SCROLL_REST, SCROLL_CASE_STUDY], {
       extrapolateLeft: "clamp",
       extrapolateRight: "clamp",
       easing: Easing.inOut(Easing.cubic),
