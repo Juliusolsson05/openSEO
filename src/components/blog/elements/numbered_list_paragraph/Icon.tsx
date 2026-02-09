@@ -1,9 +1,5 @@
-import type { SVGProps } from 'react'
+import type { IconProps } from '@/types/common'
 
-type IconProps = Pick<SVGProps<SVGSVGElement>, 'className'> & {
-  width?: number | string
-  height?: number | string
-}
 
 export default function Icon({ width = 120, height = 120, className }: IconProps) {
   return (

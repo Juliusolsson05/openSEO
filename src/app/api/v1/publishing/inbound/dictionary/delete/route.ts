@@ -1,3 +1,4 @@
+import { readInboundKey } from '@/types/publishing'
 import { prisma } from '@/lib/prisma'
 import { apiHandler } from '@/server/api/handler'
 import { ValidationError } from '@/server/api/errors'
@@ -15,11 +16,6 @@ type InboundEnvelope = {
   }
 }
 
-function readInboundKey(headers: Headers) {
-  const auth = headers.get('authorization') ?? ''
-  if (auth.toLowerCase().startsWith('bearer ')) return auth.slice(7).trim()
-  return headers.get('x-aurora-inbound-key')?.trim() ?? ''
-}
 
 export const POST = apiHandler(async ({ body }, req) => {
   const inboundKey = readInboundKey(req.headers)

@@ -5,21 +5,7 @@ import { Button } from '@/components/ui/button'
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
 
-interface ProductRecommendation {
-  index?: number
-  order?: number
-  motivation: string
-  title: string
-  image?: string
-  price?: string
-  tags?: string[]
-}
-
-interface ProductRecommendationsContent {
-  title: string
-  introduction: string
-  products?: ProductRecommendation[]
-}
+import type { ProductRecommendation, ProductRecommendationsContent } from '@/types/content-elements'
 
 interface ProductRecommendationsProps extends Omit<ElementComponentProps, 'content'> {
   content: ProductRecommendationsContent

@@ -1,11 +1,7 @@
 import { RESTRICTED_BLOCK_SCHEMAS } from '../../constants/restricted-schemas';
 import { getAnthropicClient, getOpenAIClient, MODELS } from '../../clients';
 
-type Message = {
-  role: 'system' | 'user' | 'assistant';
-  content: Array<{ type: 'text'; text: string }>;
-};
-
+import type { StructuredMessage as Message } from '@/types/quillo'
 export async function getElementSuggestions(blogPost: unknown) {
   const messages: Message[] = [
     { role: 'system', content: [{ type: 'text', text: 'You are a specialized AI assistant focused on enhancing blog post content. Suggest around 5-6 useful elements and never suggest anything after FAQ/conclusion.' }] },

@@ -26,10 +26,11 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 
-type Category = { id: number; name: string }
+import type { Category } from '@/types/blog'
+
 type BulkSchedule = { id: number; name: string }
 
-interface BlogTitle {
+interface SchedulingTitle {
   id: number
   title_text: string
   status: number | string
@@ -68,7 +69,7 @@ export default function BlogSchedulingPage() {
   const calendarRef = useRef<FullCalendar>(null)
 
   const [loading, setLoading] = useState(true)
-  const [posts, setPosts] = useState<BlogTitle[]>([])
+  const [posts, setPosts] = useState<SchedulingTitle[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const [showScheduled, setShowScheduled] = useState(true)
@@ -77,7 +78,7 @@ export default function BlogSchedulingPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
-  const [schedulePost, setSchedulePost] = useState<BlogTitle | null>(null)
+  const [schedulePost, setSchedulePost] = useState<SchedulingTitle | null>(null)
   const [scheduleDate, setScheduleDate] = useState('')
 
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false)
@@ -86,7 +87,7 @@ export default function BlogSchedulingPage() {
   const [bulkStartDate, setBulkStartDate] = useState('')
 
   const [eventInfoOpen, setEventInfoOpen] = useState(false)
-  const [selectedEventPost, setSelectedEventPost] = useState<BlogTitle | null>(null)
+  const [selectedEventPost, setSelectedEventPost] = useState<SchedulingTitle | null>(null)
 
   const [rescheduleConfirmOpen, setRescheduleConfirmOpen] = useState(false)
   const [pendingDropInfo, setPendingDropInfo] = useState<EventDropArg | null>(null)
@@ -96,7 +97,7 @@ export default function BlogSchedulingPage() {
 
   const fetchPosts = useCallback(async () => {
     setLoading(true)
-    const { data } = await api<BlogTitle[] | { data?: BlogTitle[]; results?: BlogTitle[] }>('/api/aurora/blog/titles/?pageSize=500')
+    const { data } = await api<SchedulingTitle[] | { data?: SchedulingTitle[]; results?: SchedulingTitle[] }>('/api/aurora/blog/titles/?pageSize=500')
 
     const items = Array.isArray(data) ? data : (data as any)?.data ?? (data as any)?.results ?? []
     const filtered = items.filter((post: any) => post.status === 'GENERATED' || post.status === 4 || Boolean(post.scheduled_date))
@@ -146,14 +147,14 @@ export default function BlogSchedulingPage() {
 
   const miniWeeks = useMemo(() => buildMiniCalendarWeeks(miniYear, miniMonth), [miniYear, miniMonth])
 
-  const openScheduleDialog = (post: BlogTitle) => {
+  const openScheduleDialog = (post: SchedulingTitle) => {
     setSchedulePost(post)
     setScheduleDate('')
     setScheduleDialogOpen(true)
   }
 
   const onEventClick = useCallback((info: EventClickArg) => {
-    setSelectedEventPost(info.event.extendedProps.post as BlogTitle)
+    setSelectedEventPost(info.event.extendedProps.post as SchedulingTitle)
     setEventInfoOpen(true)
   }, [setSelectedEventPost, setEventInfoOpen])
 

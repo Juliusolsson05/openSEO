@@ -13,17 +13,7 @@ import {
   YAxis,
 } from 'recharts'
 
-interface BarItem {
-  label: string
-  value: number
-}
-
-interface BarChartContent {
-  title: string
-  text_before?: string
-  text_after?: string
-  bars: BarItem[]
-}
+import type { BarItem, BarChartContent } from '@/types/content-elements'
 
 interface BarChartProps extends Omit<ElementComponentProps, 'content'> {
   content: BarChartContent

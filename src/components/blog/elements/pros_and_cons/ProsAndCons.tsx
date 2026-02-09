@@ -13,13 +13,7 @@ import { useElementSave } from '@/hooks/use-element-save'
 import { Input } from '@/components/ui/input'
 import { applyHyperlinks } from '../hyperlink-utils'
 
-interface ProsAndConsContent {
-  title?: string
-  text_before?: string
-  pros?: string[]
-  cons?: string[]
-  text_after?: string
-}
+import type { ProsAndConsContent } from '@/types/content-elements'
 
 export function ProsAndCons({ content, blogId, elementId, onContentUpdated, onElementDeleted, hyperlink }: ElementComponentProps) {
   const updateElement = useElementsStore((s) => s.updateElement)

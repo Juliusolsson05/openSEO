@@ -4,16 +4,7 @@ import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 
-interface QuizQuestion {
-  text?: string
-  options?: string[]
-}
-
-interface QuizContent {
-  title?: string
-  description?: string
-  questions?: QuizQuestion[]
-}
+import type { QuizContent } from '@/types/content-elements'
 
 interface QuizProps extends Omit<ElementComponentProps, 'content'> {
   content: QuizContent

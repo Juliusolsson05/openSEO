@@ -99,7 +99,7 @@ export async function getSyncedDictionaries(companyId: number): Promise<ExampleD
     words: d.words.map((w): ExampleWord => ({
       id: w.id,
       keyword: w.keyword,
-      definition: w.definition as ExampleWord['definition'],
+      definition: w.definition as unknown as ExampleWord['definition'],
     })),
   }))
 }

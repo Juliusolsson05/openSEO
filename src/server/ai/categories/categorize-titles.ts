@@ -1,7 +1,8 @@
 import { getOpenAIClient, MODELS } from '@/server/ai/clients';
 import { parseToolArguments } from '@/server/ai/utils';
 
-type Category = { id: number; name: string };
+import type { Category } from '@/types/blog'
+
 type Title = { id: number; title_text: string };
 
 export async function categorizeTitles(

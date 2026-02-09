@@ -5,19 +5,7 @@ import { Button } from '@/components/ui/button'
 import { BasePreview } from '../BasePreview'
 import type { PreviewComponentProps } from '../registry'
 
-interface ProductRecommendation {
-  motivation: string
-  title: string
-  image?: string
-  price?: string
-  tags?: string[]
-}
-
-interface ProductRecommendationsContent {
-  title: string
-  introduction: string
-  products?: ProductRecommendation[]
-}
+import type { ProductRecommendationsContent } from '@/types/content-elements'
 
 const splitProductTitle = (title: string) => title.split('|').map((part) => part.trim())
 

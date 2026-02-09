@@ -16,8 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { createHyperlinkedText, type HyperlinkData } from '../hyperlink-utils'
 
-type FAQItem = { question: string; answer: string }
-type FAQContent = { title?: string; items: FAQItem[] }
+import type { FAQItem, FAQContent } from '@/types/content-elements'
 
 const normalizeContent = (value: unknown): FAQContent => {
   if (Array.isArray(value)) {

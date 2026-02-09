@@ -4,13 +4,7 @@ import { BasePreview } from '../BasePreview'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import type { PreviewComponentProps } from '../registry'
 
-interface ProsAndConsContent {
-  title?: string
-  text_before?: string
-  pros: string[]
-  cons: string[]
-  text_after?: string
-}
+import type { ProsAndConsContent } from '@/types/content-elements'
 
 interface ProsAndConsPreviewProps extends Omit<PreviewComponentProps, 'content'> {
   content: ProsAndConsContent

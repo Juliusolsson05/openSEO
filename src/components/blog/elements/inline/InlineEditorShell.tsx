@@ -2,9 +2,8 @@
 
 import { type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
+import type { SaveStatus } from '@/types/common'
 import { SaveIndicator } from './SaveIndicator'
-
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 interface InlineEditorShellProps {
   title?: string

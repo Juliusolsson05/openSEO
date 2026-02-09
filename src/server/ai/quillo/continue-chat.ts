@@ -1,9 +1,6 @@
 import { getAnthropicClient, getOpenAIClient, MODELS } from '../clients';
 
-type ChatMessage = {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-};
+import type { ChatMessage } from '@/types/quillo';
 
 export async function continueChat(messages: ChatMessage[], userQuestion: string) {
   try {

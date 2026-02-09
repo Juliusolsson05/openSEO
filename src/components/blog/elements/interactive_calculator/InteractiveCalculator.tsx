@@ -4,11 +4,7 @@ import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 
-interface InteractiveCalculatorContent {
-  title?: string
-  description?: string
-  result?: string
-}
+import type { InteractiveCalculatorContent } from '@/types/content-elements'
 
 interface InteractiveCalculatorProps extends Omit<ElementComponentProps, 'content'> {
   content: InteractiveCalculatorContent

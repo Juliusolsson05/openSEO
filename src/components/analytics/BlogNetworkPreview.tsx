@@ -4,14 +4,10 @@ import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
-interface BlogTitle {
-  id: number
-  title_text: string
-  post_linking: number[]
-}
+import type { AnalyticsBlogTitle } from '@/stores/analytics-store'
 
 interface BlogNetworkPreviewProps {
-  blogTitles: BlogTitle[]
+  blogTitles: Pick<AnalyticsBlogTitle, 'id' | 'title_text' | 'post_linking'>[]
 }
 
 export function BlogNetworkPreview({ blogTitles }: BlogNetworkPreviewProps) {

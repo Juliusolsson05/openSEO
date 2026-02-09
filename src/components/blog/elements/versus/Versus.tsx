@@ -16,19 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { applyHyperlinks } from '../hyperlink-utils'
 
-interface VersusCriterion {
-  name: string
-  winner: number
-  details: string[]
-}
-
-interface VersusContent {
-  title?: string
-  text_before?: string
-  competitors: string[]
-  criteria: VersusCriterion[]
-  text_after?: string
-}
+import type { VersusCriterion, VersusContent } from '@/types/content-elements'
 
 export function Versus({ content, blogId, elementId, onContentUpdated, onElementAdded, onElementDeleted, hyperlink }: ElementComponentProps) {
   const updateElement = useElementsStore((s) => s.updateElement)

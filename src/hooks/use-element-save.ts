@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react'
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+import type { SaveStatus } from '@/types/common'
 
 export function useElementSave<T>(saveFn: (content: T) => Promise<{ success: boolean; error?: string }>) {
   const [status, setStatus] = useState<SaveStatus>('idle')

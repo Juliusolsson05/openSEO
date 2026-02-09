@@ -3,14 +3,10 @@
 import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-interface BlogTitle {
-  id: number
-  title_text: string
-  post_linking: number[]
-}
+import type { AnalyticsBlogTitle } from '@/stores/analytics-store'
 
 interface BlogStatisticsProps {
-  blogTitles: BlogTitle[]
+  blogTitles: Pick<AnalyticsBlogTitle, 'id' | 'title_text' | 'post_linking'>[]
 }
 
 function Gauge({ value }: { value: number }) {

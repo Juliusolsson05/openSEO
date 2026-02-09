@@ -1,11 +1,7 @@
 import { RESTRICTED_BLOCK_SCHEMAS } from '../../constants/restricted-schemas';
 import { getAnthropicClient, getOpenAIClient, MODELS } from '../../clients';
 
-type Message = {
-  role: 'system' | 'user' | 'assistant';
-  content: Array<{ type: 'text'; text: string }>;
-};
-
+import type { StructuredMessage as Message } from '@/types/quillo'
 export async function getContentImprovements(blogPost: unknown, messages: Message[]) {
   messages.push({ role: 'user', content: [{ type: 'text', text: `Improve content quality with tools enhance/humanize/regenerate. Current blog post: ${JSON.stringify(blogPost)}` }] });
 

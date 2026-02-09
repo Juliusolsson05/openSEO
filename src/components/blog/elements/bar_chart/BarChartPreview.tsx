@@ -5,17 +5,7 @@ import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import type { PreviewComponentProps } from '../registry'
 import { Bar, BarChart as RechartsBarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from 'recharts'
 
-interface BarItem {
-  label: string
-  value: number
-}
-
-interface BarChartContent {
-  title: string
-  text_before?: string
-  text_after?: string
-  bars: BarItem[]
-}
+import type { BarChartContent } from '@/types/content-elements'
 
 interface BarChartPreviewProps extends Omit<PreviewComponentProps, 'content'> {
   content: BarChartContent

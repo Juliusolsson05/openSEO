@@ -25,7 +25,7 @@ import {
 import { api, apiPost } from '@/lib/api'
 import { toast } from 'sonner'
 
-interface BlogTitle { id: number; title_text: string; status: number | string }
+import type { BlogTitle } from '@/types/blog'
 
 interface BlogPostSummary {
   id: number
@@ -72,7 +72,8 @@ export default function BlogPage() {
   const [generating, setGenerating] = useState(false)
 
   const postsLeftToGenerate = titles.filter((t) => {
-    const status = typeof t.status === 'string' ? t.status.toUpperCase() : t.status
+    const s = t.status as number | string
+    const status = typeof s === 'string' ? s.toUpperCase() : s
     return status === 1 || status === 'TO_BE_GENERATED'
   }).length
   const publishedCount = posts.filter((p) => p.is_published).length

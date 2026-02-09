@@ -3,12 +3,10 @@
 import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-interface BlogTitleItem {
-  generated_date: string | null
-}
+import type { AnalyticsBlogTitle } from '@/stores/analytics-store'
 
 interface BlogPostCalendarProps {
-  blogTitles: BlogTitleItem[]
+  blogTitles: Pick<AnalyticsBlogTitle, 'generated_date'>[]
 }
 
 const PURPLE_STEPS = ['#FFFFFF', '#EFE7FF', '#D5C0FF', '#B694FF', '#8B5CF6'] // theme: visualization palette

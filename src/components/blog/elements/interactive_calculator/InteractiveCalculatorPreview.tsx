@@ -4,11 +4,7 @@ import { BasePreview } from '../BasePreview'
 import type { PreviewComponentProps } from '../registry'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 
-interface InteractiveCalculatorContent {
-  title?: string
-  description?: string
-  result?: string
-}
+import type { InteractiveCalculatorContent } from '@/types/content-elements'
 
 interface InteractiveCalculatorPreviewProps extends Omit<PreviewComponentProps, 'content'> {
   content: InteractiveCalculatorContent

@@ -1,10 +1,6 @@
 import { getAnthropicClient, getOpenAIClient, MODELS } from '../../clients';
 
-type Message = {
-  role: 'system' | 'user' | 'assistant';
-  content: Array<{ type: 'text'; text: string }>;
-};
-
+import type { StructuredMessage as Message } from '@/types/quillo'
 export async function getParagraphSuggestions(blogPost: unknown, messages: Message[]) {
   messages.push({ role: 'user', content: [{ type: 'text', text: `Good, but now we have too many graphical elements. Add 4-5 paragraphs between graphical elements for smoother reading. Current blog post: ${JSON.stringify(blogPost)}` }] });
 

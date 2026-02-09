@@ -5,15 +5,7 @@ import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import { ExternalLink, Check, Star } from 'lucide-react'
 import type { ElementComponentProps } from '../registry'
 
-interface ToolRecommendationContent {
-  title: string
-  companyUrl: string
-  companyWebsite: string
-  pricing: string
-  productDescription: string
-  headerColor: string
-  features: string[]
-}
+import type { ToolRecommendationContent } from '@/types/content-elements'
 
 interface ToolRecommendationProps extends Omit<ElementComponentProps, 'content'> {
   content: ToolRecommendationContent

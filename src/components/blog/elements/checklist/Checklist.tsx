@@ -14,8 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 
-type ChecklistItem = { text?: string; action?: string; checked?: boolean }
-type ChecklistContent = { title?: string; items?: ChecklistItem[] }
+import type { ChecklistItem, ChecklistContent } from '@/types/content-elements'
 
 export function Checklist({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
   const updateElement = useElementsStore((s) => s.updateElement)

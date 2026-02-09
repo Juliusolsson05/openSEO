@@ -86,7 +86,7 @@ export async function getSyncedDictionaries(companyId: number): Promise<PublicDi
     words: d.words.map((w): PublicWord => ({
       id: w.id,
       keyword: w.keyword,
-      definition: w.definition as PublicWord['definition'],
+      definition: w.definition as unknown as PublicWord['definition'],
     })),
   }))
 }

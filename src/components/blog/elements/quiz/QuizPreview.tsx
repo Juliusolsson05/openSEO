@@ -4,16 +4,7 @@ import { BasePreview } from '../BasePreview'
 import type { PreviewComponentProps } from '../registry'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 
-interface QuizQuestion {
-  text?: string
-  options?: string[]
-}
-
-interface QuizContent {
-  title?: string
-  description?: string
-  questions?: QuizQuestion[]
-}
+import type { QuizContent } from '@/types/content-elements'
 
 interface QuizPreviewProps extends Omit<PreviewComponentProps, 'content'> {
   content: QuizContent

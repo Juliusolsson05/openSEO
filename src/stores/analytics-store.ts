@@ -70,7 +70,7 @@ export interface DictionaryGeneralResponse {
   low_priority_words: number
 }
 
-export interface BlogTitle {
+export interface AnalyticsBlogTitle {
   id: number
   title_text: string
   generated_date: string | null
@@ -88,7 +88,7 @@ interface AnalyticsState {
   linkedWords: DictionaryWordCount[]
   dictionaryData: DictionaryGeneralResponse | null
   blogMetaData: BlogMetaResponse | null
-  blogTitles: BlogTitle[]
+  blogTitles: AnalyticsBlogTitle[]
   generalBlogData: BlogGeneralResponse | null
   elementBreakdown: ElementBreakdownResponse | null
   isLoading: boolean
@@ -139,7 +139,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
           }).catch(() => ({ data: null, error: new Error('dictionary failed') })),
           api<BlogMetaResponse>('/api/aurora/analytics/blog/meta')
             .catch(() => ({ data: null, error: new Error('meta failed') })),
-          api<{ data: BlogTitle[]; total: number } | BlogTitle[]>('/api/aurora/blog/titles/')
+          api<{ data: AnalyticsBlogTitle[]; total: number } | AnalyticsBlogTitle[]>('/api/aurora/blog/titles/')
             .catch(() => ({ data: null, error: new Error('titles failed') })),
           api<BlogGeneralResponse>('/api/aurora/analytics/blog/general', {
             params: { include_recommendations: 'false' },

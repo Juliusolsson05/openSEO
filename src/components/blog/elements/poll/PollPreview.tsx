@@ -4,11 +4,7 @@ import { BasePreview } from '../BasePreview'
 import type { PreviewComponentProps } from '../registry'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 
-interface PollContent {
-  question?: string
-  options?: string[]
-  description?: string
-}
+import type { PollContent } from '@/types/content-elements'
 
 interface PollPreviewProps extends Omit<PreviewComponentProps, 'content'> {
   content: PollContent

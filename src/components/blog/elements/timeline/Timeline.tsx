@@ -15,18 +15,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 
-interface TimelineEvent {
-  date: string
-  title: string
-  description: string
-}
-
-interface TimelineContent {
-  title?: string
-  text_before?: string
-  events?: TimelineEvent[]
-  text_after?: string
-}
+import type { TimelineEvent, TimelineContent } from '@/types/content-elements'
 
 export function Timeline({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ElementComponentProps) {
   const updateElement = useElementsStore((s) => s.updateElement)

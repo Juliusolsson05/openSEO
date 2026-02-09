@@ -14,12 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 
-type GlossaryTerm = { term: string; definition: string }
-
-interface GlossaryContent {
-  title?: string
-  terms: GlossaryTerm[]
-}
+import type { GlossaryTerm, GlossaryContent } from '@/types/content-elements'
 
 /** Normalize both formats: array of {term, definition} OR Record<string, string> */
 function normalizeContent(raw: unknown): GlossaryContent {

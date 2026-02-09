@@ -2,7 +2,7 @@
 
 import { useRef, useCallback, useState, useEffect } from 'react'
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+import type { SaveStatus } from '@/types/common'
 
 export function useAutoSave(
   saveFn: (content: any) => Promise<boolean>,

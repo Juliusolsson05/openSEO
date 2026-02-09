@@ -5,9 +5,9 @@ import { BookOpen } from 'lucide-react'
 import { BasePreview } from '../BasePreview'
 import type { PreviewComponentProps } from '../registry'
 
-type GlossaryTerm = { term: string; definition: string }
+import type { GlossaryTerm } from '@/types/content-elements'
 
-interface GlossaryContent {
+interface GlossaryPreviewContent {
   title?: string
   terms: GlossaryTerm[] | Record<string, string>
 }
@@ -23,7 +23,7 @@ function normalizeTerms(raw: unknown): GlossaryTerm[] {
 }
 
 export function GlossaryPreview({ content }: PreviewComponentProps) {
-  const glossaryContent = (content ?? {}) as GlossaryContent
+  const glossaryContent = (content ?? {}) as GlossaryPreviewContent
   const terms = normalizeTerms(glossaryContent.terms)
 
   return (

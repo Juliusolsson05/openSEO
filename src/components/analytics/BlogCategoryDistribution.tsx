@@ -4,12 +4,10 @@ import { useMemo } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-interface BlogTitleItem {
-  categories?: Array<{ id: number; name: string }>
-}
+import type { AnalyticsBlogTitle } from '@/stores/analytics-store'
 
 interface BlogCategoryDistributionProps {
-  blogTitles: BlogTitleItem[]
+  blogTitles: Pick<AnalyticsBlogTitle, 'categories'>[]
 }
 
 const COLORS = ['#0078D4', '#2899F5', '#50B0F9', '#7DCBF7', '#A6D8FF', '#0F6CBD', '#5C2D91'] // theme: primary scale

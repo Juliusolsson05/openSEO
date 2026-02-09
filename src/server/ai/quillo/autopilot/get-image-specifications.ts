@@ -1,10 +1,6 @@
 import { getAnthropicClient, getOpenAIClient, MODELS } from '../../clients';
 
-type Message = {
-  role: 'system' | 'user' | 'assistant';
-  content: Array<{ type: 'text'; text: string }>;
-};
-
+import type { StructuredMessage as Message } from '@/types/quillo'
 export async function getImageSpecifications(blogPost: unknown, messages: Message[]) {
   messages.push({ role: 'user', content: [{ type: 'text', text: `Review this blog post and provide specs for existing images only. Include style_guide and per-image alt+description+element_id. Blog Post: ${JSON.stringify(blogPost)}` }] });
 

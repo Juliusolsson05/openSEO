@@ -4,19 +4,7 @@ import { BasePreview } from '../BasePreview'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import type { PreviewComponentProps } from '../registry'
 
-interface VersusCriterion {
-  name: string
-  winner: number
-  details: string[]
-}
-
-interface VersusContent {
-  title?: string
-  text_before?: string
-  competitors: string[]
-  criteria: VersusCriterion[]
-  text_after?: string
-}
+import type { VersusContent } from '@/types/content-elements'
 
 interface VersusPreviewProps extends Omit<PreviewComponentProps, 'content'> {
   content: VersusContent

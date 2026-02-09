@@ -16,13 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { applyHyperlinks } from '../hyperlink-utils'
 
-interface TableContent {
-  title?: string
-  text_before?: string
-  headers?: string[]
-  rows?: string[][]
-  text_after?: string
-}
+import type { TableContent } from '@/types/content-elements'
 
 export function Table({ content, blogId, elementId, onContentUpdated, onElementDeleted, hyperlink }: ElementComponentProps) {
   const updateElement = useElementsStore((s) => s.updateElement)

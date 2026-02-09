@@ -27,9 +27,9 @@ import {
   FileText,
 } from 'lucide-react'
 
-interface Category {
-  id: number
-  name: string
+import type { Category as BaseCategory } from '@/types/blog'
+
+interface Category extends BaseCategory {
   post_count: number
   title_count: number
 }

@@ -4,11 +4,7 @@ import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 
-interface PollContent {
-  question?: string
-  options?: string[]
-  description?: string
-}
+import type { PollContent } from '@/types/content-elements'
 
 interface PollProps extends Omit<ElementComponentProps, 'content'> {
   content: PollContent

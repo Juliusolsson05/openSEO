@@ -1,10 +1,7 @@
 import { BLOCK_SCHEMAS } from '../constants/block-schemas';
 import { getAnthropicClient, getOpenAIClient, MODELS } from '../clients';
 
-type ChatMessage = {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-};
+import type { ChatMessage } from '@/types/quillo';
 
 export async function analyzeBlogPost(postData: unknown) {
   const functionParameters = {

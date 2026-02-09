@@ -1,30 +1,7 @@
 import { NextResponse } from 'next/server'
 
-export type ApiMeta = {
-  requestId?: string
-  timestamp?: string
-}
-
-export type ApiSuccessResponse<T> = {
-  success: true
-  data: T
-  meta?: ApiMeta
-}
-
-export type ApiProblem = {
-  type?: string
-  title?: string
-  status: number
-  code?: string
-  detail: string
-  requestId?: string
-  details?: unknown
-}
-
-export type ApiErrorResponse = {
-  success: false
-  error: ApiProblem
-}
+export type { ApiMeta, ApiSuccessResponse, ApiProblem, ApiErrorResponse } from '@/types/api'
+import type { ApiMeta, ApiSuccessResponse, ApiErrorResponse } from '@/types/api'
 
 export function success<T>(data: T, status = 200, meta?: ApiMeta): NextResponse<ApiSuccessResponse<T>> {
   return NextResponse.json(

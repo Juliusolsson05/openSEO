@@ -2,18 +2,7 @@ import { BasePreview } from '../BasePreview'
 import type { PreviewComponentProps } from '../registry'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 
-interface TimelineEvent {
-  date: string
-  title: string
-  description: string
-}
-
-interface TimelineContent {
-  title?: string
-  text_before?: string
-  events: TimelineEvent[]
-  text_after?: string
-}
+import type { TimelineContent } from '@/types/content-elements'
 
 interface TimelinePreviewProps extends Omit<PreviewComponentProps, 'content'> {
   content: TimelineContent

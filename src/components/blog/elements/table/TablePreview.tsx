@@ -4,13 +4,7 @@ import { BasePreview } from '../BasePreview'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import type { PreviewComponentProps } from '../registry'
 
-interface TableContent {
-  title: string
-  text_before?: string
-  headers: string[]
-  rows: string[][]
-  text_after?: string
-}
+import type { TableContent } from '@/types/content-elements'
 
 interface TablePreviewProps extends Omit<PreviewComponentProps, 'content'> {
   content: TableContent
@@ -35,7 +29,7 @@ export function TablePreview({ content }: TablePreviewProps) {
         <table className="w-full border-separate border-spacing-0">
           <thead>
             <tr className="bg-muted/50">
-              {content.headers.map((header, index) => (
+              {(content.headers ?? []).map((header, index) => (
                 <th
                   key={index}
                   className="border-b px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-foreground"
@@ -45,7 +39,7 @@ export function TablePreview({ content }: TablePreviewProps) {
             </tr>
           </thead>
           <tbody>
-            {content.rows.map((row, rowIndex) => (
+            {(content.rows ?? []).map((row, rowIndex) => (
               <tr key={rowIndex} className="odd:bg-background even:bg-muted/20">
                 {row.map((cell, cellIndex) => (
                   <td
