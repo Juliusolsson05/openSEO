@@ -1,194 +1,43 @@
 import Link from 'next/link'
 import type { ComparisonToolData } from '../_lib/types'
 
-interface CompareHeroProps {
+interface Props {
   toolA: ComparisonToolData
   toolB: ComparisonToolData
   title: string | null
   updatedAt: Date
 }
 
-export function CompareHero({ toolA, toolB, title, updatedAt }: CompareHeroProps) {
-  const formattedDate = updatedAt.toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  })
-
-  // Rough reading time estimate
-  const readingTime = '8'
+export function CompareHero({ toolA, toolB, title, updatedAt }: Props) {
+  const date = new Date(updatedAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   return (
-    <section
-      style={{
-        background: 'linear-gradient(135deg, #002050 0%, #0078D4 100%)',
-        padding: '36px 24px 48px',
-        textAlign: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Decorative elements */}
-      <div
-        style={{
-          position: 'absolute',
-          top: -80,
-          right: -80,
-          width: 240,
-          height: 240,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.03)',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: -50,
-          left: -50,
-          width: 180,
-          height: 180,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.02)',
-        }}
-      />
-
-      <div style={{ position: 'relative', zIndex: 1 }}>
+    <section style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #002050 0%, #0078D4 100%)' }}>
+      <div style={{ position: 'absolute', inset: 0, opacity: 0.06, backgroundImage: 'linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+      <div style={{ position: 'relative', zIndex: 10, maxWidth: 1080, margin: '0 auto', padding: '40px 24px 32px', textAlign: 'center' }}>
         {/* Breadcrumb */}
-        <nav style={{ marginBottom: 28, fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>
-          <Link
-            href="/landing/compare"
-            style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none' }}
-          >
-            Compare
-          </Link>
-          <span style={{ margin: '0 8px', opacity: 0.5 }}>/</span>
-          <span style={{ color: 'rgba(255,255,255,0.7)' }}>{toolA.name} vs {toolB.name}</span>
-        </nav>
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 16 }}>
+          <Link href="/landing/compare" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Compare</Link>
+          {' / '}
+          {toolA.name} vs {toolB.name}
+        </p>
 
-        {/* VS Badge */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 24,
-            marginBottom: 24,
-          }}
-        >
-          <div style={{ textAlign: 'center' }}>
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.12)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 8px',
-                fontSize: 20,
-                fontWeight: 700,
-                color: '#fff',
-              }}
-            >
-              {toolA.name.charAt(0)}
-            </div>
-            <span
-              style={{
-                fontSize: 26,
-                fontWeight: 700,
-                color: '#FFFFFF',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              {toolA.name}
-            </span>
-          </div>
-
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 48,
-              height: 48,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.15)',
-              border: '2px solid rgba(255,255,255,0.25)',
-              color: '#fff',
-              fontSize: 14,
-              fontWeight: 700,
-              letterSpacing: '0.03em',
-              flexShrink: 0,
-            }}
-          >
-            VS
-          </span>
-
-          <div style={{ textAlign: 'center' }}>
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.12)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 8px',
-                fontSize: 20,
-                fontWeight: 700,
-                color: '#fff',
-              }}
-            >
-              {toolB.name.charAt(0)}
-            </div>
-            <span
-              style={{
-                fontSize: 26,
-                fontWeight: 700,
-                color: '#FFFFFF',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              {toolB.name}
-            </span>
-          </div>
+        {/* Tool names */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 12 }}>
+          <span style={{ fontSize: 26, fontWeight: 600, color: '#FFFFFF', letterSpacing: '-0.02em' }}>{toolA.name}</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#0078D4', padding: '3px 10px', background: 'rgba(255,255,255,0.9)', borderRadius: 2 }}>VS</span>
+          <span style={{ fontSize: 26, fontWeight: 600, color: '#FFFFFF', letterSpacing: '-0.02em' }}>{toolB.name}</span>
         </div>
 
-        {/* Title */}
         {title && (
-          <h1
-            style={{
-              fontSize: 20,
-              fontWeight: 500,
-              color: 'rgba(255,255,255,0.85)',
-              margin: '0 0 16px',
-              lineHeight: 1.4,
-              letterSpacing: '-0.01em',
-              maxWidth: 600,
-              marginLeft: 'auto',
-              marginRight: 'auto',
-            }}
-          >
+          <h1 style={{ fontSize: 15, fontWeight: 400, color: 'rgba(255,255,255,0.65)', margin: '0 auto 8px', maxWidth: 520 }}>
             {title}
           </h1>
         )}
 
-        {/* Meta */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 16,
-            fontSize: 13,
-            color: 'rgba(255,255,255,0.55)',
-          }}
-        >
-          <span>Last updated {formattedDate}</span>
-          <span style={{ opacity: 0.4 }}>·</span>
-          <span>~{readingTime} min read</span>
-        </div>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+          Last updated {date} · ~8 min read
+        </p>
       </div>
     </section>
   )

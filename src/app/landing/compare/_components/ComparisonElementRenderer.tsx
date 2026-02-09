@@ -17,7 +17,6 @@ interface Props {
 }
 
 export function ComparisonElementRenderer({ element, toolA, toolB }: Props) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const content = element.content as any
 
   switch (element.element_type) {

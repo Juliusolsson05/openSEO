@@ -8,97 +8,23 @@ interface Props {
 
 export function AuroraCTA({ content }: Props) {
   const headline = content.headline || 'Looking for something better?'
-  const text =
-    content.text ||
-    'Aurora generates complete, structured blog posts — not just text. 20+ element types, Autopilot enhancement, and built-in CMS publishing.'
+  const text = content.text || 'Aurora generates complete, structured blog posts — not just text. 20+ element types, Autopilot enhancement, and built-in CMS publishing.'
 
   return (
-    <div
-      style={{
-        background: 'linear-gradient(135deg, #002050 0%, #0078D4 100%)',
-        borderRadius: 16,
-        padding: '44px 36px',
-        marginBottom: 36,
-        color: '#fff',
-        textAlign: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-        boxShadow: '0 4px 24px rgba(0,120,212,0.2)',
-      }}
-    >
-      {/* Glow effect */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 300,
-          height: 300,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }}
-      />
-
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 48,
-            height: 48,
-            borderRadius: 12,
-            background: 'rgba(255,255,255,0.12)',
-            marginBottom: 20,
-          }}
-        >
-          <AuroraLogo size={28} />
-        </div>
-        <h3
-          style={{
-            fontSize: 22,
-            fontWeight: 600,
-            margin: '0 0 12px',
-            letterSpacing: '-0.01em',
-          }}
-        >
+    <section style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #002050 0%, #0078D4 100%)', padding: '48px 32px', marginBottom: 0, borderRadius: 2 }}>
+      <div style={{ position: 'absolute', inset: 0, opacity: 0.06, backgroundImage: 'linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+      <div style={{ position: 'relative', zIndex: 10, textAlign: 'center' }}>
+        <AuroraLogo size={32} light />
+        <h2 style={{ fontSize: 22, fontWeight: 600, color: '#FFFFFF', margin: '16px 0 8px', letterSpacing: '-0.01em' }}>
           {headline}
-        </h3>
-        <p
-          style={{
-            fontSize: 15,
-            lineHeight: 1.7,
-            margin: '0 0 28px',
-            opacity: 0.9,
-            maxWidth: 520,
-            marginLeft: 'auto',
-            marginRight: 'auto',
-          }}
-        >
+        </h2>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: '0 auto 20px', maxWidth: 440, lineHeight: 1.6 }}>
           {text}
         </p>
-        <Link
-          href="/landing"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '14px 32px',
-            borderRadius: 8,
-            background: '#fff',
-            color: '#0078D4',
-            fontSize: 15,
-            fontWeight: 600,
-            textDecoration: 'none',
-            boxShadow: '0 2px 12px rgba(255,255,255,0.15)',
-            transition: 'opacity 0.15s',
-          }}
-        >
+        <Link href="/register" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', fontSize: 13, fontWeight: 600, color: '#0078D4', background: '#FFFFFF', borderRadius: 2, textDecoration: 'none' }}>
           Try Aurora free →
         </Link>
       </div>
-    </div>
+    </section>
   )
 }
