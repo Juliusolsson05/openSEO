@@ -4,6 +4,7 @@ import {
   Img,
   interpolate,
   spring,
+  staticFile,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
@@ -39,14 +40,13 @@ const BRAND = {
   navHover: "#F0F4F1",
 };
 
-/* ── Unsplash stock photos (small crops for performance) ── */
+/* ── Local stock photos (downloaded from Unsplash) ── */
 const PHOTOS = {
-  hero: "https://images.unsplash.com/photo-1607082349566-187342175e2f?w=800&h=400&fit=crop&q=80",
-  post1: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=260&fit=crop&q=80",
-  post2: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=400&h=260&fit=crop&q=80",
-  post3: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&h=260&fit=crop&q=80",
-  post4: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400&h=260&fit=crop&q=80",
-  newPost: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=260&fit=crop&q=80",
+  post1: staticFile("images/blog/post1.jpg"),
+  post2: staticFile("images/blog/post2.jpg"),
+  post3: staticFile("images/blog/post3.jpg"),
+  post4: staticFile("images/blog/post4.jpg"),
+  newPost: staticFile("images/blog/new-post.jpg"),
 };
 
 /* ── Blog posts ── */
