@@ -42,7 +42,8 @@ export default async function ComparisonPage({ params }: PageProps) {
           position: 'sticky',
           top: 0,
           zIndex: 50,
-          background: '#fff',
+          background: 'rgba(255,255,255,0.95)',
+          backdropFilter: 'blur(8px)',
           borderBottom: '1px solid #E6E6E6',
         }}
       >
@@ -53,7 +54,7 @@ export default async function ComparisonPage({ params }: PageProps) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            height: 48,
+            height: 52,
             padding: '0 24px',
           }}
         >
@@ -63,7 +64,7 @@ export default async function ComparisonPage({ params }: PageProps) {
               Aurora
             </span>
           </Link>
-          <Link href="/landing/compare" style={{ fontSize: 13, color: '#0078D4', textDecoration: 'none' }}>
+          <Link href="/landing/compare" style={{ fontSize: 13, color: '#0078D4', textDecoration: 'none', fontWeight: 500 }}>
             ← All comparisons
           </Link>
         </div>
@@ -80,9 +81,9 @@ export default async function ComparisonPage({ params }: PageProps) {
       {/* Content */}
       <main
         style={{
-          maxWidth: 900,
+          maxWidth: 800,
           margin: '0 auto',
-          padding: '0 24px 64px',
+          padding: '40px 24px 64px',
         }}
       >
         {elements.length === 0 ? (

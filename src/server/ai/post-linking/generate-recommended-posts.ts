@@ -29,11 +29,14 @@ export async function generateRecommendedPosts(titles: TitleItem[]) {
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
-      functions: [{ name: 'generate_recommended_posts', description: 'Generates recommended post IDs based on the given titles.', parameters: functionParameters }],
-      function_call: { name: 'generate_recommended_posts' },
+      tools: [{
+        type: 'function' as const,
+        function: { name: 'generate_recommended_posts', description: 'Generates recommended post IDs based on the given titles.', parameters: functionParameters },
+      }],
+      tool_choice: { type: 'function' as const, function: { name: 'generate_recommended_posts' } },
     });
 
-    const recommendations = JSON.parse(response.choices[0]?.message.function_call?.arguments ?? '{}') as Record<string, number[]>;
+    const recommendations = JSON.parse(response.choices[0]?.message?.tool_calls?.[0]?.function?.arguments ?? '{}') as Record<string, number[]>;
     return titles.map((title, idx) => ({ id: title.id, title: title.title, recommended_posts: recommendations[`title_${idx + 1}`] ?? [] }));
   } catch (error) {
     return `An error occurred: ${error instanceof Error ? error.message : String(error)}`;

@@ -48,16 +48,16 @@ export async function processHyperlinks(element: Record<string, unknown>) {
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
-      functions: [functionParameters],
-      function_call: { name: 'hyperlink_response' },
+      tools: [{ type: 'function' as const, function: functionParameters }],
+      tool_choice: { type: 'function' as const, function: { name: 'hyperlink_response' } },
     });
 
-    const functionCall = response.choices[0]?.message.function_call;
-    if (!functionCall) {
+    const toolCall = response.choices[0]?.message?.tool_calls?.[0]?.function;
+    if (!toolCall) {
       throw new Error('No function call in the API response');
     }
 
-    const result = JSON.parse(functionCall.arguments) as { hyperlink?: unknown };
+    const result = JSON.parse(toolCall.arguments) as { hyperlink?: unknown };
     if (!result.hyperlink || typeof result.hyperlink !== 'object' || !(result.hyperlink as Record<string, unknown>).matched_keywords) {
       throw new Error('Invalid response structure from API');
     }

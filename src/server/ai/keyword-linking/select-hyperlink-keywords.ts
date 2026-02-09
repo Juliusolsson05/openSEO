@@ -41,19 +41,23 @@ export async function selectHyperlinkKeywords(content: Content, matchedKeywords:
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
-      functions: [
+      tools: [
         {
-          name: 'select_hyperlink_keywords',
-          description: 'Selects the most relevant keywords for hyperlinking in a paragraph.',
-          parameters: functionParameters,
+          type: 'function' as const,
+          function: {
+            name: 'select_hyperlink_keywords',
+            description: 'Selects the most relevant keywords for hyperlinking in a paragraph.',
+            parameters: functionParameters,
+          },
         },
       ],
-      function_call: {
-        name: 'select_hyperlink_keywords',
+      tool_choice: {
+        type: 'function' as const,
+        function: { name: 'select_hyperlink_keywords' },
       },
     });
 
-    const jsonResponse = response.choices[0]?.message.function_call?.arguments ?? '{}';
+    const jsonResponse = response.choices[0]?.message?.tool_calls?.[0]?.function?.arguments ?? '{}';
     const selectedKeywords = (JSON.parse(jsonResponse) as { keywords?: unknown[] }).keywords ?? [];
     return selectedKeywords;
   } catch (error) {

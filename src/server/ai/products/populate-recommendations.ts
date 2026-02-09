@@ -55,11 +55,14 @@ export async function populateRecommendations(
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
-      functions: [{ name: 'generate_product_recommendations', description: 'Generates product recommendations based on the given themes.', parameters: functionParameters }],
-      function_call: { name: 'generate_product_recommendations' },
+      tools: [{
+        type: 'function' as const,
+        function: { name: 'generate_product_recommendations', description: 'Generates product recommendations based on the given themes.', parameters: functionParameters },
+      }],
+      tool_choice: { type: 'function' as const, function: { name: 'generate_product_recommendations' } },
     });
 
-    const recommendations = JSON.parse(response.choices[0]?.message.function_call?.arguments ?? '{}') as Record<string, { index: number; order: number; motivation?: string }>;
+    const recommendations = JSON.parse(response.choices[0]?.message?.tool_calls?.[0]?.function?.arguments ?? '{}') as Record<string, { index: number; order: number; motivation?: string }>;
 
     if (includeMotivation) {
       const recommendedProducts = Array.from({ length: productAmount }, (_, idx) => {

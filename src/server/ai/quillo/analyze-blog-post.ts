@@ -104,16 +104,19 @@ export async function analyzeBlogPost(postData: unknown) {
   const response = await getOpenAIClient().chat.completions.create({
     model: MODELS.OPENAI_DEFAULT,
     messages,
-    functions: [{
-      name: 'analyze_blog_post',
-      description: 'Analyzes a blog post and provides structured, comprehensive improvement suggestions',
-      parameters: functionParameters,
+    tools: [{
+      type: 'function' as const,
+      function: {
+        name: 'analyze_blog_post',
+        description: 'Analyzes a blog post and provides structured, comprehensive improvement suggestions',
+        parameters: functionParameters,
+      },
     }],
-    function_call: { name: 'analyze_blog_post' },
+    tool_choice: { type: 'function' as const, function: { name: 'analyze_blog_post' } },
     max_completion_tokens: 2000,
   });
 
-  const jsonResponse = response.choices[0]?.message.function_call?.arguments ?? '{}';
+  const jsonResponse = response.choices[0]?.message?.tool_calls?.[0]?.function?.arguments ?? '{}';
   const analysisResult = JSON.parse(jsonResponse);
   messages.push({ role: 'assistant', content: jsonResponse });
 

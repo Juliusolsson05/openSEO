@@ -6,16 +6,31 @@ interface Props {
 
 export function Introduction({ content }: Props) {
   return (
-    <div style={{ marginBottom: 32 }}>
+    <div
+      style={{
+        marginBottom: 36,
+        paddingLeft: 20,
+        borderLeft: '3px solid #0078D4',
+      }}
+    >
       <p
         style={{
-          fontSize: 16,
-          lineHeight: 1.7,
+          fontSize: 17,
+          lineHeight: 1.75,
           color: '#1A1A1A',
           margin: 0,
         }}
       >
-        {content.text}
+        <span
+          style={{
+            fontSize: 22,
+            fontWeight: 600,
+            lineHeight: 1,
+          }}
+        >
+          {content.text.charAt(0)}
+        </span>
+        {content.text.slice(1)}
       </p>
     </div>
   )

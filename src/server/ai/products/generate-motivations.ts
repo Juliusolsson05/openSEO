@@ -35,11 +35,14 @@ export async function generateMotivations(
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
-      functions: [{ name: 'generate_motivations', description: 'Generates motivations for the given product titles.', parameters: functionParameters }],
-      function_call: { name: 'generate_motivations' },
+      tools: [{
+        type: 'function' as const,
+        function: { name: 'generate_motivations', description: 'Generates motivations for the given product titles.', parameters: functionParameters },
+      }],
+      tool_choice: { type: 'function' as const, function: { name: 'generate_motivations' } },
     });
 
-    const motivations = JSON.parse(response.choices[0]?.message.function_call?.arguments ?? '{}') as Record<string, { index: number; motivation: string }>;
+    const motivations = JSON.parse(response.choices[0]?.message?.tool_calls?.[0]?.function?.arguments ?? '{}') as Record<string, { index: number; motivation: string }>;
     return Array.from({ length: Object.keys(motivations).length }, (_, idx) => {
       const m = motivations[`motivation_${idx + 1}`];
       return {
