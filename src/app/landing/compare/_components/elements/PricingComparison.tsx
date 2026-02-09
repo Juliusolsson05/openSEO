@@ -45,7 +45,7 @@ function PlanCard({
         </div>
       )}
       <h4 style={{ fontSize: 14, fontWeight: 600, color: '#1A1A1A', margin: '0 0 8px' }}>
-        {plan.name}
+        {plan.name ?? (plan as any).plan ?? ''}
       </h4>
       <p style={{ fontSize: 24, fontWeight: 700, color: '#0078D4', margin: '0 0 16px', letterSpacing: '-0.02em' }}>
         {plan.price}

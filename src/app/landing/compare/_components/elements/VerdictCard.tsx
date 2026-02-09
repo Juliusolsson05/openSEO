@@ -7,9 +7,13 @@ interface Props {
 }
 
 export function VerdictCard({ content, toolA, toolB }: Props) {
-  // Split verdict text into bullet points if they contain newlines
-  const aBullets = content.tool_a_verdict.split('\n').filter(Boolean)
-  const bBullets = content.tool_b_verdict.split('\n').filter(Boolean)
+  // Handle both array and string verdict formats
+  const aBullets = Array.isArray(content.tool_a_verdict)
+    ? content.tool_a_verdict
+    : content.tool_a_verdict.split('\n').filter(Boolean)
+  const bBullets = Array.isArray(content.tool_b_verdict)
+    ? content.tool_b_verdict
+    : content.tool_b_verdict.split('\n').filter(Boolean)
 
   return (
     <div

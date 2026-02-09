@@ -54,9 +54,12 @@ export function ScoreSummary({ content, toolA, toolB }: Props) {
 
       {/* Dimension rows */}
       <div style={{ padding: '8px 24px 16px' }}>
-        {content.dimensions.map((dim, i) => {
-          const aWins = dim.tool_a > dim.tool_b
-          const bWins = dim.tool_b > dim.tool_a
+        {content.dimensions.map((dim: any, i: number) => {
+          const label = dim.label ?? dim.name ?? ''
+          const scoreA = dim.tool_a ?? dim.tool_a_score ?? 0
+          const scoreB = dim.tool_b ?? dim.tool_b_score ?? 0
+          const aWins = scoreA > scoreB
+          const bWins = scoreB > scoreA
           const maxScore = 5
 
           return (
@@ -68,7 +71,7 @@ export function ScoreSummary({ content, toolA, toolB }: Props) {
               }}
             >
               <div style={{ fontSize: 14, fontWeight: 500, color: '#1A1A1A', marginBottom: 10 }}>
-                {dim.label}
+                {label}
               </div>
 
               {/* Tool A bar */}
@@ -84,7 +87,7 @@ export function ScoreSummary({ content, toolA, toolB }: Props) {
                 >
                   <div
                     style={{
-                      width: `${(dim.tool_a / maxScore) * 100}%`,
+                      width: `${(scoreA / maxScore) * 100}%`,
                       height: '100%',
                       borderRadius: 4,
                       background: colorA,
@@ -101,7 +104,7 @@ export function ScoreSummary({ content, toolA, toolB }: Props) {
                     textAlign: 'right',
                   }}
                 >
-                  {dim.tool_a}
+                  {scoreA}
                 </span>
                 {aWins && (
                   <span
@@ -132,7 +135,7 @@ export function ScoreSummary({ content, toolA, toolB }: Props) {
                 >
                   <div
                     style={{
-                      width: `${(dim.tool_b / maxScore) * 100}%`,
+                      width: `${(scoreB / maxScore) * 100}%`,
                       height: '100%',
                       borderRadius: 4,
                       background: colorB,
@@ -149,7 +152,7 @@ export function ScoreSummary({ content, toolA, toolB }: Props) {
                     textAlign: 'right',
                   }}
                 >
-                  {dim.tool_b}
+                  {scoreB}
                 </span>
                 {bWins && (
                   <span
