@@ -72,18 +72,23 @@ export async function generateExplanation(
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
-      functions: [{
-        name: 'generate_explanation_paragraphs',
-        description:
-          'Generates three paragraphs to explain a given keyword based on the subject and short description, along with synonyms, antonyms, usage examples, related keywords, meta description, and FAQs.',
-        parameters: functionParameters,
+      tools: [{
+        type: 'function' as const,
+        function: {
+          name: 'generate_explanation_paragraphs',
+          description:
+            'Generates three paragraphs to explain a given keyword based on the subject and short description, along with synonyms, antonyms, usage examples, related keywords, meta description, and FAQs.',
+          parameters: functionParameters,
+        },
       }],
-      function_call: {
-        name: 'generate_explanation_paragraphs',
+      tool_choice: {
+        type: 'function' as const,
+        function: { name: 'generate_explanation_paragraphs' },
       },
     });
 
-    return JSON.parse(response.choices[0]?.message.function_call?.arguments ?? '{}');
+    const toolCall = response.choices[0]?.message?.tool_calls?.[0]
+    return JSON.parse(toolCall?.function?.arguments ?? '{}');
   } catch (error) {
     return `An error occurred: ${error instanceof Error ? error.message : String(error)}`;
   }

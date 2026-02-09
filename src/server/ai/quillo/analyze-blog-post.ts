@@ -110,7 +110,7 @@ export async function analyzeBlogPost(postData: unknown) {
       parameters: functionParameters,
     }],
     function_call: { name: 'analyze_blog_post' },
-    max_tokens: 2000,
+    max_completion_tokens: 2000,
   });
 
   const jsonResponse = response.choices[0]?.message.function_call?.arguments ?? '{}';

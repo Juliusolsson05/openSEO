@@ -85,7 +85,7 @@ export async function generateCaseStudy(blogTitle: string, focusKeyword: string)
       },
     ],
     tool_choice: { type: 'function', function: { name: 'generate_case_study' } },
-    max_tokens: 1500,
+    max_completion_tokens: 1500,
   });
 
   let content = JSON.parse(parseToolArguments(response)) as any;

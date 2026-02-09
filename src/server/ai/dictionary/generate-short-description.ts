@@ -17,21 +17,28 @@ export async function generateShortDescription(word: string, subject: string, la
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
-      functions: [{
-        name: 'generate_short_description',
-        description: 'Generates a one-paragraph description for the given word in the context of the given subject.',
-        parameters: {
-          type: 'object',
-          properties: {
-            description: { type: 'string', description: 'A short description for the word. Should ONLY be around 25 words.' },
+      tools: [{
+        type: 'function' as const,
+        function: {
+          name: 'generate_short_description',
+          description: 'Generates a one-paragraph description for the given word in the context of the given subject.',
+          parameters: {
+            type: 'object' as const,
+            properties: {
+              description: { type: 'string' as const, description: 'A short description for the word. Should ONLY be around 25 words.' },
+            },
+            required: ['description'],
           },
-          required: ['description'],
         },
       }],
-      function_call: { name: 'generate_short_description' },
+      tool_choice: {
+        type: 'function' as const,
+        function: { name: 'generate_short_description' },
+      },
     });
 
-    const parsed = JSON.parse(response.choices[0]?.message.function_call?.arguments ?? '{}') as { description?: string };
+    const toolCall = response.choices[0]?.message?.tool_calls?.[0]
+    const parsed = JSON.parse(toolCall?.function?.arguments ?? '{}') as { description?: string };
     return parsed.description ?? '';
   } catch (error) {
     return `An error occurred: ${error instanceof Error ? error.message : String(error)}`;

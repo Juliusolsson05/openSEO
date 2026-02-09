@@ -40,7 +40,7 @@ export async function enhanceReadability(
       },
     ],
     tool_choice: { type: 'function', function: { name: 'enhance_blog_element_readability' } },
-    max_tokens: 500,
+    max_completion_tokens: 500,
   });
 
   let enhanced = JSON.parse(parseToolArguments(response)) as any;

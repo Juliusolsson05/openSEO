@@ -15,7 +15,7 @@ export async function continueChat(messages: ChatMessage[], userQuestion: string
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
-      max_tokens: 2000,
+      max_completion_tokens: 2000,
     });
 
     const message = response.choices[0]?.message;

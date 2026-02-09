@@ -41,7 +41,7 @@ export async function generateNewElement(
       },
     ],
     tool_choice: { type: 'function', function: { name: 'generate_new_element' } },
-    max_tokens: 1000,
+    max_completion_tokens: 1000,
   });
 
   let generatedElement = JSON.parse(parseToolArguments(response)) as any;

@@ -15,20 +15,20 @@ export async function generateKeywords(letter: string, numWords: number, subject
     ];
 
     const functionParameters = {
-      type: 'object',
+      type: 'object' as const,
       properties: Object.fromEntries(
         Array.from({ length: numWords }, (_, idx) => {
           const i = idx + 1;
           return [
             `keyword_${i}`,
             {
-              type: 'object',
+              type: 'object' as const,
               properties: {
-                keyword: { type: 'string', description: `Keyword ${i} starting with ${letter} (first letter should always be in uppercase)` },
-                description: { type: 'string', description: `Description for keyword ${i}` },
-                focus_keyword: { type: 'string', description: 'What users is most likely to search about if they want to learn about the word.' },
+                keyword: { type: 'string' as const, description: `Keyword ${i} starting with ${letter} (first letter should always be in uppercase)` },
+                description: { type: 'string' as const, description: `Description for keyword ${i}` },
+                focus_keyword: { type: 'string' as const, description: 'What users is most likely to search about if they want to learn about the word.' },
               },
-              required: ['keyword', 'description', 'focus_keyword'],
+              required: ['keyword', 'description', 'focus_keyword'] as const,
             },
           ];
         }),
@@ -39,17 +39,22 @@ export async function generateKeywords(letter: string, numWords: number, subject
     const response = await getOpenAIClient().chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
-      functions: [{
-        name: 'generate_keywords_with_descriptions',
-        description: `Generates keywords starting '${letter}', along with descriptions, based on the given subject. It is VERY important that ALL the words start with '${letter}'`,
-        parameters: functionParameters,
+      tools: [{
+        type: 'function' as const,
+        function: {
+          name: 'generate_keywords_with_descriptions',
+          description: `Generates keywords starting '${letter}', along with descriptions, based on the given subject. It is VERY important that ALL the words start with '${letter}'`,
+          parameters: functionParameters,
+        },
       }],
-      function_call: {
-        name: 'generate_keywords_with_descriptions',
+      tool_choice: {
+        type: 'function' as const,
+        function: { name: 'generate_keywords_with_descriptions' },
       },
     })
 
-    const args = (response.choices[0]?.message as any)?.function_call?.arguments
+    const toolCall = response.choices[0]?.message?.tool_calls?.[0]
+    const args = toolCall?.function?.arguments
     return JSON.parse(args ?? '{}')
   } catch (error) {
     return `An error occurred: ${error instanceof Error ? error.message : String(error)}`;

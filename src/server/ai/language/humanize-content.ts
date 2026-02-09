@@ -44,7 +44,7 @@ ${JSON.stringify(schema, null, 2)}`;
     messages.push(this.createMessageObject(initialText));
     let response = await this.client.messages.create({
       model: MODELS.ANTHROPIC_DEFAULT,
-      max_tokens: 1000,
+      max_completion_tokens: 1000,
       temperature: 0.5,
       system: this.systemPrompt,
       messages,
@@ -58,7 +58,7 @@ ${JSON.stringify(schema, null, 2)}`;
       messages.push(this.createMessageObject(feedback));
       response = await this.client.messages.create({
         model: MODELS.ANTHROPIC_DEFAULT,
-        max_tokens: 1000,
+        max_completion_tokens: 1000,
         temperature: 0.5,
         system: this.systemPrompt,
         messages,

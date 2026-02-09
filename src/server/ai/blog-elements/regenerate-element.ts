@@ -46,7 +46,7 @@ export async function regenerateElement(
       },
     ],
     tool_choice: { type: 'function', function: { name: 'regenerate_blog_element' } },
-    max_tokens: 16000,
+    max_completion_tokens: 16000,
   });
 
   let regeneratedElements = JSON.parse(parseToolArguments(response)) as any;
