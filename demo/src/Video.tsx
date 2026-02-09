@@ -8,10 +8,14 @@ import { BlogPostScene } from "./scenes/BlogPostScene";
 import { PublishedBlogScene } from "./scenes/PublishedBlogScene";
 import { TrafficGrowthScene } from "./scenes/TrafficGrowthScene";
 import { OutroScene } from "./scenes/OutroScene";
+import { SlideTransition } from "./components/SlideTransition";
 import { ProgressBar } from "./components/ProgressBar";
 import { GuideBox } from "./components/GuideBox";
 
 const backgroundMusic = staticFile("audio/background.mp3");
+
+/* Overlap frames — next scene starts sliding in while previous scene is still showing */
+const OV = 8;
 
 export const Video: React.FC = () => {
   let offset = 0;
@@ -33,19 +37,19 @@ export const Video: React.FC = () => {
   offset += blogPostDur;
 
   const publishedBlogDur = sec(DURATIONS.publishedBlog);
-  const publishedBlogFrom = offset;
-  offset += publishedBlogDur;
+  const publishedBlogFrom = offset - OV; // overlap with blog post end
+  offset += publishedBlogDur - OV;
 
   const trafficGrowthDur = sec(DURATIONS.trafficGrowth);
-  const trafficGrowthFrom = offset;
-  offset += trafficGrowthDur;
+  const trafficGrowthFrom = offset - OV;
+  offset += trafficGrowthDur - OV;
 
   const outroDur = sec(DURATIONS.outro);
-  const outroFrom = offset;
-  offset += outroDur;
+  const outroFrom = offset - OV;
+  offset += outroDur - OV;
 
   return (
-    <div style={{ width: "100%", height: "100%", background: "#ffffff" }}>
+    <div style={{ width: "100%", height: "100%", background: "#0A1628" }}>
       <Audio src={backgroundMusic} volume={0.11} />
 
       <Sequence from={introFrom} durationInFrames={introDur}>
@@ -64,16 +68,25 @@ export const Video: React.FC = () => {
         <BlogPostScene />
       </Sequence>
 
-      <Sequence from={publishedBlogFrom} durationInFrames={publishedBlogDur}>
-        <PublishedBlogScene />
+      {/* After publish click — slide in the real website */}
+      <Sequence from={publishedBlogFrom} durationInFrames={publishedBlogDur + OV}>
+        <SlideTransition direction="right" durationFrames={14}>
+          <PublishedBlogScene />
+        </SlideTransition>
       </Sequence>
 
-      <Sequence from={trafficGrowthFrom} durationInFrames={trafficGrowthDur}>
-        <TrafficGrowthScene />
+      {/* Traffic results — slide up */}
+      <Sequence from={trafficGrowthFrom} durationInFrames={trafficGrowthDur + OV}>
+        <SlideTransition direction="up" durationFrames={12}>
+          <TrafficGrowthScene />
+        </SlideTransition>
       </Sequence>
 
-      <Sequence from={outroFrom} durationInFrames={outroDur}>
-        <OutroScene />
+      {/* Outro — slide up */}
+      <Sequence from={outroFrom} durationInFrames={outroDur + OV}>
+        <SlideTransition direction="up" durationFrames={12}>
+          <OutroScene />
+        </SlideTransition>
       </Sequence>
 
       <GuideBox />

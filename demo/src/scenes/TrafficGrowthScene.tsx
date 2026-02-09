@@ -160,7 +160,7 @@ export const TrafficGrowthScene: React.FC = () => {
         <p style={{
           margin: 0, fontSize: 14, color: "rgba(255,255,255,0.4)", textAlign: "center",
         }}>
-          Organic traffic growth for Vink E-commerce after switching to Aurora
+          Organic traffic growth for Leafline Commerce after switching to Aurora
         </p>
       </div>
 

@@ -454,9 +454,9 @@ export const ShortBlogGenScene: React.FC = () => {
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                 }}>
                   <div>
-                    <p style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>How Vink Cut Packaging Waste by 40%</p>
+                    <p style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>How Leafline Cut Packaging Waste by 40%</p>
                     <p style={{ margin: "3px 0 0", fontSize: 11, opacity: 0.7 }}>
-                      <span>🏢</span> Vink E-commerce · Sustainability
+                      <span>🏢</span> Leafline Commerce · Sustainability
                     </p>
                   </div>
                   <div style={{

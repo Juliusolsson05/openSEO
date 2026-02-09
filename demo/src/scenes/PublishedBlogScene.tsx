@@ -1,106 +1,160 @@
 import React from "react";
 import {
   AbsoluteFill,
-  Easing,
+  Img,
   interpolate,
   spring,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { WIDTH, HEIGHT } from "../constants";
+import { WIDTH } from "../constants";
 
 /* ────────────────────────────────────────────
  * Published Blog Scene — 8s (240 frames @ 30fps)
  *
- * Shows a REAL independent blog website (not Aurora themed).
- * Brand: "Vink" — a green/neutral e-commerce sustainability blog.
+ * Shows the customer's REAL website (not Aurora).
+ * Brand: "Leafline" — sustainable packaging for e-commerce.
+ * Uses Unsplash stock photos for realism.
  *
- *   0–10     Scene appears (no fade, hard cut from dashboard)
- *   10–60    Camera settles on blog index with 4 existing posts
- *   60–120   New post slides in at the top with a subtle glow
- *   120–160  "Just published" badge animates in
- *   160–240  Hold — the blog looks complete with 5 posts
+ *   0–30     Scene slides in from right (wipe transition)
+ *   30–70    Blog index settles with 4 existing posts
+ *   70–130   New post slides in at the top with glow
+ *   130–160  Toast notification
+ *   160–240  Hold
  * ──────────────────────────────────────────── */
 
-const F = "'Georgia', 'Times New Roman', serif";
 const SANS = "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', sans-serif";
+const SERIF = "'Georgia', 'Times New Roman', serif";
 
 const BRAND = {
-  bg: "#FAFAF8",
+  bg: "#FAFAF7",
   surface: "#FFFFFF",
-  accent: "#2D6A4F",
-  accentLight: "#D8F3DC",
-  text: "#1B1B18",
-  textMuted: "#6B705C",
-  border: "#E8E8E3",
+  accent: "#1B6B4A",
+  accentLight: "#E8F5EE",
+  accentDark: "#145237",
+  text: "#1A1D1C",
+  textMuted: "#5F6B64",
+  border: "#E5E8E6",
   headerBg: "#FFFFFF",
-  footerBg: "#1B1B18",
+  navHover: "#F0F4F1",
 };
 
-/* ── Existing blog posts (before our new one) ── */
+/* ── Unsplash stock photos (small crops for performance) ── */
+const PHOTOS = {
+  hero: "https://images.unsplash.com/photo-1607082349566-187342175e2f?w=800&h=400&fit=crop&q=80",
+  post1: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=260&fit=crop&q=80",
+  post2: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=400&h=260&fit=crop&q=80",
+  post3: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&h=260&fit=crop&q=80",
+  post4: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400&h=260&fit=crop&q=80",
+  newPost: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=260&fit=crop&q=80",
+};
+
+/* ── Blog posts ── */
 const EXISTING_POSTS = [
   {
     title: "Why Biodegradable Mailers Are the Future of D2C Shipping",
     date: "Jan 28, 2026",
-    excerpt: "Consumer expectations around packaging sustainability have shifted dramatically. Here's why biodegradable mailers are becoming the default for direct-to-consumer brands.",
+    excerpt: "Consumer expectations around packaging sustainability have shifted dramatically. Here's why biodegradable mailers are becoming the default.",
     tag: "Shipping",
-    image: "#B7E4C7",
+    photo: PHOTOS.post1,
+    readTime: "6 min read",
   },
   {
     title: "5 Ways to Reduce Packaging Waste Without Raising Costs",
     date: "Jan 15, 2026",
-    excerpt: "Sustainability doesn't have to mean higher margins. We break down five proven strategies that cut waste and keep your bottom line intact.",
+    excerpt: "Sustainability doesn't have to mean higher margins. Five proven strategies that cut waste and keep your bottom line intact.",
     tag: "Strategy",
-    image: "#A7C4BC",
+    photo: PHOTOS.post2,
+    readTime: "8 min read",
   },
   {
     title: "How We Helped 200+ Stores Switch to Recyclable Packaging",
     date: "Jan 3, 2026",
-    excerpt: "A look at our partnership program and the real-world results from helping e-commerce stores transition to fully recyclable packaging solutions.",
+    excerpt: "A look at our partnership program and real-world results from helping e-commerce stores transition.",
     tag: "Case Study",
-    image: "#95B8A3",
+    photo: PHOTOS.post3,
+    readTime: "5 min read",
   },
   {
     title: "The Complete Guide to Sustainable Packaging Certifications",
     date: "Dec 18, 2025",
-    excerpt: "FSC, PEFC, Cradle to Cradle — understanding which certifications matter for your brand and your customers.",
+    excerpt: "FSC, PEFC, Cradle to Cradle — understanding which certifications matter for your brand.",
     tag: "Guide",
-    image: "#84A98C",
+    photo: PHOTOS.post4,
+    readTime: "10 min read",
   },
 ];
 
 const NEW_POST = {
   title: "The Future of Small Businesses: Embracing AI Tools for Growth",
   date: "Feb 7, 2026",
-  excerpt: "Small businesses are navigating rapid digital change. AI tools now make it possible to automate repetitive work, uncover customer insights, and make faster decisions without enterprise-sized teams.",
+  excerpt: "Small businesses are navigating rapid digital change. AI tools now make it possible to automate repetitive work and uncover customer insights.",
   tag: "AI & Growth",
-  image: "#52796F",
+  photo: PHOTOS.newPost,
+  readTime: "7 min read",
 };
 
+/* ── Leafline Logo SVG ── */
+const LeaflineLogo: React.FC<{ size?: number }> = ({ size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+    {/* Leaf shape */}
+    <path
+      d="M8 28C8 28 6 18 10 12C14 6 22 4 28 4C28 4 26 14 22 20C18 26 8 28 8 28Z"
+      fill={BRAND.accent}
+      stroke={BRAND.accentDark}
+      strokeWidth={0.5}
+    />
+    {/* Leaf vein */}
+    <path
+      d="M28 4C22 10 15 16 8 28"
+      stroke={BRAND.accentLight}
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      fill="none"
+    />
+    <path
+      d="M18 12C16 15 13 18 10 22"
+      stroke={BRAND.accentLight}
+      strokeWidth={0.8}
+      strokeLinecap="round"
+      fill="none"
+      opacity={0.7}
+    />
+  </svg>
+);
+
 /* ── Header ── */
-const BlogHeader: React.FC = () => (
+const SiteHeader: React.FC = () => (
   <div style={{
-    height: 64, display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "0 48px", borderBottom: `1px solid ${BRAND.border}`, background: BRAND.headerBg,
+    height: 68, display: "flex", alignItems: "center", justifyContent: "space-between",
+    padding: "0 64px", borderBottom: `1px solid ${BRAND.border}`,
+    background: BRAND.headerBg,
   }}>
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <div style={{
-        width: 32, height: 32, borderRadius: 6, background: BRAND.accent,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 16, fontWeight: 700, color: "#FFFFFF", fontFamily: SANS,
-      }}>V</div>
-      <span style={{ fontSize: 18, fontWeight: 700, color: BRAND.text, fontFamily: SANS, letterSpacing: "-0.02em" }}>
-        Vink
-      </span>
-      <span style={{ fontSize: 12, color: BRAND.textMuted, fontFamily: SANS, marginLeft: 4 }}>
-        Sustainable Packaging
+      <LeaflineLogo size={30} />
+      <span style={{
+        fontSize: 20, fontWeight: 700, color: BRAND.text,
+        fontFamily: SANS, letterSpacing: "-0.03em",
+      }}>
+        Leafline
       </span>
     </div>
-    <div style={{ display: "flex", gap: 28, fontSize: 14, fontFamily: SANS, color: BRAND.textMuted }}>
-      <span>Solutions</span>
-      <span>About</span>
+    <nav style={{ display: "flex", gap: 32, fontSize: 14, fontFamily: SANS }}>
+      <span style={{ color: BRAND.textMuted, fontWeight: 500 }}>Solutions</span>
+      <span style={{ color: BRAND.textMuted, fontWeight: 500 }}>Pricing</span>
       <span style={{ color: BRAND.accent, fontWeight: 600 }}>Blog</span>
-      <span>Contact</span>
+      <span style={{ color: BRAND.textMuted, fontWeight: 500 }}>About</span>
+      <span style={{ color: BRAND.textMuted, fontWeight: 500 }}>Contact</span>
+    </nav>
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <span style={{ fontSize: 13, color: BRAND.textMuted, fontFamily: SANS }}>Log in</span>
+      <div style={{
+        padding: "8px 18px", borderRadius: 6,
+        background: BRAND.accent, color: "#FFFFFF",
+        fontSize: 13, fontWeight: 600, fontFamily: SANS,
+      }}>
+        Get Started
+      </div>
     </div>
   </div>
 );
@@ -110,92 +164,167 @@ const PostCard: React.FC<{
   post: typeof NEW_POST;
   isNew?: boolean;
   newProgress?: number;
-}> = ({ post, isNew, newProgress = 1 }) => (
+  featured?: boolean;
+}> = ({ post, isNew, newProgress = 1, featured }) => (
   <div style={{
-    display: "flex", gap: 24, padding: "28px 0",
-    borderBottom: `1px solid ${BRAND.border}`,
+    display: "flex", flexDirection: featured ? "column" : "row", gap: featured ? 16 : 20,
+    padding: featured ? 0 : "24px 0",
+    borderBottom: featured ? "none" : `1px solid ${BRAND.border}`,
     opacity: isNew ? newProgress : 1,
-    transform: isNew ? `translateY(${interpolate(newProgress, [0, 1], [20, 0])}px)` : "none",
+    transform: isNew ? `translateY(${interpolate(newProgress, [0, 1], [30, 0])}px)` : "none",
+    position: "relative",
   }}>
-    {/* Image placeholder */}
+    {/* Photo */}
     <div style={{
-      width: 240, height: 160, borderRadius: 8, flexShrink: 0,
-      background: `linear-gradient(135deg, ${post.image} 0%, ${post.image}CC 100%)`,
-      position: "relative", overflow: "hidden",
+      width: featured ? "100%" : 220, height: featured ? 200 : 140,
+      borderRadius: 8, flexShrink: 0, overflow: "hidden",
+      position: "relative",
     }}>
-      <div style={{
-        position: "absolute", inset: 0, opacity: 0.15,
-        backgroundImage: "linear-gradient(45deg, rgba(255,255,255,0.3) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.3) 75%)",
-        backgroundSize: "20px 20px",
+      <Img src={post.photo} style={{
+        width: "100%", height: "100%", objectFit: "cover",
       }} />
-      {isNew && newProgress > 0.5 && (
+      {isNew && newProgress > 0.6 && (
         <div style={{
-          position: "absolute", top: 10, left: 10,
-          padding: "4px 10px", borderRadius: 4,
+          position: "absolute", top: 12, left: 12,
+          padding: "5px 12px", borderRadius: 5,
           background: BRAND.accent, color: "#FFFFFF",
           fontSize: 10, fontWeight: 700, fontFamily: SANS,
-          letterSpacing: "0.05em", textTransform: "uppercase",
+          letterSpacing: "0.06em", textTransform: "uppercase",
+          boxShadow: "0 2px 8px rgba(27,107,74,0.3)",
         }}>
-          Just Published
+          ✦ Just Published
         </div>
       )}
     </div>
 
     {/* Content */}
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <span style={{
-          padding: "3px 10px", borderRadius: 4,
+          padding: "2px 8px", borderRadius: 4,
           background: BRAND.accentLight, color: BRAND.accent,
           fontSize: 11, fontWeight: 600, fontFamily: SANS,
         }}>
           {post.tag}
         </span>
         <span style={{ fontSize: 12, color: BRAND.textMuted, fontFamily: SANS }}>{post.date}</span>
+        <span style={{ fontSize: 11, color: BRAND.textMuted, fontFamily: SANS, opacity: 0.7 }}>·</span>
+        <span style={{ fontSize: 11, color: BRAND.textMuted, fontFamily: SANS, opacity: 0.7 }}>{post.readTime}</span>
       </div>
       <h3 style={{
-        margin: 0, fontSize: 20, fontWeight: 700, lineHeight: 1.3,
-        color: BRAND.text, fontFamily: F,
+        margin: 0, fontSize: featured ? 22 : 17, fontWeight: 700, lineHeight: 1.3,
+        color: BRAND.text, fontFamily: SERIF,
       }}>
         {post.title}
       </h3>
       <p style={{
-        margin: 0, fontSize: 14, lineHeight: 1.6,
+        margin: 0, fontSize: 13, lineHeight: 1.55,
         color: BRAND.textMuted, fontFamily: SANS,
+        overflow: "hidden", display: "-webkit-box",
       }}>
         {post.excerpt}
       </p>
-      <span style={{
-        fontSize: 13, fontWeight: 600, color: BRAND.accent, fontFamily: SANS,
-        marginTop: "auto",
-      }}>
-        Read more →
-      </span>
+      {!featured && (
+        <span style={{
+          fontSize: 13, fontWeight: 600, color: BRAND.accent, fontFamily: SANS,
+          marginTop: "auto",
+        }}>
+          Read article →
+        </span>
+      )}
     </div>
   </div>
 );
 
-/* ── Notification toast ── */
+/* ── Toast notification ── */
 const PublishToast: React.FC<{ progress: number }> = ({ progress }) => {
   if (progress <= 0) return null;
-  const y = interpolate(progress, [0, 1], [40, 0]);
   return (
     <div style={{
-      position: "absolute", top: 80, right: 48,
-      padding: "12px 20px", borderRadius: 8,
+      position: "absolute", top: 84, right: 64,
+      padding: "14px 22px", borderRadius: 10,
       background: BRAND.accent, color: "#FFFFFF",
       fontFamily: SANS, fontSize: 13, fontWeight: 600,
-      boxShadow: "0 8px 24px rgba(45,106,79,0.3)",
-      display: "flex", alignItems: "center", gap: 8,
+      boxShadow: "0 12px 32px rgba(27,107,74,0.35)",
+      display: "flex", alignItems: "center", gap: 10,
       opacity: interpolate(progress, [0, 1], [0, 1]),
-      transform: `translateY(${y}px)`,
+      transform: `translateY(${interpolate(progress, [0, 1], [30, 0])}px)`,
       zIndex: 50,
     }}>
-      <span style={{ fontSize: 16 }}>✓</span>
-      New post published successfully
+      <div style={{
+        width: 22, height: 22, borderRadius: "50%",
+        background: "rgba(255,255,255,0.2)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 12,
+      }}>✓</div>
+      New article published to blog
     </div>
   );
 };
+
+/* ── Sidebar ── */
+const BlogSidebar: React.FC = () => (
+  <div style={{ width: 240, flexShrink: 0 }}>
+    {/* Search */}
+    <div style={{
+      height: 38, borderRadius: 6, border: `1px solid ${BRAND.border}`,
+      background: BRAND.surface, padding: "0 12px",
+      display: "flex", alignItems: "center", gap: 8,
+      fontSize: 13, color: BRAND.textMuted, fontFamily: SANS,
+      marginBottom: 24,
+    }}>
+      🔍 Search articles...
+    </div>
+
+    {/* Categories */}
+    <p style={{
+      fontSize: 11, fontWeight: 700, textTransform: "uppercase",
+      letterSpacing: "0.08em", color: BRAND.textMuted, fontFamily: SANS,
+      margin: "0 0 12px",
+    }}>Categories</p>
+    {["All Posts", "Shipping", "Strategy", "Case Studies", "Guides", "AI & Growth"].map((cat, i) => (
+      <div key={cat} style={{
+        padding: "8px 12px", borderRadius: 6, marginBottom: 2,
+        fontSize: 13, fontFamily: SANS,
+        color: i === 0 ? BRAND.accent : BRAND.textMuted,
+        fontWeight: i === 0 ? 600 : 400,
+        background: i === 0 ? BRAND.accentLight : "transparent",
+      }}>
+        {cat}
+      </div>
+    ))}
+
+    {/* Newsletter */}
+    <div style={{
+      marginTop: 24, padding: 16, borderRadius: 8,
+      background: BRAND.accentLight, border: `1px solid ${BRAND.border}`,
+    }}>
+      <p style={{ margin: "0 0 6px", fontSize: 14, fontWeight: 700, color: BRAND.text, fontFamily: SANS }}>
+        Stay updated
+      </p>
+      <p style={{ margin: "0 0 12px", fontSize: 12, color: BRAND.textMuted, fontFamily: SANS, lineHeight: 1.5 }}>
+        Get our latest sustainability insights delivered weekly.
+      </p>
+      <div style={{
+        height: 34, borderRadius: 6, border: `1px solid ${BRAND.border}`,
+        background: BRAND.surface, padding: "0 10px",
+        display: "flex", alignItems: "center",
+        fontSize: 12, color: BRAND.textMuted, fontFamily: SANS,
+        marginBottom: 8,
+      }}>
+        your@email.com
+      </div>
+      <div style={{
+        height: 34, borderRadius: 6,
+        background: BRAND.accent, color: "#FFFFFF",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 12, fontWeight: 600, fontFamily: SANS,
+      }}>
+        Subscribe
+      </div>
+    </div>
+  </div>
+);
 
 /* ══════════════════════════════════════════════ */
 export const PublishedBlogScene: React.FC = () => {
@@ -205,80 +334,89 @@ export const PublishedBlogScene: React.FC = () => {
   /* New post entrance */
   const newPostProgress = spring({
     fps,
-    frame: Math.max(0, frame - 60),
-    config: { damping: 22, stiffness: 100 },
-    durationInFrames: 40,
+    frame: Math.max(0, frame - 70),
+    config: { damping: 22, stiffness: 90 },
+    durationInFrames: 45,
   });
 
   /* Toast */
   const toastProgress = spring({
     fps,
-    frame: Math.max(0, frame - 80),
-    config: { damping: 20, stiffness: 120 },
+    frame: Math.max(0, frame - 90),
+    config: { damping: 20, stiffness: 110 },
     durationInFrames: 30,
   });
 
-  /* Subtle glow behind new post */
-  const glowOpacity = interpolate(frame, [60, 90, 160, 200], [0, 0.15, 0.15, 0], {
+  /* Glow behind new post */
+  const glowOpacity = interpolate(frame, [70, 100, 170, 210], [0, 0.12, 0.12, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
   return (
     <AbsoluteFill style={{ background: BRAND.bg, fontFamily: SANS }}>
-      <BlogHeader />
+      <SiteHeader />
 
-      {/* Blog hero */}
       <div style={{
-        padding: "40px 48px 0",
-        maxWidth: 900, margin: "0 auto", width: "100%",
+        display: "flex", gap: 40,
+        maxWidth: 1080, margin: "0 auto", width: "100%",
+        padding: "32px 48px 0",
       }}>
-        <div style={{ marginBottom: 8 }}>
-          <span style={{
-            fontSize: 11, fontWeight: 600, textTransform: "uppercase",
-            letterSpacing: "0.1em", color: BRAND.accent, fontFamily: SANS,
-          }}>
-            Blog
-          </span>
-        </div>
-        <h1 style={{
-          margin: "0 0 8px", fontSize: 36, fontWeight: 700, lineHeight: 1.2,
-          color: BRAND.text, fontFamily: F,
-        }}>
-          Insights & Resources
-        </h1>
-        <p style={{
-          margin: "0 0 32px", fontSize: 15, color: BRAND.textMuted, fontFamily: SANS, lineHeight: 1.6,
-        }}>
-          Practical guides on sustainable packaging, e-commerce logistics, and growing responsibly.
-        </p>
-
-        {/* Divider */}
-        <div style={{ height: 1, background: BRAND.border, marginBottom: 0 }} />
-
-        {/* Posts list */}
-        <div style={{ position: "relative" }}>
-          {/* Glow effect behind new post */}
-          {glowOpacity > 0 && (
-            <div style={{
-              position: "absolute", top: 0, left: -20, right: -20, height: 220,
-              background: `radial-gradient(ellipse at center, ${BRAND.accentLight} 0%, transparent 70%)`,
-              opacity: glowOpacity, pointerEvents: "none", zIndex: 0,
-            }} />
-          )}
-
-          {/* New post (appears at top) */}
-          {frame >= 55 && (
-            <div style={{ position: "relative", zIndex: 1 }}>
-              <PostCard post={NEW_POST} isNew newProgress={newPostProgress} />
+        {/* Main content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Page header */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <LeaflineLogo size={18} />
+              <span style={{
+                fontSize: 11, fontWeight: 600, textTransform: "uppercase",
+                letterSpacing: "0.1em", color: BRAND.accent, fontFamily: SANS,
+              }}>
+                Leafline Blog
+              </span>
             </div>
-          )}
+            <h1 style={{
+              margin: "0 0 6px", fontSize: 30, fontWeight: 700, lineHeight: 1.2,
+              color: BRAND.text, fontFamily: SERIF,
+            }}>
+              Insights & Resources
+            </h1>
+            <p style={{
+              margin: 0, fontSize: 14, color: BRAND.textMuted, fontFamily: SANS,
+            }}>
+              Practical guides on sustainable packaging, logistics, and growing responsibly.
+            </p>
+          </div>
 
-          {/* Existing posts — push down when new post arrives */}
-          {EXISTING_POSTS.map((post, i) => (
-            <PostCard key={i} post={post} />
-          ))}
+          <div style={{ height: 1, background: BRAND.border, marginBottom: 0 }} />
+
+          {/* Posts */}
+          <div style={{ position: "relative" }}>
+            {/* Glow */}
+            {glowOpacity > 0 && (
+              <div style={{
+                position: "absolute", top: -10, left: -24, right: -24, height: 200,
+                background: `radial-gradient(ellipse at center top, ${BRAND.accentLight} 0%, transparent 70%)`,
+                opacity: glowOpacity, pointerEvents: "none", zIndex: 0,
+              }} />
+            )}
+
+            {/* New post */}
+            {frame >= 65 && (
+              <div style={{ position: "relative", zIndex: 1 }}>
+                <PostCard post={NEW_POST} isNew newProgress={newPostProgress} />
+              </div>
+            )}
+
+            {/* Existing posts */}
+            {EXISTING_POSTS.map((post, i) => (
+              <PostCard key={i} post={post} />
+            ))}
+          </div>
         </div>
+
+        {/* Sidebar */}
+        <BlogSidebar />
       </div>
 
       <PublishToast progress={toastProgress} />
