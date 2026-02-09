@@ -112,12 +112,13 @@ export const BlogPostScene: React.FC = () => {
       extrapolateRight: "clamp",
       easing: Easing.inOut(Easing.cubic),
     });
-  } else if (frame <= 960) {
+  } else if (frame <= 955) {
     // Hold on case study
     scrollY = SCROLL_CASE_STUDY;
-  } else if (frame <= 1010) {
+  } else if (frame <= 1000) {
     // Scroll back up to top so publish button is clearly visible
-    scrollY = interpolate(frame, [960, 1010], [SCROLL_CASE_STUDY, SCROLL_PUBLISH], {
+    // Must finish BEFORE camera zoom starts (frame 1015)
+    scrollY = interpolate(frame, [955, 1000], [SCROLL_CASE_STUDY, SCROLL_PUBLISH], {
       extrapolateLeft: "clamp",
       extrapolateRight: "clamp",
       easing: Easing.inOut(Easing.cubic),
@@ -136,7 +137,7 @@ export const BlogPostScene: React.FC = () => {
   // Case Study card selected in modal after cursor clicks it
   const caseStudySelected = frame >= 750;
   // Publish button pressed state
-  const publishPressed  = frame >= 1040;
+  const publishPressed  = frame >= 1042;
 
   /* ── Fade to outro ── */
   const endFade = interpolate(frame, [1050, 1080], [0, 1], {
@@ -150,12 +151,13 @@ export const BlogPostScene: React.FC = () => {
   const CAM_PUBLISH: CameraState = { scale: 1.12, focusX: 1400, focusY: 340 };
 
   let cam: CameraState;
-  if (frame < 1000) {
+  if (frame < 1015) {
+    // No zoom until scroll is fully settled at top (scroll finishes at frame 1000)
     cam = CAM_FULL;
   } else {
     const zoomIn = spring({
       fps,
-      frame: frame - 1000,
+      frame: frame - 1015,
       config: { damping: 30, stiffness: 100, overshootClamping: true },
       durationInFrames: 40,
     });
@@ -225,9 +227,9 @@ export const BlogPostScene: React.FC = () => {
       }
     }
 
-    // Capture publish button early — it's in the fixed sidebar, always visible.
-    // Must capture BEFORE CameraRig zoom starts (frame 1000) to avoid skewed measurements.
-    if (!frozen.publishButton && frame >= 495) {
+    // Capture publish button when scroll has settled at 0 but BEFORE camera zoom starts.
+    // Scroll finishes at frame 1000, zoom starts at frame 1015 — capture in that window.
+    if (!frozen.publishButton && frame >= 1002 && frame < 1015) {
       const p = queryPos("publishButton");
       if (p) {
         frozen.publishButton = p;
@@ -273,15 +275,15 @@ export const BlogPostScene: React.FC = () => {
     // Watch generation
     { frame: 850,  x: INTRO_X + 60,   y: 550 },
     // Drift while watching case study
-    { frame: 955,  x: INTRO_X + 40,   y: 520 },
-    // Scroll back up happens 960–1010, cursor drifts toward publish area
-    { frame: 1010, x: publishTarget.x - 80, y: publishTarget.y + 40 },
-    // Move to publish button
+    { frame: 950,  x: INTRO_X + 40,   y: 520 },
+    // Scroll back up happens 955–1000, cursor drifts toward sidebar
+    { frame: 1005, x: publishTarget.x - 60, y: publishTarget.y + 60 },
+    // Move to publish button (scroll settled, before zoom)
     { frame: 1030, x: publishTarget.x, y: publishTarget.y },
     // Click publish
-    { frame: 1040, x: publishTarget.x, y: publishTarget.y, click: true },
+    { frame: 1042, x: publishTarget.x, y: publishTarget.y, click: true },
     // Small drift after click, then fade out
-    { frame: 1080, x: publishTarget.x + 15, y: publishTarget.y + 8 },
+    { frame: 1080, x: publishTarget.x + 12, y: publishTarget.y + 6 },
   ];
 
   return (
