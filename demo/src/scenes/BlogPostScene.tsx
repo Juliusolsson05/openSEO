@@ -20,9 +20,8 @@ import { ELEMENT_ICONS } from "../ui/blog/ElementIcons";
  *   680–700   Click + button
  *   700–780   Modal: select Case Study, click confirm
  *   780–800   Modal closes
- *   800–920   Scroll down to clearly reveal new element
- *   920–880   Skeleton loading
- *   880–1080  Case study generated, hold
+ *   800–920   Scroll down further while section generates
+ *   920–1080  Case study generated, hold
  * ──────────────────────────────────────────── */
 
 // Tuned for more natural motion and to keep right-sidebar edit toggle visible.
