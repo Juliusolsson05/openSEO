@@ -20,14 +20,18 @@ import { ELEMENT_ICONS } from "../ui/blog/ElementIcons";
  *   680–700   Click + button
  *   700–780   Modal: select Case Study, click confirm
  *   780–800   Modal closes
- *   800–920   Scroll down further while section generates
- *   920–1080  Case study generated, hold
+ *   800–920   Scroll down to reveal case study
+ *   920–960   Hold on case study
+ *   960–1010  Scroll back up to top (publish button visible)
+ *   1010–1045 Cursor → Publish button, click
+ *   1045–1080 Dark fade to outro
  * ──────────────────────────────────────────── */
 
 // Tuned for more natural motion and to keep right-sidebar edit toggle visible.
 const SCROLL_MAX = 1880;
 const SCROLL_REST = 120;
 const SCROLL_CASE_STUDY = 860;
+const SCROLL_PUBLISH = 0; // top of page — publish button is in the sidebar, always visible at scroll 0
 
 /* Layout coords (BrowserFrame content space) */
 const EDIT_SWITCH_X = 1612;
@@ -101,14 +105,24 @@ export const BlogPostScene: React.FC = () => {
   } else if (frame <= 800) {
     scrollY = SCROLL_REST;
   } else if (frame <= 940) {
-    // Scroll down much further to clearly reveal inserted case study
+    // Scroll down to reveal inserted case study
     scrollY = interpolate(frame, [800, 940], [SCROLL_REST, SCROLL_CASE_STUDY], {
       extrapolateLeft: "clamp",
       extrapolateRight: "clamp",
       easing: Easing.inOut(Easing.cubic),
     });
-  } else {
+  } else if (frame <= 960) {
+    // Hold on case study
     scrollY = SCROLL_CASE_STUDY;
+  } else if (frame <= 1010) {
+    // Scroll back up to top so publish button is clearly visible
+    scrollY = interpolate(frame, [960, 1010], [SCROLL_CASE_STUDY, SCROLL_PUBLISH], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+      easing: Easing.inOut(Easing.cubic),
+    });
+  } else {
+    scrollY = SCROLL_PUBLISH;
   }
 
   /* ── State flags ── */
@@ -120,6 +134,14 @@ export const BlogPostScene: React.FC = () => {
   const caseStudyDone   = frame >= 880;
   // Case Study card selected in modal after cursor clicks it
   const caseStudySelected = frame >= 750;
+  // Publish button pressed state
+  const publishPressed  = frame >= 1040;
+
+  /* ── Fade to outro ── */
+  const endFade = interpolate(frame, [1050, 1080], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -180,14 +202,15 @@ export const BlogPostScene: React.FC = () => {
       }
     }
 
-
-    if (!frozen.publishButton && frame >= 980) {
+    // Capture publish button position once scroll reaches top
+    if (!frozen.publishButton && frame >= 1015) {
       const p = queryPos("publishButton");
       if (p) {
         frozen.publishButton = p;
         changed = true;
       }
     }
+
     if (changed) {
       setTargets({ ...frozen });
     }
@@ -199,22 +222,6 @@ export const BlogPostScene: React.FC = () => {
   const caseStudyTarget = targets.modalCaseStudy ?? { x: MODAL_CASE_X, y: MODAL_CASE_Y };
   const modalAddTarget = targets.modalAddButton ?? { x: MODAL_ADD_BTN_X, y: MODAL_ADD_BTN_Y };
   const publishTarget = targets.publishButton ?? { x: PUBLISH_BTN_X, y: PUBLISH_BTN_Y };
-
-  // Subtle end pan + zoom toward Publish CTA
-  const camProgress = interpolate(frame, [960, 1045], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: Easing.inOut(Easing.cubic),
-  });
-  const camZoom = interpolate(camProgress, [0, 1], [1, 1.14]);
-  const focusX = 1360;
-  const focusY = 300;
-  const camTranslateX = focusX - publishTarget.x * camZoom;
-  const camTranslateY = focusY - publishTarget.y * camZoom;
-  const endFade = interpolate(frame, [1050, 1080], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
 
   /* ── Cursor ── */
   const waypoints: Waypoint[] = [
@@ -239,18 +246,23 @@ export const BlogPostScene: React.FC = () => {
     // Click "Add Element" button
     { frame: 770,  x: modalAddTarget.x, y: modalAddTarget.y },
     { frame: 785,  x: modalAddTarget.x, y: modalAddTarget.y, click: true },
-    // Watch generation then publish
-    { frame: 850,  x: INTRO_X + 60,    y: 550 },
-    { frame: 955,  x: publishTarget.x - 220, y: publishTarget.y + 80 },
-    { frame: 1015, x: publishTarget.x, y: publishTarget.y },
-    { frame: 1032, x: publishTarget.x, y: publishTarget.y, click: true },
-    { frame: 1080, x: publishTarget.x + 20, y: publishTarget.y + 10 },
+    // Watch generation
+    { frame: 850,  x: INTRO_X + 60,   y: 550 },
+    // Drift while watching case study
+    { frame: 955,  x: INTRO_X + 40,   y: 520 },
+    // Scroll back up happens 960–1010, cursor drifts toward publish area
+    { frame: 1010, x: publishTarget.x - 80, y: publishTarget.y + 40 },
+    // Move to publish button
+    { frame: 1030, x: publishTarget.x, y: publishTarget.y },
+    // Click publish
+    { frame: 1040, x: publishTarget.x, y: publishTarget.y, click: true },
+    // Small drift after click, then fade out
+    { frame: 1080, x: publishTarget.x + 15, y: publishTarget.y + 8 },
   ];
 
   return (
     <BrowserFrame url="app.nordtools.com/blog/42/edit" pad={0}>
       <div ref={rootRef} style={{ width: "100%", height: "100%", position: "relative" }}>
-        <div style={{ position: "absolute", inset: 0, transform: `translate(${camTranslateX}px, ${camTranslateY}px) scale(${camZoom})`, transformOrigin: "top left" }}>
         <DashboardShell pageTitle="Edit Post" sidebarActiveItem="Blog Posts">
           <div style={{
             margin: -32,
@@ -271,6 +283,7 @@ export const BlogPostScene: React.FC = () => {
                 addModalOpen={false}
                 caseStudyGenerating={caseStudyGen}
                 caseStudyInserted={caseStudyDone}
+                publishPressed={publishPressed}
               />
             </div>
           </div>
@@ -352,9 +365,17 @@ export const BlogPostScene: React.FC = () => {
         )}
 
         <Cursor waypoints={waypoints} />
-        </div>
 
-        <div style={{ position: "absolute", inset: 0, background: "#001633", opacity: endFade, pointerEvents: "none", zIndex: 120 }} />
+        {/* Dark fade overlay for smooth transition into outro */}
+        {endFade > 0 && (
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(135deg, #002050 0%, #0078D4 100%)",
+            opacity: endFade,
+            pointerEvents: "none",
+            zIndex: 120,
+          }} />
+        )}
       </div>
     </BrowserFrame>
   );

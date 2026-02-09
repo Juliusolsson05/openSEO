@@ -53,6 +53,7 @@ export const MockBlogPostPage: React.FC<{
   addModalOpen?: boolean;
   caseStudyGenerating?: boolean;
   caseStudyInserted?: boolean;
+  publishPressed?: boolean;
 }> = ({
   frame,
   editMode = false,
@@ -60,6 +61,7 @@ export const MockBlogPostPage: React.FC<{
   showAddButton = false,
   caseStudyGenerating = false,
   caseStudyInserted = false,
+  publishPressed = false,
 }) => {
   const f = frame ?? 9999;
 
@@ -199,7 +201,7 @@ export const MockBlogPostPage: React.FC<{
         </div>
 
         <div style={{ width: 256, flexShrink: 0, overflowY: "auto" }}>
-          <ActionsCard editMode={editMode} />
+          <ActionsCard editMode={editMode} publishPressed={publishPressed} />
           <PostDetailsCard details={{ elements: 16, created: "Feb 7, 2026", keyword: "AI tools for small businesses", slug: "/the-future-of-small-businesses-embracing-ai-tools-for-growth" }} />
           <PostInfoCard info={{ seoTitle: "Embrace AI Tools for Growth: The Future of Small Businesses", metaDescription: "Discover how AI tools for small businesses can streamline operations, enhance customer experiences, and drive sustainable growth in today's digital landscape." }} />
         </div>

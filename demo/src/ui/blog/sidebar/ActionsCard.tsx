@@ -63,7 +63,7 @@ const ActionRow: React.FC<{ icon: React.ReactNode; label: string; danger?: boole
   </div>
 );
 
-export const ActionsCard: React.FC<{ editMode?: boolean }> = ({ editMode = false }) => (
+export const ActionsCard: React.FC<{ editMode?: boolean; publishPressed?: boolean }> = ({ editMode = false, publishPressed = false }) => (
   <div style={{
     borderRadius: 8, border: `1px solid ${COLORS.border}`,
     background: COLORS.card, padding: 16, marginBottom: 16,
@@ -134,11 +134,13 @@ export const ActionsCard: React.FC<{ editMode?: boolean }> = ({ editMode = false
         style={{
           display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
           height: 32, borderRadius: 6, border: "none",
-          background: COLORS.primary, fontSize: 12, fontWeight: 500,
+          background: publishPressed ? COLORS.success : COLORS.primary,
+          fontSize: 12, fontWeight: 500,
           color: "#FFFFFF", fontFamily: F, cursor: "pointer",
+          transform: publishPressed ? "scale(0.96)" : "none",
         }}
       >
-        <UploadIcon /> Publish
+        <UploadIcon /> {publishPressed ? "Published ✓" : "Publish"}
       </button>
     </div>
   </div>
