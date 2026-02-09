@@ -6,16 +6,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { api, apiPost } from '@/lib/api'
 
-interface Dictionary {
-  id: number
-  title: string
-  subject: string
-  language: string
-  num_words: number
-  current_letter: string
-  status: string
-  total_words?: number
-}
+import type { DashboardDictionary as Dictionary } from '@/types/blog'
 
 interface Keyword {
   keyword: string

@@ -1,6 +1,6 @@
 import { getAnthropicClient, getOpenAIClient, MODELS } from '../clients';
 
-type ProductTitle = { title: string };
+import type { ProductTitle } from './generate-motivations';
 
 function generateRecommendationParameters(productAmount: number, includeMotivation: boolean) {
   const properties = Object.fromEntries(

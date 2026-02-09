@@ -1,39 +1,9 @@
-import { readInboundKey } from '@/types/publishing'
+import { readInboundKey, type InboundEnvelope, type InboundTermPayload } from '@/types/publishing'
 import { prisma } from '@/lib/prisma'
 import { apiHandler } from '@/server/api/handler'
 import { ValidationError } from '@/server/api/errors'
 import { raw, success } from '@/server/api/response'
 import { resolveCompanyByInboundApiKey } from '@/server/publishing/auth'
-
-type InboundEnvelope = {
-  event?: string
-  event_id?: string
-  payload?: {
-    dictionary?: {
-      id?: number
-      title?: string
-    }
-    term?: {
-      id?: number
-      keyword?: string
-      letter?: string
-      description?: string
-      priority?: 'HIGH' | 'LOW'
-      focus_keyword?: string
-      definition?: {
-        title?: string
-        featured_google_snippet?: string
-        meta_description?: string
-        seo_title?: string
-        synonyms?: unknown
-        antonyms?: unknown
-        usage_examples?: unknown
-        related_keywords?: unknown
-        faqs?: unknown
-      }
-    }
-  }
-}
 
 
 export const POST = apiHandler(async ({ body }, req) => {
@@ -43,7 +13,7 @@ export const POST = apiHandler(async ({ body }, req) => {
   const companyId = await resolveCompanyByInboundApiKey(inboundKey)
   if (!companyId) return raw({ detail: 'Invalid inbound API key' }, 401)
 
-  const envelope = (body ?? {}) as InboundEnvelope
+  const envelope = (body ?? {}) as InboundEnvelope<InboundTermPayload>
   if (!envelope.event_id) throw new ValidationError('event_id is required')
 
   const existingInbound = await prisma.inboundEvent.findFirst({

@@ -10,16 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
-type Dictionary = {
-  id: number
-  title: string
-  subject: string
-  language: string
-  num_words: number
-  total_words?: number
-  status: string
-  current_letter?: string
-}
+import type { DashboardDictionary as Dictionary } from '@/types/blog'
 
 const statusLabel = (d: Dictionary, currentId?: number, currentLetter?: string) => {
   if (currentId === d.id) return `Generating (${(currentLetter || 'a').toUpperCase()})`
@@ -46,14 +37,14 @@ export default function DictionaryPage() {
     if (statusFilter === 'all') return list
 
     return list.filter((d) => {
-      const done = !['generating', 'in_progress', 'definition_generation'].includes(d.status)
+      const done = !['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '')
       return statusFilter === 'completed' ? done : !done
     })
   }, [dictionaries, statusFilter])
 
   const totalPages = Math.max(1, Math.ceil(totalDictionaries / itemsPerPage))
-  const inProgress = (dictionaries ?? []).filter((d) => ['generating', 'in_progress', 'definition_generation'].includes(d.status)).length
-  const completed = (dictionaries ?? []).filter((d) => !['generating', 'in_progress', 'definition_generation'].includes(d.status)).length
+  const inProgress = (dictionaries ?? []).filter((d) => ['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '')).length
+  const completed = (dictionaries ?? []).filter((d) => !['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '')).length
 
   return (
     <div className="space-y-4">
@@ -120,7 +111,7 @@ export default function DictionaryPage() {
                       <TableCell className="text-muted-foreground">{d.subject}</TableCell>
                       <TableCell className="uppercase">{d.language}</TableCell>
                       <TableCell>
-                        <Badge variant={['generating', 'in_progress', 'definition_generation'].includes(d.status) ? 'warning' : 'success'}>
+                        <Badge variant={['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '') ? 'warning' : 'success'}>
                           {statusLabel(d, currentDictionary?.id, currentDictionary?.current_letter)}
                         </Badge>
                       </TableCell>
@@ -128,7 +119,7 @@ export default function DictionaryPage() {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Link href={`/dictionary/${d.id}`}><Button size="sm" variant="outline" className="h-7 rounded-sm">Open</Button></Link>
-                          {['generating', 'in_progress', 'definition_generation'].includes(d.status) ? (
+                          {['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '') ? (
                             <Link href="/dictionary/generate/keywords"><Button size="sm" className="h-7 rounded-sm">Resume</Button></Link>
                           ) : null}
                         </div>

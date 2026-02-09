@@ -4,18 +4,12 @@ import { useMemo } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-interface BreakdownItem {
-  score: number
-  weight: number
-}
 
-interface GeneralBlogData {
-  general_seo_score?: number
-}
+import type { BlogGeneralData, ScoreBreakdownItem } from '@/types/analytics'
 
 interface AnalyticsOverviewProps {
-  generalBlogData: GeneralBlogData | null
-  scoreBreakdown: Record<string, BreakdownItem>
+  generalBlogData: BlogGeneralData | null
+  scoreBreakdown: Record<string, ScoreBreakdownItem>
 }
 
 function SmallRing({ value, label }: { value: number; label: string }) {

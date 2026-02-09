@@ -5,13 +5,7 @@
 import { create } from 'zustand'
 import { api, apiPost, apiPut, apiDelete, apiPostForm } from '@/lib/api'
 
-interface CTA {
-  id: number
-  title: string
-  description: string
-  image: string
-  link: string
-}
+import type { CTA } from '@/types/blog'
 
 interface Campaign {
   id: number

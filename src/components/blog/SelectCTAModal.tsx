@@ -61,7 +61,7 @@ export default function SelectCTAModal({ modelValue, onOpenChange, onCtaSelected
                   className={`cursor-pointer overflow-hidden rounded-sm border-2 ${selectedCTA === cta.id ? 'border-primary' : 'border-border'}`}
                   onClick={() => setSelectedCTA(cta.id)}
                 >
-                  <img src={fullImage(cta.image)} alt={cta.title} className="h-44 w-full object-cover" />
+                  <img src={fullImage(cta.image ?? cta.image_url ?? "")} alt={cta.title} className="h-44 w-full object-cover" />
                   <CardContent className="p-3">
                     <p className="text-[13px] font-semibold">{cta.title}</p>
                     <p className="line-clamp-2 text-[12px] text-muted-foreground">{cta.description}</p>

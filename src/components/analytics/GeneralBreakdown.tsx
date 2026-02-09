@@ -2,21 +2,10 @@
 
 import { Card, CardContent } from '@/components/ui/card'
 
-interface MetricValue {
-  value: number
-  value_description?: string
-  value_recommendation?: string
-}
-
-interface GeneralBlogData {
-  average_keyword_density?: MetricValue
-  average_post_length?: MetricValue
-  average_link_density?: MetricValue
-  average_internal_links?: MetricValue
-}
+import type { BlogGeneralData } from '@/types/analytics'
 
 interface GeneralBreakdownProps {
-  generalBlogData: GeneralBlogData | null
+  generalBlogData: BlogGeneralData | null
 }
 
 function MetricRing({ value, max, unit = '' }: { value: number; max: number; unit?: string }) {

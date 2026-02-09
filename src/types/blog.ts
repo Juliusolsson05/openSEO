@@ -75,6 +75,52 @@ export interface BlogPost {
   post_linking: number[]
 }
 
+export interface DashboardFAQ {
+  question: string
+  answer: string
+}
+
+export interface DashboardDefinition {
+  title: string
+  featured_google_snippet: string
+  meta_description?: string
+  paragraph_1?: { title: string; text: string }
+  paragraph_2?: { title: string; text: string }
+  paragraph_3?: { title: string; text: string }
+  synonyms: string[]
+  antonyms: string[]
+  usage_examples: string[]
+  related_keywords: string[]
+  faqs: DashboardFAQ[]
+}
+
+export interface DashboardWord {
+  id?: number
+  keyword: string
+  definition: DashboardDefinition
+}
+
+export interface DashboardDictionary {
+  id: number
+  title: string
+  subject: string
+  language: string
+  num_words: number
+  total_words?: number
+  current_letter?: string
+  status?: string
+  words?: Array<{ id: number; keyword: string; letter: string; description: string; priority: number | string; has_definition?: boolean }>
+}
+
+export interface CTA {
+  id: number
+  title: string
+  description: string
+  image?: string
+  image_url?: string
+  link?: string
+}
+
 export interface BlogTitle {
   id: number
   title_text: string

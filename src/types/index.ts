@@ -37,7 +37,7 @@ export type {
 export type { ContentElement, ContentPost, ContentFaq, WordDefinition, ContentWord, ContentDictionary } from './dictionary'
 
 // Publishing
-export type { InboundEnvelopeBase } from './publishing'
+export type { InboundEnvelope, RawElement } from './publishing'
 export { readInboundKey } from './publishing'
 
 // Quillo / AI Chat

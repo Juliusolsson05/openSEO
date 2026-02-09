@@ -31,12 +31,7 @@ function getCompanyId(): number {
   return parseInt(raw, 10)
 }
 
-type RawElement = {
-  id: number | string
-  order: number
-  element_type: string
-  content: Record<string, unknown> | string
-}
+import type { RawElement } from '@/types/publishing'
 
 function extractElements(source: Record<string, unknown>): RawElement[] {
   const pc = source.processed_content as Record<string, unknown> | undefined

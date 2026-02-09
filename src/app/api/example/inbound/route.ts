@@ -54,12 +54,7 @@ function getCompanyId(): number {
 
 // ─── Extract elements from various payload shapes ────────────────────
 
-type RawElement = {
-  id: number | string
-  order: number
-  element_type: string
-  content: Record<string, unknown> | string
-}
+import type { RawElement } from '@/types/publishing'
 
 function extractElements(source: Record<string, unknown>): RawElement[] {
   // Shape 1: { processed_content: { elements: [...] } } — from pushAllPosts (sync)

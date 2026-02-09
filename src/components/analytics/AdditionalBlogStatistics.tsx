@@ -3,22 +3,10 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { FileText, Send, Link2, ArrowUpRight, Wrench, FlaskConical } from 'lucide-react'
 
-interface MetricValue {
-  value: number
-  value_recommendation?: string
-}
-
-interface GeneralBlogData {
-  total_blog_posts?: MetricValue
-  published_blog_posts?: MetricValue
-  average_total_links?: MetricValue
-  average_outgoing_links?: MetricValue
-  average_tool_recommendations?: MetricValue
-  average_case_studies?: MetricValue
-}
+import type { BlogGeneralData } from '@/types/analytics'
 
 interface AdditionalBlogStatisticsProps {
-  generalBlogData: GeneralBlogData | null
+  generalBlogData: BlogGeneralData | null
 }
 
 export function AdditionalBlogStatistics({ generalBlogData }: AdditionalBlogStatisticsProps) {

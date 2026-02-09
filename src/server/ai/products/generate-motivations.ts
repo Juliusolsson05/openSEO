@@ -1,6 +1,6 @@
 import { getAnthropicClient, getOpenAIClient, MODELS } from '../clients';
 
-type ProductTitle = { title: string };
+export type ProductTitle = { title: string };
 
 export async function generateMotivations(
   blogPostTitle: string,

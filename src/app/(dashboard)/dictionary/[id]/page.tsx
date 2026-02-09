@@ -23,14 +23,8 @@ interface Word {
   has_definition?: boolean
 }
 
-interface Dictionary {
-  id: number
-  title: string
-  subject: string
-  language: string
-  num_words: number
-  words: Word[]
-}
+import type { DashboardDictionary } from '@/types/blog'
+interface Dictionary extends DashboardDictionary { words: Word[] }
 
 export default function DictionaryDetailPage() {
   const params = useParams<{ id: string }>()

@@ -3,19 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 
-interface OversizedSeoTitle {
-  post_id: number
-  title: string
-  focus_keyword: string
-  extra_chars: number
-}
-
-interface OversizedMetaDescription {
-  post_id: number
-  meta_description: string
-  focus_keyword: string
-  extra_chars: number
-}
+import type { OversizedSeoTitle, OversizedMetaDescription } from '@/types/analytics'
 
 interface PostMetaProps {
   oversizedSeoTitles: OversizedSeoTitle[]

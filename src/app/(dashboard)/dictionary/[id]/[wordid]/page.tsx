@@ -9,30 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
-interface FAQ {
-  question: string
-  answer: string
-}
-
-interface Definition {
-  title: string
-  featured_google_snippet: string
-  meta_description?: string
-  paragraph_1?: { title: string; text: string }
-  paragraph_2?: { title: string; text: string }
-  paragraph_3?: { title: string; text: string }
-  synonyms: string[]
-  antonyms: string[]
-  usage_examples: string[]
-  related_keywords: string[]
-  faqs: FAQ[]
-}
-
-interface WordDefinition {
-  id?: number
-  keyword: string
-  definition: Definition
-}
+import type { DashboardDefinition as Definition, DashboardWord as WordDefinition } from '@/types/blog'
 
 const clean = (value?: string) => (value || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim()
 
