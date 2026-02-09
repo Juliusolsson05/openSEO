@@ -421,13 +421,20 @@ export class BlogService {
   }
 
   async syncRecommendedPosts(companyId: number) {
+    // Only consider posts that have actually been generated — titles still
+    // waiting for content (TO_BE_GENERATED, APPROVED, REJECTED) must not
+    // appear as related-post targets.
+    const generatedStatuses = ['GENERATED', 'PUBLISHED'] as const
     const posts = await prisma.blogPost.findMany({
-      where: { companyId },
+      where: { companyId, status: { in: [...generatedStatuses] } },
       select: { id: true, title_text: true },
       orderBy: { id: 'asc' },
     })
 
     if (!posts.length) return []
+
+    const generatedIds = new Set(posts.map((p) => p.id))
+
     const recommendations = await generateRecommendedPosts(
       posts.map((p) => ({ id: p.id, title: p.title_text })),
     )
@@ -435,7 +442,11 @@ export class BlogService {
 
     await prisma.$transaction(async (tx) => {
       for (const row of recommendations) {
-        const targetIds = (row.recommended_posts ?? []).filter((id) => id !== row.id).slice(0, 3)
+        // Only link to IDs that are actually generated/published (the AI may
+        // hallucinate IDs or return stale ones)
+        const targetIds = (row.recommended_posts ?? [])
+          .filter((id) => id !== row.id && generatedIds.has(id))
+          .slice(0, 3)
         await tx.blogPostPostLink.deleteMany({ where: { fromBlogPostId: row.id } })
         if (targetIds.length) {
           await tx.blogPostPostLink.createMany({

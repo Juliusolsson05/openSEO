@@ -20,15 +20,15 @@ import { ELEMENT_ICONS } from "../ui/blog/ElementIcons";
  *   680–700   Click + button
  *   700–780   Modal: select Case Study, click confirm
  *   780–800   Modal closes
- *   800–820   Scroll down a bit to reveal new element
- *   820–880   Skeleton loading
+ *   800–920   Scroll down to clearly reveal new element
+ *   920–880   Skeleton loading
  *   880–1080  Case study generated, hold
  * ──────────────────────────────────────────── */
 
 // Tuned for more natural motion and to keep right-sidebar edit toggle visible.
 const SCROLL_MAX = 1880;
 const SCROLL_REST = 120;
-const SCROLL_CASE_STUDY = 360;
+const SCROLL_CASE_STUDY = 560;
 
 /* Layout coords (BrowserFrame content space) */
 const EDIT_SWITCH_X = 1612;
@@ -97,9 +97,9 @@ export const BlogPostScene: React.FC = () => {
     });
   } else if (frame <= 800) {
     scrollY = SCROLL_REST;
-  } else if (frame <= 900) {
-    // Scroll down to reveal inserted case study
-    scrollY = interpolate(frame, [800, 900], [SCROLL_REST, SCROLL_CASE_STUDY], {
+  } else if (frame <= 920) {
+    // Scroll down further to clearly reveal inserted case study
+    scrollY = interpolate(frame, [800, 920], [SCROLL_REST, SCROLL_CASE_STUDY], {
       extrapolateLeft: "clamp",
       extrapolateRight: "clamp",
       easing: Easing.inOut(Easing.cubic),

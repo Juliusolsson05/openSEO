@@ -118,6 +118,9 @@ const blogPostInclude = {
     },
   },
   post_linking_from: {
+    where: {
+      toBlogPost: { status: { in: ['GENERATED', 'PUBLISHED'] } },
+    },
     include: {
       toBlogPost: {
         select: {

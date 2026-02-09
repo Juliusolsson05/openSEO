@@ -208,7 +208,10 @@ export async function getGeneralBlogAnalytics(companyId: number, includeRecommen
           hyperlink: { select: { matched_keywords: true } },
         },
       },
-      post_linking_from: { select: { toBlogPostId: true } },
+      post_linking_from: {
+        where: { toBlogPost: { status: { in: ['GENERATED', 'PUBLISHED'] } } },
+        select: { toBlogPostId: true },
+      },
       publishes: { select: { id: true } },
     },
   })
