@@ -21,6 +21,7 @@ enum TitleStatus {
   APPROVED
   REJECTED
   GENERATED
+  PUBLISHED
 }
 
 enum TitleOperation {

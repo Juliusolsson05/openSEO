@@ -37,7 +37,7 @@ export async function generateShortDescription(word: string, subject: string, la
       },
     });
 
-    const toolCall = response.choices[0]?.message?.tool_calls?.[0]
+    const toolCall = response.choices[0]?.message?.tool_calls?.[0] as any
     const parsed = JSON.parse(toolCall?.function?.arguments ?? '{}') as { description?: string };
     return parsed.description ?? '';
   } catch (error) {

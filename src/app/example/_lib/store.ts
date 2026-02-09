@@ -58,7 +58,7 @@ export async function upsertSyncedPost(
     auroraId: el.id,
     order: el.order,
     elementType: el.element_type,
-    content: el.content,
+    content: el.content as any,
   }))
 
   if (existing) {

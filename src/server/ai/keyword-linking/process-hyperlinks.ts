@@ -52,7 +52,7 @@ export async function processHyperlinks(element: Record<string, unknown>) {
       tool_choice: { type: 'function' as const, function: { name: 'hyperlink_response' } },
     });
 
-    const toolCall = response.choices[0]?.message?.tool_calls?.[0]?.function;
+    const toolCall = (response.choices[0]?.message?.tool_calls?.[0] as any)?.function;
     if (!toolCall) {
       throw new Error('No function call in the API response');
     }

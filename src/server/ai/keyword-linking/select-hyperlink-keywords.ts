@@ -57,7 +57,7 @@ export async function selectHyperlinkKeywords(content: Content, matchedKeywords:
       },
     });
 
-    const jsonResponse = response.choices[0]?.message?.tool_calls?.[0]?.function?.arguments ?? '{}';
+    const jsonResponse = (response.choices[0]?.message?.tool_calls?.[0] as any)?.function?.arguments ?? '{}';
     const selectedKeywords = (JSON.parse(jsonResponse) as { keywords?: unknown[] }).keywords ?? [];
     return selectedKeywords;
   } catch (error) {

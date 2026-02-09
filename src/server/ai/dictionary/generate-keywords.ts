@@ -53,7 +53,7 @@ export async function generateKeywords(letter: string, numWords: number, subject
       },
     })
 
-    const toolCall = response.choices[0]?.message?.tool_calls?.[0]
+    const toolCall = response.choices[0]?.message?.tool_calls?.[0] as any
     const args = toolCall?.function?.arguments
     return JSON.parse(args ?? '{}')
   } catch (error) {

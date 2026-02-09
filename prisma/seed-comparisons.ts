@@ -2290,7 +2290,7 @@ async function main() {
           comparisonId: comparison.id,
           element_type: comp.elements[i].element_type,
           order: i + 1,
-          content: comp.elements[i].content,
+          content: comp.elements[i].content as any,
         },
       })
     }

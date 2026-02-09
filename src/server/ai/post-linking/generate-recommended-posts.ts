@@ -36,7 +36,7 @@ export async function generateRecommendedPosts(titles: TitleItem[]) {
       tool_choice: { type: 'function' as const, function: { name: 'generate_recommended_posts' } },
     });
 
-    const recommendations = JSON.parse(response.choices[0]?.message?.tool_calls?.[0]?.function?.arguments ?? '{}') as Record<string, number[]>;
+    const recommendations = JSON.parse((response.choices[0]?.message?.tool_calls?.[0] as any)?.function?.arguments ?? '{}') as Record<string, number[]>;
     return titles.map((title, idx) => ({ id: title.id, title: title.title, recommended_posts: recommendations[`title_${idx + 1}`] ?? [] }));
   } catch (error) {
     return `An error occurred: ${error instanceof Error ? error.message : String(error)}`;

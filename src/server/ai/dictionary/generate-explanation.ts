@@ -87,7 +87,7 @@ export async function generateExplanation(
       },
     });
 
-    const toolCall = response.choices[0]?.message?.tool_calls?.[0]
+    const toolCall = response.choices[0]?.message?.tool_calls?.[0] as any
     return JSON.parse(toolCall?.function?.arguments ?? '{}');
   } catch (error) {
     return `An error occurred: ${error instanceof Error ? error.message : String(error)}`;

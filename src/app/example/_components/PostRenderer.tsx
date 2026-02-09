@@ -39,7 +39,7 @@ export function PostRenderer({ elements }: PostRendererProps) {
     <div className="space-y-8">
       {ordered.map((element) => {
         const key = element.id
-        const c = element.content
+        const c = element.content as Record<string, any>
         const type = element.element_type.toLowerCase()
 
         let rendered: ReactNode

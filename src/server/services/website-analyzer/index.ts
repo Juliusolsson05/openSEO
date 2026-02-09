@@ -100,11 +100,11 @@ async function saveProfile(companyId: number, websiteUrl: string, profile: Compa
     where: { id: companyId },
     data: {
       website_url: websiteUrl,
-      profile: profile as unknown as Record<string, unknown>,
+      profile: profile as any,
       // Also update legacy fields so existing AI generation benefits immediately
       business_type: profile.industry || company.business_type,
       language: profile.detected_language || company.language,
-      keywords: profile.key_terminology.length > 0 ? profile.key_terminology : company.keywords,
+      keywords: profile.key_terminology.length > 0 ? profile.key_terminology as any : company.keywords as any,
       metadata: {
         ...(company.metadata as Record<string, unknown>),
         business_description: profile.business_description,

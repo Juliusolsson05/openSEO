@@ -116,7 +116,7 @@ export async function analyzeBlogPost(postData: unknown) {
     max_completion_tokens: 2000,
   });
 
-  const jsonResponse = response.choices[0]?.message?.tool_calls?.[0]?.function?.arguments ?? '{}';
+  const jsonResponse = (response.choices[0]?.message?.tool_calls?.[0] as any)?.function?.arguments ?? '{}';
   const analysisResult = JSON.parse(jsonResponse);
   messages.push({ role: 'assistant', content: jsonResponse });
 

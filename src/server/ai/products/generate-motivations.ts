@@ -42,7 +42,7 @@ export async function generateMotivations(
       tool_choice: { type: 'function' as const, function: { name: 'generate_motivations' } },
     });
 
-    const motivations = JSON.parse(response.choices[0]?.message?.tool_calls?.[0]?.function?.arguments ?? '{}') as Record<string, { index: number; motivation: string }>;
+    const motivations = JSON.parse((response.choices[0]?.message?.tool_calls?.[0] as any)?.function?.arguments ?? '{}') as Record<string, { index: number; motivation: string }>;
     return Array.from({ length: Object.keys(motivations).length }, (_, idx) => {
       const m = motivations[`motivation_${idx + 1}`];
       return {

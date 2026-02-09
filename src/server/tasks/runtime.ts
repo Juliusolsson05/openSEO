@@ -4,7 +4,7 @@ type TaskLog = {
   stage: string
   type: string
   timestamp: string
-  data: Record<string, unknown>
+  data?: Record<string, unknown>
 }
 
 type TaskRecord = {

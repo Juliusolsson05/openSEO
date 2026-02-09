@@ -10,6 +10,7 @@ const STATUS_TO_NUMBER: Record<TitleStatus, number> = {
   GENERATED: 2,
   APPROVED: 3,
   REJECTED: 4,
+  PUBLISHED: 5,
 }
 
 function serializeTitle(t: Record<string, unknown>) {

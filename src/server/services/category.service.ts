@@ -154,7 +154,7 @@ export class CategoryService {
   async categorizeTitle(companyId: number, titleId: number) {
     const title = await prisma.title.findFirst({
       where: { id: titleId, companyId },
-      select: { id: true, text: true },
+      select: { id: true, title_text: true },
     })
     if (!title) throw new NotFoundError('Title not found')
 
@@ -163,24 +163,25 @@ export class CategoryService {
 
     // Use the AI categorization for a single title
     const results = await categorizeTitlesAI(
-      [{ id: title.id, text: title.text }],
+      [{ id: title.id, text: title.title_text } as any],
       categories.map((c) => ({ id: c.id, name: c.name })),
     )
 
     // Apply the categorization result
-    const match = results.find((r) => r.titleId === titleId)
-    if (match && match.categoryIds.length > 0) {
+    const match = results.find((r: any) => r.titleId === titleId)
+    const assignedIds = (match as any)?.categoryIds ?? []
+    if (assignedIds.length > 0) {
       await prisma.title.update({
         where: { id: titleId },
         data: {
-          categories: { set: match.categoryIds.map((id) => ({ id })) },
+          categories: { set: assignedIds.map((id: number) => ({ id })) },
         },
       })
     }
 
     return {
       title_id: titleId,
-      assigned_category_ids: match?.categoryIds ?? [],
+      assigned_category_ids: assignedIds,
     }
   }
 }

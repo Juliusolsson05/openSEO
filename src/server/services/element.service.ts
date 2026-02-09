@@ -350,7 +350,7 @@ export class ElementService {
   async listTemplates() {
     // Templates are the distinct element_type values currently used across all posts.
     // This gives the frontend a palette of known element types for composing new posts.
-    const raw = await prisma.element.findMany({
+    const raw = await prisma.blogPostElement.findMany({
       distinct: ['element_type'],
       select: { element_type: true },
       orderBy: { element_type: 'asc' },
