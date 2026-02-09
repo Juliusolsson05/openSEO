@@ -225,8 +225,9 @@ export const BlogPostScene: React.FC = () => {
       }
     }
 
-    // Capture publish button position once scroll reaches top
-    if (!frozen.publishButton && frame >= 1015) {
+    // Capture publish button early — it's in the fixed sidebar, always visible.
+    // Must capture BEFORE CameraRig zoom starts (frame 1000) to avoid skewed measurements.
+    if (!frozen.publishButton && frame >= 495) {
       const p = queryPos("publishButton");
       if (p) {
         frozen.publishButton = p;
@@ -388,20 +389,21 @@ export const BlogPostScene: React.FC = () => {
           </div>
         )}
 
-        <Cursor waypoints={waypoints} />
-
-        {/* Dark fade overlay for smooth transition into outro */}
-        {endFade > 0 && (
-          <div style={{
-            position: "absolute", inset: 0,
-            background: "linear-gradient(135deg, #002050 0%, #0078D4 100%)",
-            opacity: endFade,
-            pointerEvents: "none",
-            zIndex: 120,
-          }} />
-        )}
       </div>
     </BrowserFrame>
+
+    <Cursor waypoints={waypoints} />
+
+    {/* Dark fade overlay for smooth transition into outro */}
+    {endFade > 0 && (
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "linear-gradient(135deg, #002050 0%, #0078D4 100%)",
+        opacity: endFade,
+        pointerEvents: "none",
+        zIndex: 120,
+      }} />
+    )}
     </CameraRig>
   );
 };
