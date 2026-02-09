@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 
 import type { AnalyticsBlogTitle } from '@/stores/analytics-store'
 
@@ -13,17 +12,36 @@ interface BlogNetworkPreviewProps {
 export function BlogNetworkPreview({ blogTitles }: BlogNetworkPreviewProps) {
   const { nodes, edges } = useMemo(() => {
     const count = blogTitles.length
-    const radius = 120
-    const centerX = 170
-    const centerY = 150
+    if (count === 0) return { nodes: [], edges: [] }
 
+    const W = 400
+    const H = 340
+    const cx = W / 2
+    const cy = H / 2
+    const padding = 30
+
+    // Use a spiral layout for better distribution with many nodes
     const localNodes = blogTitles.map((post, i) => {
-      const angle = (i / Math.max(1, count)) * Math.PI * 2
+      if (count === 1) {
+        return { id: post.id, title: post.title_text, x: cx, y: cy }
+      }
+
+      // Concentric rings: split nodes into rings of increasing size
+      const rings = Math.ceil(Math.sqrt(count / 4))
+      const nodesPerRing = Math.ceil(count / rings)
+      const ring = Math.floor(i / nodesPerRing)
+      const indexInRing = i % nodesPerRing
+      const ringCount = Math.min(nodesPerRing, count - ring * nodesPerRing)
+
+      const maxRadius = Math.min(cx, cy) - padding
+      const ringRadius = ((ring + 1) / (rings + 0.5)) * maxRadius
+      const angle = (indexInRing / ringCount) * Math.PI * 2 + (ring * Math.PI) / 6 // offset each ring
+
       return {
         id: post.id,
         title: post.title_text,
-        x: centerX + Math.cos(angle) * radius,
-        y: centerY + Math.sin(angle) * radius,
+        x: cx + Math.cos(angle) * ringRadius,
+        y: cy + Math.sin(angle) * ringRadius,
       }
     })
 
@@ -46,23 +64,54 @@ export function BlogNetworkPreview({ blogTitles }: BlogNetworkPreviewProps) {
         <CardTitle className="text-[13px] uppercase tracking-wide">Network preview</CardTitle>
       </CardHeader>
       <CardContent>
-        <svg viewBox="0 0 340 300" className="h-[300px] w-full rounded-sm border border-border bg-white">
-          {edges.map((edge, index) => {
-            const from = nodeMap.get(edge.from)
-            const to = nodeMap.get(edge.to)
-            if (!from || !to) return null
-            return <line key={index} x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="#CFCFCF" strokeWidth="1" />
-          })}
-          {nodes.map((node) => (
-            <g key={node.id}>
-              <circle cx={node.x} cy={node.y} r="5" fill="#0078D4">
-                <title>{node.title}</title>
-              </circle>
-            </g>
-          ))}
-        </svg>
-        <div className="mt-3">
-          <Button variant="outline" size="sm">View Full Network</Button>
+        {nodes.length === 0 ? (
+          <p className="py-8 text-center text-[13px] text-muted-foreground">No posts to visualize.</p>
+        ) : (
+          <svg viewBox="0 0 400 340" className="h-[300px] w-full rounded-sm border border-border bg-white">
+            <defs>
+              <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                <polygon points="0 0, 6 2, 0 4" fill="#CFCFCF" />
+              </marker>
+            </defs>
+            {edges.map((edge, index) => {
+              const from = nodeMap.get(edge.from)
+              const to = nodeMap.get(edge.to)
+              if (!from || !to) return null
+              return (
+                <line
+                  key={index}
+                  x1={from.x} y1={from.y}
+                  x2={to.x} y2={to.y}
+                  stroke="#D0D0D0"
+                  strokeWidth="1"
+                  markerEnd="url(#arrowhead)"
+                  opacity={0.6}
+                />
+              )
+            })}
+            {nodes.map((node) => {
+              // Size by connection count
+              const outgoing = blogTitles.find((b) => b.id === node.id)?.post_linking?.length ?? 0
+              const r = Math.max(4, Math.min(8, 4 + outgoing))
+              return (
+                <g key={node.id}>
+                  <circle cx={node.x} cy={node.y} r={r} fill="#0078D4" opacity={0.85}>
+                    <title>{node.title} ({outgoing} links)</title>
+                  </circle>
+                </g>
+              )
+            })}
+          </svg>
+        )}
+        <div className="mt-2 flex items-center gap-3 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <div className="h-2.5 w-2.5 rounded-full bg-[#0078D4]" />
+            <span>{nodes.length} posts</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="h-[1px] w-4 bg-[#D0D0D0]" />
+            <span>{edges.length} links</span>
+          </div>
         </div>
       </CardContent>
     </Card>

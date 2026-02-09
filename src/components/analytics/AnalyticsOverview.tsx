@@ -1,15 +1,35 @@
 'use client'
 
 import { useMemo } from 'react'
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-
 
 import type { BlogGeneralData, ScoreBreakdownItem } from '@/types/analytics'
 
 interface AnalyticsOverviewProps {
   generalBlogData: BlogGeneralData | null
   scoreBreakdown: Record<string, ScoreBreakdownItem>
+}
+
+function ScoreRing({ value, size = 200, stroke = 14, color = '#0078D4' }: { value: number; size?: number; stroke?: number; color?: string }) {
+  const v = Math.max(0, Math.min(100, value))
+  const r = (size - stroke) / 2
+  const c = 2 * Math.PI * r
+  const offset = c - (v / 100) * c
+  const scoreColor = v >= 80 ? '#107C10' : v >= 50 ? '#FFB900' : '#D13438'
+  const fill = color === 'auto' ? scoreColor : color
+
+  return (
+    <div className="relative mx-auto" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="#E1E1E1" strokeWidth={stroke} fill="none" />
+        <circle cx={size / 2} cy={size / 2} r={r} stroke={fill} strokeWidth={stroke} fill="none" strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-[28px] font-bold leading-none sm:text-[34px]">{Math.round(v)}</span>
+        <span className="text-[11px] text-muted-foreground">/100</span>
+      </div>
+    </div>
+  )
 }
 
 function SmallRing({ value, label }: { value: number; label: string }) {
@@ -36,7 +56,7 @@ function SmallRing({ value, label }: { value: number; label: string }) {
 
 export function AnalyticsOverview({ generalBlogData, scoreBreakdown }: AnalyticsOverviewProps) {
   const score = generalBlogData?.general_seo_score ?? 0
-  const chartData = useMemo(() => [{ name: 'Score', value: score }, { name: 'Remaining', value: 100 - score }], [score])
+  const entries = useMemo(() => Object.entries(scoreBreakdown || {}), [scoreBreakdown])
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
@@ -44,19 +64,8 @@ export function AnalyticsOverview({ generalBlogData, scoreBreakdown }: Analytics
         <CardHeader>
           <CardTitle className="text-[13px] uppercase tracking-wide">Overall SEO score</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="mx-auto h-[200px] w-[200px] sm:h-[260px] sm:w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={chartData} dataKey="value" innerRadius={50} outerRadius={80} startAngle={90} endAngle={-270}>
-                  <Cell fill="#0078D4" />
-                  <Cell fill="#E1E1E1" />
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <p className="-mt-28 text-center text-[28px] font-bold sm:-mt-32 sm:text-[34px]">{Math.round(score)}</p>
-          <p className="text-center text-[11px] text-muted-foreground">/100</p>
+        <CardContent className="flex flex-col items-center pb-6">
+          <ScoreRing value={score} color="auto" />
         </CardContent>
       </Card>
 
@@ -65,11 +74,15 @@ export function AnalyticsOverview({ generalBlogData, scoreBreakdown }: Analytics
           <CardTitle className="text-[13px] uppercase tracking-wide">Breakdown</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-            {Object.entries(scoreBreakdown || {}).map(([key, value]) => (
-              <SmallRing key={key} value={value.score} label={key} />
-            ))}
-          </div>
+          {entries.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              {entries.map(([key, value]) => (
+                <SmallRing key={key} value={value.score} label={key} />
+              ))}
+            </div>
+          ) : (
+            <p className="py-8 text-center text-[13px] text-muted-foreground">No breakdown data available yet.</p>
+          )}
           <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div className="rounded-sm border border-border p-3">
               <p className="text-[11px] uppercase text-muted-foreground">Content Volume</p>

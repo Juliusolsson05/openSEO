@@ -9,7 +9,11 @@ interface BlogPostCalendarProps {
   blogTitles: Pick<AnalyticsBlogTitle, 'generated_date'>[]
 }
 
-const PURPLE_STEPS = ['#FFFFFF', '#EFE7FF', '#D5C0FF', '#B694FF', '#8B5CF6'] // theme: visualization palette
+const CELL = 12
+const GAP = 2
+const COL = CELL + GAP // 14px per column
+
+const BLUE_STEPS = ['#F2F2F2', '#C7E0F4', '#71AFE5', '#2B88D8', '#0078D4'] // design system blue scale
 
 function dateKey(d: Date) {
   return d.toISOString().slice(0, 10)
@@ -22,6 +26,7 @@ export function BlogPostCalendar({ blogTitles }: BlogPostCalendarProps) {
     const firstDay = new Date(year, 0, 1)
     const lastDay = new Date(year, 11, 31)
 
+    // Count posts per day
     const counts = new Map<string, number>()
     for (const item of blogTitles || []) {
       if (!item.generated_date) continue
@@ -31,26 +36,32 @@ export function BlogPostCalendar({ blogTitles }: BlogPostCalendarProps) {
       counts.set(key, (counts.get(key) ?? 0) + 1)
     }
 
+    // Build weeks starting from the Sunday before Jan 1
     const start = new Date(firstDay)
     start.setDate(start.getDate() - start.getDay())
 
     const days: Array<{ date: Date; count: number }> = []
     const cursor = new Date(start)
     while (cursor <= lastDay || cursor.getDay() !== 0) {
-      const key = dateKey(cursor)
-      days.push({ date: new Date(cursor), count: counts.get(key) ?? 0 })
+      days.push({ date: new Date(cursor), count: counts.get(dateKey(cursor)) ?? 0 })
       cursor.setDate(cursor.getDate() + 1)
     }
 
     const result: Array<Array<{ date: Date; count: number }>> = []
     for (let i = 0; i < days.length; i += 7) result.push(days.slice(i, i + 7))
 
-    const labels: Array<{ index: number; month: string }> = []
+    // Compute month label positions based on first week where month appears
+    const labels: Array<{ weekIndex: number; month: string }> = []
     let previousMonth = -1
-    result.forEach((week, index) => {
-      const month = week[0]?.date.getMonth() ?? -1
+    result.forEach((week, weekIndex) => {
+      const firstDayOfWeek = week[0]?.date
+      if (!firstDayOfWeek) return
+      const month = firstDayOfWeek.getMonth()
       if (month !== previousMonth) {
-        labels.push({ index, month: new Date(year, month, 1).toLocaleString('en-US', { month: 'short' }) })
+        labels.push({
+          weekIndex,
+          month: new Date(year, month, 1).toLocaleString('en-US', { month: 'short' }),
+        })
         previousMonth = month
       }
     })
@@ -61,10 +72,12 @@ export function BlogPostCalendar({ blogTitles }: BlogPostCalendarProps) {
   }, [blogTitles])
 
   const colorForCount = (count: number): string => {
-    if (count <= 0) return PURPLE_STEPS[0]
+    if (count <= 0) return BLUE_STEPS[0]
     const level = Math.min(4, Math.ceil((count / Math.max(1, maxCount)) * 4))
-    return PURPLE_STEPS[level]
+    return BLUE_STEPS[level]
   }
+
+  const LEFT_LABEL_W = 32 // px for day-of-week labels
 
   return (
     <Card className="rounded-sm">
@@ -73,33 +86,51 @@ export function BlogPostCalendar({ blogTitles }: BlogPostCalendarProps) {
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <div className="mb-2 ml-8 flex text-[11px] text-muted-foreground">
+          {/* Month labels — absolutely positioned by week column */}
+          <div className="relative mb-1 text-[10px] text-muted-foreground" style={{ height: 16, marginLeft: LEFT_LABEL_W }}>
             {monthLabels.map((m) => (
-              <div key={`${m.month}-${m.index}`} style={{ marginLeft: m.index === 0 ? 0 : (m.index - monthLabels[Math.max(0, monthLabels.findIndex((x) => x.index === m.index) - 1)].index) * 14 }}>
+              <span
+                key={`${m.month}-${m.weekIndex}`}
+                className="absolute"
+                style={{ left: m.weekIndex * COL }}
+              >
                 {m.month}
-              </div>
+              </span>
             ))}
           </div>
-          <div className="flex gap-1">
-            <div className="mt-0 grid grid-rows-7 pr-2 text-[11px] text-muted-foreground">
+
+          <div className="flex gap-0">
+            {/* Day-of-week labels */}
+            <div className="grid grid-rows-7 pr-1 text-[10px] text-muted-foreground" style={{ width: LEFT_LABEL_W }}>
               {['Sun', '', 'Tue', '', 'Thu', '', 'Sat'].map((d, i) => (
-                <div key={i} className="h-[12px] leading-[12px]">{d}</div>
+                <div key={i} style={{ height: CELL, lineHeight: `${CELL}px` }}>{d}</div>
               ))}
             </div>
-            <div className="flex gap-[2px]">
+
+            {/* Calendar grid */}
+            <div className="flex" style={{ gap: GAP }}>
               {weeks.map((week, wi) => (
-                <div key={wi} className="grid grid-rows-7 gap-[2px]">
+                <div key={wi} className="grid grid-rows-7" style={{ gap: GAP }}>
                   {week.map((day, di) => (
                     <div
                       key={`${wi}-${di}`}
-                      className="h-[12px] w-[12px] rounded-sm border border-border"
-                      style={{ background: colorForCount(day.count) }}
+                      className="rounded-[2px] border border-border"
+                      style={{ width: CELL, height: CELL, background: colorForCount(day.count) }}
                       title={`${day.date.toDateString()} — ${day.count} post${day.count === 1 ? '' : 's'}`}
                     />
                   ))}
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Legend */}
+          <div className="mt-2 flex items-center gap-1 text-[10px] text-muted-foreground" style={{ marginLeft: LEFT_LABEL_W }}>
+            <span>Less</span>
+            {BLUE_STEPS.map((color, i) => (
+              <div key={i} className="rounded-[2px] border border-border" style={{ width: CELL, height: CELL, background: color }} />
+            ))}
+            <span>More</span>
           </div>
         </div>
       </CardContent>

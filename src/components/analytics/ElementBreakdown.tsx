@@ -95,15 +95,15 @@ export function ElementBreakdown({ elementBreakdown }: ElementBreakdownProps) {
           </div>
         </div>
 
-        {/* Bar chart */}
-        <div className="h-[300px] sm:h-[400px]">
+        {/* Bar chart — height scales with number of element types */}
+        <div style={{ height: Math.max(300, chartData.length * 32 + 40) }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
               <XAxis type="number" tick={{ fontSize: 11 }} />
               <YAxis
                 type="category"
                 dataKey="name"
-                width={140}
+                width={160}
                 tick={{ fontSize: 11 }}
               />
               <Tooltip
