@@ -4,15 +4,15 @@ type Props = { title?: string; items: string[] }
 
 export function NumberedList({ title, items }: Props) {
   return (
-    <div>
-      {title && <h3 className="mb-3 text-[18px] font-semibold text-neutral-900">{title}</h3>}
-      <ol className="list-decimal space-y-1.5 pl-5 text-[15px] leading-relaxed text-neutral-700 marker:text-neutral-400">
+    <section>
+      {title && <h3 className="mb-3 text-[1.5rem] font-medium leading-tight text-neutral-900">{title}</h3>}
+      <ol className="my-4 list-decimal space-y-2 pl-5 text-lg font-light leading-[1.78] text-neutral-700 marker:text-neutral-400">
         {items.map((item, i) => (
           <li key={i}>
-            <RichText html={item} className="text-[15px] leading-relaxed text-neutral-700" />
+            <RichText html={item} className="text-lg font-light leading-[1.78] text-neutral-700" />
           </li>
         ))}
       </ol>
-    </div>
+    </section>
   )
 }

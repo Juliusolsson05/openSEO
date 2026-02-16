@@ -69,8 +69,19 @@ export default async function ExampleBlogPostPage({ params }: PageProps) {
       <p className="mt-2 text-[13px] text-neutral-400">{post.published_at}</p>
 
       {/* Hero image */}
-      <div className="mt-6 flex aspect-[16/7] items-center justify-center rounded-xl border border-neutral-200 bg-neutral-100">
-        <span className="text-neutral-300 text-[14px]">Featured image</span>
+      <div className="mt-6 aspect-[16/7] overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100">
+        {post.cover_image_url ? (
+          <img
+            src={post.cover_image_url}
+            alt={post.cover_image_alt || post.title}
+            className="h-full w-full object-cover"
+            loading="eager"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <span className="text-[14px] text-neutral-300">Featured image</span>
+          </div>
+        )}
       </div>
 
       {/* Content + TOC sidebar */}
@@ -121,8 +132,19 @@ export default async function ExampleBlogPostPage({ params }: PageProps) {
               href={`/example/blog/${related.slug}`}
               className="group rounded-lg border border-neutral-200 overflow-hidden hover:border-blue-200 transition-colors"
             >
-              <div className="aspect-[16/9] bg-neutral-100 flex items-center justify-center">
-                <span className="text-neutral-300 text-[11px]">IMG</span>
+              <div className="aspect-[16/9] overflow-hidden bg-neutral-100">
+                {related.cover_image_url ? (
+                  <img
+                    src={related.cover_image_url}
+                    alt={related.cover_image_alt || related.title}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <span className="text-[11px] text-neutral-300">IMG</span>
+                  </div>
+                )}
               </div>
               <div className="p-4">
                 <p className="text-[11px] text-neutral-400 mb-1">{related.published_at}</p>

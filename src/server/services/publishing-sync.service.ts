@@ -54,6 +54,7 @@ export class PublishingSyncService {
         focus_keyword: post.focus_keyword,
         excerpt: post.excerpt,
         meta_description: post.meta_description,
+        cover_image: post.cover_image,
         status: post.status,
         categories: post.categories.map((c) => c.name),
       },

@@ -49,6 +49,7 @@ export async function getPosts() {
     title: post.title,
     excerpt: post.excerpt,
     cover_image_url: post.cover_image_url,
+    cover_image_alt: post.cover_image_alt,
     published_at: post.published_at,
   }))
 }

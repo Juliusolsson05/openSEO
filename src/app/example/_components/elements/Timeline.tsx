@@ -1,21 +1,24 @@
 import { RichText } from './RichText'
 
-type TimelineItem = { title: string; description: string }
+type TimelineItem = { title: string; description: string; date?: string }
 type Props = { title?: string; items: TimelineItem[] }
 
 export function Timeline({ title, items }: Props) {
   return (
-    <div>
-      {title && <h3 className="mb-4 text-[18px] font-semibold text-neutral-900">{title}</h3>}
-      <div className="relative border-l-2 border-blue-200 pl-6 space-y-6">
+    <section>
+      {title && <h3 className="mb-4 text-[22px] font-semibold leading-tight tracking-tight text-neutral-900" dangerouslySetInnerHTML={{ __html: title }} />}
+      <div className="relative ml-4 space-y-8 border-l-2 border-blue-200 pl-8">
         {items.map((item, i) => (
           <div key={i} className="relative">
-            <div className="absolute -left-[31px] top-1 h-4 w-4 rounded-full border-2 border-blue-400 bg-white" />
-            <p className="text-[14px] font-semibold text-neutral-900">{item.title}</p>
-            <RichText html={item.description} className="mt-1 text-[13px] text-neutral-500 leading-relaxed" />
+            <div className="absolute -left-[41px] top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-blue-600 bg-white">
+              <div className="h-2 w-2 rounded-full bg-blue-600" />
+            </div>
+            {item.date ? <div className="mb-1.5 inline-block rounded-full bg-blue-50 px-3 py-0.5 text-[12px] font-semibold text-blue-700" dangerouslySetInnerHTML={{ __html: item.date }} /> : null}
+            <p className="text-[17px] font-semibold leading-snug text-neutral-900" dangerouslySetInnerHTML={{ __html: item.title }} />
+            <RichText html={item.description} className="mt-1.5 text-[16px] font-light leading-[1.7] text-neutral-600" />
           </div>
         ))}
       </div>
-    </div>
+    </section>
   )
 }

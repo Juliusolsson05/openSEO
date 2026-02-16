@@ -58,19 +58,34 @@ export function PostRenderer({ elements }: PostRendererProps) {
             rendered = <Faq title={c.title} items={c.items || []} />
             break
           case 'table':
-            rendered = <Table title={c.title} headers={c.headers || []} rows={c.rows || []} />
+            rendered = (
+              <Table
+                title={c.title}
+                headers={c.headers || c.columns || []}
+                rows={c.rows || []}
+                text_before={c.text_before}
+                text_after={c.text_after}
+              />
+            )
             break
           case 'list_paragraph':
-            rendered = <ListParagraph title={c.title} items={c.items || []} text_after_list={c.text_after_list} />
+            rendered = (
+              <ListParagraph
+                title={c.title}
+                items={c.items || c.list_items || []}
+                text_before_list={c.text_before_list}
+                text_after_list={c.text_after_list}
+              />
+            )
             break
           case 'numbered_list_paragraph':
-            rendered = <NumberedList title={c.title} items={c.items || []} />
+            rendered = <NumberedList title={c.title} items={c.items || c.list_items || []} />
             break
           case 'image':
             rendered = <ImageElement alt={c.alt} caption={c.caption} url={c.url} />
             break
           case 'quote':
-            rendered = <Quote text={c.text} attribution={c.attribution} />
+            rendered = <Quote text={c.text || c.quote} attribution={c.attribution || c.person} description={c.description} />
             break
           case 'code_cluster':
             rendered = <CodeBlock title={c.title} code={c.code} language={c.language} />
@@ -97,22 +112,34 @@ export function PostRenderer({ elements }: PostRendererProps) {
             )
             break
           case 'statistic':
-            rendered = <Statistic value={c.value} label={c.label} description={c.description} />
+            rendered = <Statistic value={c.value || `${c.percentage}%`} label={c.label || c.title} description={c.description} />
             break
           case 'bar_chart':
             rendered = <BarChart title={c.title} labels={c.labels || []} datasets={c.datasets || []} description={c.description} />
             break
           case 'pros_and_cons':
-            rendered = <ProsAndCons title={c.title} pros={c.pros || []} cons={c.cons || []} />
+            rendered = <ProsAndCons title={c.title} pros={c.pros || []} cons={c.cons || []} text_before={c.text_before} text_after={c.text_after} />
             break
           case 'timeline':
-            rendered = <Timeline title={c.title} items={c.items || []} />
+            rendered = <Timeline title={c.title} items={c.items || c.events || []} />
             break
           case 'checklist':
             rendered = <Checklist title={c.title} introduction={c.introduction} items={c.items || []} />
             break
           case 'case_study':
-            rendered = <CaseStudy title={c.title} problem={c.problem} solution={c.solution} result={c.result} />
+            rendered = (
+              <CaseStudy
+                title={c.title}
+                problem={c.problem || c.challenge}
+                solution={c.solution}
+                result={c.result || (Array.isArray(c.results) ? c.results.join('. ') : c.results)}
+                clientName={c.clientName}
+                industry={c.industry}
+                headerColor={c.headerColor}
+                results={Array.isArray(c.results) ? c.results : undefined}
+                testimonial={c.testimonial}
+              />
+            )
             break
           case 'snippet_block':
           case 'list_snippet_block':
@@ -124,15 +151,30 @@ export function PostRenderer({ elements }: PostRendererProps) {
           case 'context':
             rendered = <ContextBlock title={c.title} text={c.text} />
             break
-          case 'versus':
-            rendered = <Versus title={c.title} option_a={c.option_a} option_b={c.option_b} />
+          case 'versus': {
+            // Map Aurora's competitors/criteria format to option_a/option_b
+            let optA = c.option_a
+            let optB = c.option_b
+            if (!optA && c.competitors && c.criteria) {
+              optA = { name: c.competitors[0], points: c.criteria.map((cr: any) => cr.details?.[0] || '') }
+              optB = { name: c.competitors[1], points: c.criteria.map((cr: any) => cr.details?.[1] || '') }
+            }
+            rendered = (
+              <Versus
+                title={c.title}
+                option_a={optA || { name: '', points: [] }}
+                option_b={optB || { name: '', points: [] }}
+                criteria={Array.isArray(c.criteria) ? c.criteria : []}
+              />
+            )
             break
+          }
           case 'product_recommendations':
           case 'affiliate_recommendations':
             rendered = <ProductRecommendations title={c.title} introduction={c.introduction} products={c.products || []} />
             break
           case 'tool_recommendation':
-            rendered = <ToolRecommendation name={c.name} description={c.description} use_case={c.use_case} url={c.url} />
+            rendered = <ToolRecommendation name={c.name || c.title} description={c.description || c.productDescription} use_case={c.use_case || c.pricing} url={c.url || c.companyUrl} />
             break
           case 'glossary':
             rendered = <Glossary title={c.title} items={c.items || []} />

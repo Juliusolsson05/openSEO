@@ -1,33 +1,50 @@
 import { RichText } from './RichText'
 
-type Props = { title?: string; option_a: { name: string; points: string[] }; option_b: { name: string; points: string[] } }
+type Option = { name: string; points: string[] }
+type Criterion = { name?: string; details?: string[]; winner?: number }
 
-export function Versus({ title, option_a, option_b }: Props) {
+type Props = {
+  title?: string
+  option_a: Option
+  option_b: Option
+  criteria?: Criterion[]
+}
+
+export function Versus({ title, option_a, option_b, criteria = [] }: Props) {
+  const rows: Criterion[] = criteria.length
+    ? criteria
+    : option_a.points.map((point, idx) => ({
+        name: `Point ${idx + 1}`,
+        details: [point, option_b.points[idx] || ''],
+      }))
+
   return (
-    <div>
-      {title && <h3 className="mb-4 text-[18px] font-semibold text-neutral-900">{title}</h3>}
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border border-neutral-200 p-5">
-          <p className="mb-3 text-[14px] font-bold text-neutral-900">{option_a.name}</p>
-          <ul className="space-y-1.5">
-            {option_a.points.map((p, i) => (
-              <li key={i} className="text-[13px] text-neutral-600 leading-relaxed">
-                <RichText html={p} className="text-[13px] text-neutral-600 leading-relaxed" />
-              </li>
-            ))}
-          </ul>
+    <section>
+      {title ? <h3 className="mb-6 text-2xl font-semibold text-neutral-900" dangerouslySetInnerHTML={{ __html: title }} /> : null}
+
+      <div className="my-8 overflow-hidden rounded-lg border border-neutral-200">
+        <div className="grid grid-cols-2 bg-neutral-100 font-semibold md:grid-cols-[30%_1fr_1fr]">
+          <div className="hidden border-b border-neutral-200 p-4 md:block" />
+          <div className="border-b border-neutral-200 p-4 text-center text-sm text-neutral-900" dangerouslySetInnerHTML={{ __html: option_a.name }} />
+          <div className="border-b border-neutral-200 p-4 text-center text-sm text-neutral-900" dangerouslySetInnerHTML={{ __html: option_b.name }} />
         </div>
-        <div className="rounded-lg border border-neutral-200 p-5">
-          <p className="mb-3 text-[14px] font-bold text-neutral-900">{option_b.name}</p>
-          <ul className="space-y-1.5">
-            {option_b.points.map((p, i) => (
-              <li key={i} className="text-[13px] text-neutral-600 leading-relaxed">
-                <RichText html={p} className="text-[13px] text-neutral-600 leading-relaxed" />
-              </li>
-            ))}
-          </ul>
-        </div>
+
+        {rows.map((criterion, index) => (
+          <div key={index} className="grid grid-cols-1 border-b border-neutral-200 last:border-b-0 md:grid-cols-[30%_1fr_1fr]">
+            <div className="bg-neutral-50 p-4 font-semibold text-neutral-800" dangerouslySetInnerHTML={{ __html: criterion.name || '' }} />
+
+            {(criterion.details || []).map((detail, detailIndex) => {
+              const isWinner = criterion.winner === detailIndex
+              return (
+                <div key={`${index}-${detailIndex}`} className={`relative p-4 ${isWinner ? 'bg-emerald-50' : 'bg-white'}`}>
+                  <RichText html={detail || ''} className="text-[15px] leading-relaxed text-neutral-700" />
+                  {isWinner ? <span className="absolute top-1/2 right-4 -translate-y-1/2 font-bold text-emerald-600">✓</span> : null}
+                </div>
+              )
+            })}
+          </div>
+        ))}
       </div>
-    </div>
+    </section>
   )
 }

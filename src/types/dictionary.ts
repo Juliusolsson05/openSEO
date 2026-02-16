@@ -15,6 +15,7 @@ export interface ContentPost {
   title: string
   excerpt: string
   cover_image_url: string
+  cover_image_alt?: string
   published_at: string
   elements: ContentElement[]
 }
