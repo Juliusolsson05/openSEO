@@ -58,6 +58,13 @@ function Hero() {
             >
               <span className="absolute inset-0 rounded-lg bg-blue-600 animate-ping opacity-20" />
               <span className="absolute inset-0 rounded-lg bg-blue-500 animate-pulse opacity-15" />
+              {/* Circling border */}
+              <span className="absolute -inset-[2px] rounded-[10px] overflow-hidden">
+                <span className="absolute inset-0 animate-spin [animation-duration:3s]"
+                  style={{ background: 'conic-gradient(from 0deg, transparent 60%, rgba(147,197,253,0.7) 80%, white 100%)' }}
+                />
+              </span>
+              <span className="absolute inset-[1px] rounded-[8px] bg-blue-600" />
               <span className="relative flex items-center gap-2">Go to blog <ArrowRight className="h-3.5 w-3.5" /></span>
             </Link>
             <a
