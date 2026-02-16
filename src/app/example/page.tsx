@@ -56,15 +56,15 @@ function Hero() {
               href="/example/blog"
               className={`relative inline-flex items-center gap-2 rounded-lg ${ACCENT.bg} ${ACCENT.bgHover} px-5 py-2.5 text-[13px] font-medium text-white transition-colors shadow-sm`}
             >
-              <span className="absolute inset-0 rounded-lg bg-blue-600 animate-ping opacity-20" />
-              <span className="absolute inset-0 rounded-lg bg-blue-500 animate-pulse opacity-15" />
+              <span className="absolute inset-1 rounded-md bg-blue-600 animate-ping opacity-25 -z-10" />
+              <span className="absolute inset-1 rounded-md bg-blue-500 animate-pulse opacity-20 -z-10" />
               {/* Circling border */}
-              <span className="absolute -inset-[2px] rounded-[10px] overflow-hidden">
-                <span className="absolute inset-0 animate-spin [animation-duration:3s]"
-                  style={{ background: 'conic-gradient(from 0deg, transparent 60%, rgba(147,197,253,0.7) 80%, white 100%)' }}
+              <span className="absolute -inset-[3px] rounded-[11px] overflow-hidden">
+                <span className="absolute inset-0 animate-spin [animation-duration:2.5s]"
+                  style={{ background: 'conic-gradient(from 0deg, transparent 40%, rgba(147,197,253,0.9) 70%, white 90%, transparent 100%)' }}
                 />
               </span>
-              <span className="absolute inset-[1px] rounded-[8px] bg-blue-600" />
+              <span className="absolute inset-[1.5px] rounded-[9px] bg-blue-600" />
               <span className="relative flex items-center gap-2">Go to blog <ArrowRight className="h-3.5 w-3.5" /></span>
             </Link>
             <a
