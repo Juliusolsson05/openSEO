@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 
 const PUBLIC_PATHS = ['/', '/login', '/register', '/forgot-password']
-const PUBLIC_PREFIXES = ['/api/', '/preview/', '/share/', '/app', '/landing', '/example', '/site']
+const PUBLIC_PREFIXES = ['/api/', '/preview/', '/share/', '/landing', '/example', '/site']
 
 export default auth((req) => {
   const { pathname } = req.nextUrl
