@@ -2,20 +2,19 @@
 
 import { Label } from '@/components/ui/label'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { useAuthStore } from '@/stores/auth-store'
+import { login } from '@/store/authActions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ArrowRight, Loader2 } from 'lucide-react'
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('admin@demo.com')
   const [password, setPassword] = useState('admin')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login } = useAuthStore()
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -120,5 +119,13 @@ export default function LoginPage() {
         </p>
       </form>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="animate-pulse h-48 bg-muted rounded-sm" />}>
+      <LoginForm />
+    </Suspense>
   )
 }

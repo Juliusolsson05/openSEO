@@ -1,27 +1,17 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { Suspense, useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { useAuthSessionSync } from '@/stores/auth-store'
+import { useAuthSessionSync } from '@/store/hooks/useAuthSessionSync'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Topbar } from '@/components/layout/topbar'
 import { OnboardingTour } from '@/components/layout/onboarding-tour'
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const { data: session, status } = useSession()
-  const router = useRouter()
+/** Separate client component to isolate useSearchParams inside a Suspense boundary */
+function WelcomeTourDetector({ userId, onDetected }: { userId: string | undefined; onDetected: () => void }) {
   const searchParams = useSearchParams()
-  const [showTour, setShowTour] = useState(false)
 
-  const userId = session?.user?.id
-
-  // Auto-trigger: ?welcome=1 in URL always starts tour (even on refresh)
-  // Also fires once after signup via localStorage flag
   useEffect(() => {
     if (!userId) return
     const fromUrl = searchParams.get('welcome') === '1'
@@ -30,10 +20,24 @@ export default function DashboardLayout({
     if (fromUrl || fromStorage) {
       localStorage.removeItem('aurora:show-welcome-tour')
       localStorage.removeItem(`aurora:onboarding-tour:done:${userId}`)
-      const t = setTimeout(() => setShowTour(true), 300)
+      const t = setTimeout(onDetected, 300)
       return () => clearTimeout(t)
     }
-  }, [userId, searchParams])
+  }, [userId, searchParams, onDetected])
+
+  return null
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const [showTour, setShowTour] = useState(false)
+
+  const userId = session?.user?.id
 
   // Manual trigger: called from topbar "Take the tour" button
   const startTour = useCallback(() => {
@@ -42,7 +46,7 @@ export default function DashboardLayout({
     setShowTour(true)
   }, [userId])
 
-  // Keep Zustand in sync with NextAuth session.
+  // Keep Redux in sync with NextAuth session.
   useAuthSessionSync()
 
   useEffect(() => {
@@ -63,11 +67,16 @@ export default function DashboardLayout({
         </main>
       </div>
       {userId ? (
-        <OnboardingTour
-          userId={userId}
-          enabled={showTour}
-          onFinish={() => setShowTour(false)}
-        />
+        <>
+          <Suspense fallback={null}>
+            <WelcomeTourDetector userId={userId} onDetected={() => setShowTour(true)} />
+          </Suspense>
+          <OnboardingTour
+            userId={userId}
+            enabled={showTour}
+            onFinish={() => setShowTour(false)}
+          />
+        </>
       ) : null}
     </div>
   )
