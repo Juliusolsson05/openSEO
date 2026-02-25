@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { api, apiDelete, apiPost, apiPut } from '@/lib/api'
+import { useCategoriesQuery, useCreateCategoryMutation, useUpdateCategoryMutation, useDeleteCategoryMutation, useBulkDeleteCategoriesMutation, useGenerateCategoriesMutation, useAutoCategorizesMutation } from '@/hooks/queries/titles'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -96,16 +96,22 @@ function CategoryFormModal({
 }
 
 export default function BlogCategoriesTable() {
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
-  const [actionLoading, setActionLoading] = useState({
-    generate: false,
-    categorize: false,
-    deleteSelected: false,
-    add: false,
-    edit: false,
+  const { data: rawCategories = [], isLoading: loading } = useCategoriesQuery()
+  const categories = rawCategories as Category[]
+  const generateCategoriesMutation = useGenerateCategoriesMutation()
+  const autoCategorizeMutation = useAutoCategorizesMutation()
+  const createCategoryMutation = useCreateCategoryMutation()
+  const updateCategoryMutation = useUpdateCategoryMutation()
+  const deleteCategoryMutation = useDeleteCategoryMutation()
+  const bulkDeleteMutation = useBulkDeleteCategoriesMutation()
+  const actionLoading = {
+    generate: generateCategoriesMutation.isPending,
+    categorize: autoCategorizeMutation.isPending,
+    deleteSelected: bulkDeleteMutation.isPending,
+    add: createCategoryMutation.isPending,
+    edit: updateCategoryMutation.isPending,
     deleteOneId: 0,
-  })
+  }
 
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [addOpen, setAddOpen] = useState(false)
@@ -114,19 +120,7 @@ export default function BlogCategoriesTable() {
   const [editCategoryName, setEditCategoryName] = useState('')
   const [editCategoryId, setEditCategoryId] = useState<number | null>(null)
 
-  const fetchCategories = async () => {
-    setLoading(true)
-    const { data, error } = await api<Category[]>('/api/aurora/blog/categories/')
-    if (!error && data) {
-      setCategories(data)
-      setSelectedIds((prev) => prev.filter((id) => data.some((c) => c.id === id)))
-    }
-    setLoading(false)
-  }
 
-  useEffect(() => {
-    fetchCategories()
-  }, [])
 
   const totalPostsInCategories = useMemo(
     () => categories.reduce((sum, c) => sum + (c.post_count ?? 0), 0),
@@ -149,49 +143,29 @@ export default function BlogCategoriesTable() {
   }
 
   const runGenerate = async () => {
-    setActionLoading((v) => ({ ...v, generate: true }))
     try {
-      const { error } = await apiPost('/api/aurora/blog/categories/generate/', {})
-      if (error) throw error
-      await fetchCategories()
-      toast.success('Categories generated')
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to generate categories')
-    } finally {
-      setActionLoading((v) => ({ ...v, generate: false }))
+      await generateCategoriesMutation.mutateAsync()
+    } catch {
+      // toast handled in mutation
     }
   }
 
   const runCategorize = async () => {
-    setActionLoading((v) => ({ ...v, categorize: true }))
     try {
-      const { error } = await apiPost('/api/aurora/blog/categories/categorize/', {})
-      if (error) throw error
-      await fetchCategories()
-      toast.success('Titles categorized')
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to categorize titles')
-    } finally {
-      setActionLoading((v) => ({ ...v, categorize: false }))
+      await autoCategorizeMutation.mutateAsync()
+    } catch {
+      // toast handled in mutation
     }
   }
 
   const addCategory = async () => {
     if (!newCategoryName.trim()) return
-    setActionLoading((v) => ({ ...v, add: true }))
     try {
-      const { error } = await apiPost('/api/aurora/blog/categories/', {
-        name: newCategoryName.trim(),
-      })
-      if (error) throw error
+      await createCategoryMutation.mutateAsync({ name: newCategoryName.trim() })
       setNewCategoryName('')
       setAddOpen(false)
-      await fetchCategories()
-      toast.success('Category added')
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to add category')
-    } finally {
-      setActionLoading((v) => ({ ...v, add: false }))
+    } catch {
+      // toast handled in mutation
     }
   }
 
@@ -203,55 +177,31 @@ export default function BlogCategoriesTable() {
 
   const saveEdit = async () => {
     if (!editCategoryId || !editCategoryName.trim()) return
-    setActionLoading((v) => ({ ...v, edit: true }))
     try {
-      const { error } = await apiPut(
-        `/api/aurora/blog/categories/${editCategoryId}/`,
-        { name: editCategoryName.trim() },
-      )
-      if (error) throw error
+      await updateCategoryMutation.mutateAsync({ id: editCategoryId, name: editCategoryName.trim() })
       setEditOpen(false)
       setEditCategoryId(null)
       setEditCategoryName('')
-      await fetchCategories()
-      toast.success('Category updated')
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to update category')
-    } finally {
-      setActionLoading((v) => ({ ...v, edit: false }))
+    } catch {
+      // toast handled in mutation
     }
   }
 
   const deleteOne = async (id: number) => {
-    setActionLoading((v) => ({ ...v, deleteOneId: id }))
     try {
-      const { error } = await apiDelete(`/api/aurora/blog/categories/${id}/`)
-      if (error) throw error
-      await fetchCategories()
-      toast.success('Category deleted')
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to delete category')
-    } finally {
-      setActionLoading((v) => ({ ...v, deleteOneId: 0 }))
+      await deleteCategoryMutation.mutateAsync(id)
+    } catch {
+      // toast handled in mutation
     }
   }
 
   const deleteSelected = async () => {
     if (selectedIds.length === 0) return
-    setActionLoading((v) => ({ ...v, deleteSelected: true }))
     try {
-      const deleteCount = selectedIds.length
-      const { error } = await apiPost('/api/aurora/blog/categories/bulk-delete/', {
-        category_ids: selectedIds,
-      })
-      if (error) throw error
+      await bulkDeleteMutation.mutateAsync(selectedIds)
       setSelectedIds([])
-      await fetchCategories()
-      toast.success(`Deleted ${deleteCount} categories`)
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to delete selected categories')
-    } finally {
-      setActionLoading((v) => ({ ...v, deleteSelected: false }))
+    } catch {
+      // toast handled in mutation
     }
   }
 

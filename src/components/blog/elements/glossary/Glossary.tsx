@@ -5,7 +5,7 @@ import { Plus, Trash2, BookOpen } from 'lucide-react'
 import { renderMarkdownInline } from '@/lib/markdown'
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
-import { useElementsStore } from '@/stores/elements-store'
+import { useElementsApi } from '@/hooks/use-elements-api'
 import { useInlineEdit } from '../inline/InlineEditProvider'
 import { InlineEditorShell } from '../inline/InlineEditorShell'
 import { useElementDraft } from '@/hooks/use-element-draft'
@@ -45,7 +45,7 @@ function normalizeContent(raw: unknown): GlossaryContent {
 }
 
 export function Glossary({ content, blogId, elementId, onContentUpdated, onElementAdded, onElementDeleted }: ElementComponentProps) {
-  const updateElement = useElementsStore((s) => s.updateElement)
+  const { updateElement } = useElementsApi()
   const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
 

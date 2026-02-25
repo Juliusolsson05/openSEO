@@ -3,7 +3,7 @@
 import { Label } from '@/components/ui/label'
 
 import { useEffect, useMemo, useState } from 'react'
-import { apiPut } from '@/lib/api'
+import { useUpdatePostMetaMutation } from '@/hooks/queries/blog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -106,6 +106,7 @@ export default function PostInfoSidepanel({
   const [editedSeoTitle, setEditedSeoTitle] = useState('')
   const [editedMetaDescription, setEditedMetaDescription] = useState('')
   const [saving, setSaving] = useState(false)
+  const updatePostMeta = useUpdatePostMetaMutation()
 
   useEffect(() => {
     setHighlightKeywords(false)
@@ -125,31 +126,29 @@ export default function PostInfoSidepanel({
   const saveSeoTitle = async () => {
     if (!post || editedSeoTitle.length > TITLE_MAX) return
     setSaving(true)
-    const { data } = await apiPut<PostInfo>(
-      `/api/aurora/blog/posts/update_meta/?post_id=${post.id}`,
-      { seo_title: editedSeoTitle }
-    )
-    if (data) onUpdatePost?.({ ...post, ...data, seo_title: data.seo_title ?? editedSeoTitle })
-    setSaving(false)
-    setSeoDialogOpen(false)
+    try {
+      const data = await updatePostMeta.mutateAsync({ postId: post.id, payload: { seo_title: editedSeoTitle } })
+      if (data) onUpdatePost?.({ ...post, ...(data as any), seo_title: editedSeoTitle })
+      setSeoDialogOpen(false)
+    } catch {
+      // toast handled in mutation
+    } finally {
+      setSaving(false)
+    }
   }
 
   const saveMetaDescription = async () => {
     if (!post || editedMetaDescription.length > META_MAX) return
     setSaving(true)
-    const { data } = await apiPut<PostInfo>(
-      `/api/aurora/blog/posts/update_meta/?post_id=${post.id}`,
-      { meta_description: editedMetaDescription }
-    )
-    if (data) {
-      onUpdatePost?.({
-        ...post,
-        ...data,
-        meta_description: data.meta_description ?? editedMetaDescription,
-      })
+    try {
+      const data = await updatePostMeta.mutateAsync({ postId: post.id, payload: { meta_description: editedMetaDescription } })
+      if (data) onUpdatePost?.({ ...post, ...(data as any), meta_description: editedMetaDescription })
+      setMetaDialogOpen(false)
+    } catch {
+      // toast handled in mutation
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
-    setMetaDialogOpen(false)
   }
 
   if (!post) return null

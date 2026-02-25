@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import type { LinkedPost } from '@/stores/types'
+import type { LinkedPost } from '@/types/blog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface RelatedPostsProps {

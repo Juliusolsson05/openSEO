@@ -4,7 +4,7 @@ import { useCallback, useEffect, type FormEvent } from 'react'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
-import { useElementsStore } from '@/stores/elements-store'
+import { useElementsApi } from '@/hooks/use-elements-api'
 import { useInlineEdit } from '../inline/InlineEditProvider'
 import { InlineEditorShell } from '../inline/InlineEditorShell'
 import { useElementDraft } from '@/hooks/use-element-draft'
@@ -32,7 +32,7 @@ export function Paragraph({
   onElementAdded,
   hyperlink,
 }: ParagraphProps) {
-  const updateElement = useElementsStore((s) => s.updateElement)
+  const { updateElement } = useElementsApi()
   const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
 

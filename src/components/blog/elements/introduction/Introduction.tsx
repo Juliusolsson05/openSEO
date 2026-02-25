@@ -4,7 +4,7 @@ import { useCallback, useEffect } from 'react'
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
 import { renderMarkdown } from '@/lib/markdown'
-import { useElementsStore } from '@/stores/elements-store'
+import { useElementsApi } from '@/hooks/use-elements-api'
 import { useInlineEdit } from '../inline/InlineEditProvider'
 import { InlineEditorShell } from '../inline/InlineEditorShell'
 import { useElementDraft } from '@/hooks/use-element-draft'
@@ -27,7 +27,7 @@ const formatText = (text: string) => {
 }
 
 export function Introduction({ content, blogId, elementId, onContentUpdated, onElementDeleted, hyperlink }: ElementComponentProps) {
-  const updateElement = useElementsStore((s) => s.updateElement)
+  const { updateElement } = useElementsApi()
   const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
 

@@ -5,7 +5,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { BaseElement } from '../BaseElement'
 import { renderMarkdownInline } from '@/lib/markdown'
 import type { ElementComponentProps } from '../registry'
-import { useElementsStore } from '@/stores/elements-store'
+import { useElementsApi } from '@/hooks/use-elements-api'
 import { useInlineEdit } from '../inline/InlineEditProvider'
 import { InlineEditorShell } from '../inline/InlineEditorShell'
 import { useElementDraft } from '@/hooks/use-element-draft'
@@ -16,7 +16,7 @@ import { applyHyperlinks } from '../hyperlink-utils'
 import type { ProsAndConsContent } from '@/types/content-elements'
 
 export function ProsAndCons({ content, blogId, elementId, onContentUpdated, onElementDeleted, hyperlink }: ElementComponentProps) {
-  const updateElement = useElementsStore((s) => s.updateElement)
+  const { updateElement } = useElementsApi()
   const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
 

@@ -9,7 +9,7 @@
  */
 
 import { getComponent, getLoadingComponent, getPreviewComponent, type PreviewComponentProps } from './registry'
-import type { BlogPostElement } from '@/stores/types'
+import type { BlogPostElement } from '@/types/blog'
 import type { ElementType } from './types'
 
 interface ElementRendererProps {

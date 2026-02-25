@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   Loader2,
 } from 'lucide-react'
-import { apiPost } from '@/lib/api'
+import { useQuilloAnalyzeMutation } from '@/hooks/queries/quillo'
 import QuilloChatInterface from './QuilloChatInterface'
 
 interface AnalysisResult {
@@ -66,15 +66,14 @@ export default function QuilloChat({ blogPostId }: Props) {
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const quilloAnalyze = useQuilloAnalyzeMutation()
 
   const fetchAnalysis = async () => {
     setLoading(true)
     setError(null)
     try {
-      const { data } = await apiPost<AnalysisResult>('/api/aurora/blog/quillo/analyze/', {
-        blog_post_id: blogPostId,
-      })
-      if (data) setAnalysis(data)
+      const data = await quilloAnalyze.mutateAsync({ blogPostId })
+      if (data) setAnalysis(data as AnalysisResult)
       else throw new Error('No data')
     } catch {
       setError('Could not analyze. Please try again.')

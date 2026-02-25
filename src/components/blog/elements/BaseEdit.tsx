@@ -10,8 +10,8 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { EditFieldRenderer } from './edit/EditFieldRenderer'
-import { useBlogStore } from '@/stores/blog-store'
-import { useElementsStore } from '@/stores/elements-store'
+import { usePostQuery } from '@/hooks/queries/blog'
+import { useElementsApi } from '@/hooks/use-elements-api'
 import { getEditSchema } from './registry'
 import type { ElementType, EditField } from './types'
 
@@ -34,10 +34,10 @@ export function BaseEdit({
 }: BaseEditProps) {
   const [editedContent, setEditedContent] = useState<any>({})
   const [loading, setLoading] = useState(false)
-  const post = useBlogStore((s) => s.post)
-  const updateElement = useElementsStore((s) => s.updateElement)
+  const { data: post } = usePostQuery(blogId)
+  const { updateElement } = useElementsApi()
 
-  // Determine element type from store
+  // Determine element type from post data
   const elementType = post?.elements.find((el) => el.id === elementId)
     ?.element_type as ElementType | undefined
 

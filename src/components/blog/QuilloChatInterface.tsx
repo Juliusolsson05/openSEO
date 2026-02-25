@@ -16,7 +16,7 @@ import {
   Loader2,
   Sparkles,
 } from 'lucide-react'
-import { api, apiPost } from '@/lib/api'
+import { useQuilloChatSendMutation, useConvertToFacebookMutation, useConvertToLinkedInMutation } from '@/hooks/queries/quillo'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface Message {
@@ -47,6 +47,9 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
   const [linkedInPost, setLinkedInPost] = useState<LinkedInData | null>(null)
   const [showLinkedInPreview, setShowLinkedInPreview] = useState(false)
   const chatRef = useRef<HTMLDivElement>(null)
+  const chatSend = useQuilloChatSendMutation()
+  const convertFacebook = useConvertToFacebookMutation()
+  const convertLinkedIn = useConvertToLinkedInMutation()
 
   const scrollToBottom = useCallback(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight
@@ -62,11 +65,8 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
     setLoading(true)
 
     try {
-      const { data } = await apiPost<string>('/api/aurora/blog/quillo/analyze/chat', {
-        blog_post_id: blogPostId,
-        question: text,
-      })
-      setMessages((m) => [...m, { sender: 'quillo', text: data ?? 'No response.' }])
+      const response = await chatSend.mutateAsync({ blogPostId, question: text })
+      setMessages((m) => [...m, { sender: 'quillo', text: response }])
     } catch {
       setMessages((m) => [...m, { sender: 'quillo', text: 'Sorry, I encountered an error. Please try again.' }])
     } finally {
@@ -84,7 +84,7 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
     }, 1000)
 
     try {
-      const { data } = await api<any>(`/api/aurora/debug/testing_linkedin_whole/?blog_post_id=${blogPostId}`)
+      const data = await convertLinkedIn.mutateAsync({ blogPostId })
       if (data?.json && data?.html) {
         setLinkedInPost({ json: data.json, html: data.html.replace(/\n/g, '') })
       }
@@ -100,11 +100,9 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
   const convertToFacebook = async () => {
     setLoading(true)
     try {
-      const { data } = await apiPost<any>('/api/aurora/blog/quillo/post/facebook', {
-        blog_post_id: blogPostId,
-      })
+      const data = await convertFacebook.mutateAsync({ blogPostId })
       if (data?.facebook_post) {
-        setMessages((m) => [...m, { sender: 'quillo', text: data.facebook_post, type: 'facebook' }])
+        setMessages((m) => [...m, { sender: 'quillo', text: data.facebook_post ?? '', type: 'facebook' }])
       }
     } catch {
       setMessages((m) => [...m, { sender: 'quillo', text: 'Error converting to Facebook post.' }])

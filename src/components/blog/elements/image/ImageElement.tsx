@@ -3,7 +3,9 @@
 import { useMemo, useState } from 'react'
 import { BaseElement } from '../BaseElement'
 import type { ElementComponentProps } from '../registry'
-import { useBlogStore } from '@/stores/blog-store'
+import { usePostQuery } from '@/hooks/queries/blog'
+import { useAppDispatch } from '@/store/hooks'
+import { invalidatePost } from '@/store/slices/blogUiSlice'
 import { ImageStudio } from '@/components/blog/ImageStudio'
 import { Button } from '@/components/ui/button'
 
@@ -29,8 +31,8 @@ const resolveImageUrl = (url?: string) => {
 export function ImageElement({ content, blogId, elementId, onContentUpdated, onElementDeleted, onElementAdded }: ElementComponentProps) {
   const parsedContent = (content ?? {}) as ImageContent
   const [studioOpen, setStudioOpen] = useState(false)
-  const post = useBlogStore((s) => s.post)
-  const fetchPost = useBlogStore((s) => s.fetchPost)
+  const dispatch = useAppDispatch()
+  const { data: post } = usePostQuery(blogId)
 
   const imageNumber = useMemo(() => {
     if (typeof parsedContent.image_number === 'number' && parsedContent.image_number > 1) {
@@ -49,7 +51,7 @@ export function ImageElement({ content, blogId, elementId, onContentUpdated, onE
   const alt = parsedContent.description || 'Blog image'
 
   const onApplied = async () => {
-    if (post?.id) await fetchPost(post.id, true)
+    dispatch(invalidatePost(blogId) as any)
     onContentUpdated?.({ ...parsedContent, url: src })
   }
 
