@@ -1,30 +1,29 @@
 /**
  * Blocked feature modal hook — ported from aurora_dashboard/composables/useBlockedFeatureModal.ts
- * Uses a Zustand micro-store for shared modal state.
+ * Uses Redux permissionsSlice for shared modal state.
  */
 
-import { create } from 'zustand'
-import { usePermissionsStore, type Feature } from '@/stores/permissions-store'
+import { useAppSelector, useAppDispatch } from '@/store/hooks'
+import {
+  showBlockedModal,
+  hideBlockedModal,
+  selectHasAccess,
+  selectRestrictedMessage,
+  FEATURE_CONFIG,
+  type Feature,
+} from '@/store/slices/permissionsSlice'
 
-interface BlockedFeatureModalState {
-  isVisible: boolean
-  currentFeature: Feature | null
-  show: (feature: Feature) => void
-  hide: () => void
-}
-
-const useBlockedFeatureModalStore = create<BlockedFeatureModalState>((set) => ({
-  isVisible: false,
-  currentFeature: null,
-  show: (feature: Feature) => set({ isVisible: true, currentFeature: feature }),
-  hide: () => set({ isVisible: false, currentFeature: null }),
-}))
+export type { Feature }
 
 export function useBlockedFeatureModal() {
-  const { isVisible, currentFeature, show, hide } = useBlockedFeatureModalStore()
-  const { getRestrictedMessage, hasAccess } = usePermissionsStore()
+  const dispatch = useAppDispatch()
+  const { isVisible, currentFeature } = useAppSelector((s) => s.permissions.blockedModal)
+  const featuresMap = useAppSelector((s) => s.permissions.features)
 
-  const message = currentFeature ? getRestrictedMessage(currentFeature) : ''
+  const hasAccess = (feature: Feature): boolean =>
+    featuresMap[feature] ?? FEATURE_CONFIG[feature].defaultAccess
+
+  const message = currentFeature ? FEATURE_CONFIG[currentFeature].restrictedMessage : ''
 
   /**
    * Guard a feature action. Returns true if blocked (modal shown).
@@ -32,7 +31,7 @@ export function useBlockedFeatureModal() {
    */
   const guardFeature = (feature: Feature): boolean => {
     if (!hasAccess(feature)) {
-      show(feature)
+      dispatch(showBlockedModal(feature))
       return true
     }
     return false
@@ -42,8 +41,8 @@ export function useBlockedFeatureModal() {
     isVisible,
     currentFeature,
     message,
-    showBlockedFeatureModal: show,
-    hideBlockedFeatureModal: hide,
+    showBlockedFeatureModal: (feature: Feature) => dispatch(showBlockedModal(feature)),
+    hideBlockedFeatureModal: () => dispatch(hideBlockedModal()),
     guardFeature,
   }
 }
