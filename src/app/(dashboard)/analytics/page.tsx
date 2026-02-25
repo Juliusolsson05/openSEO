@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useAnalyticsStore } from '@/stores/analytics-store'
+import { useState } from 'react'
+import { useAnalyticsQuery } from '@/hooks/queries/analytics'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent } from '@/components/ui/card'
@@ -45,32 +45,18 @@ function AnalyticsSkeleton() {
 
 export default function AnalyticsPage() {
   const [fullView, setFullView] = useState(false)
-  const {
-    isLoading,
-    error,
-    fetchAnalyticsData,
-    generalBlogData,
-    blogTitles,
-    dictionaryData,
-    blogMetaData,
-    linkedWords,
-    elementBreakdown,
-  } = useAnalyticsStore()
-
-  useEffect(() => {
-    void fetchAnalyticsData()
-  }, [fetchAnalyticsData])
+  const { data, isLoading, isError, refetch } = useAnalyticsQuery()
 
   if (isLoading) return <AnalyticsSkeleton />
 
-  if (error) {
+  if (isError || !data) {
     return (
       <Card>
         <CardContent className="py-16 text-center">
           <AlertCircle className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" />
           <p className="text-[14px] font-semibold">Analytics Unavailable</p>
-          <p className="mt-1 text-[13px] text-muted-foreground">{error}</p>
-          <Button variant="outline" className="mt-4 gap-1.5" onClick={() => void fetchAnalyticsData()}>
+          <p className="mt-1 text-[13px] text-muted-foreground">Could not load analytics data. Please check your connection and try again.</p>
+          <Button variant="outline" className="mt-4 gap-1.5" onClick={() => void refetch()}>
             <RefreshCw className="h-3.5 w-3.5" /> Retry
           </Button>
         </CardContent>
@@ -78,6 +64,7 @@ export default function AnalyticsPage() {
     )
   }
 
+  const { generalBlogData, blogTitles, dictionaryData, blogMetaData, linkedWords, elementBreakdown } = data
   const scoreBreakdown = generalBlogData?.score_breakdown ?? {}
 
   return (
@@ -85,7 +72,7 @@ export default function AnalyticsPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-[16px] font-semibold">Analytics</h1>
         <Button variant={fullView ? 'secondary' : 'default'} className="w-full text-[12px] sm:w-auto sm:text-[13px]" onClick={() => setFullView((v) => !v)}>
-          {fullView ? 'This looks scary, bring me back 😨' : 'I know what I am doing 😎'}
+          {fullView ? 'I know what I am doing 😎' : 'This looks scary, bring me back 😨'}
         </Button>
       </div>
 

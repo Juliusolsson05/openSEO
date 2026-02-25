@@ -1,123 +1,90 @@
 'use client'
 
-import { Label } from '@/components/ui/label'
-
 import { FormEvent, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { api, apiPost } from '@/lib/api'
+import {
+  usePublishingSettingsQuery,
+  useUpdatePublishingSettingsMutation,
+} from '@/hooks/queries/settings'
+import {
+  useSyncAllPostsMutation,
+  useSyncAllDictionariesMutation,
+  useJobStatusQuery,
+} from '@/hooks/queries/publishing'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react'
 
-type SyncJobStatus = 'accepted' | 'running' | 'completed' | 'failed' | 'not_available'
-type PublishingSettingsResponse = {
-  settings?: {
-    api_endpoint?: string | null
-    has_api_key?: boolean
-  }
-}
 export default function PublishingPage() {
+  const { data: publishingData, isLoading } = usePublishingSettingsQuery()
+  const updateSettings = useUpdatePublishingSettingsMutation()
+  const syncPosts = useSyncAllPostsMutation()
+  const syncDictionaries = useSyncAllDictionariesMutation()
+
   const [publishingEndpoint, setPublishingEndpoint] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [hasExistingKey, setHasExistingKey] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [activeJobId, setActiveJobId] = useState<string | null>(null)
-  const [jobState, setJobState] = useState<SyncJobStatus | null>(null)
   const [isSyncing, setIsSyncing] = useState<'posts' | 'dictionaries' | null>(null)
 
-  const loadCompanyData = async () => {
-    setIsLoading(true)
-    const { data } = await api<PublishingSettingsResponse>('/api/v1/settings/publishing')
-    const payload = data?.settings
-    if (payload) {
-      setPublishingEndpoint(payload.api_endpoint ?? '')
-      setHasExistingKey(Boolean(payload.has_api_key))
-    }
-    setIsLoading(false)
-  }
-
+  // Sync local form state from server data
   useEffect(() => {
-    setTimeout(() => {
-      void loadCompanyData()
-    }, 0)
-  }, [])
+    if (!publishingData) return
+    setPublishingEndpoint(publishingData.api_endpoint ?? '')
+    setHasExistingKey(Boolean(publishingData.has_api_key))
+  }, [publishingData])
+
+  // Poll job status while active
+  const { data: jobData } = useJobStatusQuery(activeJobId, {
+    enabled: !!activeJobId,
+    refetchInterval: activeJobId ? 1500 : false,
+  })
+  const jobState = jobData?.status ?? null
+
+  // Stop polling when job is done
+  useEffect(() => {
+    if (jobState === 'completed' || jobState === 'failed' || jobState === 'not_available') {
+      // polling already stopped by refetchInterval logic — no action needed
+    }
+  }, [jobState])
 
   const submitForm = async (e: FormEvent) => {
     e.preventDefault()
-    setStatus(null)
-    setIsSaving(true)
+    const payload: { api_endpoint: string; api_key?: string } = {
+      api_endpoint: publishingEndpoint,
+    }
+    if (apiKey) payload.api_key = apiKey
 
-    const { error } = await api('/api/v1/settings/publishing', {
-      method: 'PATCH',
-      body: JSON.stringify({
-        api_endpoint: publishingEndpoint,
-        ...(apiKey ? { api_key: apiKey } : {}),
-      }),
-    })
-
-    if (error) {
-      setStatus({ type: 'error', message: error.message || 'Failed to update credentials.' })
-    } else {
-      setStatus({ type: 'success', message: 'Credentials updated successfully.' })
+    try {
+      await updateSettings.mutateAsync(payload)
       if (apiKey) setHasExistingKey(true)
       setApiKey('')
+    } catch {
+      // toast handled in mutation
     }
-
-    setIsSaving(false)
   }
 
   const triggerSync = async (kind: 'posts' | 'dictionaries') => {
-    setStatus(null)
     setIsSyncing(kind)
-    const endpoint = kind === 'posts' ? '/api/v1/publishing/sync/posts/all' : '/api/v1/publishing/sync/dictionaries/all'
-    const { data, error } = await apiPost<Record<string, unknown>>(endpoint, {})
-
-    if (error) {
-      setStatus({ type: 'error', message: error.message || `Failed to start ${kind} sync.` })
+    try {
+      const result =
+        kind === 'posts'
+          ? await syncPosts.mutateAsync()
+          : await syncDictionaries.mutateAsync()
+      setActiveJobId(result.jobId)
+    } catch {
+      // toast handled in mutation
+    } finally {
       setIsSyncing(null)
-      return
     }
-
-    // Unwrap { success, data: { job_id, status } } or { job_id, status }
-    const inner = (data && typeof data === 'object' && 'data' in data && data.data && typeof data.data === 'object')
-      ? (data.data as Record<string, unknown>)
-      : (data as Record<string, unknown> | null)
-    const jobId = inner?.job_id as string | undefined
-    if (!jobId) {
-      setStatus({ type: 'error', message: `Could not read job id from sync response. Got: ${JSON.stringify(data)}` })
-      setIsSyncing(null)
-      return
-    }
-
-    setActiveJobId(jobId)
-    setJobState((inner?.status as SyncJobStatus) ?? 'accepted')
-    setStatus({ type: 'success', message: `${kind === 'posts' ? 'Post' : 'Dictionary'} sync started.` })
-    setIsSyncing(null)
   }
-
-  const refreshJob = async () => {
-    if (!activeJobId) return
-    const { data, error } = await api<Record<string, unknown>>(`/api/v1/publishing/jobs/${activeJobId}`)
-    if (error || !data) return
-    const inner = (typeof data === 'object' && 'data' in data && data.data && typeof data.data === 'object')
-      ? (data.data as Record<string, unknown>)
-      : data
-    const s = inner?.status as SyncJobStatus | undefined
-    if (s) setJobState(s)
-  }
-
-  // Auto-poll active job
-  useEffect(() => {
-    if (!activeJobId || jobState === 'completed' || jobState === 'failed' || jobState === 'not_available') return
-    const interval = setInterval(() => { void refreshJob() }, 1500)
-    return () => clearInterval(interval)
-  }, [activeJobId, jobState]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const isConfigured = Boolean(publishingEndpoint.trim()) && hasExistingKey
+  const isJobActive =
+    activeJobId && jobState !== 'completed' && jobState !== 'failed' && jobState !== 'not_available'
 
   return (
     <div className="space-y-4" style={{ fontSize: 13 }}>
@@ -168,20 +135,14 @@ export default function PublishingPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button type="submit" disabled={isSaving}>
-                {isSaving ? 'Saving...' : 'Update API Settings'}
+              <Button type="submit" disabled={updateSettings.isPending}>
+                {updateSettings.isPending ? 'Saving...' : 'Update API Settings'}
               </Button>
               <Link href="/settings/publishing-api" className="text-sm text-primary hover:underline">
                 View JSON contract docs
               </Link>
             </div>
           </form>
-
-          {status && (
-            <Badge variant={status.type === 'success' ? 'success' : 'destructive'}>
-              {status.message}
-            </Badge>
-          )}
         </CardContent>
       </Card>
 
@@ -192,7 +153,8 @@ export default function PublishingPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-[13px] text-muted-foreground">
-            Push all generated content to your publishing endpoint. Posts must have status <Badge variant="outline" className="text-[10px]">GENERATED</Badge> to be included.
+            Push all generated content to your publishing endpoint. Posts must have status{' '}
+            <Badge variant="outline" className="text-[10px]">GENERATED</Badge> to be included.
           </p>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -223,9 +185,6 @@ export default function PublishingPage() {
             <div className="rounded-sm border border-border p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Active job</p>
-                <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={refreshJob}>
-                  Refresh status
-                </Button>
               </div>
               <div className="flex items-center gap-2">
                 {jobState === 'completed' ? (

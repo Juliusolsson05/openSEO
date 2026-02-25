@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Suspense, useState, useEffect, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -22,8 +22,8 @@ import {
   LayoutList,
   ArrowRight,
 } from 'lucide-react'
-import { api, apiPost } from '@/lib/api'
-import { toast } from 'sonner'
+import { usePostsQuery, useGeneratePostMutation } from '@/hooks/queries/blog'
+import { useTitlesQuery } from '@/hooks/queries/titles'
 
 import type { BlogTitle } from '@/types/blog'
 
@@ -61,15 +61,16 @@ const statusConfig = (status: number | string, published: boolean) => {
   return { text: 'Pending', variant: 'outline' as const, icon: AlertCircle }
 }
 
-export default function BlogPage() {
+function BlogPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [view, setView] = useState<'list' | 'grid'>('list')
   const [searchQuery, setSearchQuery] = useState('')
-  const [posts, setPosts] = useState<BlogPostSummary[]>([])
-  const [titles, setTitles] = useState<BlogTitle[]>([])
-  const [loading, setLoading] = useState(true)
-  const [generating, setGenerating] = useState(false)
+
+  const { data: posts = [], isLoading: loading } = usePostsQuery()
+  const { data: rawTitles = [] } = useTitlesQuery()
+  const titles = rawTitles as BlogTitle[]
+  const generatePost = useGeneratePostMutation()
 
   const postsLeftToGenerate = titles.filter((t) => {
     const s = t.status as number | string
@@ -79,23 +80,7 @@ export default function BlogPage() {
   const publishedCount = posts.filter((p) => p.is_published).length
   const draftCount = posts.filter((p) => !p.is_published).length
 
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    try {
-      const [postsRes, titlesRes] = await Promise.all([
-        api<unknown>('/api/aurora/blog/posts/'),
-        api<unknown>('/api/aurora/blog/titles/'),
-      ])
-      if (postsRes.data) setPosts(unwrapList<BlogPostSummary>(postsRes.data))
-      if (titlesRes.data) setTitles(unwrapList<BlogTitle>(titlesRes.data))
-    } catch (err) {
-      console.error('[Blog] fetchData error:', err)
-    }
-    setLoading(false)
-  }, [])
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { fetchData() }, [fetchData])
 
   useEffect(() => {
     const fromQuery = searchParams.get('search')
@@ -116,16 +101,10 @@ export default function BlogPage() {
   }, [searchQuery, posts])
 
   const generateNext = async () => {
-    setGenerating(true)
     try {
-      const { error } = await apiPost('/api/aurora/blog/posts/generate/', {})
-      if (error) throw error
-      await fetchData()
-      toast.success('Blog post generated')
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to generate post')
-    } finally {
-      setGenerating(false)
+      await generatePost.mutateAsync(undefined)
+    } catch {
+      // toast handled in mutation
     }
   }
 
@@ -193,10 +172,10 @@ export default function BlogPage() {
         <Button
           data-tour="generate-post-btn"
           onClick={generateNext}
-          disabled={generating || postsLeftToGenerate === 0}
+          disabled={generatePost.isPending || postsLeftToGenerate === 0}
           className="gap-1.5"
         >
-          {generating ? (
+          {generatePost.isPending ? (
             <>
               <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
               Generating...
@@ -252,7 +231,7 @@ export default function BlogPage() {
                 {searchQuery ? 'Try different keywords.' : 'Generate your first post to get started.'}
               </p>
               {!searchQuery && postsLeftToGenerate > 0 && (
-                <Button className="mt-4 gap-1.5" onClick={generateNext} disabled={generating}>
+                <Button className="mt-4 gap-1.5" onClick={generateNext} disabled={generatePost.isPending}>
                   <Sparkles className="h-3.5 w-3.5" /> Generate First Post
                 </Button>
               )}
@@ -409,5 +388,13 @@ export default function BlogPage() {
       {/* Categories Management */}
       <BlogCategoriesTable />
     </div>
+  )
+}
+
+export default function BlogPage() {
+  return (
+    <Suspense fallback={null}>
+      <BlogPageContent />
+    </Suspense>
   )
 }

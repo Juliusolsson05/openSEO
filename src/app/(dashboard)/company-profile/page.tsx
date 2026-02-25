@@ -1,7 +1,13 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useState } from 'react'
-import { api, apiPost } from '@/lib/api'
+import { FormEvent, useMemo, useState } from 'react'
+import {
+  useCompanyProfileQuery,
+  useUpdateCompanyProfileMutation,
+  useAnalyzeCompanyMutation,
+  type CompanyProfile,
+} from '@/hooks/queries/company'
+import { useJobStatusQuery } from '@/hooks/queries/publishing'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,32 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Globe, Loader2, RefreshCw, Sparkles, X } from 'lucide-react'
 import { Label } from '@/components/ui/label'
-
-type CompanyProfile = {
-  business_description: string
-  industry: string
-  target_audience: string
-  tone_of_voice: string[]
-  products_services: string[]
-  key_terminology: string[]
-  content_topics: string[]
-  differentiators: string[]
-  detected_language: string
-  _scraped_at?: string
-  _pages_analyzed?: number
-}
-
-type ProfileResponse = {
-  website_url: string | null
-  profile: CompanyProfile | null
-  name: string
-  business_type: string
-  language: string
-  keywords: unknown
-}
-
-type AnalyzeResponse = { task_id: string; status: string }
-type TaskStatus = { status: string; logs?: unknown[]; error?: string | null }
+import { toast } from 'sonner'
 
 const languageOptions = ['en', 'sv', 'de', 'fr', 'es', 'it', 'nl', 'no', 'da', 'fi']
 
@@ -51,100 +32,76 @@ const emptyProfile: CompanyProfile = {
 }
 
 export default function CompanyProfilePage() {
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
+  const { data: profileData, isLoading } = useCompanyProfileQuery()
+  const updateProfile = useUpdateCompanyProfileMutation()
+  const analyzeCompany = useAnalyzeCompanyMutation()
+
   const [websiteUrl, setWebsiteUrl] = useState('')
-  const [profile, setProfile] = useState<CompanyProfile>(emptyProfile)
-  const [companyName, setCompanyName] = useState('')
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analyzeTaskId, setAnalyzeTaskId] = useState<string | null>(null)
-  const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [localProfile, setLocalProfile] = useState<CompanyProfile>(emptyProfile)
+  const [profileSynced, setProfileSynced] = useState(false)
 
-  const hasProfileData = useMemo(() => {
-    return Boolean(
-      profile.business_description ||
-      profile.industry ||
-      profile.target_audience ||
-      profile.tone_of_voice.length ||
-      profile.products_services.length ||
-      profile.key_terminology.length ||
-      profile.content_topics.length ||
-      profile.differentiators.length,
+  // Sync local state once from server
+  if (profileData && !profileSynced) {
+    setWebsiteUrl(profileData.website_url ?? '')
+    setLocalProfile(
+      profileData.profile
+        ? { ...emptyProfile, ...profileData.profile }
+        : { ...emptyProfile, detected_language: profileData.language ?? 'en' }
     )
-  }, [profile])
-
-  const load = async () => {
-    setIsLoading(true)
-    const { data } = await api<ProfileResponse>('/api/v1/company/profile')
-    if (data) {
-      setWebsiteUrl(data.website_url ?? '')
-      setProfile(data.profile ? { ...emptyProfile, ...data.profile } : { ...emptyProfile, detected_language: data.language ?? 'en' })
-      setCompanyName(data.name ?? '')
-    }
-    setIsLoading(false)
+    setProfileSynced(true)
   }
 
-  useEffect(() => {
-    setTimeout(() => { void load() }, 0)
-  }, [])
+  const companyName = profileData?.name ?? ''
 
-  useEffect(() => {
-    if (!analyzeTaskId) return
-    const interval = setInterval(async () => {
-      const { data } = await api<TaskStatus>(`/api/v1/publishing/jobs/${analyzeTaskId}`)
-      if (!data) return
-      if (data.status === 'completed') {
-        setIsAnalyzing(false)
-        setAnalyzeTaskId(null)
-        setStatus({ type: 'success', message: 'Website analyzed successfully.' })
-        void load()
-      } else if (data.status === 'failed') {
-        setIsAnalyzing(false)
-        setAnalyzeTaskId(null)
-        setStatus({ type: 'error', message: data.error ?? 'Analysis failed.' })
-      }
-    }, 2000)
-    return () => clearInterval(interval)
-  }, [analyzeTaskId])
+  // Poll analysis job
+  const { data: jobData } = useJobStatusQuery(analyzeTaskId, {
+    enabled: !!analyzeTaskId,
+    refetchInterval: analyzeTaskId ? 2000 : false,
+  })
+
+  // Handle job completion
+  const jobStatus = jobData?.status
+  if (jobStatus === 'completed' && analyzeTaskId) {
+    setAnalyzeTaskId(null)
+    toast.success('Website analyzed successfully.')
+    setProfileSynced(false) // force re-sync when query refetches
+  } else if (jobStatus === 'failed' && analyzeTaskId) {
+    setAnalyzeTaskId(null)
+    toast.error(jobData?.error ?? 'Analysis failed.')
+  }
+
+  const isAnalyzing = !!analyzeTaskId || analyzeCompany.isPending
+
+  const hasProfileData = useMemo(
+    () =>
+      Boolean(
+        localProfile.business_description ||
+          localProfile.industry ||
+          localProfile.target_audience ||
+          localProfile.tone_of_voice.length ||
+          localProfile.products_services.length ||
+          localProfile.key_terminology.length ||
+          localProfile.content_topics.length ||
+          localProfile.differentiators.length
+      ),
+    [localProfile]
+  )
 
   const handleAnalyze = async (e?: FormEvent) => {
     e?.preventDefault()
     if (!websiteUrl.trim()) return
-    setStatus(null)
-    setIsAnalyzing(true)
-
-    const { data, error } = await apiPost<AnalyzeResponse>('/api/v1/company/analyze', {
-      website_url: websiteUrl,
-    })
-
-    if (error) {
-      setStatus({ type: 'error', message: error.message || 'Failed to start analysis.' })
-      setIsAnalyzing(false)
-      return
-    }
-
-    if (data?.task_id) {
-      setAnalyzeTaskId(data.task_id)
+    try {
+      const result = await analyzeCompany.mutateAsync({ websiteUrl })
+      if (result.task_id) setAnalyzeTaskId(result.task_id)
+    } catch {
+      // toast handled in mutation
     }
   }
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault()
-    setIsSaving(true)
-    setStatus(null)
-
-    const { error } = await api('/api/v1/company/profile', {
-      method: 'PATCH',
-      body: JSON.stringify({ profile }),
-    })
-
-    if (error) {
-      setStatus({ type: 'error', message: error.message || 'Failed to save company profile.' })
-    } else {
-      setStatus({ type: 'success', message: 'Company profile updated.' })
-    }
-
-    setIsSaving(false)
+    updateProfile.mutate(localProfile)
   }
 
   return (
@@ -179,14 +136,6 @@ export default function CompanyProfilePage() {
               )}
             </Button>
           </form>
-
-          {status && (
-            <div className="mt-3">
-              <Badge variant={status.type === 'success' ? 'success' : 'destructive'}>
-                {status.message}
-              </Badge>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -208,8 +157,8 @@ export default function CompanyProfilePage() {
               <div className="space-y-1.5">
                 <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Business Description</Label>
                 <textarea
-                  value={profile.business_description}
-                  onChange={(e) => setProfile((prev) => ({ ...prev, business_description: e.target.value }))}
+                  value={localProfile.business_description}
+                  onChange={(e) => setLocalProfile((prev) => ({ ...prev, business_description: e.target.value }))}
                   rows={4}
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-[13px]"
                 />
@@ -219,19 +168,21 @@ export default function CompanyProfilePage() {
                 <div className="space-y-1.5">
                   <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Industry</Label>
                   <Input
-                    value={profile.industry}
-                    onChange={(e) => setProfile((prev) => ({ ...prev, industry: e.target.value }))}
+                    value={localProfile.industry}
+                    onChange={(e) => setLocalProfile((prev) => ({ ...prev, industry: e.target.value }))}
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Detected Language</Label>
                   <select
-                    value={profile.detected_language}
-                    onChange={(e) => setProfile((prev) => ({ ...prev, detected_language: e.target.value }))}
+                    value={localProfile.detected_language}
+                    onChange={(e) => setLocalProfile((prev) => ({ ...prev, detected_language: e.target.value }))}
                     className="h-9 w-full rounded-md border border-input bg-background px-3 text-[13px]"
                   >
-                    {languageOptions.map((lang) => <option key={lang} value={lang}>{lang.toUpperCase()}</option>)}
+                    {languageOptions.map((lang) => (
+                      <option key={lang} value={lang}>{lang.toUpperCase()}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -239,8 +190,8 @@ export default function CompanyProfilePage() {
               <div className="space-y-1.5">
                 <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Target Audience</Label>
                 <textarea
-                  value={profile.target_audience}
-                  onChange={(e) => setProfile((prev) => ({ ...prev, target_audience: e.target.value }))}
+                  value={localProfile.target_audience}
+                  onChange={(e) => setLocalProfile((prev) => ({ ...prev, target_audience: e.target.value }))}
                   rows={3}
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-[13px]"
                 />
@@ -248,35 +199,37 @@ export default function CompanyProfilePage() {
 
               <EditableTagField
                 label="Tone of Voice"
-                items={profile.tone_of_voice}
-                onChange={(items) => setProfile((prev) => ({ ...prev, tone_of_voice: items }))}
+                items={localProfile.tone_of_voice}
+                onChange={(items) => setLocalProfile((prev) => ({ ...prev, tone_of_voice: items }))}
               />
               <EditableTagField
                 label="Products & Services"
-                items={profile.products_services}
-                onChange={(items) => setProfile((prev) => ({ ...prev, products_services: items }))}
+                items={localProfile.products_services}
+                onChange={(items) => setLocalProfile((prev) => ({ ...prev, products_services: items }))}
               />
               <EditableTagField
                 label="Key Terminology"
-                items={profile.key_terminology}
-                onChange={(items) => setProfile((prev) => ({ ...prev, key_terminology: items }))}
+                items={localProfile.key_terminology}
+                onChange={(items) => setLocalProfile((prev) => ({ ...prev, key_terminology: items }))}
               />
               <EditableTagField
                 label="Content Topics"
-                items={profile.content_topics}
-                onChange={(items) => setProfile((prev) => ({ ...prev, content_topics: items }))}
+                items={localProfile.content_topics}
+                onChange={(items) => setLocalProfile((prev) => ({ ...prev, content_topics: items }))}
               />
               <EditableTagField
                 label="Differentiators"
-                items={profile.differentiators}
-                onChange={(items) => setProfile((prev) => ({ ...prev, differentiators: items }))}
+                items={localProfile.differentiators}
+                onChange={(items) => setLocalProfile((prev) => ({ ...prev, differentiators: items }))}
               />
 
-              <Button type="submit" disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Profile'}</Button>
+              <Button type="submit" disabled={updateProfile.isPending}>
+                {updateProfile.isPending ? 'Saving...' : 'Save Profile'}
+              </Button>
 
-              {profile._scraped_at && (
+              {localProfile._scraped_at && (
                 <p className="text-[11px] text-muted-foreground">
-                  Last analyzed: {new Date(profile._scraped_at).toLocaleString()} · {profile._pages_analyzed} pages
+                  Last analyzed: {new Date(localProfile._scraped_at).toLocaleString()} · {localProfile._pages_analyzed} pages
                 </p>
               )}
             </form>

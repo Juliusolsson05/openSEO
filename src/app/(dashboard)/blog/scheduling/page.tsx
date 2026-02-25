@@ -9,7 +9,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import type { EventClickArg, EventDropArg } from '@fullcalendar/core'
 import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 
-import { api, apiPost, apiPut } from '@/lib/api'
+import { useTitlesQuery, useSchedulePostMutation, useReschedulePostMutation, useBulkCreateScheduleMutation, useBulkAssignScheduleMutation } from '@/hooks/queries/titles'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -68,8 +68,14 @@ function buildMiniCalendarWeeks(year: number, month: number) {
 export default function BlogSchedulingPage() {
   const calendarRef = useRef<FullCalendar>(null)
 
-  const [loading, setLoading] = useState(true)
-  const [posts, setPosts] = useState<SchedulingTitle[]>([])
+  const { data: rawTitles = [], isLoading: loading } = useTitlesQuery()
+  const scheduleReschedule = useReschedulePostMutation()
+  const schedulePost_ = useSchedulePostMutation()
+  const bulkCreate = useBulkCreateScheduleMutation()
+  const bulkAssign = useBulkAssignScheduleMutation()
+  const posts: SchedulingTitle[] = (rawTitles as any[]).filter(
+    (t: any) => t.status === 'GENERATED' || t.status === 4 || Boolean(t.scheduled_date)
+  ) as SchedulingTitle[]
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const [showScheduled, setShowScheduled] = useState(true)
@@ -95,23 +101,7 @@ export default function BlogSchedulingPage() {
   const [miniYear, setMiniYear] = useState(new Date().getFullYear())
   const [miniMonth, setMiniMonth] = useState(new Date().getMonth())
 
-  const fetchPosts = useCallback(async () => {
-    setLoading(true)
-    const { data } = await api<SchedulingTitle[] | { data?: SchedulingTitle[]; results?: SchedulingTitle[] }>('/api/aurora/blog/titles/?pageSize=500')
 
-    const items = Array.isArray(data) ? data : (data as any)?.data ?? (data as any)?.results ?? []
-    const filtered = items.filter((post: any) => post.status === 'GENERATED' || post.status === 4 || Boolean(post.scheduled_date))
-
-    setPosts(filtered)
-    setLoading(false)
-  }, [])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchPosts()
-    }, 0)
-    return () => clearTimeout(timer)
-  }, [fetchPosts])
 
   const allCategories = useMemo(() => {
     const names = new Set(posts.flatMap((p) => p.categories.map((c) => c.name)))
@@ -165,17 +155,14 @@ export default function BlogSchedulingPage() {
 
   const handleConfirmReschedule = async () => {
     if (!pendingDropInfo?.event.start) return
-
-    const { error } = await apiPut(`/api/aurora/blog/schedule/reschedule/${pendingDropInfo.event.id}/`, {
-      date: pendingDropInfo.event.start.toISOString(),
-    })
-
-    if (error) {
+    try {
+      await scheduleReschedule.mutateAsync({
+        postId: pendingDropInfo.event.id,
+        date: pendingDropInfo.event.start.toISOString(),
+      })
+    } catch {
       pendingDropInfo.revert()
-    } else {
-      await fetchPosts()
     }
-
     setRescheduleConfirmOpen(false)
     setPendingDropInfo(null)
   }
@@ -188,16 +175,13 @@ export default function BlogSchedulingPage() {
 
   const handleScheduleSingle = async () => {
     if (!schedulePost || !scheduleDate) return
-
-    const { error } = await apiPost(`/api/aurora/blog/schedule/post/${schedulePost.id}/`, {
-      date: new Date(scheduleDate).toISOString(),
-    })
-
-    if (!error) {
+    try {
+      await schedulePost_.mutateAsync({ postId: schedulePost.id, scheduledDate: scheduleDate })
       setScheduleDialogOpen(false)
       setSchedulePost(null)
       setScheduleDate('')
-      await fetchPosts()
+    } catch {
+      // toast handled in mutation
     }
   }
 
@@ -222,27 +206,26 @@ export default function BlogSchedulingPage() {
 
   const handleCreateBulk = async () => {
     if (!bulkName || !bulkStartDate || selectedIds.size === 0) return
-
     const intervalValue = bulkInterval.trim() === '' ? null : Number(bulkInterval)
-
-    const createRes = await apiPost<{ id: number }>('/api/aurora/blog/schedule/bulk/create/', {
-      name: bulkName,
-      interval_days: Number.isFinite(intervalValue) ? intervalValue : null,
-      start_date: new Date(bulkStartDate).toISOString(),
-    })
-
-    if (!createRes.error && createRes.data?.id) {
-      await apiPost('/api/aurora/blog/schedule/bulk/assign/', {
-        title_ids: Array.from(selectedIds),
-        bulk_schedule_id: createRes.data.id,
+    try {
+      const result = await bulkCreate.mutateAsync({
+        name: bulkName,
+        interval_days: Number.isFinite(intervalValue) ? intervalValue : null,
+        start_date: new Date(bulkStartDate).toISOString(),
       })
-
-      setBulkDialogOpen(false)
-      setBulkName('')
-      setBulkInterval('')
-      setBulkStartDate('')
-      setSelectedIds(new Set())
-      await fetchPosts()
+      if (result?.id) {
+        await bulkAssign.mutateAsync({
+          title_ids: Array.from(selectedIds),
+          bulk_schedule_id: result.id,
+        })
+        setBulkDialogOpen(false)
+        setBulkName('')
+        setBulkInterval('')
+        setBulkStartDate('')
+        setSelectedIds(new Set())
+      }
+    } catch {
+      // toast handled in mutations
     }
   }
 

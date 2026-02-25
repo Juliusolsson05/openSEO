@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { api } from '@/lib/api'
+import { useWordDefinitionQuery } from '@/hooks/queries/dictionary'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -15,16 +15,7 @@ const clean = (value?: string) => (value || '').replace(/<br\s*\/?>/gi, '\n').re
 
 export default function WordDetailPage() {
   const params = useParams<{ id: string; wordid: string }>()
-  const [word, setWord] = useState<WordDefinition | null>(null)
-
-  useEffect(() => {
-    const load = async () => {
-      const { data, error } = await api<WordDefinition>(`/api/aurora/dictionary/dictionary/${params.id}/word/${params.wordid}/`)
-      if (error) return
-      setWord(data)
-    }
-    void load()
-  }, [params.id, params.wordid])
+  const { data: word } = useWordDefinitionQuery(params.id, params.wordid)
 
   const sections = useMemo(() => {
     if (!word) return [] as Array<{ id: string; title: string; text: string }>

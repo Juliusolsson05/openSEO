@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useBlogStore } from '@/stores/blog-store'
+import { usePostQuery } from '@/hooks/queries/blog'
+import { invalidatePost } from '@/store/slices/blogUiSlice'
+import { useAppDispatch } from '@/store/hooks'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -35,15 +37,17 @@ import PostInfoSidepanel from '@/components/blog/PostInfoSidepanel'
 export default function BlogPostPage() {
   const params = useParams()
   const router = useRouter()
+  const dispatch = useAppDispatch()
   const postId = params.id as string
-  const { post, loading, error, fetchPost } = useBlogStore()
+  const { data: post, isLoading, isError, refetch } = usePostQuery(postId)
   const [coverStudioOpen, setCoverStudioOpen] = useState(false)
 
-  useEffect(() => {
-    if (postId) fetchPost(postId)
-  }, [postId, fetchPost])
+  const refreshPost = () => {
+    dispatch(invalidatePost(postId) as any)
+    refetch()
+  }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="max-w-6xl mx-auto flex gap-6">
         <div className="flex-1 space-y-3">
@@ -61,7 +65,7 @@ export default function BlogPostPage() {
     )
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className="max-w-md mx-auto text-center py-20">
         <FileTextIcon className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
@@ -95,7 +99,7 @@ export default function BlogPostPage() {
         </div>
 
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => fetchPost(postId, true)} className="gap-1.5">
+          <Button variant="ghost" size="sm" onClick={refreshPost} className="gap-1.5">
             <RefreshCw className="h-3 w-3" /> Refresh
           </Button>
           <Button variant="outline" size="sm" onClick={() => router.push(`/blog/${postId}/preview`)} className="gap-1.5">
@@ -158,7 +162,7 @@ export default function BlogPostPage() {
         {/* Sidebar */}
         <div className="w-64 shrink-0 space-y-4 hidden lg:block">
           {/* Admin Actions */}
-          <AdminMenu postId={post.id} onRefreshPost={() => fetchPost(post.id, true)} />
+          <AdminMenu postId={post.id} onRefreshPost={refreshPost} />
 
           {/* Details */}
           <Card>
@@ -204,7 +208,7 @@ export default function BlogPostPage() {
           {/* SEO — editable with keyword highlighting */}
           <PostInfoSidepanel
             post={post as any}
-            onUpdatePost={() => fetchPost(post.id, true)}
+            onUpdatePost={refreshPost}
           />
 
           <BlogGlossary elements={post.elements} />
@@ -238,7 +242,7 @@ export default function BlogPostPage() {
           currentUrl={post.cover_image.url}
           currentDescription={post.cover_image.description}
           postTitle={post.title_text}
-          onImageApplied={() => fetchPost(post.id, true)}
+          onImageApplied={refreshPost}
         />
       ) : null}
 

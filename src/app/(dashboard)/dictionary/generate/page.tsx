@@ -2,7 +2,8 @@
 
 import { FormEvent, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useDictionaryStore } from '@/stores/dictionary-store'
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { startDictionaryGeneration } from '@/store/slices/dictionarySessionSlice'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -12,7 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export default function DictionaryGeneratePage() {
   const router = useRouter()
-  const { startGeneration, isGenerating } = useDictionaryStore()
+  const dispatch = useAppDispatch()
+  const isGenerating = useAppSelector((s) => s.dictionarySession.isGenerating)
+  const currentDictionary = useAppSelector((s) => s.dictionarySession.currentDictionary)
 
   const [step, setStep] = useState(1)
   const [title, setTitle] = useState('')
@@ -27,8 +30,10 @@ export default function DictionaryGeneratePage() {
 
   const start = async (e: FormEvent) => {
     e.preventDefault()
-    const data = await startGeneration({ title, subject, language, num_words: numWords })
-    if (data?.session_id) router.push('/dictionary/generate/keywords')
+    const result = await dispatch(startDictionaryGeneration({ title, subject, language, num_words: numWords }))
+    if (startDictionaryGeneration.fulfilled.match(result)) {
+      router.push('/dictionary/generate/keywords')
+    }
   }
 
   return (
@@ -59,54 +64,52 @@ export default function DictionaryGeneratePage() {
                     <SelectItem value="es">Spanish</SelectItem>
                     <SelectItem value="fr">French</SelectItem>
                     <SelectItem value="de">German</SelectItem>
+                    <SelectItem value="it">Italian</SelectItem>
+                    <SelectItem value="pt">Portuguese</SelectItem>
+                    <SelectItem value="sv">Swedish</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex justify-end">
+                <Button type="button" onClick={next}>Next</Button>
+              </div>
             </>
-          ) : null}
-
-          {step === 2 ? (
+          ) : step === 2 ? (
             <>
               <div className="space-y-1">
-                <Label>Words per letter</Label>
-                <Input
-                  type="number"
+                <Label>Keywords per letter (A–Z): {numWords}</Label>
+                <input
+                  type="range"
                   min={5}
                   max={50}
                   value={numWords}
-                  onChange={(e) => setNumWords(Math.max(5, Math.min(50, Number(e.target.value) || 5)))}
-                  className="max-w-40 rounded-sm"
+                  onChange={(e) => setNumWords(Number(e.target.value))}
+                  className="w-full"
                 />
-                <p className="text-sm text-muted-foreground">Estimated total words: {estimatedTotal}</p>
+                <p className="text-xs text-muted-foreground">Estimated total: ~{estimatedTotal} keywords</p>
+              </div>
+              <div className="flex justify-between">
+                <Button type="button" variant="outline" onClick={back}>Back</Button>
+                <Button type="button" onClick={next}>Next</Button>
               </div>
             </>
-          ) : null}
-
-          {step === 3 ? (
-            <div className="rounded-sm border border-border p-4 text-sm">
-              <p><span className="text-muted-foreground">Name:</span> {title}</p>
-              <p><span className="text-muted-foreground">Language:</span> {language.toUpperCase()}</p>
-              <p><span className="text-muted-foreground">Words per letter:</span> {numWords}</p>
-              <p><span className="text-muted-foreground">Estimated total:</span> {estimatedTotal}</p>
-            </div>
-          ) : null}
-
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" className="rounded-sm" onClick={() => router.push('/dictionary')}>Cancel</Button>
-            {step > 1 ? <Button type="button" variant="outline" className="rounded-sm" onClick={back}>Back</Button> : null}
-            {step < 3 ? (
-              <Button
-                type="button"
-                className="rounded-sm"
-                onClick={next}
-                disabled={(step === 1 && (!title.trim() || !subject.trim()))}
-              >
-                Next
-              </Button>
-            ) : (
-              <Button type="submit" className="rounded-sm" disabled={isGenerating}>{isGenerating ? 'Starting...' : 'Start Generation'}</Button>
-            )}
-          </div>
+          ) : (
+            <>
+              <div className="space-y-2 rounded-sm border border-border p-4 text-[13px]">
+                <p><span className="text-muted-foreground">Name:</span> {title}</p>
+                <p><span className="text-muted-foreground">Subject:</span> {subject}</p>
+                <p><span className="text-muted-foreground">Language:</span> {language.toUpperCase()}</p>
+                <p><span className="text-muted-foreground">Keywords per letter:</span> {numWords}</p>
+                <p><span className="text-muted-foreground">Estimated total:</span> ~{estimatedTotal}</p>
+              </div>
+              <div className="flex justify-between">
+                <Button type="button" variant="outline" onClick={back}>Back</Button>
+                <Button type="submit" disabled={isGenerating}>
+                  {isGenerating ? 'Starting...' : 'Start Generation'}
+                </Button>
+              </div>
+            </>
+          )}
         </form>
       </CardContent>
     </Card>
