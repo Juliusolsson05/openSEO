@@ -16,23 +16,9 @@ import type {
   ListBlogPostsQueryInput,
   UpdateBlogPostInput,
 } from '@/server/validators/blog.validators'
+import { DEFAULT_GENERATION_ELEMENTS } from '@/lib/constants/generation'
 
 const DEFAULT_IMAGE = 'https://res.cloudinary.com/dl9qdd24e/image/upload/v1732560659/600x400_fqbihy.png'
-
-/** Default element types allowed during initial generation — matches Django INITIAL_GENERATION_ELEMENTS */
-const DEFAULT_GENERATION_ELEMENTS: Record<string, boolean> = {
-  introduction: true,
-  paragraph: true,
-  image: true,
-  faq: true,
-  conclusion: true,
-  list_paragraph: true,
-  numbered_list_paragraph: true,
-  featured_snippet_block: true,
-  table: true,
-  pros_and_cons: true,
-  quote: true,
-}
 
 function slugify(input: string): string {
   return input

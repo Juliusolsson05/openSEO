@@ -16,50 +16,11 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Label } from '@/components/ui/label'
-
-const modelOptions = ['gpt-5-mini', 'gpt-5.2', 'claude-sonnet-4-5-20250929']
-
-/** Must match DEFAULT_GENERATION_ELEMENTS in blog.service.ts */
-const DEFAULT_ELEMENTS: Record<string, boolean> = {
-  introduction: true,
-  paragraph: true,
-  image: true,
-  faq: true,
-  conclusion: true,
-  list_paragraph: true,
-  numbered_list_paragraph: true,
-  featured_snippet_block: true,
-  table: true,
-  pros_and_cons: true,
-  quote: true,
-}
-
-const generationElementOptions = [
-  'paragraph',
-  'list_paragraph',
-  'numbered_list_paragraph',
-  'image',
-  'introduction',
-  'conclusion',
-  'table',
-  'quote',
-  'featured_snippet_block',
-  'list_featured_snippet_block',
-  'pros_and_cons',
-  'faq',
-  'timeline',
-  'versus',
-  'statistic',
-  'bar_chart',
-  'case_study',
-  'tool_recommendation',
-  'glossary',
-  'context',
-  'code_cluster',
-  'poll',
-  'quiz',
-  'interactive_calculator',
-]
+import {
+  DEFAULT_GENERATION_ELEMENTS,
+  GENERATION_ELEMENT_OPTIONS,
+  MODEL_OPTIONS,
+} from '@/lib/constants/generation'
 
 const pretty = (value: string) =>
   value.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
@@ -74,7 +35,7 @@ export default function SettingsPage() {
   const [generation, setGeneration] = useState<GenerationSettings>({
     blog_post_structure_model: 'gpt-5.2',
     blog_post_content_model: 'gpt-5-mini',
-    initial_generation_elements: { ...DEFAULT_ELEMENTS },
+    initial_generation_elements: { ...DEFAULT_GENERATION_ELEMENTS },
   })
   const [newInboundKeyName, setNewInboundKeyName] = useState('')
   const [newInboundKeyValue, setNewInboundKeyValue] = useState<string | null>(null)
@@ -86,7 +47,7 @@ export default function SettingsPage() {
     const hasKeys = saved && Object.keys(saved).length > 0
     setGeneration({
       ...savedSettings,
-      initial_generation_elements: hasKeys ? saved : { ...DEFAULT_ELEMENTS },
+      initial_generation_elements: hasKeys ? saved : { ...DEFAULT_GENERATION_ELEMENTS },
     })
   }, [savedSettings])
 
@@ -135,7 +96,7 @@ export default function SettingsPage() {
                     onChange={(e) => setGeneration((prev) => ({ ...prev, blog_post_structure_model: e.target.value }))}
                     className="h-9 w-full rounded-md border border-input bg-background px-3 text-[13px]"
                   >
-                    {modelOptions.map((model) => <option key={model} value={model}>{model}</option>)}
+                    {MODEL_OPTIONS.map((model) => <option key={model} value={model}>{model}</option>)}
                   </select>
                 </Field>
 
@@ -145,7 +106,7 @@ export default function SettingsPage() {
                     onChange={(e) => setGeneration((prev) => ({ ...prev, blog_post_content_model: e.target.value }))}
                     className="h-9 w-full rounded-md border border-input bg-background px-3 text-[13px]"
                   >
-                    {modelOptions.map((model) => <option key={model} value={model}>{model}</option>)}
+                    {MODEL_OPTIONS.map((model) => <option key={model} value={model}>{model}</option>)}
                   </select>
                 </Field>
               </div>
@@ -154,7 +115,7 @@ export default function SettingsPage() {
                 <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Initial Generation Elements</Label>
                 <p className="text-[12px] text-muted-foreground">Controls which element types are included when generating a new blog post.</p>
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                  {generationElementOptions.map((element) => (
+                  {GENERATION_ELEMENT_OPTIONS.map((element) => (
                     <label key={element} className="flex items-center gap-2 rounded-sm border border-border p-2 text-[12px]">
                       <input
                         type="checkbox"
