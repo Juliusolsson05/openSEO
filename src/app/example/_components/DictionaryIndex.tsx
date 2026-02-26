@@ -18,7 +18,6 @@ export function DictionaryIndex({ dictionary }: Props) {
       )
     : dictionary.words
 
-  // Group by first letter
   const grouped: Record<string, typeof filtered> = {}
   for (const word of filtered) {
     const letter = word.keyword[0].toUpperCase()

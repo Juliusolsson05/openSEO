@@ -181,7 +181,6 @@ export default function BlogSchedulingPage() {
       setSchedulePost(null)
       setScheduleDate('')
     } catch {
-      // toast handled in mutation
     }
   }
 
@@ -225,7 +224,6 @@ export default function BlogSchedulingPage() {
         setSelectedIds(new Set())
       }
     } catch {
-      // toast handled in mutations
     }
   }
 

@@ -70,7 +70,6 @@ export function Presentation() {
   // keyboard
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // only respond if presentation is roughly in viewport
       if (e.key === 'ArrowRight') next()
       if (e.key === 'ArrowLeft') prev()
     }

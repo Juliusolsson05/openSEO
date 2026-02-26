@@ -14,12 +14,13 @@ export function parseToolArguments(response: OpenAI.Chat.Completions.ChatComplet
  */
 export function parseJsonResponse<T = unknown>(response: OpenAI.Chat.Completions.ChatCompletion): T {
   const message = response.choices[0]?.message
+  const finishReason = response.choices[0]?.finish_reason
   if (message?.refusal) {
     throw new Error(`Model refused to respond: ${message.refusal}`)
   }
   const content = message?.content
   if (!content) {
-    throw new Error('No content in response')
+    throw new Error(`No content in response (finish_reason: ${finishReason})`)
   }
   return JSON.parse(content) as T
 }
@@ -40,7 +41,6 @@ export function toStrictSchema(schema: Record<string, any>): Record<string, any>
     result.required = Object.keys(result.properties)
     result.additionalProperties = false
 
-    // Recursively process nested properties
     const props: Record<string, any> = {}
     for (const [key, value] of Object.entries(result.properties)) {
       props[key] = toStrictSchema(value as Record<string, any>)

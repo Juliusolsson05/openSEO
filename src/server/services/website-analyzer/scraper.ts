@@ -108,7 +108,6 @@ export async function scrapeWebsite(websiteUrl: string): Promise<ScrapeResult> {
   const base = normalizeUrl(websiteUrl)
   const pages: ScrapedPage[] = []
 
-  // Fetch homepage first (required)
   const homepage = await fetchPage(base)
   if (!homepage) {
     // Try with www
@@ -135,20 +134,16 @@ async function scrapeFromHomepage(
     text: stripHtml(homepage.html).slice(0, MAX_BODY_CHARS),
   })
 
-  // Find internal links from homepage to prioritize real pages
   const internalLinks = extractInternalLinks(homepage.html, base)
 
-  // Build candidate URLs: prioritize discovered links that match our patterns
   const candidates: string[] = []
   for (const path of CANDIDATE_PATHS.slice(1)) {
-    // Check if there's a discovered link matching this pattern
     const match = internalLinks.find((link) =>
       link.toLowerCase().includes(path.replace('/', ''))
     )
     candidates.push(match || `${base}${path}`)
   }
 
-  // Fetch remaining pages in parallel
   const results = await Promise.all(
     candidates.slice(0, MAX_PAGES - 1).map((url) => fetchPage(url))
   )

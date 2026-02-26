@@ -36,7 +36,6 @@ export function ElementRenderer({
   onElementAdded,
   onElementDeleted,
 }: ElementRendererProps) {
-  // Loading skeleton
   if (element.isLoading) {
     const Loading = getLoadingComponent(element.element_type as ElementType)
     return <Loading />

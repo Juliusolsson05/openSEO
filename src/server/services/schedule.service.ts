@@ -122,7 +122,6 @@ export class ScheduleService {
     const intervalDays = schedule.interval_days ?? 7
     const startDate = new Date(payload.startDate)
 
-    // Re-schedule each title in the bulk schedule by interval
     await prisma.$transaction(
       schedule.titles.map((title, index) => {
         const scheduledDate = new Date(startDate)
@@ -135,7 +134,6 @@ export class ScheduleService {
       }),
     )
 
-    // Update the schedule start date as well
     return prisma.bulkSchedule.update({
       where: { id: payload.scheduleId },
       data: { start_date: startDate },

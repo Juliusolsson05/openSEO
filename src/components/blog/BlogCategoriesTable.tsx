@@ -146,7 +146,6 @@ export default function BlogCategoriesTable() {
     try {
       await generateCategoriesMutation.mutateAsync()
     } catch {
-      // toast handled in mutation
     }
   }
 
@@ -154,7 +153,6 @@ export default function BlogCategoriesTable() {
     try {
       await autoCategorizeMutation.mutateAsync()
     } catch {
-      // toast handled in mutation
     }
   }
 
@@ -165,7 +163,6 @@ export default function BlogCategoriesTable() {
       setNewCategoryName('')
       setAddOpen(false)
     } catch {
-      // toast handled in mutation
     }
   }
 
@@ -183,7 +180,6 @@ export default function BlogCategoriesTable() {
       setEditCategoryId(null)
       setEditCategoryName('')
     } catch {
-      // toast handled in mutation
     }
   }
 
@@ -191,7 +187,6 @@ export default function BlogCategoriesTable() {
     try {
       await deleteCategoryMutation.mutateAsync(id)
     } catch {
-      // toast handled in mutation
     }
   }
 
@@ -201,7 +196,6 @@ export default function BlogCategoriesTable() {
       await bulkDeleteMutation.mutateAsync(selectedIds)
       setSelectedIds([])
     } catch {
-      // toast handled in mutation
     }
   }
 

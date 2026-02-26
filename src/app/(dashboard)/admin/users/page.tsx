@@ -23,7 +23,6 @@ export default function AdminUsersPage() {
       await approveEmail.mutateAsync({ email })
       setEmail('')
     } catch {
-      // toast handled in mutation
     }
   }
 

@@ -161,13 +161,11 @@ export class CategoryService {
     const categories = await categoryRepository.findMany(companyId)
     if (categories.length === 0) throw new ValidationError('No categories exist. Create categories first.')
 
-    // Use the AI categorization for a single title
     const results = await categorizeTitlesAI(
       [{ id: title.id, text: title.title_text } as any],
       categories.map((c) => ({ id: c.id, name: c.name })),
     )
 
-    // Apply the categorization result
     const match = results.find((r: any) => r.titleId === titleId)
     const assignedIds = (match as any)?.categoryIds ?? []
     if (assignedIds.length > 0) {

@@ -76,7 +76,6 @@ export default function BlogCtaPage() {
       setCampaignName('')
       setModal({ type: null })
     } catch {
-      // toast handled in mutation
     }
   }
 
@@ -87,7 +86,6 @@ export default function BlogCtaPage() {
       setCampaignName('')
       setModal({ type: null })
     } catch {
-      // toast handled in mutation
     }
   }
 
@@ -98,7 +96,6 @@ export default function BlogCtaPage() {
       resetCtaForm()
       setModal({ type: null })
     } catch {
-      // toast handled in mutation
     }
   }
 
@@ -109,7 +106,6 @@ export default function BlogCtaPage() {
       resetCtaForm()
       setModal({ type: null })
     } catch {
-      // toast handled in mutation
     }
   }
 
@@ -393,7 +389,6 @@ export default function BlogCtaPage() {
                     await deleteCTAMutation.mutateAsync(pendingDelete.id)
                   }
                 } catch {
-                  // toast handled in mutation
                 }
                 setPendingDelete(null)
               }}

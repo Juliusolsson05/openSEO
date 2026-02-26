@@ -44,7 +44,6 @@ const initialState: AutopilotState = {
 
 let operationCounter = 1
 
-// Async thunk: start the autopilot task
 export const startAutopilot = createAsyncThunk<
   { taskId: string; postId: number },
   number,
@@ -169,7 +168,6 @@ async function processLog(
   const state = getState()
   const operations = { ...state.autopilot.operations }
 
-  // Final completion
   if (
     log.stage === ('autopilot' as any) &&
     log.type === 'status' &&
@@ -180,7 +178,6 @@ async function processLog(
     return
   }
 
-  // Track current stage
   if (log.type === 'stage_started') {
     dispatch(stageChanged(log.stage))
   }

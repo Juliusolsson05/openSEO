@@ -88,7 +88,6 @@ export default function ElementsPage() {
   const { data: genSettings, isLoading: loading } = useGenerationSettingsQuery()
   const updateGenSettings = useUpdateGenerationSettingsMutation()
 
-  // Sync from server once
   if (genSettings && !settingsSynced) {
     const saved = genSettings.initial_generation_elements
     if (saved && typeof saved === 'object') {
@@ -97,7 +96,6 @@ export default function ElementsPage() {
     setSettingsSynced(true)
   }
 
-  // Auto-dismiss toast
   useEffect(() => {
     if (!toast) return
     const t = setTimeout(() => setToast(null), 3000)
@@ -127,7 +125,6 @@ export default function ElementsPage() {
       await updateGenSettings.mutateAsync({ initial_generation_elements: toRecord(settings) })
       setDirty(false)
     } catch {
-      // toast handled in mutation
     } finally {
       setSaving(false)
     }

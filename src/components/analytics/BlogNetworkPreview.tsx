@@ -33,7 +33,6 @@ function buildGraph(
   const cx = w / 2
   const cy = h / 2
 
-  // Compute incoming link counts
   const incomingMap = new Map<number, number>()
   for (const post of blogTitles) {
     for (const linked of post.post_linking || []) {
@@ -152,7 +151,6 @@ export function BlogNetworkPreview({ blogTitles }: BlogNetworkPreviewProps) {
   const preview = useMemo(() => buildGraph(blogTitles, 400, 340), [blogTitles])
   const full = useMemo(() => buildGraph(blogTitles, 900, 700, 50), [blogTitles])
 
-  // Ranked posts by incoming links for the table
   const rankedPosts = useMemo(() => {
     return [...full.nodes]
       .sort((a, b) => b.incoming - a.incoming || b.outgoing - a.outgoing)

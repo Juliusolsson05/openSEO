@@ -30,7 +30,6 @@ export async function api<T = any>(
   const companyId =
     (typeof window !== 'undefined' ? getCookie('companyId') : null) ?? null
 
-  // Build query string from params
   let fullUrl = `${baseUrl}${url}`
   if (options.params) {
     const searchParams = new URLSearchParams()

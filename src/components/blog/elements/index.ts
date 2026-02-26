@@ -1,4 +1,3 @@
-// Element system barrel export — core
 export { BaseElement } from './BaseElement'
 export { BasePreview } from './BasePreview'
 export { BaseEdit } from './BaseEdit'

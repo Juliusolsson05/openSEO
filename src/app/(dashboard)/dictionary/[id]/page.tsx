@@ -82,7 +82,6 @@ export default function DictionaryDetailPage() {
         word_ids: [word.id],
       })
     } catch {
-      // toast handled in mutation
     } finally {
       setLoadingWordId(null)
     }
@@ -93,7 +92,6 @@ export default function DictionaryDetailPage() {
     try {
       await generateDefinitions.mutateAsync({ dictionary_id: Number(params.id) })
     } catch {
-      // toast handled in mutation
     } finally {
       setGeneratingAll(false)
     }
@@ -111,7 +109,6 @@ export default function DictionaryDetailPage() {
       })
       toast.success('Word saved')
     } catch {
-      // toast handled in mutation
     }
   }
 
@@ -120,7 +117,6 @@ export default function DictionaryDetailPage() {
     try {
       await publishDict.mutateAsync({ dictionaryId: Number(params.id) })
     } catch {
-      // toast handled in mutation
     } finally {
       setPublishing(false)
     }
@@ -138,7 +134,6 @@ export default function DictionaryDetailPage() {
       URL.revokeObjectURL(url)
       toast.success('Dictionary exported')
     } catch {
-      // toast handled in mutation
     }
   }
 
@@ -148,7 +143,6 @@ export default function DictionaryDetailPage() {
     try {
       await deleteWordMutation.mutateAsync({ wordId: id, dictionaryId: Number(params.id) })
     } catch {
-      // toast handled in mutation
     }
   }
 

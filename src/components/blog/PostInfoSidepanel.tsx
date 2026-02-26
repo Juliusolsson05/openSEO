@@ -131,7 +131,6 @@ export default function PostInfoSidepanel({
       if (data) onUpdatePost?.({ ...post, ...(data as any), seo_title: editedSeoTitle })
       setSeoDialogOpen(false)
     } catch {
-      // toast handled in mutation
     } finally {
       setSaving(false)
     }
@@ -145,7 +144,6 @@ export default function PostInfoSidepanel({
       if (data) onUpdatePost?.({ ...post, ...(data as any), meta_description: editedMetaDescription })
       setMetaDialogOpen(false)
     } catch {
-      // toast handled in mutation
     } finally {
       setSaving(false)
     }

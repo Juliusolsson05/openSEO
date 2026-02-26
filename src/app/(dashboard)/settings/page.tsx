@@ -40,7 +40,6 @@ export default function SettingsPage() {
   const [newInboundKeyName, setNewInboundKeyName] = useState('')
   const [newInboundKeyValue, setNewInboundKeyValue] = useState<string | null>(null)
 
-  // Sync local state when server data loads
   useEffect(() => {
     if (!savedSettings) return
     const saved = savedSettings.initial_generation_elements
@@ -64,7 +63,6 @@ export default function SettingsPage() {
       setNewInboundKeyValue(payload?.key ?? null)
       setNewInboundKeyName('')
     } catch {
-      // toast handled in mutation
     }
   }
 

@@ -41,7 +41,6 @@ export default function CompanyProfilePage() {
   const [localProfile, setLocalProfile] = useState<CompanyProfile>(emptyProfile)
   const [profileSynced, setProfileSynced] = useState(false)
 
-  // Sync local state once from server
   if (profileData && !profileSynced) {
     setWebsiteUrl(profileData.website_url ?? '')
     setLocalProfile(
@@ -54,13 +53,11 @@ export default function CompanyProfilePage() {
 
   const companyName = profileData?.name ?? ''
 
-  // Poll analysis job
   const { data: jobData } = useJobStatusQuery(analyzeTaskId, {
     enabled: !!analyzeTaskId,
     refetchInterval: analyzeTaskId ? 2000 : false,
   })
 
-  // Handle job completion
   const jobStatus = jobData?.status
   if (jobStatus === 'completed' && analyzeTaskId) {
     setAnalyzeTaskId(null)
@@ -95,7 +92,6 @@ export default function CompanyProfilePage() {
       const result = await analyzeCompany.mutateAsync({ websiteUrl })
       if (result.task_id) setAnalyzeTaskId(result.task_id)
     } catch {
-      // toast handled in mutation
     }
   }
 

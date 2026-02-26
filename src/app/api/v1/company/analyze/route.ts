@@ -20,7 +20,6 @@ export const POST = apiHandler(async (ctx) => {
     throw new ValidationError('website_url is required')
   }
 
-  // Basic URL validation
   try {
     const withProtocol = /^https?:\/\//i.test(websiteUrl) ? websiteUrl : `https://${websiteUrl}`
     new URL(withProtocol)

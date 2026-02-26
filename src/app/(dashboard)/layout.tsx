@@ -39,7 +39,6 @@ export default function DashboardLayout({
 
   const userId = session?.user?.id
 
-  // Manual trigger: called from topbar "Take the tour" button
   const startTour = useCallback(() => {
     if (!userId) return
     localStorage.removeItem(`openseo:onboarding-tour:done:${userId}`)

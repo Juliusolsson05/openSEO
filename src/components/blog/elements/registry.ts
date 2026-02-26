@@ -1,11 +1,3 @@
-/**
- * Element registry — maps element_type strings to React components.
- * Ported from aurora_dashboard/views/apps/blog/elements/elements.ts
- *
- * Individual element components will be added by sub-agents.
- * Until then, all types fall back to DefaultComponent/DefaultPreview.
- */
-
 import type { ComponentType } from 'react'
 import type { ElementType, EditSchema } from './types'
 import { DefaultComponent, DefaultLoading, DefaultPreview } from './DefaultComponent'
@@ -45,7 +37,6 @@ export interface PreviewComponentProps {
 }
 
 // ─── Component registries ────────────────────────────────────────────
-// These will be populated as sub-agents port each element.
 
 const componentRegistry: Partial<Record<ElementType, ComponentType<ElementComponentProps>>> = {}
 const previewRegistry: Partial<Record<ElementType, ComponentType<PreviewComponentProps>>> = {}

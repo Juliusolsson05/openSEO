@@ -26,7 +26,6 @@ const initialState: DictionarySessionState = {
   error: null,
 }
 
-// Async thunks
 export const startDictionaryGeneration = createAsyncThunk(
   'dictionarySession/startGeneration',
   async (formData: {
@@ -137,7 +136,6 @@ export const dictionarySessionSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // startDictionaryGeneration
     builder
       .addCase(startDictionaryGeneration.pending, (state) => {
         state.isGenerating = true
@@ -163,7 +161,6 @@ export const dictionarySessionSlice = createSlice({
         state.error = action.payload as string
       })
 
-    // acceptLetterKeywords
     builder
       .addCase(acceptLetterKeywords.pending, (state) => {
         state.isGenerating = true
@@ -190,7 +187,6 @@ export const dictionarySessionSlice = createSlice({
         state.error = action.payload as string
       })
 
-    // rejectLetterKeywords
     builder
       .addCase(rejectLetterKeywords.pending, (state) => {
         state.isGenerating = true
@@ -207,7 +203,6 @@ export const dictionarySessionSlice = createSlice({
         state.error = action.payload as string
       })
 
-    // completeGeneration
     builder
       .addCase(completeGeneration.fulfilled, (state) => {
         state.currentDictionary = null

@@ -47,7 +47,6 @@ export function Modal({
     return () => document.removeEventListener('keydown', handler)
   }, [open, closeOnEscape, onClose])
 
-  // Prevent body scroll when open
   useEffect(() => {
     if (!open) return
     const prev = document.body.style.overflow

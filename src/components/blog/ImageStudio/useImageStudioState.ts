@@ -16,10 +16,8 @@ interface Options {
 export function useImageStudioState(opts: Options) {
   const { open, blogId, imageNumber, currentUrl, currentDescription = '', postTitle = '', onImageApplied, onClose } = opts
 
-  // Provider
   const [provider, setProvider] = useState<ImageStudioProvider>('ideogram')
 
-  // Shared
   const [prompt, setPrompt] = useState(currentDescription)
   const [selectedUrl, setSelectedUrl] = useState<string | null>(currentUrl ?? null)
   const [history, setHistory] = useState<HistoryEntry[]>(
@@ -29,25 +27,20 @@ export function useImageStudioState(opts: Options) {
   const [isApplying, setIsApplying] = useState(false)
   const [photopeaOpen, setPhotopeaOpen] = useState(false)
 
-  // Ideogram
   const [ideogramQuality, setIdeogramQuality] = useState<1 | 2 | 3>(2)
   const [magicPrompt, setMagicPrompt] = useState(true)
 
-  // GPT Image
   const [gptQuality, setGptQuality] = useState<'low' | 'medium' | 'high'>('medium')
   const [gptSize, setGptSize] = useState<'1024x1024' | '1536x1024' | '1024x1536' | 'auto'>('auto')
   const [gptBackground, setGptBackground] = useState<'auto' | 'transparent' | 'opaque'>('auto')
 
-  // Nano Banana
   const [nanoModel, setNanoModel] = useState<'flash' | 'pro'>('flash')
   const [nanoAspectRatio, setNanoAspectRatio] = useState<'1:1' | '3:4' | '4:3' | '9:16' | '16:9'>('16:9')
 
-  // Imagen
   const [imagenAspectRatio, setImagenAspectRatio] = useState<'1:1' | '3:4' | '4:3' | '9:16' | '16:9'>('16:9')
 
   const editableImageUrl = selectedUrl ?? currentUrl ?? null
 
-  // Reset on open
   useEffect(() => {
     if (!open) return
     setPrompt(currentDescription)
@@ -118,29 +111,21 @@ export function useImageStudioState(opts: Options) {
   }, [onImageApplied, onClose])
 
   return {
-    // Provider
     provider, setProvider,
-    // Shared
     prompt, setPrompt,
     selectedUrl, setSelectedUrl,
     history,
     isGenerating, isApplying,
     editableImageUrl,
-    // Photopea
     photopeaOpen, setPhotopeaOpen,
-    // Ideogram
     ideogramQuality, setIdeogramQuality,
     magicPrompt, setMagicPrompt,
-    // GPT Image
     gptQuality, setGptQuality,
     gptSize, setGptSize,
     gptBackground, setGptBackground,
-    // Nano Banana
     nanoModel, setNanoModel,
     nanoAspectRatio, setNanoAspectRatio,
-    // Imagen
     imagenAspectRatio, setImagenAspectRatio,
-    // Actions
     onGenerate, onUploadSelect, onStockSelect, onApply,
     addToHistory,
     postTitle, currentDescription,

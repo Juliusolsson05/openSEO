@@ -50,7 +50,6 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  // Dialogs
   const [showRegenerate, setShowRegenerate] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
   const [confirmText, setConfirmText] = useState('')
@@ -70,7 +69,7 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
       onRefreshPost?.()
       if (postId) dispatch(invalidatePost(postId) as any)
     } catch {
-      // errors/toasts handled in mutations
+      // handled in mutations
     } finally {
       setLoadingAction(null)
     }

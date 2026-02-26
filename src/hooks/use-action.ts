@@ -58,7 +58,6 @@ export function useAction(options: UseActionOptions = {}): UseActionReturn {
       const start = Date.now()
       let longShown = false
 
-      // Elapsed timer
       timerRef.current = setInterval(() => {
         const ms = Date.now() - start
         setElapsed(ms)

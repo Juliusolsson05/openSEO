@@ -95,7 +95,6 @@ async function saveProfile(companyId: number, websiteUrl: string, profile: Compa
   const company = await prisma.company.findUnique({ where: { id: companyId } })
   if (!company) throw new NotFoundError('Company not found')
 
-  // Update company with profile + derived fields
   await prisma.company.update({
     where: { id: companyId },
     data: {

@@ -30,26 +30,17 @@ export default function PublishingPage() {
   const [activeJobId, setActiveJobId] = useState<string | null>(null)
   const [isSyncing, setIsSyncing] = useState<'posts' | 'dictionaries' | null>(null)
 
-  // Sync local form state from server data
   useEffect(() => {
     if (!publishingData) return
     setPublishingEndpoint(publishingData.api_endpoint ?? '')
     setHasExistingKey(Boolean(publishingData.has_api_key))
   }, [publishingData])
 
-  // Poll job status while active
   const { data: jobData } = useJobStatusQuery(activeJobId, {
     enabled: !!activeJobId,
     refetchInterval: activeJobId ? 1500 : false,
   })
   const jobState = jobData?.status ?? null
-
-  // Stop polling when job is done
-  useEffect(() => {
-    if (jobState === 'completed' || jobState === 'failed' || jobState === 'not_available') {
-      // polling already stopped by refetchInterval logic — no action needed
-    }
-  }, [jobState])
 
   const submitForm = async (e: FormEvent) => {
     e.preventDefault()
@@ -63,7 +54,6 @@ export default function PublishingPage() {
       if (apiKey) setHasExistingKey(true)
       setApiKey('')
     } catch {
-      // toast handled in mutation
     }
   }
 
@@ -76,7 +66,6 @@ export default function PublishingPage() {
           : await syncDictionaries.mutateAsync()
       setActiveJobId(result.jobId)
     } catch {
-      // toast handled in mutation
     } finally {
       setIsSyncing(null)
     }

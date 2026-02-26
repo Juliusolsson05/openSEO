@@ -26,7 +26,6 @@ export function BlogPostCalendar({ blogTitles }: BlogPostCalendarProps) {
     const firstDay = new Date(year, 0, 1)
     const lastDay = new Date(year, 11, 31)
 
-    // Count posts per day
     const counts = new Map<string, number>()
     for (const item of blogTitles || []) {
       if (!item.generated_date) continue

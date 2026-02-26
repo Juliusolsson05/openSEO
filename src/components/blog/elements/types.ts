@@ -1,7 +1,3 @@
-/**
- * Element types and edit schema types — ported from elements.ts + edit.ts
- */
-
 // All element types in the system
 export type ElementType =
   | 'paragraph'

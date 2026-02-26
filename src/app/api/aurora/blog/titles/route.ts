@@ -99,7 +99,6 @@ const handler = apiHandler(async (ctx) => {
     if (t.blogPostId != null) blogPostIdToTitleId.set(t.blogPostId, t.id)
   }
 
-  // Fetch BlogPostPostLink edges for blog posts owned by titles on this page
   const blogPostIds = data.map((t) => t.blogPostId).filter((id): id is number => id != null)
   const blogPostLinks = blogPostIds.length
     ? await prisma.blogPostPostLink.findMany({

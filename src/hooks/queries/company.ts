@@ -7,7 +7,6 @@ import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/get-error-message'
 import type { CompanyProfile, CompanyProfileResponse, AnalyzeResponse } from '@/types/company'
 
-// Re-export for consumers that import types from this hook file
 export type { CompanyProfile, CompanyProfileResponse, AnalyzeResponse }
 
 // ─── Queries ─────────────────────────────────────────────────────────────────

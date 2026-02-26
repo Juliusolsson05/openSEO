@@ -37,7 +37,6 @@ export function BaseEdit({
   const { data: post } = usePostQuery(blogId)
   const { updateElement } = useElementsApi()
 
-  // Determine element type from post data
   const elementType = post?.elements.find((el) => el.id === elementId)
     ?.element_type as ElementType | undefined
 
@@ -92,7 +91,6 @@ export function BaseEdit({
           {editSchema ? (
             <div className="space-y-4">
               {Object.entries(editSchema.fields).map(([key, field]) => {
-                // Pooled field
                 if ('poolField' in field && field.poolField) {
                   const pf = field.poolField
                   const pooledValue = pf.keys.reduce(
@@ -109,7 +107,6 @@ export function BaseEdit({
                   )
                 }
 
-                // Regular field
                 const editField = field as EditField
                 const value = editField.passthrough ? editedContent : editedContent[key]
                 return (

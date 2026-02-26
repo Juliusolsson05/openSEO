@@ -205,7 +205,6 @@ export default function BlogTitlesPage() {
       setGenTopic('')
       setShowGenForm(false)
     } catch {
-      // toast handled in mutation
     } finally {
       setGenLoading(false)
     }

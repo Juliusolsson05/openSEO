@@ -7,7 +7,6 @@ import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/get-error-message'
 import type { GenerationSettings, PublishingSettings, ApiKey } from '@/types/settings'
 
-// Re-export for consumers that import types from this hook file
 export type { GenerationSettings, PublishingSettings, ApiKey }
 
 // ─── Queries ─────────────────────────────────────────────────────────────────

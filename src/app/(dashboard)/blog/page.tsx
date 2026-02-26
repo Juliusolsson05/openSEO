@@ -84,7 +84,6 @@ function BlogPageContent() {
     try {
       await generatePost.mutateAsync(undefined)
     } catch {
-      // toast handled in mutation
     }
   }
 
