@@ -133,3 +133,17 @@ export interface BlogTitle {
   postId?: number | null
   company: number
 }
+
+/** Lightweight list-view shape returned by GET /api/aurora/blog/posts/ */
+export interface BlogPostSummary {
+  id: number
+  title_text: string
+  slug: string
+  status: number | string
+  is_published: boolean
+  created_at: string
+  cover_image: CoverImage | null
+  elements: { id: number; element_type: string }[]
+  focus_keyword: string
+  excerpt: string
+}

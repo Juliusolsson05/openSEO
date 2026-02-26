@@ -13,7 +13,16 @@ export type { UserType, AuthUser } from './auth'
 export type { ApiOptions, ApiResponse, ApiMeta, ApiProblem, ApiSuccessResponse, ApiErrorResponse } from './api'
 
 // Blog
-export type { BlogPost, BlogPostElement, BlogTitle, LinkedPost, Category, CoverImage, HyperlinkData } from './blog'
+export type {
+  BlogPost,
+  BlogPostElement,
+  BlogPostSummary,
+  BlogTitle,
+  LinkedPost,
+  Category,
+  CoverImage,
+  HyperlinkData,
+} from './blog'
 
 // Content Elements
 export type {
@@ -33,8 +42,51 @@ export type {
   CaseStudyContent,
 } from './content-elements'
 
-// Dictionary / Public Content
-export type { ContentElement, ContentPost, ContentFaq, WordDefinition, ContentWord, ContentDictionary } from './dictionary'
+// Dictionary
+export type {
+  DashboardFAQ,
+  DashboardDefinition,
+  DashboardWord,
+  DashboardDictionary,
+  ContentElement,
+  ContentPost,
+  ContentFaq,
+  WordDefinition,
+  ContentWord,
+  ContentDictionary,
+} from './dictionary'
+
+// CTA
+export type { CTA } from './cta'
+
+// Analytics
+export type {
+  AnalyticsMetric,
+  ScoreBreakdownItem,
+  BlogGeneralData,
+  BlogGeneralResponse,
+  BlogMetaData,
+  BlogMetaResponse,
+  OversizedSeoTitle,
+  OversizedMetaDescription,
+  DictionaryWordCount,
+  DictionaryGeneralResponse,
+  AnalyticsBlogTitle,
+  ElementBreakdownResponse,
+  AnalyticsData,
+} from './analytics'
+
+// Autopilot
+export type {
+  AutopilotStage,
+  AutopilotLogType,
+  AutopilotLog,
+  AutopilotLogData,
+  AutopilotOperation,
+  RecommendationSummary,
+  ImprovementSummary,
+  ImageSummary,
+} from './autopilot'
 
 // Publishing
 export type { InboundEnvelope, RawElement } from './publishing'
