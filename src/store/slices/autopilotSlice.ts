@@ -169,15 +169,12 @@ async function processLog(
   const state = getState()
   const operations = { ...state.autopilot.operations }
 
-  console.log(`[Autopilot] Processing log: stage=${log.stage}, type=${log.type}`)
-
   // Final completion
   if (
     log.stage === ('autopilot' as any) &&
     log.type === 'status' &&
     log.data.status === 'completed'
   ) {
-    console.log('[Autopilot] Process completed')
     dispatch(removeSkeletonLoaders(postId) as any)
     dispatch(autopilotStopped())
     return

@@ -15,11 +15,11 @@ function WelcomeTourDetector({ userId, onDetected }: { userId: string | undefine
   useEffect(() => {
     if (!userId) return
     const fromUrl = searchParams.get('welcome') === '1'
-    const fromStorage = localStorage.getItem('aurora:show-welcome-tour') === '1'
+    const fromStorage = localStorage.getItem('openseo:show-welcome-tour') === '1'
 
     if (fromUrl || fromStorage) {
-      localStorage.removeItem('aurora:show-welcome-tour')
-      localStorage.removeItem(`aurora:onboarding-tour:done:${userId}`)
+      localStorage.removeItem('openseo:show-welcome-tour')
+      localStorage.removeItem(`openseo:onboarding-tour:done:${userId}`)
       const t = setTimeout(onDetected, 300)
       return () => clearTimeout(t)
     }
@@ -42,7 +42,7 @@ export default function DashboardLayout({
   // Manual trigger: called from topbar "Take the tour" button
   const startTour = useCallback(() => {
     if (!userId) return
-    localStorage.removeItem(`aurora:onboarding-tour:done:${userId}`)
+    localStorage.removeItem(`openseo:onboarding-tour:done:${userId}`)
     setShowTour(true)
   }, [userId])
 

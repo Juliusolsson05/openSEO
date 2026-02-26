@@ -111,7 +111,7 @@ export function OnboardingTour({ userId, enabled, onFinish }: Props) {
         action === ACTIONS.CLOSE
       ) {
         localStorage.setItem(
-          `aurora:onboarding-tour:done:${userId}`,
+          `openseo:onboarding-tour:done:${userId}`,
           '1',
         )
         setRun(false)
