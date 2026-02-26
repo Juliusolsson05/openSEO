@@ -40,7 +40,6 @@ After: "Customer retention is often more cost-effective than acquisition. Compan
         schema,
       },
     },
-    max_completion_tokens: 2000,
   });
 
   let enhanced = parseJsonResponse<any>(response);

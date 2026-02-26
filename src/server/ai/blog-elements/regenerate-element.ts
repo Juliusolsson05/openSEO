@@ -58,7 +58,6 @@ Regeneration note (primary instruction — follow this above all else): "${regen
         schema,
       },
     },
-    max_completion_tokens: 16000,
   });
 
   let regeneratedElements = parseJsonResponse<any>(response);

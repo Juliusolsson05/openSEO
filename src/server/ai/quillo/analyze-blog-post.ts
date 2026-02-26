@@ -119,7 +119,6 @@ export async function analyzeBlogPost(postData: unknown) {
         },
       },
     },
-    max_completion_tokens: 2000,
   });
 
   const analysisResult = parseJsonResponse(response);

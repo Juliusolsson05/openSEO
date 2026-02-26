@@ -52,7 +52,6 @@ Generate a '${elementType}' element that fits naturally between these.`,
         schema,
       },
     },
-    max_completion_tokens: 4000,
   });
 
   let generatedElement = parseJsonResponse<any>(response);
