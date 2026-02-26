@@ -5,33 +5,10 @@ import { api, apiPost } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/get-error-message'
+import type { CompanyProfile, CompanyProfileResponse, AnalyzeResponse } from '@/types/company'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export type CompanyProfile = {
-  business_description: string
-  industry: string
-  target_audience: string
-  tone_of_voice: string[]
-  products_services: string[]
-  key_terminology: string[]
-  content_topics: string[]
-  differentiators: string[]
-  detected_language: string
-  _scraped_at?: string
-  _pages_analyzed?: number
-}
-
-export type CompanyProfileResponse = {
-  website_url: string | null
-  profile: CompanyProfile | null
-  name: string
-  business_type: string
-  language: string
-  keywords: unknown
-}
-
-export type AnalyzeResponse = { task_id: string; status: string }
+// Re-export for consumers that import types from this hook file
+export type { CompanyProfile, CompanyProfileResponse, AnalyzeResponse }
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 

@@ -92,5 +92,11 @@ export type {
 export type { InboundEnvelope, RawElement } from './publishing'
 export { readInboundKey } from './publishing'
 
+// Settings
+export type { GenerationSettings, PublishingSettings, ApiKey } from './settings'
+
+// Company
+export type { CompanyProfile, CompanyProfileResponse, AnalyzeResponse } from './company'
+
 // Quillo / AI Chat
 export type { ChatMessage, StructuredMessage } from './quillo'

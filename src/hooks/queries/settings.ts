@@ -5,27 +5,10 @@ import { api, apiPost } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/get-error-message'
+import type { GenerationSettings, PublishingSettings, ApiKey } from '@/types/settings'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export type GenerationSettings = {
-  blog_post_structure_model: string
-  blog_post_content_model: string
-  initial_generation_elements: Record<string, boolean>
-}
-
-export type PublishingSettings = {
-  api_endpoint?: string | null
-  has_api_key?: boolean
-}
-
-export type ApiKey = {
-  id: number
-  name: string
-  key_prefix: string
-  is_active: boolean
-  key?: string
-}
+// Re-export for consumers that import types from this hook file
+export type { GenerationSettings, PublishingSettings, ApiKey }
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
