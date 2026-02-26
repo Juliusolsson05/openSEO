@@ -148,8 +148,6 @@ export function BaseElement({
     try {
       const result = await elementsApi.humanizeElement(blogId, elementId)
       if (result.success) {
-        // TODO: implement proper task polling
-        await new Promise((resolve) => setTimeout(resolve, 3000))
         dispatch(invalidatePost(blogId) as any)
         toast.success('Element humanized', { id: toastId })
       } else {

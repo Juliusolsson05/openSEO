@@ -123,15 +123,14 @@ export async function remove(id: number) {
 
 export async function reorder(blogPostId: number, elementIds: number[]) {
   return prisma.$transaction(async (tx) => {
-    for (const [index, elementId] of elementIds.entries()) {
-      await tx.blogPostElement.updateMany({
-        where: {
-          id: elementId,
-          blogPostId,
-        },
-        data: { order: index },
-      })
-    }
+    await Promise.all(
+      elementIds.map((elementId, index) =>
+        tx.blogPostElement.updateMany({
+          where: { id: elementId, blogPostId },
+          data: { order: index },
+        })
+      )
+    )
 
     return tx.blogPostElement.findMany({
       where: { blogPostId },
