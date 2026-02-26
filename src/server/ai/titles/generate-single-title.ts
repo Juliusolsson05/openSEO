@@ -6,11 +6,19 @@ export async function generateSingleTitle(
   existingTitles?: string[],
   language = 'en',
 ): Promise<{ title_text: string; seo_title: string; focus_keyword: string }> {
-  let systemMessage =
-    "You are an article title generator. You are responsible for creating catchy, SEO-friendly, and grammatically correct blog titles based on the given industry and number of titles requested by the user. The titles should be objective and informative. Ensure the SEO title and focus keyword match Yoast's guidelines. Do NOT make them too cliché and generic — make them actually interesting.";
+  let systemMessage = `You are a blog title strategist. Create blog titles that make readers genuinely curious — titles that promise a specific insight, a surprising angle, or a practical takeaway.
+
+Rules for good titles:
+- Be specific, not vague. "How 3 SaaS Companies Cut Churn by 40% With One Onboarding Change" beats "How to Reduce Customer Churn in SaaS."
+- Promise value the reader can act on. Every title should imply the reader will learn something concrete.
+- Avoid generic clickbait patterns like "The Ultimate Guide to..." or "Everything You Need to Know About..."
+- Use numbers, specific outcomes, or contrarian angles when they fit naturally.
+- Titles should work for an audience that already understands the basics of ${businessType} — do not write beginner-level titles unless asked.
+- Ensure the SEO title and focus keyword follow Yoast's guidelines.
+- Write the title in ${language}.`;
 
   if (existingTitles?.length) {
-    systemMessage += '\n\nThese titles already exist — do NOT generate duplicates:\n' + existingTitles.map((t, i) => `${i + 1}. ${t}`).join('\n');
+    systemMessage += '\n\nThese titles already exist — do NOT generate duplicates or near-duplicates:\n' + existingTitles.map((t, i) => `${i + 1}. ${t}`).join('\n');
   }
 
   const response = await getOpenAIClient().chat.completions.create({
@@ -19,7 +27,7 @@ export async function generateSingleTitle(
       { role: 'system', content: systemMessage },
       {
         role: 'user',
-        content: `Generate 1 blog title for the industry: ${businessType}. Write the title in ${language}.`,
+        content: `Generate 1 blog title for the industry: ${businessType}.`,
       },
     ],
     response_format: {

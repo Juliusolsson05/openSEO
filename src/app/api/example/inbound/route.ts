@@ -101,6 +101,23 @@ function toExamplePost(payload: Record<string, unknown>): { post: ExamplePost; a
     content: typeof el.content === 'string' ? (() => { try { return JSON.parse(el.content as string) } catch { return {} } })() : (el.content as Record<string, unknown>),
   }))
 
+  // Extract cover image from various payload shapes
+  let coverImageUrl = ''
+  let coverImageAlt = ''
+  const rawCover = post.cover_image as Record<string, unknown> | string | undefined
+  if (rawCover && typeof rawCover === 'object') {
+    coverImageUrl = String(rawCover.url ?? '')
+    coverImageAlt = String(rawCover.alt ?? '')
+  } else if (typeof rawCover === 'string') {
+    try {
+      const parsed = JSON.parse(rawCover) as Record<string, unknown>
+      coverImageUrl = String(parsed.url ?? '')
+      coverImageAlt = String(parsed.alt ?? '')
+    } catch {
+      coverImageUrl = rawCover
+    }
+  }
+
   return {
     auroraId: post.id as number | undefined,
     post: {
@@ -108,7 +125,8 @@ function toExamplePost(payload: Record<string, unknown>): { post: ExamplePost; a
       slug: String(post.slug),
       title: String(post.title_text),
       excerpt: String(post.excerpt ?? post.meta_description ?? ''),
-      cover_image_url: '',
+      cover_image_url: coverImageUrl,
+      cover_image_alt: coverImageAlt,
       published_at: new Date().toISOString().slice(0, 10),
       elements,
     },

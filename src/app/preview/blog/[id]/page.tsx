@@ -24,7 +24,7 @@ import {
 import '@/components/blog/elements'
 import { ElementRenderer } from '@/components/blog/elements/ElementRenderer'
 import { getPreviewComponent } from '@/components/blog/elements/registry'
-import type { BlogPost, BlogPostElement } from '@/stores/types'
+import type { BlogPost, BlogPostElement } from '@/types/blog'
 
 type Keyword = { keyword: string; description: string; count: number }
 

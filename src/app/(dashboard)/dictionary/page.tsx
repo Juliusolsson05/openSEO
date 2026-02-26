@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useDictionaryStore } from '@/stores/dictionary-store'
+import { useDictionariesQuery } from '@/hooks/queries/dictionary'
+import { useAppSelector } from '@/store/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -10,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
-import type { DashboardDictionary as Dictionary } from '@/types/blog'
+import type { DashboardDictionary as Dictionary } from '@/types/dictionary'
 
 const statusLabel = (d: Dictionary, currentId?: number, currentLetter?: string) => {
   if (currentId === d.id) return `Generating (${(currentLetter || 'a').toUpperCase()})`
@@ -21,30 +22,29 @@ const statusLabel = (d: Dictionary, currentId?: number, currentLetter?: string) 
 }
 
 export default function DictionaryPage() {
-  const { fetchDictionaries, dictionaries, totalDictionaries, isGenerating, currentDictionary } = useDictionaryStore()
-
   const [searchQuery, setSearchQuery] = useState('')
   const [page, setPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all')
   const itemsPerPage = 10
 
-  useEffect(() => {
-    fetchDictionaries({ searchQuery, itemsPerPage, page })
-  }, [fetchDictionaries, searchQuery, page])
+  const { data, isLoading } = useDictionariesQuery({ searchQuery, itemsPerPage, page })
+  const dictionaries = data?.dictionaries ?? []
+  const totalDictionaries = data?.total ?? 0
+
+  const currentDictionary = useAppSelector((s) => s.dictionarySession.currentDictionary)
+  const isGenerating = useAppSelector((s) => s.dictionarySession.isGenerating)
 
   const rows = useMemo(() => {
-    const list = dictionaries ?? []
-    if (statusFilter === 'all') return list
-
-    return list.filter((d) => {
+    if (statusFilter === 'all') return dictionaries
+    return dictionaries.filter((d) => {
       const done = !['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '')
       return statusFilter === 'completed' ? done : !done
     })
   }, [dictionaries, statusFilter])
 
   const totalPages = Math.max(1, Math.ceil(totalDictionaries / itemsPerPage))
-  const inProgress = (dictionaries ?? []).filter((d) => ['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '')).length
-  const completed = (dictionaries ?? []).filter((d) => !['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '')).length
+  const inProgress = dictionaries.filter((d) => ['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '')).length
+  const completed = dictionaries.filter((d) => !['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '')).length
 
   return (
     <div className="space-y-4">
@@ -87,7 +87,7 @@ export default function DictionaryPage() {
             <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Page</p><p className="text-2xl font-semibold">{page}/{totalPages}</p></CardContent></Card>
           </div>
 
-          {isGenerating && rows.length === 0 ? (
+          {isLoading && rows.length === 0 ? (
             <div className="space-y-2">
               {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-10 rounded-sm" />)}
             </div>

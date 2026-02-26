@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useAuthStore } from '@/stores/auth-store'
+import { useAppSelector } from '@/store/hooks'
+import { logoutUser } from '@/store/authActions'
 import { cn } from '@/lib/utils'
 import {
   FileText,
@@ -111,12 +112,12 @@ function NavLink({ item, pathname, nested = false }: { item: NavItem; pathname: 
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { userData, logout } = useAuthStore()
+  const userData = useAppSelector((s) => s.auth.userData)
   const router = useRouter()
   const isAdmin = userData?.userType === 4
 
   const handleLogout = async () => {
-    await logout()
+    await logoutUser()
     router.push('/login')
   }
 

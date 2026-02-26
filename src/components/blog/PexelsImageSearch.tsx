@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { api } from '@/lib/api'
+import { usePexelsSearchQuery } from '@/hooks/queries/images'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -15,35 +15,34 @@ interface Props { modelValue: boolean; initialSearchTerm?: string; onOpenChange:
 
 export default function PexelsImageSearch({ modelValue, initialSearchTerm = '', onOpenChange, onImageSelected }: Props) {
   const [searchQuery, setSearchQuery] = useState(initialSearchTerm)
-  const [images, setImages] = useState<PexelsImage[]>([])
-  const [totalResults, setTotalResults] = useState(0)
+  const [activeQuery, setActiveQuery] = useState(initialSearchTerm)
   const [currentPage, setCurrentPage] = useState(1)
-  const [perPage] = useState(12)
+  const perPage = 12
   const [selectedImage, setSelectedImage] = useState<PexelsImage | null>(null)
   const [imageDialog, setImageDialog] = useState(false)
-  const [hasSearched, setHasSearched] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+
+  const { data: searchData, isFetching: isLoading } = usePexelsSearchQuery(activeQuery, currentPage, perPage, {
+    enabled: !!activeQuery.trim() && modelValue,
+  })
+
+  const images = searchData?.images ?? []
+  const totalResults = searchData?.total_results ?? 0
+  const hasSearched = !!activeQuery.trim()
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(totalResults / perPage)), [totalResults, perPage])
 
-  const searchImages = async (page = 1) => {
+  const searchImages = (page = 1) => {
     if (!searchQuery.trim()) return
-    setIsLoading(true)
-    try {
-      const { data, error } = await api<SearchImagesResponse>('/api/aurora/blog/images/stock_photos/search', { method: 'GET', params: { query: searchQuery, page, per_page: perPage } })
-      if (error) throw error
-      setImages(data?.images ?? [])
-      setTotalResults(data?.total_results ?? 0)
-      setCurrentPage(page)
-      setHasSearched(true)
-    } catch {
-      setImages([]); setTotalResults(0); setHasSearched(true)
-    } finally { setIsLoading(false) }
+    setCurrentPage(page)
+    setActiveQuery(searchQuery)
   }
 
   useEffect(() => {
-    if (modelValue && initialSearchTerm) { setSearchQuery(initialSearchTerm); searchImages(1) }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (modelValue && initialSearchTerm) {
+      setSearchQuery(initialSearchTerm)
+      setActiveQuery(initialSearchTerm)
+      setCurrentPage(1)
+    }
   }, [modelValue, initialSearchTerm])
 
   return (

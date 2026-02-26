@@ -3,9 +3,17 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { apiPost, apiDelete } from '@/lib/api'
-import { useBlogStore } from '@/stores/blog-store'
-import { useEditorUiStore } from '@/stores/editor-ui-store'
+import { useAppSelector, useAppDispatch } from '@/store/hooks'
+import { setEditMode } from '@/store/slices/editorUiSlice'
+import { invalidatePost } from '@/store/slices/blogUiSlice'
+import {
+  useGenerateImagesMutation,
+  useSyncRecommendedPostsMutation,
+  useSyncKeywordsMutation,
+  usePublishPostMutation,
+  useRegeneratePostMutation,
+  useDeletePostMutation,
+} from '@/hooks/queries/blog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -18,7 +26,6 @@ import {
   Trash2,
   Eye,
   Upload,
-  Lock,
   Loader2,
   SquarePen,
 } from 'lucide-react'
@@ -30,9 +37,15 @@ interface Props {
 
 export default function AdminMenu({ postId, onRefreshPost }: Props) {
   const router = useRouter()
-  const { fetchPost } = useBlogStore()
-  const isEditModeEnabled = useEditorUiStore((s) => s.isEditModeEnabled)
-  const setEditMode = useEditorUiStore((s) => s.setEditMode)
+  const dispatch = useAppDispatch()
+  const isEditModeEnabled = useAppSelector((s) => s.editorUi.isEditModeEnabled)
+
+  const generateImages = useGenerateImagesMutation()
+  const syncRecommended = useSyncRecommendedPostsMutation()
+  const syncKeywords = useSyncKeywordsMutation()
+  const publishPost = usePublishPostMutation()
+  const regeneratePost = useRegeneratePostMutation()
+  const deletePost = useDeletePostMutation()
 
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -41,8 +54,6 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
   const [showRegenerate, setShowRegenerate] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
   const [confirmText, setConfirmText] = useState('')
-
-  // Publish
   const [showPublish, setShowPublish] = useState(false)
 
   useEffect(() => {
@@ -52,14 +63,14 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
     }
   }, [toast])
 
-  const run = async (id: string, label: string, fn: () => Promise<void>) => {
+  const run = async (id: string, fn: () => Promise<void>) => {
     setLoadingAction(id)
     try {
       await fn()
-      setToast({ type: 'success', text: `${label} completed` })
       onRefreshPost?.()
-    } catch (e: any) {
-      setToast({ type: 'error', text: e?.message || `${label} failed` })
+      if (postId) dispatch(invalidatePost(postId) as any)
+    } catch {
+      // errors/toasts handled in mutations
     } finally {
       setLoadingAction(null)
     }
@@ -70,59 +81,47 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
       id: 'images',
       icon: ImagePlus,
       label: 'Generate Images',
-      fn: () => run('images', 'Generate Images', async () => {
-        const { error } = await apiPost('/api/aurora/blog/images/generate/', { post_id: Number(postId), version: 2, magic_prompt: true, gpt_prompt: true })
-        if (error) throw error
+      fn: () => run('images', async () => {
+        await generateImages.mutateAsync({ postId: Number(postId) })
       }),
     },
     {
       id: 'sync-posts',
       icon: Link2,
       label: 'Sync Related Posts',
-      fn: () => run('sync-posts', 'Sync Posts', async () => {
-        const { error } = await apiPost('/api/aurora/blog/posts/sync/recommended/', { post_id: Number(postId) })
-        if (error) throw error
+      fn: () => run('sync-posts', async () => {
+        await syncRecommended.mutateAsync({ postId: Number(postId) })
       }),
     },
     {
       id: 'sync-keywords',
       icon: KeyRound,
       label: 'Sync Keywords',
-      fn: () => run('sync-keywords', 'Sync Keywords', async () => {
-        const { error } = await apiPost('/api/aurora/blog/posts/sync/keywords/', { post_id: Number(postId), dictionary_id: 1 })
-        if (error) throw error
+      fn: () => run('sync-keywords', async () => {
+        await syncKeywords.mutateAsync({ postId: Number(postId) })
       }),
     },
   ]
 
-  const openPublish = async () => {
-    setShowPublish(true)
-  }
+  const openPublish = () => setShowPublish(true)
 
-  const doPublish = () => run('publish', 'Publish', async () => {
+  const doPublish = () => run('publish', async () => {
     setShowPublish(false)
-    const { error } = await apiPost('/api/v1/publishing/sync/posts/one', {
-      post_id: Number(postId),
-    })
-    if (error) throw error
+    await publishPost.mutateAsync({ postId: Number(postId) })
   })
 
-  const doRegenerate = () => run('regenerate', 'Regenerate', async () => {
+  const doRegenerate = () => run('regenerate', async () => {
     setShowRegenerate(false)
     setConfirmText('')
-    const { error } = await apiPost('/api/aurora/blog/posts/regenerate/', { post_id: Number(postId) })
-    if (error) throw error
+    await regeneratePost.mutateAsync({ postId: Number(postId) })
   })
 
-  const doDelete = () => run('delete', 'Delete', async () => {
+  const doDelete = () => run('delete', async () => {
     setShowDelete(false)
     setConfirmText('')
-    const { error } = await apiDelete(`/api/aurora/blog/posts/delete/${postId}/`)
-    if (error) throw error
+    await deletePost.mutateAsync({ postId: Number(postId) })
     router.push('/blog')
   })
-
-  const isLoading = (id: string) => loadingAction === id
 
   return (
     <>
@@ -141,7 +140,7 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
                 </p>
                 <p className="text-[11px] text-muted-foreground">Enable inline element editing</p>
               </div>
-              <Switch checked={isEditModeEnabled} onCheckedChange={(v) => setEditMode(v === true)} />
+              <Switch checked={isEditModeEnabled} onCheckedChange={(v) => dispatch(setEditMode(v === true))} />
             </div>
           </div>
 
@@ -203,7 +202,7 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
             </Button>
           </div>
 
-          {/* Toast */}
+          {/* Local toast */}
           {toast && (
             <p className={`mt-3 text-[11px] leading-tight ${
               toast.type === 'success' ? 'text-success' : 'text-destructive'
@@ -236,7 +235,7 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
                 disabled={confirmText !== 'REGENERATE' || !!loadingAction}
                 onClick={doRegenerate}
               >
-                {loadingAction ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
+                {loadingAction === 'regenerate' ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
                 Regenerate
               </Button>
             </div>
@@ -268,7 +267,7 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
                 disabled={confirmText !== 'DELETE' || !!loadingAction}
                 onClick={doDelete}
               >
-                {loadingAction ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
+                {loadingAction === 'delete' ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
                 Delete
               </Button>
             </div>
@@ -285,7 +284,6 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
             <p className="text-[13px] text-muted-foreground mb-4">
               Publish this post now?
             </p>
-
             <div className="flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => setShowPublish(false)}>Cancel</Button>
               <Button
@@ -293,7 +291,7 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
                 disabled={!!loadingAction}
                 onClick={doPublish}
               >
-                {loadingAction ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
+                {loadingAction === 'publish' ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
                 Publish
               </Button>
             </div>

@@ -13,18 +13,23 @@ export async function analyzeBlogPost(postData: unknown) {
         You understand the following blog element types and their structures:
         ${JSON.stringify(BLOCK_SCHEMAS, null, 2)}
 
-        Analyze the given blog post thoroughly, considering its structure, content quality, SEO optimization, 
-        and overall effectiveness. Provide detailed, actionable suggestions for improvement. 
+        Analyze the given blog post thoroughly, considering:
+        1. SPECIFICITY: Does every paragraph reference specific companies, tools, data, or real outcomes? Generic paragraphs that could apply to any industry score low.
+        2. VALUE: Does the reader learn something actionable? Can they DO something after reading this?
+        3. INTRO QUALITY: Does the introduction hook with a specific problem, stat, or story? Or does it use the "In this post we'll explore..." anti-pattern?
+        4. KEYWORD USAGE: Is the focus keyword used naturally, or is it stuffed into every paragraph?
+        5. VOICE: Does it sound like a knowledgeable person wrote it, or like generic AI output?
+        6. SEO: Structure, headings, meta description, keyword placement.
+        7. FORMATTING: Proper use of br, strong, em tags for readability.
 
-        Use the following scoring framework to rate the blog post:
+        Scoring framework:
+        10-20: Generic AI slop — no specific examples, corporate filler, keyword stuffed
+        30-40: Below average — some structure but mostly vague and abstract
+        50-60: Average — decent structure, some specifics, but still reads as AI-generated
+        70-80: Good — clear voice, specific examples, actionable content
+        90-100: Excellent — reads like an expert wrote it, unique insights, highly actionable
 
-        10-20: Extremely Poor
-        30-40: Poor
-        50-60: Average
-        70-80: Good
-        90-100: Excellent
-
-        When evaluating, be direct and honest. Do NOT sugarcoat your feedback. The content should sound human and NOT be repetitive.`,
+        Be direct and honest. Flag every paragraph that lacks specificity.`,
     },
     {
       role: 'user',

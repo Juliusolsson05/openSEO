@@ -8,8 +8,9 @@
 import { useState, useCallback, useRef, type ReactNode } from 'react'
 import { Pencil, RefreshCw, Sparkles, Heart, Trash2, Plus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useElementsStore } from '@/stores/elements-store'
-import { useBlogStore } from '@/stores/blog-store'
+import { useElementsApi } from '@/hooks/use-elements-api'
+import { useAppDispatch } from '@/store/hooks'
+import { insertSkeletonLoader, removeSkeletonLoaderByOperationId, invalidatePost } from '@/store/slices/blogUiSlice'
 import { BaseEdit } from './BaseEdit'
 import { RegenerateModal } from './modals/RegenerateModal'
 import { ConfirmDeleteModal } from './modals/ConfirmDeleteModal'
@@ -62,11 +63,8 @@ export function BaseElement({
   const [showSelectCtaModal, setShowSelectCtaModal] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const elementsStore = useElementsStore()
-  const fetchPost = useBlogStore((s) => s.fetchPost)
-  const post = useBlogStore((s) => s.post)
-  const insertSkeletonLoader = useBlogStore((s) => s.insertSkeletonLoader)
-  const removeSkeletonLoaderByOperationId = useBlogStore((s) => s.removeSkeletonLoaderByOperationId)
+  const dispatch = useAppDispatch()
+  const elementsApi = useElementsApi()
   const opIdRef = useRef(0)
 
   const handleContentUpdated = useCallback(
@@ -85,96 +83,93 @@ export function BaseElement({
     }) => {
       setShowRegenerateModal(false)
       const opId = ++opIdRef.current
-      // Replace current element with skeleton
-      insertSkeletonLoader(opId, {
+      dispatch(insertSkeletonLoader(blogId, opId, {
         elementId,
         type: 'regeneration',
         status: 'in_progress',
         elementType: payload.new_element_type,
-      })
+      }) as any)
       const toastId = toast.loading('Regenerating element...')
       try {
-        const result = await elementsStore.regenerateElement({
+        const result = await elementsApi.regenerateElement({
           blog_post_id: blogId,
           blog_element_id: elementId,
           regeneration_note: payload.regeneration_note,
           new_element_type: payload.new_element_type,
           new_element_count: payload.new_element_count,
         })
-        if (result.success && post) {
-          await fetchPost(post.id, true)
+        if (result.success) {
+          dispatch(invalidatePost(blogId) as any)
           toast.success('Element regenerated', { id: toastId })
         } else {
-          removeSkeletonLoaderByOperationId(opId)
+          dispatch(removeSkeletonLoaderByOperationId(blogId, opId) as any)
           toast.error('Failed to regenerate element', { id: toastId })
         }
       } catch {
-        removeSkeletonLoaderByOperationId(opId)
+        dispatch(removeSkeletonLoaderByOperationId(blogId, opId) as any)
         toast.error('Failed to regenerate element', { id: toastId })
       }
     },
-    [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId]
+    [blogId, elementId, elementsApi, dispatch]
   )
 
   const handleEnhance = useCallback(async () => {
     setShowEnhanceModal(false)
     const opId = ++opIdRef.current
-    // Replace current element with skeleton (same type)
-    insertSkeletonLoader(opId, {
+    dispatch(insertSkeletonLoader(blogId, opId, {
       elementId,
       type: 'enhancement',
       status: 'in_progress',
-    })
+    }) as any)
     const toastId = toast.loading('Enhancing element...')
     try {
-      const result = await elementsStore.enhanceElement(blogId, elementId)
-      if (result.success && post) {
-        await fetchPost(post.id, true)
+      const result = await elementsApi.enhanceElement(blogId, elementId)
+      if (result.success) {
+        dispatch(invalidatePost(blogId) as any)
         toast.success('Element enhanced', { id: toastId })
       } else {
-        removeSkeletonLoaderByOperationId(opId)
+        dispatch(removeSkeletonLoaderByOperationId(blogId, opId) as any)
         toast.error('Failed to enhance element', { id: toastId })
       }
     } catch {
-      removeSkeletonLoaderByOperationId(opId)
+      dispatch(removeSkeletonLoaderByOperationId(blogId, opId) as any)
       toast.error('Failed to enhance element', { id: toastId })
     }
-  }, [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId])
+  }, [blogId, elementId, elementsApi, dispatch])
 
   const handleHumanize = useCallback(async () => {
     const opId = ++opIdRef.current
-    // Replace current element with skeleton (same type)
-    insertSkeletonLoader(opId, {
+    dispatch(insertSkeletonLoader(blogId, opId, {
       elementId,
       type: 'enhancement',
       status: 'in_progress',
-    })
+    }) as any)
     const toastId = toast.loading('Humanizing element...')
     try {
-      const result = await elementsStore.humanizeElement(blogId, elementId)
-      if (result.success && post) {
+      const result = await elementsApi.humanizeElement(blogId, elementId)
+      if (result.success) {
         // TODO: implement proper task polling
         await new Promise((resolve) => setTimeout(resolve, 3000))
-        await fetchPost(post.id, true)
+        dispatch(invalidatePost(blogId) as any)
         toast.success('Element humanized', { id: toastId })
       } else {
-        removeSkeletonLoaderByOperationId(opId)
+        dispatch(removeSkeletonLoaderByOperationId(blogId, opId) as any)
         toast.error('Failed to humanize element', { id: toastId })
       }
     } catch {
-      removeSkeletonLoaderByOperationId(opId)
+      dispatch(removeSkeletonLoaderByOperationId(blogId, opId) as any)
       toast.error('Failed to humanize element', { id: toastId })
     }
-  }, [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId])
+  }, [blogId, elementId, elementsApi, dispatch])
 
   const handleDelete = useCallback(async () => {
     setShowDeleteModal(false)
     setLoading(true)
     try {
-      const result = await elementsStore.deleteElement(blogId, elementId)
+      const result = await elementsApi.deleteElement(blogId, elementId)
       if (result.success) {
         onElementDeleted?.(elementId)
-        if (post) await fetchPost(post.id, true)
+        dispatch(invalidatePost(blogId) as any)
         toast.success('Element deleted')
       } else {
         toast.error(result.error || 'Failed to delete element')
@@ -184,41 +179,40 @@ export function BaseElement({
     } finally {
       setLoading(false)
     }
-  }, [blogId, elementId, elementsStore, fetchPost, post, onElementDeleted])
+  }, [blogId, elementId, elementsApi, dispatch, onElementDeleted])
 
   const handleAddElement = useCallback(
     async (elementType: ElementType, note?: string) => {
       setShowAddElementModal(false)
       const opId = ++opIdRef.current
-      // Insert skeleton below current element
-      insertSkeletonLoader(opId, {
+      dispatch(insertSkeletonLoader(blogId, opId, {
         elementId,
         type: 'new',
         status: 'in_progress',
         position: { afterElementId: elementId },
         elementType,
-      })
+      }) as any)
       const toastId = toast.loading('Adding element...')
       try {
-        const result = await elementsStore.addElement({
+        const result = await elementsApi.addElement({
           blog_post_id: blogId,
           element_id: elementId,
           element_type: elementType,
           generation_note: note,
         })
-        if (result.success && post) {
-          await fetchPost(post.id, true)
+        if (result.success) {
+          dispatch(invalidatePost(blogId) as any)
           toast.success('Element added', { id: toastId })
         } else {
-          removeSkeletonLoaderByOperationId(opId)
+          dispatch(removeSkeletonLoaderByOperationId(blogId, opId) as any)
           toast.error('Failed to add element', { id: toastId })
         }
       } catch {
-        removeSkeletonLoaderByOperationId(opId)
+        dispatch(removeSkeletonLoaderByOperationId(blogId, opId) as any)
         toast.error('Failed to add element', { id: toastId })
       }
     },
-    [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId]
+    [blogId, elementId, elementsApi, dispatch]
   )
 
   const handleTemplateSelect = useCallback((templateId: string) => {
@@ -234,35 +228,35 @@ export function BaseElement({
     const opId = ++opIdRef.current
     const toastId = toast.loading('Adding CTA...')
 
-    insertSkeletonLoader(opId, {
+    dispatch(insertSkeletonLoader(blogId, opId, {
       elementId,
       type: 'new',
       status: 'in_progress',
       position: { afterElementId: elementId },
       elementType: 'call_to_action',
-    })
+    }) as any)
 
     try {
-      const result = await elementsStore.addElement({
+      const result = await elementsApi.addElement({
         blog_post_id: blogId,
         element_id: elementId,
         cta_id: ctaId,
       })
 
-      if (result.success && post) {
-        await fetchPost(post.id, true)
+      if (result.success) {
+        dispatch(invalidatePost(blogId) as any)
         toast.success('CTA inserted', { id: toastId })
       } else {
-        removeSkeletonLoaderByOperationId(opId)
+        dispatch(removeSkeletonLoaderByOperationId(blogId, opId) as any)
         toast.error(result.error || 'Failed to insert CTA', { id: toastId })
       }
     } catch {
-      removeSkeletonLoaderByOperationId(opId)
+      dispatch(removeSkeletonLoaderByOperationId(blogId, opId) as any)
       toast.error('Failed to insert CTA', { id: toastId })
     } finally {
       setShowSelectCtaModal(false)
     }
-  }, [blogId, elementId, elementsStore, fetchPost, post, insertSkeletonLoader, removeSkeletonLoaderByOperationId])
+  }, [blogId, elementId, elementsApi, dispatch])
 
   return (
     <div

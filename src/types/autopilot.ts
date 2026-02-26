@@ -1,21 +1,7 @@
 /**
- * Shared types — re-exported from central type definitions.
- *
- * Kept for backward compatibility; prefer importing from '@/types/blog' directly.
+ * Autopilot domain types — single source of truth.
  */
 
-// Blog types
-export type {
-  BlogPost,
-  BlogPostElement,
-  LinkedPost,
-  Category,
-  CoverImage,
-  HyperlinkData,
-  BlogTitle,
-} from '@/types/blog'
-
-// Autopilot Types
 export type AutopilotStage =
   | 'element_suggestions'
   | 'element_creation'
@@ -34,13 +20,6 @@ export type AutopilotLogType =
   | 'completed'
   | 'finished'
   | 'launched'
-
-export interface AutopilotLog {
-  timestamp: string
-  stage: AutopilotStage
-  type: AutopilotLogType
-  data: AutopilotLogData
-}
 
 export interface AutopilotLogData {
   status?: 'started' | 'completed'
@@ -61,6 +40,13 @@ export interface AutopilotLogData {
   style_guide_brief?: string
   num_images?: number
   images_summary?: ImageSummary[]
+}
+
+export interface AutopilotLog {
+  timestamp: string
+  stage: AutopilotStage
+  type: AutopilotLogType
+  data: AutopilotLogData
 }
 
 export interface RecommendationSummary {

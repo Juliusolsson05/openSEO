@@ -1,54 +1,45 @@
-import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { encode } from 'next-auth/jwt'
+import { z } from 'zod'
 
 import { prisma } from '@/lib/prisma'
+import { apiHandler } from '@/server/api/handler'
+import { raw } from '@/server/api/response'
+import { UnauthorizedError } from '@/server/api/errors'
+import { validate } from '@/server/api/validate'
+import {
+  USER_TYPE_MAP,
+  ABILITY_RULES_BY_TYPE,
+  SESSION_COOKIE,
+  SESSION_MAX_AGE_SECONDS,
+} from '@/lib/constants/user'
 
-const USER_TYPE_MAP: Record<string, number> = {
-  DEMO: 1,
-  CLIENT: 2,
-  AGENCY: 3,
-  ADMINISTRATOR: 4,
-}
+const loginSchema = z.object({
+  email: z.string().email('Invalid email address').toLowerCase().trim(),
+  password: z.string().min(1, 'Password is required'),
+})
 
-const USER_TYPE_RULES: Record<number, string[]> = {
-  1: [],
-  2: ['view_own_data', 'manage_profile'],
-  3: ['create_clients', 'view_reports'],
-  4: ['admin', 'manage_users', 'access_all'],
-}
-
-const AUTH_SECRET = process.env.AUTH_SECRET || 'nordtools-dev-secret-change-in-production'
-const SESSION_COOKIE = 'authjs.session-token'
-const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60 // 30 days
-
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json().catch(() => ({}))
-    const email = typeof body.email === 'string' ? body.email.trim() : ''
-    const password = typeof body.password === 'string' ? body.password : ''
-
-    if (!email || !password) {
-      return NextResponse.json({ detail: 'Email and password are required' }, { status: 400 })
-    }
+export const POST = apiHandler(
+  async (ctx, req) => {
+    const { email, password } = validate(loginSchema, ctx.body)
 
     const user = await prisma.user.findUnique({
       where: { email },
       include: { company: true },
     })
 
-    if (!user?.password) {
-      return NextResponse.json({ detail: 'Invalid credentials' }, { status: 401 })
-    }
+    if (!user?.password) throw new UnauthorizedError('Invalid credentials')
 
     const valid = await bcrypt.compare(password, user.password)
-    if (!valid) {
-      return NextResponse.json({ detail: 'Invalid credentials' }, { status: 401 })
-    }
+    if (!valid) throw new UnauthorizedError('Invalid credentials')
+
+    const authSecret = process.env.AUTH_SECRET ?? (() => {
+      if (process.env.NODE_ENV === 'production') throw new Error('AUTH_SECRET must be set in production')
+      return 'openseo-dev-secret-do-not-use-in-production'
+    })()
 
     const userType = USER_TYPE_MAP[user.userType] ?? 1
 
-    // Create NextAuth-compatible encrypted JWE token
     const sessionToken = await encode({
       token: {
         id: String(user.id),
@@ -56,28 +47,23 @@ export async function POST(req: NextRequest) {
         name: user.name ?? user.email,
         userType,
         companyId: user.companyId,
-        company: user.company
-          ? { id: user.company.id, name: user.company.name }
-          : null,
+        company: user.company ? { id: user.company.id, name: user.company.name } : null,
       },
-      secret: AUTH_SECRET,
+      secret: authSecret,
       salt: SESSION_COOKIE,
       maxAge: SESSION_MAX_AGE_SECONDS,
     })
 
-    const res = NextResponse.json({
+    const res = raw({
       user: {
         email: user.email ?? '',
         username: user.name ?? (user.email ? user.email.split('@')[0] : ''),
         user_type: userType,
-        abilityRules: USER_TYPE_RULES[userType] ?? [],
-        company: user.company
-          ? { id: user.company.id, name: user.company.name }
-          : null,
+        abilityRules: ABILITY_RULES_BY_TYPE[userType] ?? [],
+        company: user.company ? { id: user.company.id, name: user.company.name } : null,
       },
     })
 
-    // Set NextAuth session cookie (same name NextAuth uses)
     const secure = req.nextUrl.protocol === 'https:'
 
     res.cookies.set(SESSION_COOKIE, sessionToken, {
@@ -98,18 +84,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Django-compatible cookies for parity
-    res.cookies.set('access', sessionToken, {
-      path: '/',
-      httpOnly: true,
-      sameSite: 'lax',
-      secure,
-      maxAge: SESSION_MAX_AGE_SECONDS,
-    })
-
     return res
-  } catch (err) {
-    console.error('Login error:', err)
-    return NextResponse.json({ detail: 'Internal server error' }, { status: 500 })
-  }
-}
+  },
+  { auth: false },
+)

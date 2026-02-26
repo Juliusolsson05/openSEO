@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-import type { AnalyticsBlogTitle } from '@/stores/analytics-store'
+import type { AnalyticsBlogTitle } from '@/types/analytics'
 
 interface BlogCategoryDistributionProps {
   blogTitles: Pick<AnalyticsBlogTitle, 'categories'>[]

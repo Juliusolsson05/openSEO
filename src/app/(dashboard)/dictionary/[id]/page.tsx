@@ -5,7 +5,14 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { Loader2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
-import { api, apiDelete, apiPost, apiPut } from '@/lib/api'
+import {
+  useDictionaryQuery,
+  useGenerateDefinitionsMutation,
+  useUpdateWordMutation,
+  useDeleteWordMutation,
+  usePublishDictionaryMutation,
+  useExportDictionaryMutation,
+} from '@/hooks/queries/dictionary'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -23,43 +30,25 @@ interface Word {
   has_definition?: boolean
 }
 
-import type { DashboardDictionary } from '@/types/blog'
+import type { DashboardDictionary } from '@/types/dictionary'
 interface Dictionary extends DashboardDictionary { words: Word[] }
 
 export default function DictionaryDetailPage() {
   const params = useParams<{ id: string }>()
-  const [dictionary, setDictionary] = useState<Dictionary | null>(null)
+  const { data: rawDict, isLoading: dictLoading } = useDictionaryQuery(params.id)
+  const dictionary = rawDict as Dictionary | undefined
+  const generateDefinitions = useGenerateDefinitionsMutation()
+  const updateWord = useUpdateWordMutation()
+  const deleteWordMutation = useDeleteWordMutation()
+  const publishDict = usePublishDictionaryMutation()
+  const exportDict = useExportDictionaryMutation()
+
   const [search, setSearch] = useState('')
   const [definitionFilter, setDefinitionFilter] = useState<'all' | 'missing' | 'ready'>('all')
   const [loadingWordId, setLoadingWordId] = useState<number | null>(null)
   const [generatingAll, setGeneratingAll] = useState(false)
   const [editing, setEditing] = useState<Record<number, Partial<Word>>>({})
   const [publishing, setPublishing] = useState(false)
-
-  const fetchDictionary = async () => {
-    const { data, error } = await api<Dictionary>(`/api/aurora/dictionary/dictionary/${params.id}`)
-    if (error) { toast.error(error.message); return }
-    setDictionary(data)
-  }
-
-  useEffect(() => {
-    let alive = true
-
-    const load = async () => {
-      const { data, error } = await api<Dictionary>(`/api/aurora/dictionary/dictionary/${params.id}`)
-      if (!alive) return
-      if (error) {
-        toast.error(error.message)
-        return
-      }
-      setDictionary(data)
-    }
-
-    void load()
-    return () => {
-      alive = false
-    }
-  }, [params.id])
 
   const words = useMemo(() => {
     if (!dictionary) return []
@@ -88,15 +77,12 @@ export default function DictionaryDetailPage() {
   const generateDefinition = async (word: Word) => {
     setLoadingWordId(word.id)
     try {
-      const { error } = await apiPost('/api/aurora/dictionary/generation/definition/generate/', {
-        session_id: Number(params.id),
-        word: word.keyword,
+      await generateDefinitions.mutateAsync({
+        dictionary_id: Number(params.id),
+        word_ids: [word.id],
       })
-      if (error) throw error
-      await fetchDictionary()
-      toast.success(`Definition generated for "${word.keyword}"`)
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to generate definition')
+    } catch {
+      // toast handled in mutation
     } finally {
       setLoadingWordId(null)
     }
@@ -104,18 +90,10 @@ export default function DictionaryDetailPage() {
 
   const generateMissing = async () => {
     setGeneratingAll(true)
-    const toastId = toast.loading('Generating definitions...')
     try {
-      const { error } = await apiPost('/api/aurora/dictionary/generation/definition/generate/', {
-        session_id: Number(params.id),
-        include_priority_two: true,
-        batch_size: 20,
-      })
-      if (error) throw error
-      await fetchDictionary()
-      toast.success('Missing definitions generated', { id: toastId })
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to generate missing definitions', { id: toastId })
+      await generateDefinitions.mutateAsync({ dictionary_id: Number(params.id) })
+    } catch {
+      // toast handled in mutation
     } finally {
       setGeneratingAll(false)
     }
@@ -125,32 +103,24 @@ export default function DictionaryDetailPage() {
     const patch = editing[id]
     if (!patch) return
     try {
-      const { error } = await apiPut(`/api/aurora/dictionary/modify/word/${id}`, patch)
-      if (error) throw error
+      await updateWord.mutateAsync({ wordId: id, dictionaryId: Number(params.id), patch })
       setEditing((prev) => {
         const next = { ...prev }
         delete next[id]
         return next
       })
-      await fetchDictionary()
       toast.success('Word saved')
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to save word')
+    } catch {
+      // toast handled in mutation
     }
   }
 
   const publishDictionary = async () => {
     setPublishing(true)
-    const toastId = toast.loading('Publishing dictionary...')
     try {
-      const { error } = await apiPost('/api/v1/publishing/sync/dictionaries/one', {
-        dictionary_id: Number(params.id),
-      })
-      if (error) throw error
-      toast.success('Dictionary published to your endpoint', { id: toastId })
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Failed to publish dictionary'
-      toast.error(msg, { id: toastId })
+      await publishDict.mutateAsync({ dictionaryId: Number(params.id) })
+    } catch {
+      // toast handled in mutation
     } finally {
       setPublishing(false)
     }
@@ -158,10 +128,7 @@ export default function DictionaryDetailPage() {
 
   const exportDictionary = async () => {
     try {
-      const { data, error } = await apiPost('/api/aurora/dictionary/dictionary/export/all/', {
-        dictionary_id: Number(params.id),
-      })
-      if (error) throw error
+      const data = await exportDict.mutateAsync({ dictionaryId: Number(params.id) })
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -170,9 +137,8 @@ export default function DictionaryDetailPage() {
       a.click()
       URL.revokeObjectURL(url)
       toast.success('Dictionary exported')
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Failed to export dictionary'
-      toast.error(msg)
+    } catch {
+      // toast handled in mutation
     }
   }
 
@@ -180,12 +146,9 @@ export default function DictionaryDetailPage() {
 
   const deleteWord = async (id: number) => {
     try {
-      const { error } = await apiDelete(`/api/aurora/dictionary/modify/word/${id}`)
-      if (error) throw error
-      await fetchDictionary()
-      toast.success('Word deleted')
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to delete word')
+      await deleteWordMutation.mutateAsync({ wordId: id, dictionaryId: Number(params.id) })
+    } catch {
+      // toast handled in mutation
     }
   }
 

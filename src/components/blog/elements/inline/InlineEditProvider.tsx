@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
-import { useEditorUiStore } from '@/stores/editor-ui-store'
+import { useAppSelector } from '@/store/hooks'
 
 interface InlineEditContextValue {
   isEditModeEnabled: boolean
@@ -21,7 +21,7 @@ const InlineEditContext = createContext<InlineEditContextValue>({
 
 export function InlineEditProvider({ children }: { children: ReactNode }) {
   const [activeElementId, setActiveElementId] = useState<number | null>(null)
-  const isEditModeEnabled = useEditorUiStore((s) => s.isEditModeEnabled)
+  const isEditModeEnabled = useAppSelector((s) => s.editorUi.isEditModeEnabled)
 
   useEffect(() => {
     if (!isEditModeEnabled) setActiveElementId(null)

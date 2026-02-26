@@ -5,122 +5,102 @@ import { ArrowRight } from 'lucide-react'
 export default async function ExampleBlogIndex() {
   const posts = await getPosts()
   const featured = posts[0]
-  const sidebar = posts.slice(1, 4)
-  const row = posts.slice(4, 10)
+  const rest = posts.slice(1)
 
   return (
     <div className="mx-auto max-w-[1120px] px-6 py-12">
+      {/* Header */}
       <div className="mb-10">
         <p className="text-[12px] font-semibold uppercase tracking-widest text-blue-600">Blog</p>
-        <h1 className="mt-1 text-[28px] font-semibold tracking-tight text-neutral-900">
-          Engineering & Product
+        <h1 className="mt-1 text-[32px] font-semibold tracking-tight text-neutral-900">
+          Insights & Guides
         </h1>
-        <p className="mt-1 text-[14px] text-neutral-500">
-          Deep dives, how-tos, and lessons from building at scale.
+        <p className="mt-2 text-[15px] text-neutral-500 max-w-lg">
+          Practical guides, tool comparisons, and frameworks for teams that ship.
         </p>
       </div>
 
-      {/* Hero row: featured + 3 sidebar */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Featured post — 2 cols wide */}
-        {featured && (
-          <Link
-            href={`/example/blog/${featured.slug}`}
-            className="group lg:col-span-2 block"
-          >
-            <div className="aspect-[16/9] rounded-lg bg-neutral-100 border border-neutral-200 overflow-hidden mb-4 flex items-center justify-center">
-              <span className="text-neutral-300 text-[14px]">Featured</span>
+      {/* Featured post — full width hero */}
+      {featured && (
+        <Link
+          href={`/example/blog/${featured.slug}`}
+          className="group block mb-12"
+        >
+          <div className="grid gap-8 lg:grid-cols-2 items-center">
+            <div className="aspect-[16/10] overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100">
+              {featured.cover_image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={featured.cover_image_url}
+                  alt={featured.cover_image_alt || featured.title}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                  loading="eager"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <span className="text-[14px] text-neutral-300">Featured</span>
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="rounded bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-600">Latest</span>
-              <span className="text-[11px] text-neutral-400">{featured.published_at}</span>
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-600 uppercase tracking-wide">Latest</span>
+                <span className="text-[12px] text-neutral-400">{featured.published_at}</span>
+              </div>
+              <h2 className="text-[26px] font-semibold text-neutral-900 group-hover:text-blue-600 transition-colors leading-tight tracking-tight">
+                {featured.title}
+              </h2>
+              <p className="mt-3 text-[15px] text-neutral-500 leading-relaxed line-clamp-3">
+                {featured.excerpt}
+              </p>
+              <span className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-medium text-blue-600 group-hover:gap-2.5 transition-all">
+                Read article <ArrowRight className="h-4 w-4" />
+              </span>
             </div>
-            <h2 className="text-[22px] font-semibold text-neutral-900 group-hover:text-blue-600 transition-colors leading-tight">
-              {featured.title}
-            </h2>
-            <p className="mt-2 text-[14px] text-neutral-500 leading-relaxed line-clamp-2">
-              {featured.excerpt}
-            </p>
-            <span className="mt-3 inline-flex items-center gap-1 text-[13px] font-medium text-blue-600">
-              Read post <ArrowRight className="h-3 w-3" />
-            </span>
-          </Link>
-        )}
+          </div>
+        </Link>
+      )}
 
-        {/* Sidebar — 3 posts stacked */}
-        <div className="flex flex-col gap-5">
-          {sidebar.map((post) => (
+      {/* Divider */}
+      {rest.length > 0 && <div className="border-t border-neutral-200 mb-10" />}
+
+      {/* Remaining posts — card grid */}
+      {rest.length > 0 && (
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {rest.map((post) => (
             <Link
               key={post.id}
               href={`/example/blog/${post.slug}`}
-              className="group flex gap-4"
+              className="group"
             >
-              <div className="h-20 w-28 shrink-0 rounded-md bg-neutral-100 border border-neutral-200 flex items-center justify-center">
-                <span className="text-neutral-300 text-[10px]">IMG</span>
+              <div className="aspect-[16/10] overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 mb-4">
+                {post.cover_image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={post.cover_image_url}
+                    alt={post.cover_image_alt || post.title}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <span className="text-[11px] text-neutral-300">IMG</span>
+                  </div>
+                )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] text-neutral-400 mb-1">{post.published_at}</p>
-                <h3 className="text-[14px] font-semibold text-neutral-900 group-hover:text-blue-600 transition-colors leading-snug line-clamp-2">
-                  {post.title}
-                </h3>
-              </div>
+              <p className="text-[11px] text-neutral-400 mb-1.5">{post.published_at}</p>
+              <h3 className="text-[16px] font-semibold text-neutral-900 group-hover:text-blue-600 transition-colors leading-snug line-clamp-2">
+                {post.title}
+              </h3>
+              <p className="mt-2 text-[13px] text-neutral-500 leading-relaxed line-clamp-2">
+                {post.excerpt}
+              </p>
+              <span className="mt-3 inline-flex items-center gap-1 text-[13px] font-medium text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                Read more <ArrowRight className="h-3 w-3" />
+              </span>
             </Link>
           ))}
         </div>
-      </div>
-
-      {/* Divider */}
-      <div className="my-10 border-t border-neutral-200" />
-
-      {/* Row 2: two wide horizontal cards */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {row.slice(0, 2).map((post) => (
-          <Link
-            key={post.id}
-            href={`/example/blog/${post.slug}`}
-            className="group flex gap-5 items-start"
-          >
-            <div className="h-28 w-40 shrink-0 rounded-md bg-neutral-100 border border-neutral-200 flex items-center justify-center">
-              <span className="text-neutral-300 text-[10px]">IMG</span>
-            </div>
-            <div className="flex-1 min-w-0 py-1">
-              <p className="text-[11px] text-neutral-400 mb-1">{post.published_at}</p>
-              <h3 className="text-[15px] font-semibold text-neutral-900 group-hover:text-blue-600 transition-colors leading-snug line-clamp-2">
-                {post.title}
-              </h3>
-              <p className="mt-1.5 text-[13px] text-neutral-500 line-clamp-2">
-                {post.excerpt}
-              </p>
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      {/* Row 3: grid of remaining */}
-      {row.length > 2 && (
-        <>
-          <div className="my-10 border-t border-neutral-200" />
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {row.slice(2).map((post) => (
-              <Link
-                key={post.id}
-                href={`/example/blog/${post.slug}`}
-                className="group"
-              >
-                <div className="aspect-[16/10] rounded-md bg-neutral-100 border border-neutral-200 mb-3 flex items-center justify-center">
-                  <span className="text-neutral-300 text-[10px]">IMG</span>
-                </div>
-                <p className="text-[11px] text-neutral-400 mb-1">{post.published_at}</p>
-                <h3 className="text-[14px] font-semibold text-neutral-900 group-hover:text-blue-600 transition-colors leading-snug line-clamp-2">
-                  {post.title}
-                </h3>
-                <p className="mt-1 text-[12px] text-neutral-500 line-clamp-2">
-                  {post.excerpt}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </>
       )}
     </div>
   )

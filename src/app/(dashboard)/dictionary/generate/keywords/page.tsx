@@ -2,7 +2,13 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useDictionaryStore } from '@/stores/dictionary-store'
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import {
+  addRemovedKeyword,
+  removeRemovedKeyword,
+  acceptLetterKeywords,
+  rejectLetterKeywords,
+} from '@/store/slices/dictionarySessionSlice'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -13,16 +19,12 @@ const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('')
 
 export default function DictionaryGenerateKeywordsPage() {
   const router = useRouter()
-  const {
-    currentDictionary,
-    currentLetterKeywords,
-    removedKeywords,
-    isGenerating,
-    addRemovedKeyword,
-    removeRemovedKeyword,
-    acceptCurrentLetterKeywords,
-    rejectCurrentLetterKeywords,
-  } = useDictionaryStore()
+  const dispatch = useAppDispatch()
+
+  const currentDictionary = useAppSelector((s) => s.dictionarySession.currentDictionary)
+  const currentLetterKeywords = useAppSelector((s) => s.dictionarySession.currentLetterKeywords)
+  const removedKeywords = useAppSelector((s) => s.dictionarySession.removedKeywords)
+  const isGenerating = useAppSelector((s) => s.dictionarySession.isGenerating)
 
   useEffect(() => {
     if (!currentDictionary) router.push('/dictionary/generate')
@@ -40,13 +42,22 @@ export default function DictionaryGenerateKeywordsPage() {
   }
 
   const toggleKeep = (idx: number, keep: boolean) => {
-    if (keep) removeRemovedKeyword(idx)
-    else addRemovedKeyword(idx)
+    if (keep) dispatch(removeRemovedKeyword(idx))
+    else dispatch(addRemovedKeyword(idx))
   }
 
   const handleAccept = async () => {
-    await acceptCurrentLetterKeywords()
-    if (!useDictionaryStore.getState().currentDictionary) router.push('/dictionary')
+    const result = await dispatch(acceptLetterKeywords())
+    if (acceptLetterKeywords.fulfilled.match(result)) {
+      const updatedDict = result.payload?.data
+      if (!updatedDict?.letter) {
+        router.push('/dictionary')
+      }
+    }
+  }
+
+  const handleReject = async () => {
+    await dispatch(rejectLetterKeywords())
   }
 
   return (
@@ -58,55 +69,62 @@ export default function DictionaryGenerateKeywordsPage() {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-1">
-            {alphabet.map((letter, idx) => {
-              const isCurrent = letter === currentLetter
-              const done = idx < currentIndex
-              return (
-                <Badge key={letter} variant={isCurrent || done ? 'default' : 'outline'} className="rounded-sm">
-                  {letter.toUpperCase()}
-                </Badge>
-              )
-            })}
+          <div className="flex gap-2">
+            {alphabet.map((l) => (
+              <div
+                key={l}
+                className={`flex h-7 w-7 items-center justify-center rounded-sm text-[12px] font-semibold uppercase ${
+                  l === currentLetter
+                    ? 'bg-primary text-white'
+                    : currentIndex > alphabet.indexOf(l)
+                    ? 'bg-success-light text-success-foreground'
+                    : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                {l}
+              </div>
+            ))}
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={handleAccept} disabled={isGenerating || entries.length === 0} className="rounded-sm">Accept letter & next</Button>
-            <Button onClick={rejectCurrentLetterKeywords} disabled={isGenerating || entries.length === 0} variant="outline" className="rounded-sm">Regenerate letter</Button>
-            <Button onClick={() => router.push('/dictionary')} variant="outline" className="rounded-sm">Finish later</Button>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12">Keep</TableHead>
+                <TableHead>Keyword</TableHead>
+                <TableHead>Description</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {entries.map(([key, value]) => {
+                const idx = parseIndex(key)
+                const kept = !removedKeywords.includes(idx)
+                return (
+                  <TableRow key={key} className={!kept ? 'opacity-40' : ''}>
+                    <TableCell>
+                      <Checkbox checked={kept} onCheckedChange={(v) => toggleKeep(idx, v === true)} />
+                    </TableCell>
+                    <TableCell className="font-medium">{value.keyword}</TableCell>
+                    <TableCell className="text-muted-foreground text-[12px]">{value.description}</TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+
+          <div className="flex justify-between items-center pt-2">
+            <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
+              <Badge variant="outline">{removedKeywords.length} removed</Badge>
+              <Badge variant="outline">{entries.length - removedKeywords.length} kept</Badge>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleReject} disabled={isGenerating}>
+                Regenerate ({currentLetter.toUpperCase()})
+              </Button>
+              <Button onClick={handleAccept} disabled={isGenerating}>
+                {isGenerating ? 'Processing...' : currentIndex < 25 ? `Accept & next (${alphabet[currentIndex + 1]?.toUpperCase()})` : 'Accept & finish'}
+              </Button>
+            </div>
           </div>
-
-          <div className="rounded-sm border border-border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Keep</TableHead>
-                  <TableHead>Keyword</TableHead>
-                  <TableHead>Focus keyword</TableHead>
-                  <TableHead>Description</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {entries.map(([key, item]) => {
-                  const idx = parseIndex(key)
-                  const keep = !removedKeywords.includes(idx)
-
-                  return (
-                    <TableRow key={key}>
-                      <TableCell>
-                        <Checkbox checked={keep} onCheckedChange={(v) => toggleKeep(idx, Boolean(v))} />
-                      </TableCell>
-                      <TableCell className={keep ? 'font-medium' : 'font-medium line-through opacity-50'}>{item.keyword}</TableCell>
-                      <TableCell className={keep ? '' : 'line-through opacity-50'}>{item.focus_keyword || '—'}</TableCell>
-                      <TableCell className={keep ? 'text-muted-foreground' : 'text-muted-foreground line-through opacity-50'}>{item.description}</TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </div>
-
-          <p className="text-xs text-muted-foreground">Removed this letter: {removedKeywords.length}</p>
         </CardContent>
       </Card>
     </div>

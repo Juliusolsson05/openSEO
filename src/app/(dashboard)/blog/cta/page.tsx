@@ -7,12 +7,19 @@ import { Label } from '@/components/ui/label'
  * Campaigns with nested CTAs. CRUD for both.
  */
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
-import { useCtaStore } from '@/stores/cta-store'
+import {
+  useCampaignsQuery,
+  useCreateCampaignMutation,
+  useEditCampaignMutation,
+  useDeleteCampaignMutation,
+  useCreateCTAMutation,
+  useEditCTAMutation,
+  useDeleteCTAMutation,
+} from '@/hooks/queries/cta'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -23,7 +30,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  Image as ImageIcon,
   ExternalLink,
   X,
   Target,
@@ -37,10 +43,21 @@ interface ModalState {
 }
 
 export default function BlogCtaPage() {
-  const store = useCtaStore()
-  const [modal, setModal] = useState<ModalState>({ type: null })
+  const { data: campaigns = [], isLoading } = useCampaignsQuery()
+  const createCampaignMutation = useCreateCampaignMutation()
+  const editCampaignMutation = useEditCampaignMutation()
+  const deleteCampaignMutation = useDeleteCampaignMutation()
+  const createCTAMutation = useCreateCTAMutation()
+  const editCTAMutation = useEditCTAMutation()
+  const deleteCTAMutation = useDeleteCTAMutation()
 
-  // Form state
+  const isMutating =
+    createCampaignMutation.isPending ||
+    editCampaignMutation.isPending ||
+    createCTAMutation.isPending ||
+    editCTAMutation.isPending
+
+  const [modal, setModal] = useState<ModalState>({ type: null })
   const [campaignName, setCampaignName] = useState('')
   const [ctaForm, setCtaForm] = useState({
     campaignId: 0,
@@ -50,74 +67,50 @@ export default function BlogCtaPage() {
     generateImage: false,
     image: null as File | null,
   })
-
-  useEffect(() => {
-    store.fetchCTAs()
-  }, [])
-
-  useEffect(() => {
-    if (store.successMessage) {
-      toast.success(store.successMessage)
-      store.clearMessages()
-    }
-  }, [store.successMessage])
-
-  useEffect(() => {
-    if (store.errorMessage) {
-      toast.error(store.errorMessage)
-      store.clearMessages()
-    }
-  }, [store.errorMessage])
+  const [pendingDelete, setPendingDelete] = useState<{ type: 'campaign' | 'cta'; id: number } | null>(null)
 
   const handleCreateCampaign = async () => {
     if (!campaignName.trim()) return
-    await store.createNewCampaign(campaignName.trim())
-    setCampaignName('')
-    setModal({ type: null })
+    try {
+      await createCampaignMutation.mutateAsync({ name: campaignName.trim() })
+      setCampaignName('')
+      setModal({ type: null })
+    } catch {
+      // toast handled in mutation
+    }
   }
 
   const handleEditCampaign = async () => {
     if (!campaignName.trim() || !modal.data?.id) return
-    await store.editCampaign(modal.data.id, campaignName.trim())
-    setCampaignName('')
-    setModal({ type: null })
-  }
-
-  const [pendingDelete, setPendingDelete] = useState<{ type: 'campaign' | 'cta'; id: number } | null>(null)
-
-  const handleDeleteCampaign = async (id: number) => {
-    setPendingDelete({ type: 'campaign', id })
+    try {
+      await editCampaignMutation.mutateAsync({ id: modal.data.id, name: campaignName.trim() })
+      setCampaignName('')
+      setModal({ type: null })
+    } catch {
+      // toast handled in mutation
+    }
   }
 
   const handleCreateCTA = async () => {
     if (!ctaForm.title || !ctaForm.campaignId) return
-    await store.createNewCTA({
-      campaignId: ctaForm.campaignId,
-      title: ctaForm.title,
-      description: ctaForm.description,
-      link: ctaForm.link,
-      generateImage: ctaForm.generateImage,
-      image: ctaForm.image,
-    })
-    resetCtaForm()
-    setModal({ type: null })
+    try {
+      await createCTAMutation.mutateAsync(ctaForm)
+      resetCtaForm()
+      setModal({ type: null })
+    } catch {
+      // toast handled in mutation
+    }
   }
 
   const handleEditCTA = async () => {
     if (!ctaForm.title || !modal.data?.id) return
-    await store.editCTA(modal.data.id, {
-      title: ctaForm.title,
-      description: ctaForm.description,
-      link: ctaForm.link,
-      generateImage: ctaForm.generateImage,
-      image: ctaForm.image,
-    })
-    resetCtaForm()
-    setModal({ type: null })
-  }
-
-  const handleDeleteCTA = async (id: number) => {
-    setPendingDelete({ type: 'cta', id })
+    try {
+      await editCTAMutation.mutateAsync({ ctaId: modal.data.id, ...ctaForm })
+      resetCtaForm()
+      setModal({ type: null })
+    } catch {
+      // toast handled in mutation
+    }
   }
 
   const resetCtaForm = () => {
@@ -131,8 +124,8 @@ export default function BlogCtaPage() {
 
   const openCreateCTA = () => {
     resetCtaForm()
-    if (store.campaigns.length > 0) {
-      setCtaForm((f) => ({ ...f, campaignId: store.campaigns[0].id }))
+    if (campaigns.length > 0) {
+      setCtaForm((f) => ({ ...f, campaignId: campaigns[0].id }))
     }
     setModal({ type: 'cta-create' })
   }
@@ -152,13 +145,12 @@ export default function BlogCtaPage() {
   return (
     <div className="space-y-6">
       <div className="flex gap-6">
-        {/* Main content */}
         <div className="flex-1 space-y-6">
-          {store.isLoading && store.campaigns.length === 0 ? (
+          {isLoading && campaigns.length === 0 ? (
             <div className="space-y-4">
               {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
             </div>
-          ) : store.campaigns.length === 0 ? (
+          ) : campaigns.length === 0 ? (
             <Card>
               <CardContent className="py-16 text-center">
                 <Target className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
@@ -172,7 +164,7 @@ export default function BlogCtaPage() {
               </CardContent>
             </Card>
           ) : (
-            store.campaigns.map((campaign) => (
+            campaigns.map((campaign) => (
               <Card key={campaign.id}>
                 <CardHeader className="flex-row items-center justify-between pb-2">
                   <CardTitle>{campaign.name}</CardTitle>
@@ -180,7 +172,7 @@ export default function BlogCtaPage() {
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditCampaign(campaign)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteCampaign(campaign.id)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setPendingDelete({ type: 'campaign', id: campaign.id })}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -209,7 +201,7 @@ export default function BlogCtaPage() {
                               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditCTA(cta, campaign.id)}>
                                 <Pencil className="h-3 w-3" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteCTA(cta.id)}>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setPendingDelete({ type: 'cta', id: cta.id })}>
                                 <Trash2 className="h-3 w-3" />
                               </Button>
                             </div>
@@ -223,7 +215,6 @@ export default function BlogCtaPage() {
             ))
           )}
 
-          {/* CTA info */}
           <Card>
             <CardContent className="p-4 flex gap-3">
               <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
@@ -239,17 +230,16 @@ export default function BlogCtaPage() {
           </Card>
         </div>
 
-        {/* Sidebar */}
         <div className="w-56 shrink-0 hidden lg:block">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle>Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button className="w-full gap-1.5" size="sm" onClick={() => { setCampaignName(''); setModal({ type: 'campaign-create' }) }} disabled={store.isLoading}>
+              <Button className="w-full gap-1.5" size="sm" onClick={() => { setCampaignName(''); setModal({ type: 'campaign-create' }) }} disabled={isMutating}>
                 <Plus className="h-3 w-3" /> New Campaign
               </Button>
-              <Button variant="outline" className="w-full gap-1.5" size="sm" onClick={openCreateCTA} disabled={store.campaigns.length === 0 || store.isLoading}>
+              <Button variant="outline" className="w-full gap-1.5" size="sm" onClick={openCreateCTA} disabled={campaigns.length === 0 || isMutating}>
                 <Plus className="h-3 w-3" /> New CTA
               </Button>
             </CardContent>
@@ -257,7 +247,7 @@ export default function BlogCtaPage() {
         </div>
       </div>
 
-      {/* Modals */}
+      {/* Main modal */}
       <Dialog open={!!modal.type} onOpenChange={(open) => !open && setModal({ type: null })}>
         <DialogContent className="w-full max-w-md p-0">
           <Card className="border-0 shadow-none">
@@ -278,7 +268,6 @@ export default function BlogCtaPage() {
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Campaign forms */}
               {(modal.type === 'campaign-create' || modal.type === 'campaign-edit') && (
                 <>
                   <div>
@@ -286,15 +275,14 @@ export default function BlogCtaPage() {
                     <Input value={campaignName} onChange={(e) => setCampaignName(e.target.value)} placeholder="e.g. Summer Sale" className="h-9" />
                   </div>
                   <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setModal({ type: null })} disabled={store.isLoading}>Cancel</Button>
-                    <Button onClick={modal.type === 'campaign-create' ? handleCreateCampaign : handleEditCampaign} disabled={store.isLoading}>
-                      {store.isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : modal.type === 'campaign-create' ? 'Create' : 'Save'}
+                    <Button variant="outline" onClick={() => setModal({ type: null })} disabled={isMutating}>Cancel</Button>
+                    <Button onClick={modal.type === 'campaign-create' ? handleCreateCampaign : handleEditCampaign} disabled={isMutating}>
+                      {isMutating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : modal.type === 'campaign-create' ? 'Create' : 'Save'}
                     </Button>
                   </div>
                 </>
               )}
 
-              {/* CTA forms */}
               {(modal.type === 'cta-create' || modal.type === 'cta-edit') && (
                 <>
                   {modal.type === 'cta-create' && (
@@ -305,7 +293,7 @@ export default function BlogCtaPage() {
                           <SelectValue placeholder="Select campaign" />
                         </SelectTrigger>
                         <SelectContent>
-                          {store.campaigns.map((c) => (
+                          {campaigns.map((c) => (
                             <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -348,15 +336,14 @@ export default function BlogCtaPage() {
                     </div>
                   )}
                   <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setModal({ type: null })} disabled={store.isLoading}>Cancel</Button>
-                    <Button onClick={modal.type === 'cta-create' ? handleCreateCTA : handleEditCTA} disabled={store.isLoading}>
-                      {store.isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : modal.type === 'cta-create' ? 'Create' : 'Save'}
+                    <Button variant="outline" onClick={() => setModal({ type: null })} disabled={isMutating}>Cancel</Button>
+                    <Button onClick={modal.type === 'cta-create' ? handleCreateCTA : handleEditCTA} disabled={isMutating}>
+                      {isMutating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : modal.type === 'cta-create' ? 'Create' : 'Save'}
                     </Button>
                   </div>
                 </>
               )}
 
-              {/* CTA detail */}
               {modal.type === 'cta-detail' && modal.data && (
                 <div className="space-y-3">
                   {modal.data.image && (
@@ -399,8 +386,15 @@ export default function BlogCtaPage() {
               variant="destructive"
               onClick={async () => {
                 if (!pendingDelete) return
-                if (pendingDelete.type === 'campaign') await store.deleteCampaign(pendingDelete.id)
-                else await store.deleteCTA(pendingDelete.id)
+                try {
+                  if (pendingDelete.type === 'campaign') {
+                    await deleteCampaignMutation.mutateAsync(pendingDelete.id)
+                  } else {
+                    await deleteCTAMutation.mutateAsync(pendingDelete.id)
+                  }
+                } catch {
+                  // toast handled in mutation
+                }
                 setPendingDelete(null)
               }}
             >

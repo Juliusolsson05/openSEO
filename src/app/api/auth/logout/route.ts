@@ -5,7 +5,7 @@ import { raw } from '@/server/api/response'
 
 export const POST = apiHandler(
   async () => {
-    const secret = process.env.AUTH_SECRET || 'nordtools-dev-secret-change-in-production'
+    const secret = process.env.AUTH_SECRET ?? 'openseo-dev-secret-do-not-use-in-production'
     const expired = await new SignJWT({}).setProtectedHeader({ alg: 'HS256' }).setExpirationTime('0s').sign(new TextEncoder().encode(secret))
 
     const response = raw({ ok: true })

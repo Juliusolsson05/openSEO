@@ -31,9 +31,9 @@ import {
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { apiPost } from '@/lib/api'
-import { useTitlesStore } from '@/stores/titles-store'
-import type { BlogTitle } from '@/stores/types'
+import { useTitlesApi } from '@/hooks/use-titles-api'
+import { useGenerateTitlesMutation } from '@/hooks/queries/titles'
+import type { BlogTitle } from '@/types/blog'
 
 type SortKey = 'title_text' | 'status' | 'dateCreated'
 type SortDir = 'asc' | 'desc'
@@ -81,7 +81,7 @@ export default function BlogTitlesPage() {
     fetchCategories,
     assignCategory,
     createCategory,
-  } = useTitlesStore()
+  } = useTitlesApi()
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<number | null>(null)
@@ -95,6 +95,7 @@ export default function BlogTitlesPage() {
   const [genCount, setGenCount] = useState('5')
   const [newTitleText, setNewTitleText] = useState('')
   const [genLoading, setGenLoading] = useState(false)
+  const generateTitlesMutation = useGenerateTitlesMutation()
   const [addingTitle, setAddingTitle] = useState(false)
   const [generatingTitleId, setGeneratingTitleId] = useState<number | null>(null)
   const [regeneratingTitleId, setRegeneratingTitleId] = useState<number | null>(null)
@@ -197,17 +198,14 @@ export default function BlogTitlesPage() {
     if (!genTopic.trim()) return
     setGenLoading(true)
     try {
-      const { error } = await apiPost('/api/aurora/blog/titles/generate/', {
+      await generateTitlesMutation.mutateAsync({
         topic: genTopic,
         count: parseInt(genCount, 10) || 5,
       })
-      if (error) throw error
-      await fetchTitles()
-      toast.success(`Generated titles for "${genTopic}"`)
       setGenTopic('')
       setShowGenForm(false)
-    } catch (e: unknown) {
-      toast.error(getErrorMessage(e, 'Failed to generate titles'))
+    } catch {
+      // toast handled in mutation
     } finally {
       setGenLoading(false)
     }

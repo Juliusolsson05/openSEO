@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import type { BlogPostElement } from '@/stores/types'
+import type { BlogPostElement } from '@/types/blog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 type Keyword = {

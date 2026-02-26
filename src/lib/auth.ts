@@ -2,21 +2,9 @@ import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import bcrypt from 'bcryptjs'
-import type { UserType as PrismaUserType } from '@prisma/client'
 
 import { prisma } from './prisma'
-
-/**
- * Map Prisma UserType enum → numeric user type (matching Django)
- */
-const USER_TYPE_MAP: Record<PrismaUserType, number> = {
-  DEMO: 1,
-  CLIENT: 2,
-  AGENCY: 3,
-  ADMINISTRATOR: 4,
-}
-
-const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60 // 30 days
+import { USER_TYPE_MAP, SESSION_MAX_AGE_SECONDS } from './constants/user'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),

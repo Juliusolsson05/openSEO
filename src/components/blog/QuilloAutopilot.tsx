@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { Sparkles, X, ArrowRight, AlertCircle } from 'lucide-react'
-import { useAutopilotStore } from '@/stores/autopilot-store'
+import { useAppSelector, useAppDispatch } from '@/store/hooks'
+import { startAutopilot } from '@/store/slices/autopilotSlice'
 
 interface Props {
   postId: number
@@ -17,8 +18,8 @@ export default function QuilloAutopilot({ postId }: Props) {
   const [showTooltip, setShowTooltip] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
-  const isRunning = useAutopilotStore((s) => s.isRunning)
-  const startAutopilot = useAutopilotStore((s) => s.startAutopilot)
+  const isRunning = useAppSelector((s) => s.autopilot.isRunning)
+  const dispatch = useAppDispatch()
 
   const handleScroll = useCallback(() => {
     if (window.scrollY > 50 && showTooltip) {
@@ -40,7 +41,7 @@ export default function QuilloAutopilot({ postId }: Props) {
   const handleStart = async () => {
     setShowModal(false)
     try {
-      await startAutopilot(postId)
+      await dispatch(startAutopilot(postId))
     } catch (err) {
       console.error('Autopilot failed:', err)
     }

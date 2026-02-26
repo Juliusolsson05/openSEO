@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Eye, Save, Loader2, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { api } from '@/lib/api'
+import { useGenerationSettingsQuery, useUpdateGenerationSettingsMutation } from '@/hooks/queries/settings'
 
 import '@/components/blog/elements'
 import {
@@ -80,30 +80,22 @@ export default function ElementsPage() {
   const [settings, setSettings] = useState<ElementSetting[]>(defaultConfig)
   const [search, setSearch] = useState('')
   const [previewType, setPreviewType] = useState<ElementType | null>(null)
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null)
   const [dirty, setDirty] = useState(false)
+  const [settingsSynced, setSettingsSynced] = useState(false)
 
-  // Load from API on mount
-  const loadSettings = useCallback(async () => {
-    setLoading(true)
-    try {
-      const { data } = await api<{ settings: Record<string, any> }>(
-        '/api/v1/settings/generation',
-      )
-      const saved = data?.settings?.initial_generation_elements
-      if (saved && typeof saved === 'object') {
-        setSettings(mergeFromApi(saved as Record<string, boolean>))
-      }
-    } catch {
-      // Use defaults if API fails
-    } finally {
-      setLoading(false)
+  const { data: genSettings, isLoading: loading } = useGenerationSettingsQuery()
+  const updateGenSettings = useUpdateGenerationSettingsMutation()
+
+  // Sync from server once
+  if (genSettings && !settingsSynced) {
+    const saved = genSettings.initial_generation_elements
+    if (saved && typeof saved === 'object') {
+      setSettings(mergeFromApi(saved as Record<string, boolean>))
     }
-  }, [])
-
-  useEffect(() => { loadSettings() }, [loadSettings])
+    setSettingsSynced(true)
+  }
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -132,15 +124,10 @@ export default function ElementsPage() {
   const save = async () => {
     setSaving(true)
     try {
-      const { error } = await api('/api/v1/settings/generation', {
-        method: 'PATCH',
-        body: JSON.stringify({ initial_generation_elements: toRecord(settings) }),
-      })
-      if (error) throw error
-      setToast({ message: 'Element settings saved', variant: 'success' })
+      await updateGenSettings.mutateAsync({ initial_generation_elements: toRecord(settings) })
       setDirty(false)
     } catch {
-      setToast({ message: 'Failed to save settings', variant: 'error' })
+      // toast handled in mutation
     } finally {
       setSaving(false)
     }

@@ -1,29 +1,74 @@
+import { Building2, CheckCircle2, Quote as QuoteIcon } from 'lucide-react'
+
 import { RichText } from './RichText'
 
-type Props = { title: string; problem?: string; solution?: string; result?: string }
+type Testimonial = { quote?: string; author?: string }
 
-export function CaseStudy({ title, problem, solution, result }: Props) {
+type Props = {
+  title: string
+  problem?: string
+  solution?: string
+  result?: string
+  clientName?: string
+  industry?: string
+  headerColor?: string
+  results?: string[]
+  testimonial?: Testimonial
+}
+
+export function CaseStudy({ title, problem, solution, result, clientName, industry, headerColor, results = [], testimonial }: Props) {
+  const safeHeader = headerColor && /^#[0-9a-fA-F]{6}$/.test(headerColor) ? headerColor : '#0078D4'
+  const normalizedResults = results.length ? results : result ? [result] : []
+
   return (
-    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-6">
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-2">Case Study</p>
-      <h3 className="text-[18px] font-semibold text-neutral-900 mb-4">{title}</h3>
-      <div className="space-y-3">
-        {problem && (
-          <div>
-            <p className="text-[12px] font-semibold uppercase tracking-wide text-neutral-400 mb-1">Problem</p>
-            <RichText html={problem} className="text-[14px] text-neutral-700 leading-relaxed" />
+    <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+      <div className="px-8 py-7 text-white" style={{ backgroundColor: safeHeader }}>
+        <h3 className="text-[22px] font-semibold leading-tight" dangerouslySetInnerHTML={{ __html: title }} />
+        {(clientName || industry) && (
+          <div className="mt-3 flex items-center gap-2 text-[14px] font-medium text-white/85">
+            <Building2 className="h-3.5 w-3.5" />
+            {clientName ? <span dangerouslySetInnerHTML={{ __html: clientName }} /> : null}
+            {clientName && industry ? <span className="text-white/60">·</span> : null}
+            {industry ? <span dangerouslySetInnerHTML={{ __html: industry }} /> : null}
           </div>
         )}
-        {solution && (
+      </div>
+
+      <div className="space-y-6 px-8 py-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {problem && (
+            <div>
+              <h4 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-neutral-500">The Challenge</h4>
+              <RichText html={problem} className="text-[15px] leading-[1.7] text-neutral-800" />
+            </div>
+          )}
+          {solution && (
+            <div>
+              <h4 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-neutral-500">The Solution</h4>
+              <RichText html={solution} className="text-[15px] leading-[1.7] text-neutral-800" />
+            </div>
+          )}
+        </div>
+
+        {normalizedResults.length > 0 && (
           <div>
-            <p className="text-[12px] font-semibold uppercase tracking-wide text-neutral-400 mb-1">Solution</p>
-            <RichText html={solution} className="text-[14px] text-neutral-700 leading-relaxed" />
+            <h4 className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-neutral-500">Key Results</h4>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {normalizedResults.map((item, idx) => (
+                <div key={idx} className="flex items-start gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <RichText html={item} className="text-[14px] leading-snug text-neutral-800" />
+                </div>
+              ))}
+            </div>
           </div>
         )}
-        {result && (
-          <div>
-            <p className="text-[12px] font-semibold uppercase tracking-wide text-neutral-400 mb-1">Result</p>
-            <RichText html={result} className="text-[14px] text-neutral-700 leading-relaxed" />
+
+        {testimonial?.quote && (
+          <div className="relative rounded-lg border border-neutral-200 bg-neutral-50 px-6 py-5">
+            <QuoteIcon className="absolute left-4 top-4 h-5 w-5 text-neutral-300" />
+            <blockquote className="pl-6 text-[16px] font-light italic leading-[1.7] text-neutral-800" dangerouslySetInnerHTML={{ __html: testimonial.quote }} />
+            {testimonial.author ? <p className="mt-3 pl-6 text-[13px] font-semibold text-neutral-500">— {testimonial.author}</p> : null}
           </div>
         )}
       </div>

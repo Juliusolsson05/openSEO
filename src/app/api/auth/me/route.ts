@@ -1,12 +1,6 @@
 import { apiHandler } from '@/server/api/handler'
 import { raw } from '@/server/api/response'
-
-const ABILITY_RULES_BY_TYPE: Record<number, string[]> = {
-  1: [],
-  2: ['view_own_data', 'manage_profile'],
-  3: ['create_clients', 'view_reports'],
-  4: ['admin', 'manage_users', 'access_all'],
-}
+import { ABILITY_RULES_BY_TYPE } from '@/lib/constants/user'
 
 export const GET = apiHandler(async (ctx) => {
   if (!ctx.user) {

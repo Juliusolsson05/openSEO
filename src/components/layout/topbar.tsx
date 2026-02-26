@@ -4,10 +4,11 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Search, Bell, FileText, Tags, BookOpen, Package, HelpCircle, Building2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getCookie, setCookie } from 'cookies-next'
-
-import { api } from '@/lib/api'
-import { useAuthStore, USER_TYPES } from '@/stores/auth-store'
+import { useAppSelector } from '@/store/hooks'
+import { USER_TYPES } from '@/types/auth'
 import { Button } from '@/components/ui/button'
+import { useCompaniesQuery } from '@/hooks/queries/admin'
+import { useNotificationsQuery, useGlobalSearchQuery } from '@/hooks/queries/global'
 
 type CompanyListItem = { id: number; name: string }
 
@@ -82,31 +83,18 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
   const title = getPageTitle(pathname)
-  const userData = useAuthStore((s) => s.userData)
+  const userData = useAppSelector((s) => s.auth.userData)
   const isAdmin = userData?.userType === USER_TYPES.Administrator
 
-  const [companies, setCompanies] = useState<CompanyListItem[]>([])
-  const [companiesLoaded, setCompaniesLoaded] = useState(false)
+  // ─── Companies (admin only) ────────────────────────────────────────────────
+  const { data: companies = [], isSuccess: companiesLoaded } = useCompaniesQuery({ enabled: isAdmin })
+
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(() => {
     if (typeof window === 'undefined') return null
     const fromCookie = Number(getCookie('companyId') ?? '')
     if (Number.isInteger(fromCookie) && fromCookie > 0) return fromCookie
     return null
   })
-
-  // Fetch companies for admin
-  useEffect(() => {
-    if (!isAdmin) return
-    let cancelled = false
-    ;(async () => {
-      const { data } = await api<{ companies: CompanyListItem[] } | CompanyListItem[]>('/api/admin/companies')
-      if (cancelled) return
-      const items = Array.isArray(data) ? data : (data?.companies ?? [])
-      setCompanies(items)
-      setCompaniesLoaded(true)
-    })()
-    return () => { cancelled = true }
-  }, [isAdmin])
 
   // Validate selectedCompanyId once companies are loaded
   useEffect(() => {
@@ -116,7 +104,6 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
     const isValid = currentId !== null && companies.some((c) => c.id === currentId)
 
     if (!isValid) {
-      // Fall back to user's own company if it's in the list, otherwise first company
       const fallback = companies.find((c) => c.id === userData?.companyId) ?? companies[0]
       if (fallback) {
         setSelectedCompanyId(fallback.id)
@@ -139,17 +126,34 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
     router.refresh()
   }
 
+  // ─── Global search (debounced) ─────────────────────────────────────────────
   const [searchFocused, setSearchFocused] = useState(false)
   const [query, setQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<GlobalSearchItem[]>([])
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [activeResultIndex, setActiveResultIndex] = useState(0)
-
-  const [notifications, setNotifications] = useState<NotificationFeedItem[]>([])
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const searchBoxRef = useRef<HTMLDivElement | null>(null)
   const notificationsRef = useRef<HTMLDivElement | null>(null)
 
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 180)
+    return () => clearTimeout(t)
+  }, [query])
+
+  const { data: searchResults = [] } = useGlobalSearchQuery(debouncedQuery, {
+    enabled: !!debouncedQuery.trim(),
+  })
+
+  useEffect(() => {
+    setActiveResultIndex(0)
+  }, [searchResults])
+
+  // ─── Notifications ─────────────────────────────────────────────────────────
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+
+  const { data: notifications = [] } = useNotificationsQuery()
+
+  // ─── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -166,47 +170,11 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
   }, [])
 
   useEffect(() => {
-    const run = async () => {
-      const trimmed = query.trim()
-      if (!trimmed) {
-        setSearchResults([])
-        setActiveResultIndex(0)
-        return
-      }
-
-      const { data } = await api<GlobalSearchItem[] | { data: GlobalSearchItem[] }>('/api/v1/search/global', {
-        params: { q: trimmed, limit: 10 },
-      })
-      const items = Array.isArray(data) ? data : (data?.data ?? [])
-      setSearchResults(items)
-      setActiveResultIndex(0)
-    }
-
-    const timeout = setTimeout(run, 180)
-    return () => clearTimeout(timeout)
-  }, [query])
-
-  useEffect(() => {
-    const run = async () => {
-      const { data } = await api<NotificationFeedItem[] | { data: NotificationFeedItem[] }>('/api/v1/notifications', {
-        params: { limit: 20 },
-      })
-      const items = Array.isArray(data) ? data : (data?.data ?? [])
-      setNotifications(items)
-    }
-
-    run()
-    const interval = setInterval(run, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node
       if (searchBoxRef.current && !searchBoxRef.current.contains(target)) setSearchOpen(false)
       if (notificationsRef.current && !notificationsRef.current.contains(target)) setNotificationsOpen(false)
     }
-
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
@@ -220,10 +188,14 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
     }, {})
   }, [searchResults])
 
-  const flatSearchResults = useMemo(() => Object.values(groupedSearchResults).flat(), [groupedSearchResults])
+  const flatSearchResults = useMemo(
+    () => Object.values(groupedSearchResults).flat(),
+    [groupedSearchResults]
+  )
 
   const unreadCount = useMemo(() => {
-    const lastSeenAtRaw = typeof window !== 'undefined' ? localStorage.getItem(LAST_SEEN_KEY) : null
+    const lastSeenAtRaw =
+      typeof window !== 'undefined' ? localStorage.getItem(LAST_SEEN_KEY) : null
     const lastSeenAt = lastSeenAtRaw ? new Date(lastSeenAtRaw).getTime() : 0
     return notifications.filter((n) => new Date(n.createdAt).getTime() > lastSeenAt).length
   }, [notifications])
@@ -306,7 +278,9 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
             if (e.key === 'ArrowUp') {
               e.preventDefault()
               if (flatSearchResults.length > 0) {
-                setActiveResultIndex((prev) => (prev - 1 + flatSearchResults.length) % flatSearchResults.length)
+                setActiveResultIndex(
+                  (prev) => (prev - 1 + flatSearchResults.length) % flatSearchResults.length
+                )
               }
               return
             }
@@ -324,12 +298,14 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
             </div>
 
             {flatSearchResults.length === 0 ? (
-              <p className="px-3 py-4 text-xs text-muted-foreground">No matches for “{query.trim()}”.</p>
+              <p className="px-3 py-4 text-xs text-muted-foreground">No matches for &quot;{query.trim()}&quot;.</p>
             ) : (
               <div className="max-h-96 overflow-auto p-2">
                 {Object.entries(groupedSearchResults).map(([group, items]) => (
                   <div key={group} className="mb-2 last:mb-0">
-                    <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{group}</p>
+                    <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {group}
+                    </p>
                     {items.map((result) => {
                       const idx = flatSearchResults.findIndex((r) => r.id === result.id)
                       const isActive = idx === activeResultIndex
@@ -340,7 +316,9 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
                           key={result.id}
                           type="button"
                           variant="ghost"
-                          className={`mb-1 flex h-auto w-full items-start justify-between rounded-md px-2 py-2 text-left ${isActive ? 'bg-secondary' : ''}`}
+                          className={`mb-1 flex h-auto w-full items-start justify-between rounded-md px-2 py-2 text-left ${
+                            isActive ? 'bg-secondary' : ''
+                          }`}
                           onMouseDown={(e) => e.preventDefault()}
                           onMouseEnter={() => setActiveResultIndex(idx)}
                           onClick={() => {
@@ -353,11 +331,17 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
                           <div className="flex min-w-0 items-start gap-2">
                             <TypeIcon className="mt-0.5 h-3.5 w-3.5 text-muted-foreground" />
                             <div className="min-w-0">
-                              <p className="truncate text-xs font-semibold text-foreground">{result.title}</p>
-                              <p className="truncate text-[11px] text-muted-foreground">{result.subtitle || result.type}</p>
+                              <p className="truncate text-xs font-semibold text-foreground">
+                                {result.title}
+                              </p>
+                              <p className="truncate text-[11px] text-muted-foreground">
+                                {result.subtitle || result.type}
+                              </p>
                             </div>
                           </div>
-                          <span className="ml-3 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">{relativeTime(result.updatedAt)}</span>
+                          <span className="ml-3 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
+                            {relativeTime(result.updatedAt)}
+                          </span>
                         </Button>
                       )
                     })}
@@ -393,7 +377,9 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
           aria-label="Notifications"
         >
           <Bell className="h-4 w-4" />
-          {unreadCount > 0 ? <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" /> : null}
+          {unreadCount > 0 ? (
+            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" />
+          ) : null}
         </Button>
 
         {notificationsOpen ? (
@@ -420,7 +406,9 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
                     <div>
                       <p className="text-xs font-semibold">{notification.title}</p>
                       <p className="text-[11px] text-muted-foreground">{notification.subtitle}</p>
-                      <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">{relativeTime(notification.createdAt)}</p>
+                      <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                        {relativeTime(notification.createdAt)}
+                      </p>
                     </div>
                   </Button>
                 ))}

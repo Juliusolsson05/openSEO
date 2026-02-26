@@ -2,37 +2,20 @@
 
 import { FormEvent, ReactNode, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { api, apiPost } from '@/lib/api'
+import {
+  useGenerationSettingsQuery,
+  useUpdateGenerationSettingsMutation,
+  useApiKeysQuery,
+  useCreateApiKeyMutation,
+  useRevokeApiKeyMutation,
+  type GenerationSettings,
+} from '@/hooks/queries/settings'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Label } from '@/components/ui/label'
-
-type GenerationSettings = {
-  blog_post_structure_model: string
-  blog_post_content_model: string
-  initial_generation_elements: Record<string, boolean>
-}
-
-type SettingsDomainResponse<T> = {
-  success?: boolean
-  data?: {
-    settings?: T
-  }
-}
-
-type InboundKey = {
-  id: number
-  name: string
-  key_prefix: string
-  is_active: boolean
-}
-
-type InboundKeyCreateResponse = InboundKey & {
-  key?: string
-}
 
 const modelOptions = ['gpt-5-mini', 'gpt-5.2', 'claude-sonnet-4-5-20250929']
 
@@ -79,102 +62,49 @@ const generationElementOptions = [
 ]
 
 const pretty = (value: string) =>
-  value
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase())
+  value.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
 
 export default function SettingsPage() {
-  const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const { data: savedSettings, isLoading: isLoadingGeneration } = useGenerationSettingsQuery()
+  const updateGeneration = useUpdateGenerationSettingsMutation()
+  const { data: inboundKeys = [] } = useApiKeysQuery()
+  const createApiKey = useCreateApiKeyMutation()
+  const revokeApiKey = useRevokeApiKeyMutation()
 
-  const [isLoadingGeneration, setIsLoadingGeneration] = useState(true)
-  const [isSavingGeneration, setIsSavingGeneration] = useState(false)
   const [generation, setGeneration] = useState<GenerationSettings>({
     blog_post_structure_model: 'gpt-5.2',
     blog_post_content_model: 'gpt-5-mini',
     initial_generation_elements: { ...DEFAULT_ELEMENTS },
   })
-
-  const [inboundKeys, setInboundKeys] = useState<InboundKey[]>([])
   const [newInboundKeyName, setNewInboundKeyName] = useState('')
   const [newInboundKeyValue, setNewInboundKeyValue] = useState<string | null>(null)
 
-  const fetchInboundKeys = async () => {
-    const { data, error } = await api<InboundKey[] | { data: InboundKey[] }>('/api/v1/publishing/api-keys')
-    if (error) return
-    const items = Array.isArray(data) ? data : (data?.data ?? [])
-    setInboundKeys(items)
-  }
-
+  // Sync local state when server data loads
   useEffect(() => {
-    const load = async () => {
-      const generationRes = await api<SettingsDomainResponse<GenerationSettings>>('/api/v1/settings/generation')
-
-      if (generationRes.error) {
-        setStatus({ type: 'error', message: generationRes.error.message || 'Failed to load generation settings.' })
-      } else {
-        const data = generationRes.data?.data?.settings
-        if (data) {
-          const saved = data.initial_generation_elements
-          const hasKeys = saved && Object.keys(saved).length > 0
-          setGeneration({
-            ...data,
-            initial_generation_elements: hasKeys ? saved : { ...DEFAULT_ELEMENTS },
-          })
-        }
-      }
-      setIsLoadingGeneration(false)
-
-      void fetchInboundKeys()
-    }
-
-    void load()
-  }, [])
+    if (!savedSettings) return
+    const saved = savedSettings.initial_generation_elements
+    const hasKeys = saved && Object.keys(saved).length > 0
+    setGeneration({
+      ...savedSettings,
+      initial_generation_elements: hasKeys ? saved : { ...DEFAULT_ELEMENTS },
+    })
+  }, [savedSettings])
 
   const saveGeneration = async (e: FormEvent) => {
     e.preventDefault()
-    setIsSavingGeneration(true)
-    setStatus(null)
-
-    const { error } = await api('/api/v1/settings/generation', {
-      method: 'PATCH',
-      body: JSON.stringify(generation),
-    })
-
-    if (error) {
-      setStatus({ type: 'error', message: error.message || 'Failed to save generation settings.' })
-    } else {
-      setStatus({ type: 'success', message: 'Generation settings saved.' })
-    }
-    setIsSavingGeneration(false)
+    updateGeneration.mutate(generation)
   }
 
   const createInboundKey = async (e: FormEvent) => {
     e.preventDefault()
     if (!newInboundKeyName.trim()) return
-
-    const { data, error } = await apiPost<InboundKeyCreateResponse | { data: InboundKeyCreateResponse }>('/api/v1/publishing/api-keys', { name: newInboundKeyName.trim() })
-    if (error) {
-      setStatus({ type: 'error', message: error.message || 'Failed to create inbound key.' })
-      return
+    try {
+      const payload = await createApiKey.mutateAsync({ name: newInboundKeyName.trim() })
+      setNewInboundKeyValue(payload?.key ?? null)
+      setNewInboundKeyName('')
+    } catch {
+      // toast handled in mutation
     }
-
-    const payload = data && typeof data === 'object' && 'data' in data
-      ? (data.data as InboundKeyCreateResponse)
-      : (data as InboundKeyCreateResponse | null)
-
-    setNewInboundKeyValue(payload?.key ?? null)
-    setNewInboundKeyName('')
-    setStatus({ type: 'success', message: 'Inbound key created. Copy it now.' })
-    await fetchInboundKeys()
-  }
-
-  const revokeInboundKey = async (id: number) => {
-    const { error } = await apiPost(`/api/v1/publishing/api-keys/${id}/revoke`, {})
-    if (error) {
-      setStatus({ type: 'error', message: error.message || 'Failed to revoke key.' })
-      return
-    }
-    await fetchInboundKeys()
   }
 
   return (
@@ -243,7 +173,9 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <Button type="submit" disabled={isSavingGeneration}>{isSavingGeneration ? 'Saving...' : 'Save Generation Settings'}</Button>
+              <Button type="submit" disabled={updateGeneration.isPending}>
+                {updateGeneration.isPending ? 'Saving...' : 'Save Generation Settings'}
+              </Button>
             </form>
           )}
         </CardContent>
@@ -261,7 +193,7 @@ export default function SettingsPage() {
               placeholder="Key name (e.g. production-webhook)"
               className="max-w-sm"
             />
-            <Button type="submit">Create inbound key</Button>
+            <Button type="submit" disabled={createApiKey.isPending}>Create inbound key</Button>
           </form>
 
           {newInboundKeyValue ? (
@@ -279,7 +211,14 @@ export default function SettingsPage() {
                   <p className="text-muted-foreground">{key.key_prefix}… {key.is_active ? 'active' : 'revoked'}</p>
                 </div>
                 {key.is_active ? (
-                  <Button variant="outline" className="h-8" onClick={() => revokeInboundKey(key.id)}>Revoke</Button>
+                  <Button
+                    variant="outline"
+                    className="h-8"
+                    disabled={revokeApiKey.isPending}
+                    onClick={() => revokeApiKey.mutate(key.id)}
+                  >
+                    Revoke
+                  </Button>
                 ) : (
                   <Badge variant="outline">Revoked</Badge>
                 )}
@@ -288,12 +227,6 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
-
-      {status && (
-        <Badge variant={status.type === 'success' ? 'success' : 'destructive'}>
-          {status.message}
-        </Badge>
-      )}
     </div>
   )
 }

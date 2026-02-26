@@ -7,11 +7,19 @@ export async function generateTitles(
   language: string,
   existingTitles?: string[],
 ): Promise<Record<string, unknown>> {
-  let systemMessage =
-    "You are an article title generator. You are responsible for creating catchy, SEO-friendly, and grammatically correct blog titles based on the given industry and number of titles requested by the user. The titles should be objective and informative. Ensure the SEO title and focus keyword match Yoast's guidelines. Do NOT make them too cliché and generic — make them actually interesting.";
+  let systemMessage = `You are a blog title strategist. Create blog titles that make readers genuinely curious — titles that promise a specific insight, a surprising angle, or a practical takeaway.
+
+Rules for good titles:
+- Be specific, not vague. "How 3 SaaS Companies Cut Churn by 40% With One Onboarding Change" beats "How to Reduce Customer Churn in SaaS."
+- Promise value the reader can act on. Every title should imply the reader will learn something concrete.
+- Avoid generic clickbait patterns like "The Ultimate Guide to..." or "Everything You Need to Know About..."
+- Use numbers, specific outcomes, or contrarian angles when they fit naturally.
+- Titles should work for an audience that already understands the basics of ${industry} — do not write beginner-level titles unless asked.
+- Ensure the SEO title and focus keyword follow Yoast's guidelines.
+- Write all titles in ${language}.`;
 
   if (existingTitles?.length) {
-    systemMessage += '\n\nThese titles already exist — do NOT generate duplicates:\n' + existingTitles.map((t, i) => `${i + 1}. ${t}`).join('\n');
+    systemMessage += '\n\nThese titles already exist — do NOT generate duplicates or near-duplicates:\n' + existingTitles.map((t, i) => `${i + 1}. ${t}`).join('\n');
   }
 
   const titleProperties: Record<string, any> = {};
@@ -38,7 +46,7 @@ export async function generateTitles(
       { role: 'system', content: systemMessage },
       {
         role: 'user',
-        content: `Generate ${numTitles} blog titles for the industry: ${industry}. Write the titles in ${language}.`,
+        content: `Generate ${numTitles} blog titles for the industry: ${industry}.`,
       },
     ],
     response_format: {

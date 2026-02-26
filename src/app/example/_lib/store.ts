@@ -10,6 +10,21 @@
 import { prisma } from '@/lib/prisma'
 import type { ExampleDictionary, ExamplePost, ExampleWord } from './types'
 
+function parseCoverImage(value: string): { url: string; alt?: string } {
+  if (!value) return { url: '' }
+
+  try {
+    const parsed = JSON.parse(value) as { url?: string; alt?: string }
+    if (parsed && typeof parsed.url === 'string') {
+      return { url: parsed.url, alt: typeof parsed.alt === 'string' ? parsed.alt : undefined }
+    }
+  } catch {
+    // Keep backward compatibility when cover image is stored as plain URL.
+  }
+
+  return { url: value }
+}
+
 // ─── Posts ──────────────────────────────────────────────────────────
 
 export async function getSyncedPosts(companyId: number): Promise<ExamplePost[]> {
@@ -19,20 +34,25 @@ export async function getSyncedPosts(companyId: number): Promise<ExamplePost[]> 
     orderBy: { publishedAt: 'desc' },
   })
 
-  return posts.map((p) => ({
-    id: p.id,
-    slug: p.slug,
-    title: p.title,
-    excerpt: p.excerpt,
-    cover_image_url: p.coverImage,
-    published_at: p.publishedAt,
-    elements: p.elements.map((el) => ({
-      id: el.id,
-      order: el.order,
-      element_type: el.elementType,
-      content: el.content as Record<string, unknown>,
-    })),
-  }))
+  return posts.map((p) => {
+    const coverImage = parseCoverImage(p.coverImage)
+
+    return {
+      id: p.id,
+      slug: p.slug,
+      title: p.title,
+      excerpt: p.excerpt,
+      cover_image_url: coverImage.url,
+      cover_image_alt: coverImage.alt,
+      published_at: p.publishedAt,
+      elements: p.elements.map((el) => ({
+        id: el.id,
+        order: el.order,
+        element_type: el.elementType,
+        content: el.content as Record<string, unknown>,
+      })),
+    }
+  })
 }
 
 export async function upsertSyncedPost(
@@ -49,7 +69,9 @@ export async function upsertSyncedPost(
     slug: post.slug,
     title: post.title,
     excerpt: post.excerpt,
-    coverImage: post.cover_image_url,
+    coverImage: post.cover_image_alt
+      ? JSON.stringify({ url: post.cover_image_url, alt: post.cover_image_alt })
+      : post.cover_image_url,
     publishedAt: post.published_at,
     auroraId: auroraId ?? null,
   }

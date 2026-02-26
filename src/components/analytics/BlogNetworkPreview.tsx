@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Maximize2, X } from 'lucide-react'
 
-import type { AnalyticsBlogTitle } from '@/stores/analytics-store'
+import type { AnalyticsBlogTitle } from '@/types/analytics'
 
 interface BlogNetworkPreviewProps {
   blogTitles: Pick<AnalyticsBlogTitle, 'id' | 'title_text' | 'post_linking'>[]

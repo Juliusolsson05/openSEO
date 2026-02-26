@@ -13,7 +13,7 @@ export async function generateCaseStudy(blogTitle: string, focusKeyword: string)
       companyWebsite: { type: 'string', description: 'The official website URL of the featured company.' },
       headerColor: {
         type: 'string',
-        description: "Hex color code for the header background (e.g., '#FF7A59' for orange).",
+        description: "Hex color code for the header background that matches the company's brand colors.",
       },
       challenge: { type: 'string', description: 'A brief description of the problem or challenge the client faced.' },
       solution: {
@@ -54,15 +54,17 @@ export async function generateCaseStudy(blogTitle: string, focusKeyword: string)
     messages: [
       {
         role: 'system',
-        content:
-          'You are an expert content creator specializing in crafting detailed and accurate case studies.\nYou are tasked with generating a case study that fits this blog title and focus keyword. The case study should be based on a real company and real information. Pick a well-known, verifiable company relevant to the topic. Do not use placeholder names like "XYZ Corp." Make the header color match the company\'s brand colors.',
+        content: `You are a case study writer. Generate a case study featuring a well-known, verifiable company that is relevant to the blog topic.
+
+Requirements:
+- Use a REAL company that readers would recognize — e.g. Slack, HubSpot, Shopify, Stripe, Notion, Airbnb, etc.
+- The challenge, solution, and results should be grounded in what this company is publicly known for.
+- Include specific numbers in results where possible (percentages, revenue, user counts).
+- The testimonial should sound natural, not corporate. Use a real executive name and title if possible.
+- Match the header color to the company's actual brand colors.
+- Do not use placeholder names like "XYZ Corp" or "Acme Inc."`,
       },
-      { role: 'user', content: `Blog Title: ${blogTitle}\nFocus Keyword: ${focusKeyword}` },
-      {
-        role: 'system',
-        content:
-          'Generate the case study content following the provided schema. Ensure all required fields are populated with accurate and real-world information.',
-      },
+      { role: 'user', content: `Blog Title: ${blogTitle}\nFocus Keyword: ${focusKeyword}\n\nGenerate a relevant case study for this topic.` },
     ],
     response_format: {
       type: 'json_schema',

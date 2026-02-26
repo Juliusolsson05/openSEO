@@ -1,8 +1,4 @@
-/**
- * Permissions store — ported from aurora_dashboard/stores/users/permissionsStore.ts
- */
-
-import { create } from 'zustand'
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
 export const FEATURE_CONFIG = {
   publish: {
@@ -54,32 +50,51 @@ export type Feature = keyof typeof FEATURE_CONFIG
 interface PermissionsState {
   features: Record<Feature, boolean>
   isDemoUser: boolean
-
-  hasAccess: (feature: Feature) => boolean
-  getRestrictedMessage: (feature: Feature) => string
-  setFeatureAccess: (feature: Feature, access: boolean) => void
-  setDemoMode: (isDemo: boolean) => void
+  blockedModal: {
+    isVisible: boolean
+    currentFeature: Feature | null
+  }
 }
 
-export const usePermissionsStore = create<PermissionsState>((set, get) => ({
+const initialState: PermissionsState = {
   features: Object.fromEntries(
     Object.entries(FEATURE_CONFIG).map(([key, config]) => [key, config.defaultAccess])
   ) as Record<Feature, boolean>,
   isDemoUser: true,
-
-  hasAccess: (feature) => {
-    return get().features[feature] ?? FEATURE_CONFIG[feature].defaultAccess
+  blockedModal: {
+    isVisible: false,
+    currentFeature: null,
   },
+}
 
-  getRestrictedMessage: (feature) => {
-    return FEATURE_CONFIG[feature].restrictedMessage
+export const permissionsSlice = createSlice({
+  name: 'permissions',
+  initialState,
+  reducers: {
+    setFeatureAccess(state, action: PayloadAction<{ feature: Feature; access: boolean }>) {
+      state.features[action.payload.feature] = action.payload.access
+    },
+    setDemoMode(state, action: PayloadAction<boolean>) {
+      state.isDemoUser = action.payload
+    },
+    showBlockedModal(state, action: PayloadAction<Feature>) {
+      state.blockedModal.isVisible = true
+      state.blockedModal.currentFeature = action.payload
+    },
+    hideBlockedModal(state) {
+      state.blockedModal.isVisible = false
+      state.blockedModal.currentFeature = null
+    },
   },
+})
 
-  setFeatureAccess: (feature, access) => {
-    set((state) => ({
-      features: { ...state.features, [feature]: access },
-    }))
-  },
+export const { setFeatureAccess, setDemoMode, showBlockedModal, hideBlockedModal } = permissionsSlice.actions
 
-  setDemoMode: (isDemo) => set({ isDemoUser: isDemo }),
-}))
+// Selector factories (use with useAppSelector)
+export const selectHasAccess = (feature: Feature) => (state: { permissions: PermissionsState }): boolean =>
+  state.permissions.features[feature] ?? FEATURE_CONFIG[feature].defaultAccess
+
+export const selectRestrictedMessage = (feature: Feature): string =>
+  FEATURE_CONFIG[feature].restrictedMessage
+
+export const selectIsDemoUser = (state: { permissions: PermissionsState }) => state.permissions.isDemoUser

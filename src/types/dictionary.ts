@@ -1,6 +1,55 @@
 /**
- * Dictionary and public content types — unified from PublicX and ExampleX variants.
+ * Dictionary domain types — public content and dashboard variants.
  */
+
+// ─── Dashboard dictionary types ──────────────────────────────────────────────
+// Used by dashboard pages and the dictionary session store.
+
+export interface DashboardFAQ {
+  question: string
+  answer: string
+}
+
+export interface DashboardDefinition {
+  title: string
+  featured_google_snippet: string
+  meta_description?: string
+  paragraph_1?: { title: string; text: string }
+  paragraph_2?: { title: string; text: string }
+  paragraph_3?: { title: string; text: string }
+  synonyms: string[]
+  antonyms: string[]
+  usage_examples: string[]
+  related_keywords: string[]
+  faqs: DashboardFAQ[]
+}
+
+export interface DashboardWord {
+  id?: number
+  keyword: string
+  definition: DashboardDefinition
+}
+
+export interface DashboardDictionary {
+  id: number
+  title: string
+  subject: string
+  language: string
+  num_words: number
+  total_words?: number
+  current_letter?: string
+  status?: string
+  words?: Array<{
+    id: number
+    keyword: string
+    letter: string
+    description: string
+    priority: number | string
+    has_definition?: boolean
+  }>
+}
+
+// ─── Public content types ─────────────────────────────────────────────────────
 
 export interface ContentElement {
   id: string
@@ -15,6 +64,7 @@ export interface ContentPost {
   title: string
   excerpt: string
   cover_image_url: string
+  cover_image_alt?: string
   published_at: string
   elements: ContentElement[]
 }
