@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { api, apiPost } from '@/lib/api'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/get-error-message'
 
 export interface AnalysisResult {
   overall_analysis?: {
@@ -40,8 +41,8 @@ export function useQuilloAnalyzeMutation() {
       if (error) throw error
       return data!
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Could not analyze. Please try again.')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Could not analyze. Please try again.'))
     },
   })
 }
@@ -62,8 +63,8 @@ export function useQuilloChatMutation() {
       if (error) throw error
       return data!
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Chat request failed.')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Chat request failed.'))
     },
   })
 }

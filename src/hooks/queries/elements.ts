@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/get-error-message'
 import type { CTA } from '@/types/cta'
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
@@ -53,8 +54,8 @@ export function useUpdateElementMutation() {
     onSuccess: (_data, { blogPostId }) => {
       qc.invalidateQueries({ queryKey: QK.post(blogPostId) })
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to update element')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to update element'))
     },
   })
 }
@@ -78,8 +79,8 @@ export function useDeleteElementMutation() {
     onSuccess: (_data, { blogPostId }) => {
       qc.invalidateQueries({ queryKey: QK.post(blogPostId) })
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to delete element')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to delete element'))
     },
   })
 }
@@ -104,8 +105,8 @@ export function useRegenerateElementMutation() {
     onSuccess: (_data, { blog_post_id }) => {
       qc.invalidateQueries({ queryKey: QK.post(blog_post_id) })
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to regenerate element')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to regenerate element'))
     },
   })
 }
@@ -130,8 +131,8 @@ export function useEnhanceElementMutation() {
     onSuccess: (_data, { blogPostId }) => {
       qc.invalidateQueries({ queryKey: QK.post(blogPostId) })
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to enhance element')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to enhance element'))
     },
   })
 }
@@ -156,8 +157,8 @@ export function useHumanizeElementMutation() {
     onSuccess: (_data, { blogPostId }) => {
       qc.invalidateQueries({ queryKey: QK.post(blogPostId) })
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to humanize element')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to humanize element'))
     },
   })
 }
@@ -182,8 +183,8 @@ export function useAddElementMutation() {
     onSuccess: (_data, { blog_post_id }) => {
       qc.invalidateQueries({ queryKey: QK.post(blog_post_id) })
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to add element')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to add element'))
     },
   })
 }

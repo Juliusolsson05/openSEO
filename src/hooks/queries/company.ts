@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, apiPost } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/get-error-message'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -64,8 +65,8 @@ export function useUpdateCompanyProfileMutation() {
       qc.invalidateQueries({ queryKey: QK.companyProfile() })
       toast.success('Company profile updated')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to save company profile')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to save company profile'))
     },
   })
 }
@@ -83,8 +84,8 @@ export function useAnalyzeCompanyMutation() {
     onSuccess: () => {
       toast.success('Website analysis started')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to start analysis')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to start analysis'))
     },
   })
 }

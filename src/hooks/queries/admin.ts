@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, apiPost } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/get-error-message'
 
 export type CompanyListItem = { id: number; name: string }
 export type InviteItem = { id: string; email: string | null }
@@ -52,8 +53,8 @@ export function useApproveUserEmailMutation() {
       qc.invalidateQueries({ queryKey: QK.users() })
       toast.success('Email approved for signup')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to approve email')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to approve email'))
     },
   })
 }

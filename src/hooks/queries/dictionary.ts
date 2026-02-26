@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/get-error-message'
 import type { DashboardDictionary as Dictionary, DashboardWord } from '@/types/dictionary'
 
 interface ListDictionariesArg {
@@ -68,8 +69,8 @@ export function useDeleteDictionaryMutation() {
       qc.invalidateQueries({ queryKey: ['dictionaries'] })
       toast.success('Dictionary deleted')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to delete dictionary')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to delete dictionary'))
     },
   })
 }
@@ -105,7 +106,7 @@ export function useGenerateDefinitionsMutation() {
       qc.invalidateQueries({ queryKey: ['dictionary', String(dictionary_id)] })
       toast.success('Definitions generated')
     },
-    onError: (err: any) => { toast.error(err?.message || 'Failed to generate definitions') },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to generate definitions')) },
   })
 }
 
@@ -124,7 +125,7 @@ export function useUpdateWordMutation() {
     onSuccess: (_d, { dictionaryId }) => {
       qc.invalidateQueries({ queryKey: ['dictionary', String(dictionaryId)] })
     },
-    onError: (err: any) => { toast.error(err?.message || 'Failed to update word') },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to update word')) },
   })
 }
 
@@ -138,7 +139,7 @@ export function usePublishDictionaryMutation() {
       return data
     },
     onSuccess: () => { toast.success('Dictionary published') },
-    onError: (err: any) => { toast.error(err?.message || 'Failed to publish dictionary') },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to publish dictionary')) },
   })
 }
 
@@ -155,7 +156,7 @@ export function useExportDictionaryMutation() {
       if (error) throw error
       return data
     },
-    onError: (err: any) => { toast.error(err?.message || 'Failed to export dictionary') },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to export dictionary')) },
   })
 }
 
@@ -174,7 +175,7 @@ export function useDeleteWordMutation() {
       qc.invalidateQueries({ queryKey: ['dictionary', String(dictionaryId)] })
       toast.success('Word deleted')
     },
-    onError: (err: any) => { toast.error(err?.message || 'Failed to delete word') },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to delete word')) },
   })
 }
 

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, apiPost } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/get-error-message'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -85,8 +86,8 @@ export function useUpdateGenerationSettingsMutation() {
       qc.invalidateQueries({ queryKey: QK.generationSettings() })
       toast.success('Generation settings saved')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to save generation settings')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to save generation settings'))
     },
   })
 }
@@ -109,8 +110,8 @@ export function useUpdatePublishingSettingsMutation() {
       qc.invalidateQueries({ queryKey: QK.publishingSettings() })
       toast.success('Credentials updated')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to update credentials')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to update credentials'))
     },
   })
 }
@@ -134,8 +135,8 @@ export function useCreateApiKeyMutation() {
       qc.invalidateQueries({ queryKey: QK.apiKeys() })
       toast.success('Inbound key created')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to create inbound key')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to create inbound key'))
     },
   })
 }
@@ -154,8 +155,8 @@ export function useRevokeApiKeyMutation() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.apiKeys() })
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to revoke key')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to revoke key'))
     },
   })
 }

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/get-error-message'
 import type { BlogPost, BlogPostSummary } from '@/types/blog'
 import { unwrapList } from '@/lib/utils'
 
@@ -57,8 +58,8 @@ export function useUpdatePostMetaMutation() {
     onSuccess: (_data, { postId }) => {
       qc.invalidateQueries({ queryKey: QK.post(postId) })
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to update post meta')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to update post meta'))
     },
   })
 }
@@ -77,8 +78,8 @@ export function useRegeneratePostMutation() {
       qc.invalidateQueries({ queryKey: QK.post(postId) })
       toast.success('Regenerate completed')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Regenerate failed')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Regenerate failed'))
     },
   })
 }
@@ -97,8 +98,8 @@ export function useDeletePostMutation() {
       qc.invalidateQueries({ queryKey: QK.posts() })
       toast.success('Delete completed')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Delete failed')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Delete failed'))
     },
   })
 }
@@ -117,8 +118,8 @@ export function usePublishPostMutation() {
       qc.invalidateQueries({ queryKey: QK.post(postId) })
       toast.success('Publish completed')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Publish failed')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Publish failed'))
     },
   })
 }
@@ -148,8 +149,8 @@ export function useGenerateImagesMutation() {
     onSuccess: () => {
       toast.success('Generate Images completed')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Generate Images failed')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Generate Images failed'))
     },
   })
 }
@@ -167,8 +168,8 @@ export function useSyncRecommendedPostsMutation() {
     onSuccess: () => {
       toast.success('Sync Posts completed')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Sync Posts failed')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Sync Posts failed'))
     },
   })
 }
@@ -192,8 +193,8 @@ export function useSyncKeywordsMutation() {
     onSuccess: () => {
       toast.success('Sync Keywords completed')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Sync Keywords failed')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Sync Keywords failed'))
     },
   })
 }
@@ -212,8 +213,8 @@ export function useGeneratePostMutation() {
       qc.invalidateQueries({ queryKey: QK.titles() })
       toast.success('Blog post generated')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to generate post')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to generate post'))
     },
   })
 }

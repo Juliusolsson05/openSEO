@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { api, apiPost } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/get-error-message'
 
 export interface PexelsImage {
   id: number
@@ -67,8 +68,8 @@ export function useGenerateImagesMutation() {
     onSuccess: () => {
       toast.success('Image generation started')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to generate images')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to generate images'))
     },
   })
 }
@@ -98,8 +99,8 @@ export function useApplyImageMutation() {
       if (error) throw error
       return data
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to apply image')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to apply image'))
     },
   })
 }

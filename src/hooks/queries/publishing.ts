@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, apiPost } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/get-error-message'
 
 type SyncJobStatus = 'accepted' | 'running' | 'completed' | 'failed' | 'not_available'
 
@@ -71,8 +72,8 @@ export function useSyncAllPostsMutation() {
     onSuccess: () => {
       toast.success('Post sync started')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to start post sync')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to start post sync'))
     },
   })
 }
@@ -98,8 +99,8 @@ export function useSyncAllDictionariesMutation() {
     onSuccess: () => {
       toast.success('Dictionary sync started')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to start dictionary sync')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to start dictionary sync'))
     },
   })
 }

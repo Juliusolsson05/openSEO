@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/get-error-message'
 import type { BlogTitle, Category } from '@/types/blog'
 
 // ─── Number → Status mapping (same as titlesApi) ────────────────────────────
@@ -67,8 +68,8 @@ export function useCreateTitleMutation() {
       qc.invalidateQueries({ queryKey: QK.titles() })
       toast.success('Title created')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to create title')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to create title'))
     },
   })
 }
@@ -101,8 +102,8 @@ export function useUpdateTitleMutation() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.titles() })
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to update title')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to update title'))
     },
   })
 }
@@ -121,8 +122,8 @@ export function useDeleteTitleMutation() {
       qc.invalidateQueries({ queryKey: QK.titles() })
       toast.success('Title deleted')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to delete title')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to delete title'))
     },
   })
 }
@@ -142,8 +143,8 @@ export function useRegenerateTitleMutation() {
       qc.invalidateQueries({ queryKey: QK.titles() })
       toast.success('Title regenerated')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to regenerate title')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to regenerate title'))
     },
   })
 }
@@ -168,8 +169,8 @@ export function useSchedulePostMutation() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.titles() })
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to schedule post')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to schedule post'))
     },
   })
 }
@@ -197,8 +198,8 @@ export function useScheduleByIntervalMutation() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.titles() })
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to schedule by interval')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to schedule by interval'))
     },
   })
 }
@@ -217,8 +218,8 @@ export function useGenerateTitlePostMutation() {
       qc.invalidateQueries({ queryKey: QK.titles() })
       toast.success('Post generation started')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to generate post')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to generate post'))
     },
   })
 }
@@ -245,8 +246,8 @@ export function useAssignCategoryMutation() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.titles() })
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to assign category')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to assign category'))
     },
   })
 }
@@ -264,8 +265,8 @@ export function useCreateCategoryMutation() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.categories() })
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to create category')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to create category'))
     },
   })
 }
@@ -285,8 +286,8 @@ export function useGenerateTitlesMutation() {
       qc.invalidateQueries({ queryKey: QK.titles() })
       toast.success('Titles generated')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to generate titles')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to generate titles'))
     },
   })
 }
@@ -300,7 +301,7 @@ export function useUpdateCategoryMutation() {
       return data
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: QK.categories() }) },
-    onError: (err: any) => { toast.error(err?.message || 'Failed to update category') },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to update category')) },
   })
 }
 
@@ -316,7 +317,7 @@ export function useDeleteCategoryMutation() {
       qc.invalidateQueries({ queryKey: QK.categories() })
       toast.success('Category deleted')
     },
-    onError: (err: any) => { toast.error(err?.message || 'Failed to delete category') },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to delete category')) },
   })
 }
 
@@ -332,7 +333,7 @@ export function useBulkDeleteCategoriesMutation() {
       qc.invalidateQueries({ queryKey: QK.categories() })
       toast.success('Categories deleted')
     },
-    onError: (err: any) => { toast.error(err?.message || 'Failed to delete categories') },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to delete categories')) },
   })
 }
 
@@ -348,7 +349,7 @@ export function useGenerateCategoriesMutation() {
       qc.invalidateQueries({ queryKey: QK.categories() })
       toast.success('Categories generated')
     },
-    onError: (err: any) => { toast.error(err?.message || 'Failed to generate categories') },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to generate categories')) },
   })
 }
 
@@ -365,7 +366,7 @@ export function useAutoCategorizesMutation() {
       qc.invalidateQueries({ queryKey: QK.titles() })
       toast.success('Auto-categorize completed')
     },
-    onError: (err: any) => { toast.error(err?.message || 'Failed to auto-categorize') },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to auto-categorize')) },
   })
 }
 
@@ -381,7 +382,7 @@ export function useReschedulePostMutation() {
       return data
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: QK.titles() }) },
-    onError: (err: any) => { toast.error(err?.message || 'Failed to reschedule') },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to reschedule')) },
   })
 }
 
@@ -397,7 +398,7 @@ export function useBulkCreateScheduleMutation() {
       return data!
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: QK.titles() }) },
-    onError: (err: any) => { toast.error(err?.message || 'Failed to create schedule') },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to create schedule')) },
   })
 }
 
@@ -410,6 +411,6 @@ export function useBulkAssignScheduleMutation() {
       return data
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: QK.titles() }) },
-    onError: (err: any) => { toast.error(err?.message || 'Failed to assign schedule') },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to assign schedule')) },
   })
 }

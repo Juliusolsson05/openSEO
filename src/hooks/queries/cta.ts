@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/get-error-message'
 import type { CTA } from '@/types/cta'
 
 export interface Campaign {
@@ -56,8 +57,8 @@ export function useCreateCampaignMutation() {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
       toast.success('Campaign created')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to create campaign')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to create campaign'))
     },
   })
 }
@@ -77,8 +78,8 @@ export function useEditCampaignMutation() {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
       toast.success('Campaign updated')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to edit campaign')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to edit campaign'))
     },
   })
 }
@@ -97,8 +98,8 @@ export function useDeleteCampaignMutation() {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
       toast.success('Campaign deleted')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to delete campaign')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to delete campaign'))
     },
   })
 }
@@ -148,8 +149,8 @@ export function useCreateCTAMutation() {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
       toast.success('CTA created')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to create CTA')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to create CTA'))
     },
   })
 }
@@ -198,8 +199,8 @@ export function useEditCTAMutation() {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
       toast.success('CTA updated')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to edit CTA')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to edit CTA'))
     },
   })
 }
@@ -218,8 +219,8 @@ export function useDeleteCTAMutation() {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
       toast.success('CTA deleted')
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to delete CTA')
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to delete CTA'))
     },
   })
 }
