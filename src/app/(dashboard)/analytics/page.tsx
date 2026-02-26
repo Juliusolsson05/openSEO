@@ -71,8 +71,8 @@ export default function AnalyticsPage() {
     <div className="space-y-4 animate-in">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-[16px] font-semibold">Analytics</h1>
-        <Button variant={fullView ? 'secondary' : 'default'} className="w-full text-[12px] sm:w-auto sm:text-[13px]" onClick={() => setFullView((v) => !v)}>
-          {fullView ? 'I know what I am doing 😎' : 'This looks scary, bring me back 😨'}
+        <Button variant={fullView ? 'default' : 'secondary'} className="w-full text-[12px] sm:w-auto sm:text-[13px]" onClick={() => setFullView((v) => !v)}>
+          {fullView ? 'This looks scary, bring me back 😨' : 'I know what I am doing 😎'}
         </Button>
       </div>
 
