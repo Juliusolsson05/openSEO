@@ -86,7 +86,7 @@ Requirements:
         },
       },
     },
-    max_completion_tokens: 1500,
+    max_completion_tokens: 4000,
   });
 
   let content = parseJsonResponse<any>(response);

@@ -18,6 +18,9 @@ export function parseJsonResponse<T = unknown>(response: OpenAI.Chat.Completions
   if (message?.refusal) {
     throw new Error(`Model refused to respond: ${message.refusal}`)
   }
+  if (finishReason === 'length') {
+    throw new Error('Generation hit token limit — response was cut off. Try a simpler element or shorter context.')
+  }
   const content = message?.content
   if (!content) {
     throw new Error(`No content in response (finish_reason: ${finishReason})`)
