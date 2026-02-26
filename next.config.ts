@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   // Do NOT use trailingSlash — the catch-all route normalizes paths instead.
   // skipTrailingSlashRedirect prevents Next.js from 308-redirecting /api/aurora/foo/ → /api/aurora/foo
   skipTrailingSlashRedirect: true,
-  allowedDevOrigins: ['192.168.50.42', '192.168.50.91', '127.0.0.1', 'localhost'],
+  allowedDevOrigins: ['192.168.1.154', '127.0.0.1', 'localhost'],
 
   async rewrites() {
     return [
