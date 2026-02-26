@@ -12,27 +12,35 @@ import { DefaultComponent, DefaultLoading, DefaultPreview } from './DefaultCompo
 
 // Component props that every element receives
 export interface ElementComponentProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   content: any
   blogId: number
   elementId: number
   postTitle?: string
   imageNumber?: number | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   hyperlink?: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onContentUpdated?: (content: any) => void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onElementAdded?: (element: any) => void
   onElementDeleted?: (elementId: number) => void
 }
 
 export interface PreviewComponentProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   content: any
   blogId?: number
   elementId?: number
   postTitle?: string
   imageNumber?: number | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   hyperlink?: any
   companyName?: string
   isCoverImage?: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   elements?: any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
 }
 

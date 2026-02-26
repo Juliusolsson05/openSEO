@@ -28,7 +28,7 @@ export interface BlogPostElement {
   id: number
   element_type: string
   order?: number
-  content: any
+  content: Record<string, unknown>
   hyperlink: HyperlinkData | null
   created_at: string
   blog_post: number
