@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-import type { AnalyticsBlogTitle } from '@/store/types/analyticsTypes'
+import type { AnalyticsBlogTitle } from '@/types/analytics'
 
 interface BlogPostCalendarProps {
   blogTitles: Pick<AnalyticsBlogTitle, 'generated_date'>[]

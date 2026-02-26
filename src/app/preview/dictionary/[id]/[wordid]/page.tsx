@@ -19,7 +19,7 @@ import {
   Tag,
 } from 'lucide-react'
 
-import type { DashboardDefinition as Definition, DashboardWord as WordDefinition } from '@/types/blog'
+import type { DashboardDefinition as Definition, DashboardWord as WordDefinition } from '@/types/dictionary'
 
 const clean = (value?: string) =>
   (value || '')

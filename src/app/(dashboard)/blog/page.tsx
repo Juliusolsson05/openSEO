@@ -25,28 +25,8 @@ import {
 import { usePostsQuery, useGeneratePostMutation } from '@/hooks/queries/blog'
 import { useTitlesQuery } from '@/hooks/queries/titles'
 
-import type { BlogTitle } from '@/types/blog'
-
-interface BlogPostSummary {
-  id: number
-  title_text: string
-  slug: string
-  status: number | string
-  is_published: boolean
-  created_at: string
-  cover_image: { url: string; description: string } | null
-  elements: { id: number; element_type: string }[]
-  focus_keyword: string
-  excerpt: string
-}
-
-function unwrapList<T>(raw: unknown): T[] {
-  if (Array.isArray(raw)) return raw as T[]
-  if (!raw || typeof raw !== 'object') return []
-  const obj = raw as Record<string, unknown>
-  const nested = obj.data ?? obj.results ?? obj.items
-  return Array.isArray(nested) ? (nested as T[]) : []
-}
+import type { BlogTitle, BlogPostSummary } from '@/types/blog'
+import { unwrapList } from '@/lib/utils'
 
 const statusConfig = (status: number | string, published: boolean) => {
   if (published)

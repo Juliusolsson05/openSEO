@@ -9,7 +9,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { queryClient } from '@/lib/query-client'
 import { QK } from '@/lib/query-keys'
 import type { BlogPost, BlogPostElement } from '@/types/blog'
-import type { AutopilotOperation } from '@/store/types/autopilotTypes'
+import type { AutopilotOperation } from '@/types/autopilot'
 
 interface BlogUiState {
   /** Track which postId is currently showing skeletons */

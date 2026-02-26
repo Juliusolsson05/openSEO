@@ -30,7 +30,7 @@ interface Word {
   has_definition?: boolean
 }
 
-import type { DashboardDictionary } from '@/types/blog'
+import type { DashboardDictionary } from '@/types/dictionary'
 interface Dictionary extends DashboardDictionary { words: Word[] }
 
 export default function DictionaryDetailPage() {

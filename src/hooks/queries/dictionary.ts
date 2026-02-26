@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
-import type { DashboardDictionary as Dictionary, DashboardWord } from '@/types/blog'
+import type { DashboardDictionary as Dictionary, DashboardWord } from '@/types/dictionary'
 
 interface ListDictionariesArg {
   searchQuery?: string

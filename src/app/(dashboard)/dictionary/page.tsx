@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
-import type { DashboardDictionary as Dictionary } from '@/types/blog'
+import type { DashboardDictionary as Dictionary } from '@/types/dictionary'
 
 const statusLabel = (d: Dictionary, currentId?: number, currentLetter?: string) => {
   if (currentId === d.id) return `Generating (${(currentLetter || 'a').toUpperCase()})`

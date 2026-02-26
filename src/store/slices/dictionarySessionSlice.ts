@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
 import { apiPost } from '@/lib/api'
-import type { DashboardDictionary as Dictionary } from '@/types/blog'
+import type { DashboardDictionary as Dictionary } from '@/types/dictionary'
 
 interface Keyword {
   keyword: string

@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
-import type { DashboardDefinition as Definition, DashboardWord as WordDefinition } from '@/types/blog'
+import type { DashboardDefinition as Definition, DashboardWord as WordDefinition } from '@/types/dictionary'
 
 const clean = (value?: string) => (value || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim()
 

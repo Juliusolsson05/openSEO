@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
-import type { BlogPost } from '@/types/blog'
+import type { BlogPost, BlogPostSummary } from '@/types/blog'
+import { unwrapList } from '@/lib/utils'
 
 // ─── Queries ────────────────────────────────────────────────────────────────
 
@@ -21,27 +22,6 @@ export function usePostQuery(
     },
     enabled: !!id && (options?.enabled ?? true),
   })
-}
-
-interface BlogPostSummary {
-  id: number
-  title_text: string
-  slug: string
-  status: number | string
-  is_published: boolean
-  created_at: string
-  cover_image: { url: string; description: string } | null
-  elements: { id: number; element_type: string }[]
-  focus_keyword: string
-  excerpt: string
-}
-
-function unwrapList<T>(raw: unknown): T[] {
-  if (Array.isArray(raw)) return raw as T[]
-  if (!raw || typeof raw !== 'object') return []
-  const obj = raw as Record<string, unknown>
-  const nested = obj.data ?? obj.results ?? obj.items
-  return Array.isArray(nested) ? (nested as T[]) : []
 }
 
 export function usePostsQuery(filters?: object) {

@@ -11,7 +11,7 @@ import type {
   ElementBreakdownResponse,
   AnalyticsData,
   DictionaryWordCount,
-} from '@/store/types/analyticsTypes'
+} from '@/types/analytics'
 
 export function useAnalyticsQuery() {
   return useQuery({

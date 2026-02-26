@@ -14,7 +14,7 @@ import type {
   RecommendationSummary,
   ImprovementSummary,
   ImageSummary,
-} from '@/store/types/autopilotTypes'
+} from '@/types/autopilot'
 
 interface AutopilotStartResponse {
   task_id: string
