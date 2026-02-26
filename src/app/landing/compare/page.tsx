@@ -7,7 +7,6 @@ export default async function ComparePage() {
 
   return (
     <>
-            {/* Hero */}
       <section style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #002050 0%, #0078D4 100%)' }}>
         <div style={{ position: 'absolute', inset: 0, opacity: 0.06, backgroundImage: 'linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
         <div style={{ position: 'relative', zIndex: 10, maxWidth: 1080, margin: '0 auto', padding: '64px 24px 56px', textAlign: 'center' }}>
@@ -21,7 +20,6 @@ export default async function ComparePage() {
         </div>
       </section>
 
-      {/* Comparisons grid */}
       <section style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 24px 64px' }}>
         <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#0078D4', marginBottom: 8 }}>Comparisons</p>
         <h2 style={{ fontSize: 24, fontWeight: 600, color: '#1A1A1A', letterSpacing: '-0.01em', margin: '0 0 24px' }}>
@@ -50,7 +48,6 @@ export default async function ComparePage() {
         )}
       </section>
 
-      {/* CTA */}
       <section style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #002050 0%, #0078D4 100%)', padding: '64px 24px' }}>
         <div style={{ position: 'absolute', inset: 0, opacity: 0.06, backgroundImage: 'linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
         <div style={{ position: 'relative', zIndex: 10, maxWidth: 1080, margin: '0 auto', textAlign: 'center' }}>

@@ -84,7 +84,6 @@ export default function BlogPostPage() {
 
   return (
     <div className="max-w-6xl mx-auto animate-in">
-      {/* Toolbar */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => router.push('/blog')}>
@@ -112,7 +111,6 @@ export default function BlogPostPage() {
       </div>
 
       <div className="flex gap-6">
-        {/* Main */}
         <div className="flex-1 min-w-0">
           <Card>
             <CardContent className="p-6">
@@ -159,12 +157,9 @@ export default function BlogPostPage() {
           </Card>
         </div>
 
-        {/* Sidebar */}
         <div className="w-64 shrink-0 space-y-4 hidden lg:block">
-          {/* Admin Actions */}
           <AdminMenu postId={post.id} onRefreshPost={refreshPost} />
 
-          {/* Details */}
           <Card>
             <CardContent className="p-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-3">
@@ -205,7 +200,6 @@ export default function BlogPostPage() {
             </CardContent>
           </Card>
 
-          {/* SEO — editable with keyword highlighting */}
           <PostInfoSidepanel
             post={post as any}
             onUpdatePost={refreshPost}
@@ -213,7 +207,6 @@ export default function BlogPostPage() {
 
           <BlogGlossary elements={post.elements} />
 
-          {/* Categories */}
           {post.categories && post.categories.length > 0 && (
             <Card>
               <CardContent className="p-4">
@@ -246,7 +239,6 @@ export default function BlogPostPage() {
         />
       ) : null}
 
-      {/* Quillo AI */}
       <QuilloChat blogPostId={post.id} />
       <QuilloAutopilot postId={post.id} />
     </div>

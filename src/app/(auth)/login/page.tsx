@@ -44,7 +44,6 @@ function LoginForm() {
         to continue to Aurora Dashboard
       </p>
 
-      {/* Demo credentials */}
       <div className="mt-6 rounded-sm border border-info-light bg-info-light p-3">
         <p className="text-[11px] font-semibold text-primary uppercase tracking-wide mb-1.5">
           Demo Accounts

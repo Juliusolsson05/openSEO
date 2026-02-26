@@ -99,7 +99,6 @@ export function BlogPostCalendar({ blogTitles }: BlogPostCalendarProps) {
           </div>
 
           <div className="flex gap-0">
-            {/* Day-of-week labels */}
             <div className="grid grid-rows-7 pr-1 text-[10px] text-muted-foreground" style={{ width: LEFT_LABEL_W }}>
               {['Sun', '', 'Tue', '', 'Thu', '', 'Sat'].map((d, i) => (
                 <div key={i} style={{ height: CELL, lineHeight: `${CELL}px` }}>{d}</div>

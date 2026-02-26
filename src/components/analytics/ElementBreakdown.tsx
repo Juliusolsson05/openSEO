@@ -75,7 +75,6 @@ export function ElementBreakdown({ elementBreakdown }: ElementBreakdownProps) {
         <CardTitle className="text-[13px] uppercase tracking-wide">Element breakdown</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Summary stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-sm border border-border p-3 text-center">
             <p className="text-[22px] font-bold">{elementBreakdown.total_posts}</p>
@@ -95,7 +94,6 @@ export function ElementBreakdown({ elementBreakdown }: ElementBreakdownProps) {
           </div>
         </div>
 
-        {/* Bar chart — height scales with number of element types */}
         <div style={{ height: Math.max(300, chartData.length * 32 + 40) }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
@@ -119,7 +117,6 @@ export function ElementBreakdown({ elementBreakdown }: ElementBreakdownProps) {
           </ResponsiveContainer>
         </div>
 
-        {/* Elements per post distribution */}
         {elementBreakdown.total_elements_per_post.length > 0 && (
           <div>
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

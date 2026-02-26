@@ -38,7 +38,6 @@ export function DictionaryIndex({ dictionary }: Props) {
         </p>
       </div>
 
-      {/* Search */}
       <div className="relative mb-8 max-w-sm">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
         <input
@@ -63,14 +62,12 @@ export function DictionaryIndex({ dictionary }: Props) {
         ))}
       </div>
 
-      {/* No results */}
       {letters.length === 0 && (
         <p className="py-12 text-center text-[14px] text-neutral-400">
           No terms match &ldquo;{query}&rdquo;
         </p>
       )}
 
-      {/* Alphabetical tables */}
       <div className="space-y-8">
         {letters.map((letter) => (
           <div key={letter} id={`letter-${letter}`} className="scroll-mt-24">
@@ -126,7 +123,6 @@ export function DictionaryIndex({ dictionary }: Props) {
         ))}
       </div>
 
-      {/* Word count */}
       <div className="mt-10 text-center">
         <p className="text-[12px] text-neutral-400">
           {filtered.length} term{filtered.length !== 1 ? 's' : ''}{query.trim() ? ' found' : ' in this glossary'}

@@ -16,7 +16,6 @@ export function GenerateSlide() {
       style={{ background: THEME.colors.surface, fontFamily: THEME.fonts.body }}
     >
       <div className="flex w-full max-w-[820px] items-center gap-12">
-        {/* Left text */}
         <div className="flex-shrink-0" style={{ width: 260 }}>
           <div
             className="mb-3 inline-flex h-9 w-9 items-center justify-center"
@@ -44,7 +43,6 @@ export function GenerateSlide() {
             className="overflow-hidden"
             style={{ border: `1px solid ${THEME.colors.border}`, borderRadius: THEME.radii.md, background: THEME.colors.surfaceAlt }}
           >
-            {/* Header */}
             <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${THEME.colors.border}`, background: THEME.colors.surface }}>
               <span className="text-[12px] font-semibold" style={{ color: THEME.colors.foreground }}>Suggested Titles</span>
               <span className="text-[11px]" style={{ color: THEME.colors.mutedLight }}>5 generated</span>

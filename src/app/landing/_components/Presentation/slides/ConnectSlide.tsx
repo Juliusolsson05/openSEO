@@ -8,7 +8,6 @@ export function ConnectSlide() {
       style={{ background: THEME.colors.surface, fontFamily: THEME.fonts.body }}
     >
       <div className="flex w-full max-w-[820px] items-center gap-12">
-        {/* Left text */}
         <div className="flex-1 min-w-0">
           <div
             className="mb-3 inline-flex h-9 w-9 items-center justify-center"

@@ -24,7 +24,6 @@ import { Presentation } from './_components/Presentation'
 function Hero() {
   return (
     <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #002050 0%, #0078D4 100%)' }}>
-      {/* Grid pattern like auth layout */}
       <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(rgba(255,255,255,0.4)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.4)_1px,transparent_1px)] [background-size:32px_32px]" />
       <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08)_0%,rgba(255,255,255,0.00)_50%)]" />
 
@@ -72,7 +71,6 @@ function Hero() {
           </p>
         </div>
 
-        {/* Dashboard preview */}
         <div className="mt-14 overflow-hidden shadow-2xl" style={{ borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="flex items-center gap-1.5 px-4 py-2" style={{ background: '#F5F5F5', borderBottom: '1px solid #E1E1E1' }}>
             <div className="h-2.5 w-2.5 rounded-full" style={{ background: '#FF5F57' }} />
@@ -308,7 +306,6 @@ function BeforeAfter() {
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">
-          {/* Before */}
           <div className="p-5" style={{ background: '#FFFFFF', border: '1px solid #E1E1E1', borderRadius: 4 }}>
             <div className="flex items-center gap-2 mb-4">
               <div className="h-2 w-2 rounded-full" style={{ background: '#FFB900' }} />
@@ -328,7 +325,6 @@ function BeforeAfter() {
             </div>
           </div>
 
-          {/* After */}
           <div className="p-5" style={{ background: '#FFFFFF', border: '2px solid #0078D4', borderRadius: 4 }}>
             <div className="flex items-center gap-2 mb-4">
               <div className="h-2 w-2 rounded-full" style={{ background: '#107C10' }} />

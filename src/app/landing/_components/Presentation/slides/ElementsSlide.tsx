@@ -31,7 +31,6 @@ export function ElementsSlide() {
       style={{ background: THEME.colors.surfaceAlt, fontFamily: THEME.fonts.body }}
     >
       <div className="flex w-full max-w-[820px] items-center gap-12">
-        {/* Left text */}
         <div className="flex-shrink-0" style={{ width: 260 }}>
           <div
             className="mb-3 inline-flex h-9 w-9 items-center justify-center"

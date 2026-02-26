@@ -3,7 +3,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 export function CaseStudyLoading() {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-      {/* Header */}
       <div className="bg-primary/20 px-8 py-7">
         <div className="flex items-start justify-between gap-6">
           <div className="flex-1">
@@ -14,9 +13,7 @@ export function CaseStudyLoading() {
         </div>
       </div>
 
-      {/* Body */}
       <div className="px-8 py-6 space-y-6">
-        {/* Challenge & Solution side by side */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
             <Skeleton className="mb-2 h-3 w-24" />
@@ -30,7 +27,6 @@ export function CaseStudyLoading() {
           </div>
         </div>
 
-        {/* Results */}
         <div>
           <Skeleton className="mb-3 h-3 w-20" />
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -40,7 +36,6 @@ export function CaseStudyLoading() {
           </div>
         </div>
 
-        {/* Testimonial */}
         <div className="rounded-lg border border-border bg-secondary/30 px-6 py-5">
           <Skeleton className="h-4 w-full" />
           <Skeleton className="mt-2 h-4 w-[70%]" />
@@ -48,7 +43,6 @@ export function CaseStudyLoading() {
         </div>
       </div>
 
-      {/* Footer */}
       <div className="flex items-center justify-between border-t border-border px-8 py-4">
         <Skeleton className="h-4 w-28" />
         <Skeleton className="h-4 w-32" />

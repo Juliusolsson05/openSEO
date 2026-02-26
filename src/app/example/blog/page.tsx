@@ -9,7 +9,6 @@ export default async function ExampleBlogIndex() {
 
   return (
     <div className="mx-auto max-w-[1120px] px-6 py-12">
-      {/* Header */}
       <div className="mb-10">
         <p className="text-[12px] font-semibold uppercase tracking-widest text-blue-600">Blog</p>
         <h1 className="mt-1 text-[32px] font-semibold tracking-tight text-neutral-900">
@@ -61,10 +60,8 @@ export default async function ExampleBlogIndex() {
         </Link>
       )}
 
-      {/* Divider */}
       {rest.length > 0 && <div className="border-t border-neutral-200 mb-10" />}
 
-      {/* Remaining posts — card grid */}
       {rest.length > 0 && (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {rest.map((post) => (

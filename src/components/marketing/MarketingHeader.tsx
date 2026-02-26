@@ -27,7 +27,6 @@ export function MarketingHeader() {
   return (
     <header className="fixed top-0 z-50 w-full bg-white" style={{ borderBottom: '1px solid #E6E6E6' }}>
       <div className="mx-auto flex h-12 max-w-[1080px] items-center justify-between px-6">
-        {/* Logo */}
         <Link href="/landing" className="flex items-center gap-2">
           <AuroraLogo size={22} />
           <span className="text-[14px] font-semibold" style={{ color: '#1A1A1A', letterSpacing: '-0.01em' }}>
@@ -37,7 +36,6 @@ export function MarketingHeader() {
           <span className="hidden sm:inline text-[11px]" style={{ color: '#A0A0A0' }}>by Nordtools</span>
         </Link>
 
-        {/* Desktop nav */}
         <nav className="hidden items-center gap-0 md:flex">
           {NAV_ITEMS.map((item) => (
             <Link
@@ -54,7 +52,6 @@ export function MarketingHeader() {
           ))}
         </nav>
 
-        {/* Desktop CTA */}
         <div className="hidden items-center gap-4 md:flex">
           <Link href="/login" className="text-[13px]" style={{ color: '#0078D4' }}>
             Sign in
@@ -68,13 +65,11 @@ export function MarketingHeader() {
           </Link>
         </div>
 
-        {/* Mobile toggle */}
         <button className="md:hidden" style={{ color: '#616161' }} onClick={() => setOpen(!open)}>
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       {open && (
         <div className="bg-white px-6 py-4 md:hidden" style={{ borderTop: '1px solid #E6E6E6' }}>
           {NAV_ITEMS.map((item) => (

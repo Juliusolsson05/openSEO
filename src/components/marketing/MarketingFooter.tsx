@@ -35,7 +35,6 @@ export function MarketingFooter() {
     <footer style={{ borderTop: '1px solid #E6E6E6', background: '#FFFFFF' }}>
       <div className="mx-auto max-w-[1080px] px-6 py-10">
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
-          {/* Brand */}
           <div>
             <Link href="/landing" className="flex items-center gap-2">
               <AuroraLogo size={20} />
@@ -50,7 +49,6 @@ export function MarketingFooter() {
             </p>
           </div>
 
-          {/* Link columns */}
           {COLUMNS.map((col) => (
             <div key={col.title}>
               <p

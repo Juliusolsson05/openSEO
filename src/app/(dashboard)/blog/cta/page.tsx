@@ -243,7 +243,6 @@ export default function BlogCtaPage() {
         </div>
       </div>
 
-      {/* Main modal */}
       <Dialog open={!!modal.type} onOpenChange={(open) => !open && setModal({ type: null })}>
         <DialogContent className="w-full max-w-md p-0">
           <Card className="border-0 shadow-none">
@@ -363,7 +362,6 @@ export default function BlogCtaPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirm */}
       <Dialog open={pendingDelete !== null} onOpenChange={(open) => { if (!open) setPendingDelete(null) }}>
         <DialogContent className="w-full max-w-sm">
           <DialogHeader>

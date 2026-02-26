@@ -98,7 +98,6 @@ export default function QuilloChat({ blogPostId }: Props) {
 
   return createPortal(
     <>
-      {/* Floating button */}
       {!isOpen && (
         <Button
           onClick={toggle}
@@ -109,7 +108,6 @@ export default function QuilloChat({ blogPostId }: Props) {
         </Button>
       )}
 
-      {/* Analysis panel */}
       {isOpen && (
         <Card className="fixed bottom-6 right-6 z-40 w-[420px] max-h-[70vh] flex flex-col shadow-lg">
           <CardHeader className="flex-row items-center justify-between bg-sidebar text-white rounded-t-sm px-4 py-3 shrink-0">
@@ -135,7 +133,6 @@ export default function QuilloChat({ blogPostId }: Props) {
               </div>
             ) : analysis ? (
               <>
-                {/* Tabs */}
                 <div className="flex border-b border-border">
                   {(['overall', 'seo', 'content'] as const).map((t) => (
                     <Button
@@ -219,7 +216,6 @@ export default function QuilloChat({ blogPostId }: Props) {
             ) : null}
           </CardContent>
 
-          {/* Footer */}
           {analysis && (
             <div className="border-t border-border p-3 shrink-0">
               <Button className="w-full gap-1.5" onClick={() => { setShowChat(true); setIsOpen(false) }}>

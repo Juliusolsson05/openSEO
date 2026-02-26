@@ -9,9 +9,7 @@ export default function AuthLayout({
 }) {
   return (
     <div className="flex min-h-screen">
-      {/* Left — Azure-style branding panel */}
       <div className="hidden lg:flex lg:w-[480px] azure-hero items-center justify-center relative overflow-hidden">
-        {/* Premium geometric accents */}
         <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.10)_0%,rgba(255,255,255,0.00)_45%)]" />
         <div className="absolute -top-16 -right-20 h-64 w-64 rotate-12 border border-white/20 bg-white/5" />
         <div className="absolute -bottom-20 -left-20 h-56 w-56 -rotate-12 border border-white/15 bg-white/5" />
@@ -31,7 +29,6 @@ export default function AuthLayout({
         </div>
       </div>
 
-      {/* Right — form area */}
       <div className="relative flex flex-1 items-center justify-center bg-white p-8">
         <Link
           href="/"

@@ -122,7 +122,6 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <DialogContent className="w-full max-w-3xl h-[80vh] p-0">
           <Card className="h-full border-0 shadow-none flex flex-col">
-            {/* Header */}
             <CardHeader className="flex-row items-center justify-between bg-sidebar text-white rounded-t-sm px-4 py-3 shrink-0">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
@@ -135,7 +134,6 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
               </Button>
             </CardHeader>
 
-          {/* Messages */}
           <CardContent className="flex-1 overflow-y-auto p-4 space-y-3" ref={chatRef}>
             {messages.map((msg, i) => (
               <div key={i} className={`max-w-[80%] ${msg.sender === 'user' ? 'ml-auto' : 'mr-auto'}`}>
@@ -199,7 +197,6 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
             )}
           </CardContent>
 
-          {/* Input area */}
           <div className="border-t border-border px-4 py-3 flex items-center gap-2 shrink-0">
             <input
               value={input}
@@ -214,7 +211,6 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
             </Button>
           </div>
 
-          {/* Social conversion actions */}
           <div className="border-t border-border px-4 py-2 flex items-center justify-center gap-2 shrink-0">
             <Button variant="outline" size="sm" className="gap-1 text-[11px]" onClick={convertToLinkedIn} disabled={loading || linkedInLoading}>
               <Linkedin className="h-3.5 w-3.5" /> LinkedIn
@@ -227,7 +223,6 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
       </DialogContent>
       </Dialog>
 
-      {/* LinkedIn preview */}
       <Dialog open={showLinkedInPreview && !!linkedInPost} onOpenChange={(open) => !open && setShowLinkedInPreview(false)}>
         <DialogContent className="w-full max-w-xl p-0">
           <Card className="border-0 shadow-none">

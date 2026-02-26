@@ -100,7 +100,6 @@ function NavLink({ item, pathname, nested = false }: { item: NavItem; pathname: 
           : 'text-sidebar-foreground hover:bg-sidebar-hover'
       )}
     >
-      {/* Left accent bar */}
       {isActive && (
         <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-white" />
       )}
@@ -123,7 +122,6 @@ export function Sidebar() {
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-[240px] flex-col bg-sidebar">
-      {/* Logo bar */}
       <div className="flex h-12 items-center gap-2.5 px-4 border-b border-sidebar-border">
         <AuroraLogo size={24} light />
         <span className="text-[15px] font-semibold text-white tracking-tight">
@@ -131,7 +129,6 @@ export function Sidebar() {
         </span>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3">
         {navigation.map((section, i) => (
           <div key={i} className="mb-1">
@@ -165,7 +162,6 @@ export function Sidebar() {
         ) : null}
       </nav>
 
-      {/* User bar */}
       <div className="border-t border-sidebar-border px-3 py-3">
         <div className="flex items-center gap-2.5 px-1">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-accent text-[12px] font-semibold text-white uppercase">

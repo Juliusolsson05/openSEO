@@ -92,7 +92,6 @@ export function ProsAndCons({ content, blogId, elementId, onContentUpdated, onEl
             />
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {/* Pros */}
               <div>
                 <h4 className="mb-2 border-b-2 border-emerald-600 pb-1.5 text-sm font-semibold text-emerald-600">Pros</h4>
                 <div className="space-y-1.5">
@@ -116,7 +115,6 @@ export function ProsAndCons({ content, blogId, elementId, onContentUpdated, onEl
                 </div>
               </div>
 
-              {/* Cons */}
               <div>
                 <h4 className="mb-2 border-b-2 border-rose-600 pb-1.5 text-sm font-semibold text-rose-600">Cons</h4>
                 <div className="space-y-1.5">

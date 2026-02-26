@@ -171,7 +171,6 @@ export default function ElementsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Toast */}
       {toast && createPortal(
         <div className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-md text-[13px] font-medium shadow-lg ${toast.variant === 'success' ? 'bg-[#DFF6DD] text-[#107C10]' : 'bg-[#FDE7E9] text-[#D13438]'}`}>
           {toast.message}

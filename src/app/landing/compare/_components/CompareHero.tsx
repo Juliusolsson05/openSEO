@@ -15,14 +15,12 @@ export function CompareHero({ toolA, toolB, title, updatedAt }: Props) {
     <section style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #002050 0%, #0078D4 100%)' }}>
       <div style={{ position: 'absolute', inset: 0, opacity: 0.06, backgroundImage: 'linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
       <div style={{ position: 'relative', zIndex: 10, maxWidth: 1080, margin: '0 auto', padding: '40px 24px 32px', textAlign: 'center' }}>
-        {/* Breadcrumb */}
         <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 16 }}>
           <Link href="/landing/compare" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Compare</Link>
           {' / '}
           {toolA.name} vs {toolB.name}
         </p>
 
-        {/* Tool names */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 12 }}>
           <span style={{ fontSize: 26, fontWeight: 600, color: '#FFFFFF', letterSpacing: '-0.02em' }}>{toolA.name}</span>
           <span style={{ fontSize: 10, fontWeight: 700, color: '#0078D4', padding: '3px 10px', background: 'rgba(255,255,255,0.9)', borderRadius: 2 }}>VS</span>

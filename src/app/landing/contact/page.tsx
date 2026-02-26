@@ -21,7 +21,6 @@ export default function ContactPage() {
       </p>
 
       <div className="grid gap-8 md:grid-cols-5">
-        {/* Contact info */}
         <div className="md:col-span-2 space-y-5">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 h-8 w-8 shrink-0 flex items-center justify-center" style={{ background: '#F0F6FF', borderRadius: 2 }}>
@@ -53,7 +52,6 @@ export default function ContactPage() {
             </div>
           </div>
 
-          {/* Social links placeholder */}
           <div className="pt-4" style={{ borderTop: '1px solid #E6E6E6' }}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] mb-3" style={{ color: '#A0A0A0' }}>Follow us</p>
             <div className="flex gap-3">
@@ -71,7 +69,6 @@ export default function ContactPage() {
           </div>
         </div>
 
-        {/* Contact form */}
         <div className="md:col-span-3">
           {submitted ? (
             <div className="p-8 text-center" style={{ background: '#F0F6FF', borderRadius: 4 }}>

@@ -66,7 +66,6 @@ export function CaseStudy({ content, blogId, elementId, onContentUpdated, onElem
           </div>
         </div>
 
-        {/* Body */}
         <div className="px-8 py-6 space-y-6">
           {/* Challenge & Solution — side by side on desktop */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -99,7 +98,6 @@ export function CaseStudy({ content, blogId, elementId, onContentUpdated, onElem
             </div>
           </div>
 
-          {/* Testimonial */}
           {content?.testimonial?.quote && (
             <div className="relative rounded-lg border border-border bg-secondary/30 px-6 py-5">
               <Quote className="absolute top-4 left-4 h-5 w-5 text-muted-foreground/30" />
@@ -114,7 +112,6 @@ export function CaseStudy({ content, blogId, elementId, onContentUpdated, onElem
           )}
         </div>
 
-        {/* Footer */}
         {content?.companyWebsite && (
           <div className="flex items-center justify-between border-t border-border px-8 py-4">
             <a

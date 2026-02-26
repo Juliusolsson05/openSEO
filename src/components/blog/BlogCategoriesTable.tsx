@@ -260,7 +260,6 @@ export default function BlogCategoriesTable() {
           </div>
         ) : (
           <div className="space-y-3">
-            {/* Summary row */}
             <div className="flex items-center gap-4 text-[12px] text-muted-foreground">
               <label className="flex items-center gap-1.5 cursor-pointer select-none">
                 <Checkbox
@@ -289,7 +288,6 @@ export default function BlogCategoriesTable() {
               </span>
             </div>
 
-            {/* Category chips */}
             <div className="flex flex-wrap gap-2">
               {categories.map((cat) => {
                 const selected = selectedIds.includes(cat.id)

@@ -201,7 +201,6 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
             </Button>
           </div>
 
-          {/* Local toast */}
           {toast && (
             <p className={`mt-3 text-[11px] leading-tight ${
               toast.type === 'success' ? 'text-success' : 'text-destructive'
@@ -212,7 +211,6 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
         </CardContent>
       </Card>
 
-      {/* Regenerate confirm */}
       {showRegenerate && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowRegenerate(false)}>
           <div className="w-[400px] rounded-lg border border-border bg-background p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -243,7 +241,6 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
         document.body
       )}
 
-      {/* Delete confirm */}
       {showDelete && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowDelete(false)}>
           <div className="w-[400px] rounded-lg border border-border bg-background p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -275,7 +272,6 @@ export default function AdminMenu({ postId, onRefreshPost }: Props) {
         document.body
       )}
 
-      {/* Publish flow */}
       {showPublish && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowPublish(false)}>
           <div className="w-[400px] rounded-lg border border-border bg-background p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>

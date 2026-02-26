@@ -26,7 +26,6 @@ export function AutopilotSlide() {
       style={{ background: THEME.colors.surface, fontFamily: THEME.fonts.body }}
     >
       <div className="w-full max-w-[820px]">
-        {/* Top text */}
         <div className="mb-6 flex items-center gap-3">
           <div
             className="inline-flex h-9 w-9 items-center justify-center"
@@ -46,7 +45,6 @@ export function AutopilotSlide() {
 
         {/* Before / After grid */}
         <div className="grid gap-4 md:grid-cols-2">
-          {/* Before */}
           <div className="p-4" style={{ background: THEME.colors.surfaceSoft, border: `1px solid ${THEME.colors.border}`, borderRadius: THEME.radii.md }}>
             <div className="flex items-center gap-2 mb-3">
               <div className="h-2 w-2 rounded-full" style={{ background: THEME.colors.warning }} />
@@ -70,7 +68,6 @@ export function AutopilotSlide() {
             </p>
           </div>
 
-          {/* After */}
           <div className="p-4" style={{ background: THEME.colors.surface, border: `2px solid ${THEME.colors.primary}`, borderRadius: THEME.radii.md }}>
             <div className="flex items-center gap-2 mb-3">
               <div className="h-2 w-2 rounded-full" style={{ background: THEME.colors.success }} />

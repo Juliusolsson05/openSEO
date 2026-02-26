@@ -27,7 +27,6 @@ export function ImageStudio(props: Props) {
     <>
       <Modal open={props.open} onClose={props.onClose} zClass="z-[60]">
         <div className="flex w-[min(1100px,95vw)] max-h-[85vh] flex-col overflow-hidden rounded-lg border border-border bg-background shadow-xl">
-          {/* Header */}
           <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-3">
             <h2 className="text-base font-semibold">🎨 Image Studio</h2>
             <div className="flex items-center gap-2">
@@ -52,7 +51,6 @@ export function ImageStudio(props: Props) {
 
           {/* Body — two panels */}
           <div className="flex flex-1 min-h-0 overflow-hidden">
-            {/* Left: Preview */}
             <div className="flex w-[55%] shrink-0 p-4">
               <ImagePreviewPanel
                 imageUrl={state.selectedUrl}
@@ -61,7 +59,6 @@ export function ImageStudio(props: Props) {
               />
             </div>
 
-            {/* Right: Controls */}
             <div className="flex w-[45%] flex-col border-l border-border">
               <div className="flex-1 overflow-y-auto p-4">
                 <ImageControlPanel
@@ -98,7 +95,6 @@ export function ImageStudio(props: Props) {
             </div>
           </div>
 
-          {/* Footer: History + Actions */}
           <ImageHistory
             items={state.history}
             activeUrl={state.selectedUrl}

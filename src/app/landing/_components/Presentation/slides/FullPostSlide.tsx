@@ -18,7 +18,6 @@ export function FullPostSlide() {
       style={{ background: THEME.colors.surfaceAlt, fontFamily: THEME.fonts.body }}
     >
       <div className="flex w-full max-w-[820px] items-center gap-12">
-        {/* Left text */}
         <div className="flex-shrink-0" style={{ width: 260 }}>
           <div
             className="mb-3 inline-flex h-9 w-9 items-center justify-center"
@@ -46,7 +45,6 @@ export function FullPostSlide() {
             className="overflow-hidden"
             style={{ border: `1px solid ${THEME.colors.border}`, borderRadius: THEME.radii.md, background: THEME.colors.surface, maxHeight: 400 }}
           >
-            {/* Post title bar */}
             <div className="px-4 py-3" style={{ borderBottom: `1px solid ${THEME.colors.border}` }}>
               <p className="text-[13px] font-semibold" style={{ color: THEME.colors.foreground }}>
                 The Complete Guide to API Rate Limiting

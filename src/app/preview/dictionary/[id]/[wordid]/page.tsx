@@ -83,7 +83,6 @@ export default function DictionaryPublicPreviewPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground [font-family:'Segoe_UI',SegoeUI,Segoe_UI_Web,Arial,sans-serif]">
-      {/* Header */}
       {showHeaderFooter && (
         <header className="h-20 border-b border-border bg-white">
           <div className="mx-auto flex h-full w-full max-w-[1280px] items-center px-6">
@@ -126,7 +125,6 @@ export default function DictionaryPublicPreviewPage() {
         </CardContent>
       </Card>
 
-      {/* Main content */}
       <main className="mx-auto w-full max-w-[1280px] px-4 py-8 lg:px-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           <section className="lg:col-span-9">
@@ -158,7 +156,6 @@ export default function DictionaryPublicPreviewPage() {
 
             {!loading && !error && word && def && (
               <article className="mx-auto max-w-[720px]">
-                {/* Breadcrumb */}
                 <div className="mb-4 text-xs text-muted-foreground">
                   Home / Glossary / {word.keyword}
                 </div>
@@ -179,7 +176,6 @@ export default function DictionaryPublicPreviewPage() {
                   </CardContent>
                 </Card>
 
-                {/* Sections */}
                 <div className="space-y-8">
                   {sections.map((section) => (
                     <section
@@ -277,7 +273,6 @@ export default function DictionaryPublicPreviewPage() {
             )}
           </section>
 
-          {/* Sidebar */}
           <aside className="hidden lg:col-span-3 lg:block">
             <div className="sticky top-24 space-y-4">
               {/* On this page */}
@@ -351,7 +346,6 @@ export default function DictionaryPublicPreviewPage() {
                     </div>
                   </div>
 
-                  {/* Newsletter */}
                   <div className="rounded border border-border p-3">
                     <p className="mb-2 flex items-center gap-2 text-sm font-semibold">
                       <Mail className="h-4 w-4 text-primary" /> Newsletter
@@ -362,7 +356,6 @@ export default function DictionaryPublicPreviewPage() {
                     </Button>
                   </div>
 
-                  {/* Tags */}
                   {def && (def.synonyms || []).length > 0 && (
                     <div>
                       <p className="mb-2 flex items-center gap-2 text-sm font-semibold">
@@ -384,7 +377,6 @@ export default function DictionaryPublicPreviewPage() {
         </div>
       </main>
 
-      {/* Footer */}
       {showHeaderFooter && (
         <footer className="border-t border-border bg-white">
           <div className="mx-auto grid w-full max-w-[1280px] grid-cols-1 gap-6 px-6 py-8 md:grid-cols-4">

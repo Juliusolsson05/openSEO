@@ -131,7 +131,6 @@ export function Timeline({ content, blogId, elementId, onContentUpdated, onEleme
                 <div className="absolute -left-[41px] top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-primary bg-card">
                   <div className="h-2 w-2 rounded-full bg-primary" />
                 </div>
-                {/* Date badge */}
                 <div className="mb-1.5 inline-block rounded-full bg-primary/10 px-3 py-0.5 text-[12px] font-semibold text-primary" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(event.date ?? '') }} />
                 <h4 className="text-[17px] font-semibold leading-snug text-foreground" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(event.title ?? '') }} />
                 <div className="mt-1.5 text-[16px] font-light leading-[1.7] text-muted-foreground [&_strong]:font-semibold [&_em]:font-[450]" dangerouslySetInnerHTML={{ __html: renderMarkdown(event.description ?? '') }} />

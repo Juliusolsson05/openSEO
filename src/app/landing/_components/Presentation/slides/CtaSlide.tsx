@@ -12,7 +12,6 @@ export function CtaSlide() {
         fontFamily: THEME.fonts.body,
       }}
     >
-      {/* Grid pattern */}
       <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(rgba(255,255,255,0.4)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.4)_1px,transparent_1px)] [background-size:32px_32px]" />
 
       <div className="relative z-10 flex flex-col items-center gap-5">

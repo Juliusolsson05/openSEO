@@ -44,7 +44,6 @@ export function ImagePreviewPanel({ imageUrl, provider, isGenerating }: Props) {
         )}
       </div>
 
-      {/* Footer info */}
       <div className="shrink-0 border-t border-border px-3 py-1.5 text-[11px] text-muted-foreground">
         {PROVIDER_LABELS[provider] ?? provider}
       </div>

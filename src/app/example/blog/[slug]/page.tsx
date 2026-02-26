@@ -53,7 +53,6 @@ export default async function ExampleBlogPostPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-[1120px] px-6 py-12">
-      {/* Breadcrumb */}
       <nav className="mb-6 text-[13px] text-neutral-400">
         <Link href="/example" className="hover:text-blue-600 transition-colors">Home</Link>
         <span className="mx-1.5">/</span>
@@ -62,13 +61,11 @@ export default async function ExampleBlogPostPage({ params }: PageProps) {
         <span className="text-neutral-600">{post.title}</span>
       </nav>
 
-      {/* Title + date */}
       <h1 className="text-[32px] font-semibold tracking-tight text-neutral-900 leading-tight max-w-3xl">
         {post.title}
       </h1>
       <p className="mt-2 text-[13px] text-neutral-400">{post.published_at}</p>
 
-      {/* Hero image */}
       <div className="mt-6 aspect-[16/7] overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100">
         {post.cover_image_url ? (
           <img
@@ -94,7 +91,6 @@ export default async function ExampleBlogPostPage({ params }: PageProps) {
         </aside>
       </div>
 
-      {/* Prev / Next navigation */}
       <div className="mt-12 grid gap-4 border-t border-neutral-200 pt-8 md:grid-cols-2">
         {prevPost ? (
           <Link
@@ -122,7 +118,6 @@ export default async function ExampleBlogPostPage({ params }: PageProps) {
         ) : <div />}
       </div>
 
-      {/* Related posts with images */}
       <section className="mt-12 border-t border-neutral-200 pt-8">
         <h2 className="text-[22px] font-semibold tracking-tight text-neutral-900">Related posts</h2>
         <div className="mt-5 grid gap-5 md:grid-cols-3">

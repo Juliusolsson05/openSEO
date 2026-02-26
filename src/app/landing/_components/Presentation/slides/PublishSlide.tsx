@@ -9,7 +9,6 @@ export function PublishSlide() {
       style={{ background: THEME.colors.surface, fontFamily: THEME.fonts.body }}
     >
       <div className="flex w-full max-w-[820px] items-center gap-12">
-        {/* Left text */}
         <div className="flex-shrink-0" style={{ width: 260 }}>
           <div
             className="mb-3 inline-flex h-9 w-9 items-center justify-center"
@@ -90,7 +89,6 @@ export function PublishSlide() {
             <span className="text-[10px] font-medium" style={{ color: THEME.colors.mutedLight }}>3 formats</span>
           </div>
 
-          {/* Aurora branding */}
           <div className="flex items-center justify-center gap-1.5 pt-1">
             <AuroraLogo size={12} />
             <span className="text-[10px]" style={{ color: THEME.colors.mutedLight }}>Powered by Aurora</span>

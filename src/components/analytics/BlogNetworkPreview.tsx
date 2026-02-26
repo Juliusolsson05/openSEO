@@ -201,7 +201,6 @@ export function BlogNetworkPreview({ blogTitles }: BlogNetworkPreviewProps) {
             <DialogTitle className="text-[14px]">Blog Post Network</DialogTitle>
           </DialogHeader>
           <div className="flex flex-1 gap-4 overflow-hidden">
-            {/* Network graph */}
             <div className="flex-1 overflow-hidden rounded-sm border border-border bg-white">
               <NetworkSvg
                 nodes={full.nodes}
@@ -211,7 +210,6 @@ export function BlogNetworkPreview({ blogTitles }: BlogNetworkPreviewProps) {
                 showLabels
               />
             </div>
-            {/* Ranked posts sidebar */}
             <div className="hidden w-[260px] shrink-0 overflow-y-auto md:block">
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Most Connected Posts

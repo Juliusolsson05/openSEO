@@ -26,7 +26,6 @@ export function ImageHistory({ items, activeUrl, onSelect, onApply, onCancel, ap
   return (
     <div className="shrink-0 border-t border-border px-5 py-3">
       <div className="flex items-center justify-between gap-4">
-        {/* Thumbnails */}
         <div className="flex items-center gap-2 overflow-x-auto min-w-0 flex-1">
           {items.length > 0 && (
             <span className="text-[11px] text-muted-foreground shrink-0 mr-1">History</span>
@@ -51,7 +50,6 @@ export function ImageHistory({ items, activeUrl, onSelect, onApply, onCancel, ap
           ))}
         </div>
 
-        {/* Actions */}
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={onCancel} className="text-xs">
             Cancel

@@ -79,7 +79,6 @@ export default function PublishingPage() {
     <div className="space-y-4" style={{ fontSize: 13 }}>
       <h1 className="text-xl font-semibold">Publishing</h1>
 
-      {/* API Config */}
       <Card className="rounded-sm border-border bg-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -135,7 +134,6 @@ export default function PublishingPage() {
         </CardContent>
       </Card>
 
-      {/* Sync Controls */}
       <Card className="rounded-sm border-border bg-white">
         <CardHeader>
           <CardTitle>Sync Content</CardTitle>
@@ -169,7 +167,6 @@ export default function PublishingPage() {
             </p>
           )}
 
-          {/* Job tracker */}
           {activeJobId && (
             <div className="rounded-sm border border-border p-3 space-y-2">
               <div className="flex items-center justify-between">

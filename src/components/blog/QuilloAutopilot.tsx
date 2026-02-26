@@ -49,7 +49,6 @@ export default function QuilloAutopilot({ postId }: Props) {
 
   return createPortal(
     <>
-      {/* Floating button */}
       <div className={`fixed z-40 transition-all duration-300 ${
         collapsed ? 'top-1/2 right-0 -translate-y-1/2' : 'top-20 right-6'
       }`}>
@@ -83,7 +82,6 @@ export default function QuilloAutopilot({ postId }: Props) {
         </div>
       </div>
 
-      {/* Info modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="w-full max-w-md p-0 border-0 bg-transparent shadow-none">
           <VisuallyHidden><DialogTitle>Quillo Autopilot</DialogTitle></VisuallyHidden>

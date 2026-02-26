@@ -14,7 +14,6 @@ export function FeatureComparison({ content, toolA, toolB }: Props) {
 
   return (
     <div style={{ marginBottom: 24, border: '1px solid #E1E1E1', borderRadius: 2, overflow: 'hidden' }}>
-      {/* Header */}
       <div style={{ padding: '12px 16px', background: '#F5F5F5', borderBottom: '1px solid #E1E1E1' }}>
         <h3 style={{ fontSize: 14, fontWeight: 600, color: '#1A1A1A', margin: 0 }}>{content.category}</h3>
       </div>

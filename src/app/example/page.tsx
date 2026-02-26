@@ -80,7 +80,6 @@ function Hero() {
           </p>
         </div>
 
-        {/* App preview */}
         <div className="mt-16 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-lg shadow-neutral-200/50">
           <div className="flex items-center gap-1.5 border-b border-neutral-100 bg-neutral-50 px-4 py-2.5">
             <div className="h-2.5 w-2.5 rounded-full bg-red-300" />
@@ -147,7 +146,6 @@ function Hero() {
           </div>
         </div>
 
-        {/* Logos */}
         <div className="mt-16 text-center">
           <p className="text-[12px] font-medium uppercase tracking-widest text-neutral-400">
             Trusted by teams at

@@ -95,7 +95,6 @@ export function Presentation() {
       style={{ background: THEME.colors.surfaceAlt, borderTop: `1px solid ${THEME.colors.border}`, borderBottom: `1px solid ${THEME.colors.border}` }}
     >
       <div className="mx-auto max-w-[1080px] px-6">
-        {/* Section header */}
         <p
           className="text-[11px] font-semibold uppercase tracking-[0.12em]"
           style={{ color: THEME.colors.primary }}
@@ -115,7 +114,6 @@ export function Presentation() {
           Walk through the full Aurora workflow — step by step.
         </p>
 
-        {/* Deck */}
         <div
           className="relative mt-10 overflow-hidden"
           style={{
@@ -142,7 +140,6 @@ export function Presentation() {
             </motion.div>
           </AnimatePresence>
 
-          {/* Nav arrows */}
           <button
             onClick={prev}
             className="absolute left-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center transition-opacity"
@@ -171,7 +168,6 @@ export function Presentation() {
             <ChevronRight className="h-4 w-4" style={{ color: THEME.colors.foreground }} />
           </button>
 
-          {/* Slide counter */}
           <div
             className="absolute bottom-3 right-4 text-[11px]"
             style={{ color: THEME.colors.mutedLight }}
@@ -180,7 +176,6 @@ export function Presentation() {
           </div>
         </div>
 
-        {/* Dot nav + labels */}
         <div className="mt-5 flex items-center justify-center gap-1">
           {SLIDES.map((_, i) => (
             <button

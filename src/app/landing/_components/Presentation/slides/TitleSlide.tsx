@@ -10,7 +10,6 @@ export function TitleSlide() {
         fontFamily: THEME.fonts.body,
       }}
     >
-      {/* Grid pattern */}
       <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(rgba(255,255,255,0.4)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.4)_1px,transparent_1px)] [background-size:32px_32px]" />
       <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08)_0%,rgba(255,255,255,0.00)_50%)]" />
 

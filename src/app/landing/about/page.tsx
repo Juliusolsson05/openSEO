@@ -23,7 +23,6 @@ export default function AboutPage() {
         an AI-powered platform that turns a topic into a complete, publish-ready blog post.
       </p>
 
-      {/* Mission */}
       <section className="mb-10">
         <h2 className="text-[18px] font-semibold mb-3 md:text-[20px]" style={heading}>Our Mission</h2>
         <p className="text-[14px] leading-[1.75]" style={muted}>
@@ -34,7 +33,6 @@ export default function AboutPage() {
         </p>
       </section>
 
-      {/* Who we are */}
       <section className="mb-10">
         <h2 className="text-[18px] font-semibold mb-3 md:text-[20px]" style={heading}>Who We Are</h2>
         <p className="text-[14px] leading-[1.75]" style={muted}>
@@ -44,7 +42,6 @@ export default function AboutPage() {
         </p>
       </section>
 
-      {/* Values */}
       <section className="mb-10">
         <h2 className="text-[18px] font-semibold mb-3 md:text-[20px]" style={heading}>What We Believe</h2>
         <div className="space-y-4 mt-4">
@@ -70,7 +67,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="pt-6" style={{ borderTop: '1px solid #E6E6E6' }}>
         <p className="text-[14px] leading-[1.75] mb-4" style={muted}>
           Want to see what Aurora can do? Try it free for 14 days.

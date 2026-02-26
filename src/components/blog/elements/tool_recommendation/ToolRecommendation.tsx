@@ -31,7 +31,6 @@ export function ToolRecommendation({ content, blogId, elementId, onContentUpdate
       onElementDeleted={onElementDeleted}
     >
       <div className="overflow-hidden rounded-xl border bg-card shadow-sm" style={{ borderColor: brandColor || undefined }}>
-        {/* Header */}
         <div className="flex items-center gap-5 border-b px-6 py-5" style={{ borderColor: brandColor || undefined, backgroundColor: brandColor ? `${brandColor}08` : undefined }}>
           <img
             src={`https://img.logo.dev/${extractDomain(websiteUrl)}?token=pk_PJnue9akRVmT-qo6GmYjhA`}
@@ -65,7 +64,6 @@ export function ToolRecommendation({ content, blogId, elementId, onContentUpdate
           )}
         </div>
 
-        {/* Description */}
         <div className="px-6 py-5">
           <div
             className="text-[16px] font-light leading-[1.8] text-foreground [&_strong]:font-semibold [&_em]:font-[450]"
@@ -73,7 +71,6 @@ export function ToolRecommendation({ content, blogId, elementId, onContentUpdate
           />
         </div>
 
-        {/* Features */}
         {features.length > 0 && (
           <div className="border-t border-border px-6 py-5">
             <h3 className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Key Features</h3>

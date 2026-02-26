@@ -263,10 +263,8 @@ export function BaseElement({
       onMouseLeave={() => setShowAddButton(false)}
     >
       <div className="flex gap-2">
-        {/* Content */}
         <div className="flex-1">{children}</div>
 
-        {/* Action buttons */}
         <div className="flex flex-col gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
           {allowEdit && (
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowEditModal(true)} disabled={loading}>
@@ -296,7 +294,6 @@ export function BaseElement({
         </div>
       </div>
 
-      {/* Add element button */}
       {showAddButton && allowAddElement && (
         <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 z-[1]">
           <Button
@@ -311,7 +308,6 @@ export function BaseElement({
         </div>
       )}
 
-      {/* Modals */}
       <BaseEdit
         open={showEditModal}
         onOpenChange={setShowEditModal}

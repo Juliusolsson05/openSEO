@@ -89,7 +89,6 @@ function BlogPageContent() {
 
   return (
     <div className="space-y-6">
-      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 stagger">
         {[
           { label: 'TOTAL POSTS', value: posts.length, color: 'text-foreground' },
@@ -110,7 +109,6 @@ function BlogPageContent() {
         ))}
       </div>
 
-      {/* Toolbar */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -126,7 +124,6 @@ function BlogPageContent() {
           <Filter className="h-3 w-3" /> Filter
         </Button>
 
-        {/* View toggle */}
         <div className="flex border border-border rounded-sm overflow-hidden">
           <Button
             size="icon"
@@ -168,7 +165,6 @@ function BlogPageContent() {
         </Button>
       </div>
 
-      {/* Posts — empty / loading states shared */}
       {loading ? (
         view === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -229,7 +225,6 @@ function BlogPageContent() {
                 className="overflow-hidden cursor-pointer hover:border-primary/40 transition-colors group"
                 onClick={() => router.push(`/blog/${post.id}`)}
               >
-                {/* Cover image */}
                 <div className="h-44 bg-secondary overflow-hidden">
                   {post.cover_image ? (
                     <img
@@ -244,7 +239,6 @@ function BlogPageContent() {
                   )}
                 </div>
 
-                {/* Content */}
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant={status.variant} className="gap-1">
@@ -286,7 +280,6 @@ function BlogPageContent() {
         /* ─── List view ─────────────────────────────────────── */
         <Card>
           <CardContent className="p-0">
-            {/* Table header */}
             <div className="flex items-center gap-4 px-4 py-2.5 border-b border-border bg-secondary/50 text-[11px] font-semibold text-muted-foreground tracking-wide uppercase">
               <div className="w-16" />
               <div className="flex-1">Title</div>
@@ -364,7 +357,6 @@ function BlogPageContent() {
           </CardContent>
         </Card>
       )}
-      {/* Categories Management */}
       <BlogCategoriesTable />
     </div>
   )
