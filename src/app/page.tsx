@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { getSetupStatus } from '@/server/setup'
 
+export const dynamic = 'force-dynamic'
+
 export default async function HomePage() {
   const setup = await getSetupStatus()
   if (!setup.complete) {
