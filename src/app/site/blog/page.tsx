@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { getPosts } from '@/server/public-content/data'
 
+export const dynamic = 'force-dynamic'
+
 export default async function SiteBlogIndex() {
   const posts = await getPosts()
   const featured = posts[0]

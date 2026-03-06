@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { SiteWordRenderer } from '@/app/site/_components/SiteWordRenderer'
 import { getDictionary, getWord } from '@/server/public-content/data'
 
+export const dynamic = 'force-dynamic'
+
 type PageProps = { params: Promise<{ wordId: string }> }
 
 export default async function SiteDictionaryWordPage({ params }: PageProps) {

@@ -4,6 +4,8 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { SitePostRenderer } from '@/app/site/_components/SitePostRenderer'
 import { getPost, getPosts } from '@/server/public-content/data'
 
+export const dynamic = 'force-dynamic'
+
 type PageProps = { params: Promise<{ slug: string }> }
 
 function TableOfContents({ elements }: { elements: { id: string; element_type: string; content: Record<string, unknown> }[] }) {
