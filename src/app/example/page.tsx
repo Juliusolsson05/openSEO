@@ -548,7 +548,7 @@ function AuroraBanner() {
         </button>
 
         <p className="mt-4 text-[11px] text-neutral-400">
-          Powered by Aurora · nordtools.com
+          Powered by OpenSEO
         </p>
       </div>
     </div>

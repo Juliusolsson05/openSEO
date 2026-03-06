@@ -5,10 +5,10 @@ import { Providers } from '@/components/providers'
 
 export const metadata: Metadata = {
   title: {
-    template: '%s — Aurora',
-    default: 'Aurora — Nordtools',
+    template: '%s — OpenSEO',
+    default: 'OpenSEO',
   },
-  description: 'Aurora Dashboard by Nordtools — AI-powered content engine.',
+  description: 'OpenSEO is a self-hostable AI-powered SEO content platform.',
   icons: { icon: '/favicon.ico' },
 }
 

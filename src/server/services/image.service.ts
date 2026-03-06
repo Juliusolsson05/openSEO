@@ -2,6 +2,7 @@ import { NotFoundError, ValidationError } from '@/server/api/errors'
 import { generateGptImage, generateIdeogramImage, generateImagenImage, generateNanoBananaImage } from '@/server/ai/image/generate-image'
 import { uploadUrlToCloudinary, uploadBinaryToCloudinary, uploadBase64ToCloudinary } from '@/server/utils/cloudinary'
 import * as imageRepository from '@/server/repositories/image.repository'
+import { vault } from '@/lib/vault'
 
 const DEFAULT_PLACEHOLDER_URL = 'https://res.cloudinary.com/dl9qdd24e/image/upload/v1732560659/600x400_fqbihy.png'
 
@@ -302,7 +303,7 @@ export class ImageService {
     color?: string,
   ) {
     if (!query) throw new ValidationError('Search query is required')
-    const key = process.env.PEXELS
+    const key = await vault.get('PEXELS')
     if (!key) throw new Error('Pexels API key is not set')
 
     const url = new URL('https://api.pexels.com/v1/search')

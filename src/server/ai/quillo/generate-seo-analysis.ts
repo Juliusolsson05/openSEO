@@ -10,7 +10,7 @@ export async function generateSeoAnalysis(analyticsData: unknown) {
     { role: 'user' as const, content: analyticsJson },
   ];
 
-  const response = await getOpenAIClient().chat.completions.create({
+  const response = await (await getOpenAIClient()).chat.completions.create({
     model: MODELS.OPENAI_DEFAULT,
     messages,
     temperature: 1,

@@ -15,7 +15,7 @@ export async function generateShortDescription(word: string, subject: string, la
       },
     ];
 
-    const response = await getOpenAIClient().chat.completions.create({
+    const response = await (await getOpenAIClient()).chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
       response_format: {

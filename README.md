@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OpenSEO
 
-## Getting Started
+OpenSEO is a self-hostable AI-powered SEO content platform for generating, editing, analyzing, and publishing long-form content.
 
-First, run the development server:
+## What is included
+
+- AI-assisted blog generation workflow
+- Block-based editor with rich content elements
+- Dictionary and glossary generation
+- Publishing API and public content rendering
+- Company-scoped workspaces, analytics, scheduling, and CTA management
+
+## Local development
+
+1. Copy `.env.example` to `.env`
+2. Install dependencies with `npm install`
+3. Start infrastructure with `docker compose up -d postgres redis`
+4. Run Prisma migrations with `npx prisma migrate dev`
+5. Start the app with `npm run dev`
+6. Open `http://localhost:4720`
+7. Finish first-run onboarding at `/setup`
+
+If you prefer to run the app entirely in containers, `docker compose up --build` now starts the app, Postgres, and Redis together.
+
+## One-command install
+
+For a guided local install, run:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+./install.sh
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The script creates `.env`, starts Docker services, runs Prisma migrations, waits for the app to become healthy, and then sends you to `/setup` for the first admin account.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The project currently supports provider configuration through environment variables. The next OSS step is moving provider secrets into an encrypted in-app vault.
 
-## Learn More
+Start from `.env.example` and configure at minimum:
 
-To learn more about Next.js, take a look at the following resources:
+- `AUTH_SECRET`
+- `OPENSEO_ENCRYPTION_KEY`
+- `DATABASE_URL`
+- `REDIS_URL`
+- `FRONTEND_URL`
+- `NEXT_PUBLIC_SITE_URL`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+AI and media provider keys are only required for the features you use.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Roadmap to public OSS launch
 
-## Deploy on Vercel
+- Replace environment-based provider secrets with an encrypted settings vault
+- Add a first-run `/setup` onboarding flow
+- Add `install.sh` for one-command setup
+- Finalize license, CI, and public docs
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `npm run dev` - start the dev server
+- `npm run build` - build for production
+- `npm run start` - run the production server
+- `npm run lint` - run ESLint

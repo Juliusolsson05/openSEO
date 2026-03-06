@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
-import { AuroraLogo } from '@/components/brand/logo'
+import { OpenSeoLogo } from '@/components/brand/logo'
 
 const NAV_ITEMS = [
   { label: 'Product', href: '/landing#features' },
@@ -28,7 +28,7 @@ export function MarketingHeader() {
     <header className="fixed top-0 z-50 w-full bg-white" style={{ borderBottom: '1px solid #E6E6E6' }}>
       <div className="mx-auto flex h-12 max-w-[1080px] items-center justify-between px-6">
         <Link href="/landing" className="flex items-center gap-2">
-          <AuroraLogo size={22} />
+          <OpenSeoLogo size={22} />
           <span className="text-[14px] font-semibold" style={{ color: '#1A1A1A', letterSpacing: '-0.01em' }}>
             Aurora
           </span>

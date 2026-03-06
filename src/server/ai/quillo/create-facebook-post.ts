@@ -11,7 +11,7 @@ export async function createFacebookPost(elements: string, slug: string) {
 
     const userMessage = { role: 'user' as const, content: elements };
 
-    const response = await getOpenAIClient().chat.completions.create({
+    const response = await (await getOpenAIClient()).chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages: [systemMessage, userMessage],
       temperature: 1,

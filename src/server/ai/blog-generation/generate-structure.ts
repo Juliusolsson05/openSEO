@@ -17,7 +17,7 @@ export async function generateStructure(
       ? COMMON_ELEMENTS
       : COMMON_ELEMENTS.filter((element) => allowedElements[element.type]);
 
-  const response = await getOpenAIClient().chat.completions.create({
+  const response = await (await getOpenAIClient()).chat.completions.create({
     model,
     messages: [
       { role: 'system', content: STRUCTURE_SYSTEM_PROMPT.replace('{title}', titleText) },

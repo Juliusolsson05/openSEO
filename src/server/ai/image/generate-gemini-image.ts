@@ -31,7 +31,7 @@ export async function generateGeminiImage(
   prompt: string,
   aspectRatio: '1:1' | '3:4' | '4:3' | '9:16' | '16:9' = '16:9',
 ): Promise<GenerateResult> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY
+  const apiKey = await vault.get('GEMINI_API_KEY')
   if (!apiKey) return { error: 'Gemini API key is not configured.' }
 
   try {
@@ -74,3 +74,4 @@ export async function generateGeminiImage(
     return { error: `Gemini: ${err instanceof Error ? err.message : String(err)}` }
   }
 }
+import { vault } from '@/lib/vault'

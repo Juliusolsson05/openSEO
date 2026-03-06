@@ -41,7 +41,7 @@ function LoginForm() {
         Sign in
       </h2>
       <p className="mt-1.5 text-[13px] text-muted-foreground">
-        to continue to Aurora Dashboard
+        to continue to OpenSEO
       </p>
 
       <div className="mt-6 rounded-sm border border-info-light bg-info-light p-3">

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { AuroraLogo } from '@/components/brand/logo'
+import { OpenSeoLogo } from '@/components/brand/logo'
 
 export function SiteFooter() {
   return (
@@ -8,7 +8,7 @@ export function SiteFooter() {
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
           <div>
             <Link href="/landing" className="flex items-center gap-2">
-              <AuroraLogo size={20} />
+              <OpenSeoLogo size={20} />
               <span className="text-[13px] font-semibold text-neutral-900">Aurora</span>
             </Link>
             <p className="mt-3 text-[11px] leading-relaxed text-neutral-400">

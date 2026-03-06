@@ -36,6 +36,7 @@ export default function DashboardLayout({
   const { data: session, status } = useSession()
   const router = useRouter()
   const [showTour, setShowTour] = useState(false)
+  const [setupChecked, setSetupChecked] = useState(false)
 
   const userId = session?.user?.id
 
@@ -49,12 +50,23 @@ export default function DashboardLayout({
   useAuthSessionSync()
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login')
+    async function verifySetup() {
+      const response = await fetch('/api/setup/status', { cache: 'no-store' })
+      const payload = await response.json().catch(() => null)
+      if (payload?.data?.complete === false) {
+        router.push('/setup')
+        return
+      }
+      setSetupChecked(true)
+      if (status === 'unauthenticated') {
+        router.push('/login')
+      }
     }
+
+    verifySetup()
   }, [status, router])
 
-  if (status !== 'authenticated') return null
+  if (!setupChecked || status !== 'authenticated') return null
 
   return (
     <div className="min-h-screen bg-background">

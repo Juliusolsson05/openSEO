@@ -43,7 +43,7 @@ export async function getContentImprovements(blogPost: unknown, messages: Messag
     },
   } as const;
 
-  const response = await getOpenAIClient().chat.completions.create({
+  const response = await (await getOpenAIClient()).chat.completions.create({
     model: MODELS.OPENAI_DEFAULT,
     messages,
     response_format: { type: 'json_schema', json_schema: responseSchema },

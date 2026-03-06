@@ -40,7 +40,7 @@ export async function categorizeTitles(
       requiredKeys.push(key);
     }
 
-    const response = await getOpenAIClient().chat.completions.create({
+    const response = await (await getOpenAIClient()).chat.completions.create({
       model: MODELS.OPENAI_SMART,
       messages: [
         {

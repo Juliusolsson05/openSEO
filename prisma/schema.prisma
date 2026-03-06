@@ -57,8 +57,6 @@ model User {
   /// Auth
   password    String?
 
-  /// Integrated from Django UserProfile
-  firebaseUid String?   @unique
   userType    UserType  @default(DEMO)
   companyId   Int?
   demoExpiry  DateTime?
@@ -107,6 +105,17 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  category  String
+  label     String
+  hint      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 /// --- Core company ---

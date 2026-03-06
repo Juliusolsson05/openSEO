@@ -9,7 +9,7 @@ export async function enhanceReadability(
 ): Promise<Record<string, unknown>> {
   const schema = generateElementFunctionParameters(elementType);
 
-  const response = await getOpenAIClient().chat.completions.create({
+  const response = await (await getOpenAIClient()).chat.completions.create({
     model: MODELS.OPENAI_DEFAULT,
     messages: [
       {

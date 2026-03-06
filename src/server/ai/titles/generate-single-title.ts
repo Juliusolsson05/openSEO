@@ -21,7 +21,7 @@ Rules for good titles:
     systemMessage += '\n\nThese titles already exist — do NOT generate duplicates or near-duplicates:\n' + existingTitles.map((t, i) => `${i + 1}. ${t}`).join('\n');
   }
 
-  const response = await getOpenAIClient().chat.completions.create({
+  const response = await (await getOpenAIClient()).chat.completions.create({
     model: MODELS.OPENAI_DEFAULT,
     messages: [
       { role: 'system', content: systemMessage },

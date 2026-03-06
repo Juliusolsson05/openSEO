@@ -151,7 +151,7 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
 | \`x-request-id\` | Unique request identifier (returned on every response) |
 | \`deprecation\` | Present on legacy \`/api/aurora/*\` routes |
 `,
-    contact: { name: 'NordTools', url: 'https://nordtools.se' },
+    contact: { name: 'OpenSEO', url: 'https://openseo.ai' },
   },
 
   servers: [

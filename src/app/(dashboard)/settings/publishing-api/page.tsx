@@ -178,7 +178,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   const apiKey = req.headers.get('authorization')?.replace('Bearer ', '')
-  if (apiKey !== process.env.AURORA_OUTBOUND_KEY) {
+  if (apiKey !== process.env.OPENSEO_OUTBOUND_KEY) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

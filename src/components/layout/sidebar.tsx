@@ -20,7 +20,7 @@ import {
   LogOut,
   ExternalLink,
 } from 'lucide-react'
-import { AuroraLogo } from '@/components/brand/logo'
+import { OpenSeoLogo } from '@/components/brand/logo'
 import { Button } from '@/components/ui/button'
 
 interface NavItem {
@@ -123,7 +123,7 @@ export function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-[240px] flex-col bg-sidebar">
       <div className="flex h-12 items-center gap-2.5 px-4 border-b border-sidebar-border">
-        <AuroraLogo size={24} light />
+        <OpenSeoLogo size={24} light />
         <span className="text-[15px] font-semibold text-white tracking-tight">
           Aurora
         </span>

@@ -9,7 +9,7 @@ export async function continueChat(messages: ChatMessage[], userQuestion: string
       content: `The user has provided the following question, if the question is something that is not related to the blog post, refuse to answer it, but if the qusetion is related to the blog post you should not say that, then just go on as normal: ${userQuestion}`,
     });
 
-    const response = await getOpenAIClient().chat.completions.create({
+    const response = await (await getOpenAIClient()).chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
     });

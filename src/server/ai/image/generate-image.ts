@@ -1,4 +1,5 @@
 import { GoogleGenAI, Modality } from '@google/genai'
+import { vault } from '@/lib/vault'
 import { getOpenAIClient } from '../clients'
 
 interface ImageResult {
@@ -44,7 +45,7 @@ export async function generateIdeogramImage(
   version = 1,
   magicPromptOn = false,
 ): Promise<GenerateResult> {
-  const ideogramKey = process.env.IDEOGRAM
+  const ideogramKey = await vault.get('IDEOGRAM')
   if (!ideogramKey) return { error: 'Ideogram API key is not configured.' }
 
   try {
@@ -96,7 +97,7 @@ export async function generateGptImage(
   outputFormat: 'png' | 'jpeg' | 'webp' = 'png',
 ): Promise<GenerateBase64Result> {
   try {
-    const openai = getOpenAIClient()
+    const openai = await getOpenAIClient()
     const response = await openai.images.generate({
       model: 'gpt-image-1',
       prompt: prompt || 'A professional blog header image',
@@ -125,7 +126,7 @@ export async function generateNanoBananaImage(
   model: 'flash' | 'pro' = 'flash',
   aspectRatio: GeminiAspectRatio = '16:9',
 ): Promise<GenerateNanoBananaResult> {
-  const apiKey = process.env.GEMINI_API_KEY
+  const apiKey = await vault.get('GEMINI_API_KEY')
   if (!apiKey) return { error: 'Gemini API key is not configured.' }
 
   try {
@@ -161,7 +162,7 @@ export async function generateImagenImage(
   aspectRatio: GeminiAspectRatio = '16:9',
   numberOfImages = 1,
 ): Promise<GenerateBase64Result> {
-  const apiKey = process.env.GEMINI_API_KEY
+  const apiKey = await vault.get('GEMINI_API_KEY')
   if (!apiKey) return { error: 'Gemini API key is not configured.' }
 
   try {

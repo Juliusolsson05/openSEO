@@ -397,7 +397,7 @@ export class BlogService {
     if (!post) throw new NotFoundError('Blog post not found or does not belong to your company')
 
     const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
-    const frontendBaseUrl = process.env.FRONTEND_URL ?? 'http://localhost:4000'
+    const frontendBaseUrl = process.env.FRONTEND_URL ?? 'http://localhost:4720'
     const shareToken = Buffer.from(`post:${postId}:company:${companyId}:exp:${expiresAt.toISOString()}`).toString('base64url')
 
     return {

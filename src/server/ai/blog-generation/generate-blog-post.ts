@@ -93,7 +93,7 @@ Company description:
 
   const schema = generateBlogFunctionParameters(JSON.stringify(structure));
 
-  const response = await getOpenAIClient().chat.completions.create({
+  const response = await (await getOpenAIClient()).chat.completions.create({
     model,
     messages,
     response_format: {

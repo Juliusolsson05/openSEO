@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://aurora.nordtools.com'
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:4720'
 
 export default function robots(): MetadataRoute.Robots {
   return {

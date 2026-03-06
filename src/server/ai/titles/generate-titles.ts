@@ -40,7 +40,7 @@ Rules for good titles:
     requiredKeys.push(key);
   }
 
-  const response = await getOpenAIClient().chat.completions.create({
+  const response = await (await getOpenAIClient()).chat.completions.create({
     model: MODELS.OPENAI_DEFAULT,
     messages: [
       { role: 'system', content: systemMessage },

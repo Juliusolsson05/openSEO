@@ -3,17 +3,11 @@ import { getPosts, getDictionary } from '@/server/public-content/data'
 
 export const dynamic = 'force-dynamic'
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://aurora.nordtools.com'
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:4720'
 
 /** Safely import comparison data — may fail if Prisma isn't set up */
 async function getComparisonSlugs(): Promise<string[]> {
-  try {
-    const { getPublishedComparisons } = await import('@/app/landing/compare/_lib/data')
-    const comparisons = await getPublishedComparisons()
-    return comparisons.map((c) => c.slug)
-  } catch {
-    return []
-  }
+  return []
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

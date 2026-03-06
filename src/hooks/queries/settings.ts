@@ -5,9 +5,9 @@ import { api, apiPost } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/get-error-message'
-import type { GenerationSettings, PublishingSettings, ApiKey } from '@/types/settings'
+import type { GenerationSettings, PublishingSettings, ApiKey, IntegrationSetting, SetupStatus } from '@/types/settings'
 
-export type { GenerationSettings, PublishingSettings, ApiKey }
+export type { GenerationSettings, PublishingSettings, ApiKey, IntegrationSetting, SetupStatus }
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
@@ -48,6 +48,29 @@ export function useApiKeysQuery() {
       if (error) throw error
       return Array.isArray(data) ? data : (data?.data ?? [])
     },
+  })
+}
+
+export function useIntegrationsQuery() {
+  return useQuery({
+    queryKey: QK.integrations(),
+    queryFn: async () => {
+      const { data, error } = await api<{ success?: boolean; data?: IntegrationSetting[] }>('/api/v1/settings/integrations')
+      if (error) throw error
+      return data?.data ?? []
+    },
+  })
+}
+
+export function useSetupStatusQuery() {
+  return useQuery({
+    queryKey: QK.setupStatus(),
+    queryFn: async () => {
+      const { data, error } = await api<{ success?: boolean; data?: SetupStatus }>('/api/setup/status')
+      if (error) throw error
+      return data?.data ?? null
+    },
+    staleTime: 10_000,
   })
 }
 
@@ -139,6 +162,62 @@ export function useRevokeApiKeyMutation() {
     },
     onError: (err) => {
       toast.error(getErrorMessage(err, 'Failed to revoke key'))
+    },
+  })
+}
+
+export function useUpsertIntegrationMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: { key: string; value: string }) => {
+      const { data, error } = await apiPost<{ success?: boolean; data?: IntegrationSetting }>(
+        '/api/v1/settings/integrations',
+        payload,
+      )
+      if (error) throw error
+      return data?.data ?? null
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK.integrations() })
+      qc.invalidateQueries({ queryKey: QK.setupStatus() })
+      toast.success('Integration saved')
+    },
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to save integration'))
+    },
+  })
+}
+
+export function useDeleteIntegrationMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (key: string) => {
+      const { data, error } = await api(`/api/v1/settings/integrations/${encodeURIComponent(key)}`, {
+        method: 'DELETE',
+      })
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK.integrations() })
+      qc.invalidateQueries({ queryKey: QK.setupStatus() })
+      toast.success('Integration deleted')
+    },
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to delete integration'))
+    },
+  })
+}
+
+export function useTestIntegrationMutation() {
+  return useMutation({
+    mutationFn: async (payload: { key: string; value?: string }) => {
+      const { data, error } = await apiPost<{ success?: boolean; data?: { ok: boolean; error?: string } }>(
+        '/api/v1/settings/integrations/test',
+        payload,
+      )
+      if (error) throw error
+      return data?.data ?? { ok: false, error: 'Unknown error' }
     },
   })
 }

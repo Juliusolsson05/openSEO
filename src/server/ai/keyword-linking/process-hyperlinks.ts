@@ -11,7 +11,7 @@ export async function processHyperlinks(element: Record<string, unknown>) {
       { role: 'user' as const, content: JSON.stringify(element) },
     ];
 
-    const response = await getOpenAIClient().chat.completions.create({
+    const response = await (await getOpenAIClient()).chat.completions.create({
       model: MODELS.OPENAI_DEFAULT,
       messages,
       response_format: {

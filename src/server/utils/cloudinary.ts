@@ -1,7 +1,11 @@
-function getCloudinaryCredentials() {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME
-  const apiKey = process.env.CLOUDINARY_API_KEY
-  const apiSecret = process.env.CLOUDINARY_API_SECRET
+import { vault } from '@/lib/vault'
+
+async function getCloudinaryCredentials() {
+  const [cloudName, apiKey, apiSecret] = await Promise.all([
+    vault.get('CLOUDINARY_CLOUD_NAME'),
+    vault.get('CLOUDINARY_API_KEY'),
+    vault.get('CLOUDINARY_API_SECRET'),
+  ])
   if (!cloudName || !apiKey || !apiSecret) return null
   return { cloudName, apiKey, apiSecret }
 }
@@ -20,7 +24,7 @@ export async function uploadToCloudinary(
   source: File | string | { base64: string; mimeType: string },
   folder: string,
 ): Promise<string | null> {
-  const creds = getCloudinaryCredentials()
+  const creds = await getCloudinaryCredentials()
   if (!creds) {
     console.error('[Cloudinary] Missing credentials (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET)')
     return null

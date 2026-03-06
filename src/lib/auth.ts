@@ -10,7 +10,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET ?? (() => {
     if (process.env.NODE_ENV === 'production') throw new Error('AUTH_SECRET must be set in production')
-    return 'nordtools-dev-secret-do-not-use-in-production'
+    return 'openseo-dev-secret-do-not-use-in-production'
   })(),
   session: {
     strategy: 'jwt',

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { AuroraLogo } from '@/components/brand/logo'
+import { OpenSeoLogo } from '@/components/brand/logo'
 
 export default function AuthLayout({
   children,
@@ -17,11 +17,11 @@ export default function AuthLayout({
 
         <div className="relative z-10 max-w-sm px-10 text-center">
           <div className="flex justify-center mb-6">
-            <AuroraLogo size={56} light />
+            <OpenSeoLogo size={56} light />
           </div>
-          <h1 className="text-[28px] font-semibold text-white leading-tight">Aurora</h1>
+          <h1 className="text-[28px] font-semibold text-white leading-tight">OpenSEO</h1>
           <p className="mt-1 text-[12px] font-medium uppercase tracking-[0.15em] text-white/50">
-            by Nordtools
+            self-hosted platform
           </p>
           <p className="mt-6 text-[15px] leading-relaxed text-white/70">
             AI-powered content engine. Generate, optimize, and publish blog content that ranks.

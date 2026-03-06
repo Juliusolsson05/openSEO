@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
-import { AuroraLogo } from '@/components/brand/logo'
+import { OpenSeoLogo } from '@/components/brand/logo'
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false)
@@ -12,7 +12,7 @@ export function SiteHeader() {
     <header className="fixed top-0 z-50 w-full bg-white border-b border-neutral-200">
       <div className="mx-auto flex h-12 max-w-[1080px] items-center justify-between px-6">
         <Link href="/landing" className="flex items-center gap-2">
-          <AuroraLogo size={22} />
+          <OpenSeoLogo size={22} />
           <span className="text-[14px] font-semibold text-neutral-900">Aurora</span>
           <span className="text-[11px] text-neutral-400 hidden sm:inline">by Nordtools</span>
         </Link>

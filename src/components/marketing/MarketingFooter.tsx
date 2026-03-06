@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { AuroraLogo } from '@/components/brand/logo'
+import { OpenSeoLogo } from '@/components/brand/logo'
 
 const COLUMNS = [
   {
@@ -37,7 +37,7 @@ export function MarketingFooter() {
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
           <div>
             <Link href="/landing" className="flex items-center gap-2">
-              <AuroraLogo size={20} />
+              <OpenSeoLogo size={20} />
               <span className="text-[13px] font-semibold" style={{ color: '#1A1A1A' }}>
                 Aurora
               </span>

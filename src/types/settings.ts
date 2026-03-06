@@ -20,3 +20,22 @@ export type ApiKey = {
   is_active: boolean
   key?: string
 }
+
+export type IntegrationSetting = {
+  key: string
+  category: string
+  label: string
+  hint?: string | null
+  maskedValue: string | null
+  configured: boolean
+  source: 'vault' | 'env' | 'missing'
+  updatedAt?: string | null
+}
+
+export type SetupStatus = {
+  complete: boolean
+  hasAdminUser: boolean
+  hasCompany: boolean
+  hasAiProvider: boolean
+  configuredProviderKeys: string[]
+}

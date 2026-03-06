@@ -1,29 +1,25 @@
-version: "3.9"
-
 services:
-  # ── PostgreSQL ──────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
-    container_name: nordtools-postgres
+    container_name: openseo-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: nordtools
-      POSTGRES_PASSWORD: nordtools
-      POSTGRES_DB: nordtools
+      POSTGRES_USER: openseo
+      POSTGRES_PASSWORD: openseo
+      POSTGRES_DB: openseo
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nordtools"]
+      test: ["CMD-SHELL", "pg_isready -U openseo"]
       interval: 5s
       timeout: 3s
       retries: 5
 
-  # ── Redis ───────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: nordtools-redis
+    container_name: openseo-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -34,6 +30,26 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  app:
+    build:
+      context: .
+    container_name: openseo-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://openseo:openseo@postgres:5432/openseo}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "${PORT:-4720}:3000"
 
 volumes:
   postgres_data:

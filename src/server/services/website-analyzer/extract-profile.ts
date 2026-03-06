@@ -70,7 +70,7 @@ function buildUserPrompt(pages: ScrapedPage[]): string {
 }
 
 export async function extractCompanyProfile(pages: ScrapedPage[]): Promise<CompanyProfile> {
-  const client = getOpenAIClient()
+  const client = await getOpenAIClient()
 
   const response = await client.chat.completions.create({
     model: MODELS.OPENAI_SMART,

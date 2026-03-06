@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
     ]
   },
 
-  // Allow LAN access (e.g. 192.168.x.x:4000)
+  // Allow LAN access (e.g. 192.168.x.x:4720)
   // Note: Allow-Origin: * with Allow-Credentials: true is invalid per spec.
   // In production, set FRONTEND_URL to the actual origin.
   async headers() {
