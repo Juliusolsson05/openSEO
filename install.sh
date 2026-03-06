@@ -140,6 +140,7 @@ read -r -p "App URL [http://localhost:${APP_PORT}]: " APP_URL
 APP_URL="${APP_URL:-http://localhost:${APP_PORT}}"
 
 replace_or_append AUTH_SECRET "$(generate_secret 32)"
+replace_or_append AUTH_TRUST_HOST "true"
 replace_or_append OPENSEO_ENCRYPTION_KEY "$(generate_secret 32)"
 replace_or_append PORT "$APP_PORT"
 replace_or_append NEXT_PUBLIC_API_BASE_URL ""
