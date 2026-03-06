@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState, useCallback } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useAuthSessionSync } from '@/store/hooks/useAuthSessionSync'
 import { Sidebar } from '@/components/layout/sidebar'
@@ -11,6 +11,8 @@ import { OnboardingTour } from '@/components/layout/onboarding-tour'
 /** Separate client component to isolate useSearchParams inside a Suspense boundary */
 function WelcomeTourDetector({ userId, onDetected }: { userId: string | undefined; onDetected: () => void }) {
   const searchParams = useSearchParams()
+  const pathname = usePathname()
+  const router = useRouter()
 
   useEffect(() => {
     if (!userId) return
@@ -20,10 +22,13 @@ function WelcomeTourDetector({ userId, onDetected }: { userId: string | undefine
     if (fromUrl || fromStorage) {
       localStorage.removeItem('openseo:show-welcome-tour')
       localStorage.removeItem(`openseo:onboarding-tour:done:${userId}`)
+      if (fromUrl) {
+        router.replace(pathname)
+      }
       const t = setTimeout(onDetected, 300)
       return () => clearTimeout(t)
     }
-  }, [userId, searchParams, onDetected])
+  }, [userId, searchParams, pathname, router, onDetected])
 
   return null
 }

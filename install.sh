@@ -1,29 +1,72 @@
 #!/usr/bin/env bash
+#
+# OpenSEO — One-command installer
+# https://github.com/Juliusolsson05/openSEO
+#
+# Usage:
+#   ./install.sh              Install with defaults (port 4720)
+#   ./install.sh --port 8080  Use a specific port
+#   ./install.sh --no-open    Don't open browser after install
+#   ./install.sh --reset      Tear down everything and start fresh
+#
 
 set -euo pipefail
 
+# ──────────────────────────────────────────────
+# Constants
+# ──────────────────────────────────────────────
+
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ENV_FILE="$ROOT_DIR/.env"
-EXAMPLE_ENV_FILE="$ROOT_DIR/.env.example"
+EXAMPLE_ENV="$ROOT_DIR/.env.example"
 DEFAULT_PORT=4720
-INTERNAL_DATABASE_URL="postgresql://openseo:openseo@postgres:5432/openseo"
+INTERNAL_DB_URL="postgresql://openseo:openseo@postgres:5432/openseo"
 INTERNAL_REDIS_URL="redis://redis:6379"
 
-require_command() {
-  if ! command -v "$1" >/dev/null 2>&1; then
-    printf 'Missing required command: %s\n' "$1" >&2
-    exit 1
-  fi
+# ──────────────────────────────────────────────
+# Output helpers
+# ──────────────────────────────────────────────
+
+bold()    { printf '\033[1m%s\033[0m' "$*"; }
+dim()     { printf '\033[2m%s\033[0m' "$*"; }
+green()   { printf '\033[32m%s\033[0m' "$*"; }
+yellow()  { printf '\033[33m%s\033[0m' "$*"; }
+red()     { printf '\033[31m%s\033[0m' "$*"; }
+
+info()    { printf '  %s\n' "$*"; }
+success() { printf '  %s %s\n' "$(green "✓")" "$*"; }
+warn()    { printf '  %s %s\n' "$(yellow "!")" "$*"; }
+fail()    { printf '  %s %s\n' "$(red "✗")" "$*" >&2; }
+
+phase() {
+  printf '\n\033[1m[%s] %s\033[0m\n' "$1" "$2"
 }
+
+header() {
+  printf '\n'
+  printf '\033[1m'
+  cat <<'ART'
+  ██████╗ ██████╗ ███████╗███╗   ██╗    ███████╗███████╗ ██████╗
+ ██╔═══██╗██╔══██╗██╔════╝████╗  ██║    ██╔════╝██╔════╝██╔═══██╗
+ ██║   ██║██████╔╝█████╗  ██╔██╗ ██║    ███████╗█████╗  ██║   ██║
+ ██║   ██║██╔═══╝ ██╔══╝  ██║╚██╗██║    ╚════██║██╔══╝  ██║   ██║
+ ╚██████╔╝██║     ███████╗██║ ╚████║    ███████║███████╗╚██████╔╝
+  ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═══╝    ╚══════╝╚══════╝ ╚═════╝
+ART
+  printf '\033[0m'
+  printf '  %s\n\n' "$(dim "Open-source AI content platform — self-hosted installer")"
+}
+
+# ──────────────────────────────────────────────
+# Utilities
+# ──────────────────────────────────────────────
 
 generate_secret() {
-  openssl rand -base64 "$1" | tr -d '\n'
+  openssl rand -base64 "$1" 2>/dev/null | tr -d '\n'
 }
 
-replace_or_append() {
-  local key="$1"
-  local value="$2"
-
+env_set() {
+  local key="$1" value="$2"
   python3 - "$ENV_FILE" "$key" "$value" <<'PY'
 from pathlib import Path
 import sys
@@ -34,9 +77,9 @@ value = sys.argv[3]
 
 lines = env_path.read_text().splitlines()
 updated = False
-for index, line in enumerate(lines):
+for i, line in enumerate(lines):
     if line.startswith(f"{key}="):
-        lines[index] = f"{key}={value}"
+        lines[i] = f"{key}={value}"
         updated = True
         break
 
@@ -51,18 +94,15 @@ PY
 
 port_is_free() {
   python3 - "$1" <<'PY'
-import socket
-import sys
-
-port = int(sys.argv[1])
-sock = socket.socket()
-sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+import socket, sys
+s = socket.socket()
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 try:
-    sock.bind(("0.0.0.0", port))
+    s.bind(("0.0.0.0", int(sys.argv[1])))
 except OSError:
     sys.exit(1)
 finally:
-    sock.close()
+    s.close()
 PY
 }
 
@@ -70,23 +110,26 @@ find_free_port() {
   local port="$1"
   while ! port_is_free "$port"; do
     port=$((port + 1))
+    if [ "$port" -gt 65535 ]; then
+      fail "No free port found starting from $1"
+      exit 1
+    fi
   done
-  printf '%s\n' "$port"
+  printf '%s' "$port"
 }
 
 wait_for_health() {
-  local url="$1"
-  local attempts=90
+  local url="$1" max_wait=180 elapsed=0
 
-  for _ in $(seq 1 "$attempts"); do
+  while [ "$elapsed" -lt "$max_wait" ]; do
     if curl -fsS "$url" >/dev/null 2>&1; then
       return 0
     fi
     sleep 2
+    elapsed=$((elapsed + 2))
   done
 
-  printf 'Timed out waiting for %s\n' "$url" >&2
-  exit 1
+  return 1
 }
 
 open_browser() {
@@ -98,80 +141,251 @@ open_browser() {
   fi
 }
 
-require_command docker
-require_command openssl
-require_command curl
-require_command perl
-require_command python3
+# ──────────────────────────────────────────────
+# Parse arguments
+# ──────────────────────────────────────────────
 
-if ! docker compose version >/dev/null 2>&1; then
-  printf 'Docker Compose is required but not available.\n' >&2
-  exit 1
+ARG_PORT=""
+ARG_NO_OPEN=0
+ARG_RESET=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --port)
+      ARG_PORT="$2"
+      shift 2
+      ;;
+    --no-open)
+      ARG_NO_OPEN=1
+      shift
+      ;;
+    --reset)
+      ARG_RESET=1
+      shift
+      ;;
+    --help|-h)
+      printf 'Usage: ./install.sh [OPTIONS]\n\n'
+      printf 'Options:\n'
+      printf '  --port PORT   Use a specific port (default: %s)\n' "$DEFAULT_PORT"
+      printf '  --no-open     Do not open browser after install\n'
+      printf '  --reset       Remove all containers, volumes, and .env, then reinstall\n'
+      printf '  --help        Show this help message\n'
+      exit 0
+      ;;
+    *)
+      fail "Unknown option: $1"
+      printf '  Run ./install.sh --help for usage.\n' >&2
+      exit 1
+      ;;
+  esac
+done
+
+# ──────────────────────────────────────────────
+# Reset mode
+# ──────────────────────────────────────────────
+
+if [ "$ARG_RESET" = 1 ]; then
+  header
+  phase "1/1" "Resetting OpenSEO"
+
+  info "Stopping containers and removing volumes..."
+  docker compose down -v --remove-orphans 2>/dev/null || true
+
+  if [ -f "$ENV_FILE" ]; then
+    rm "$ENV_FILE"
+    info "Removed .env"
+  fi
+
+  success "Reset complete. Run ./install.sh to reinstall."
+  printf '\n'
+  exit 0
 fi
 
-if [ ! -f "$EXAMPLE_ENV_FILE" ]; then
-  printf 'Missing %s\n' "$EXAMPLE_ENV_FILE" >&2
-  exit 1
-fi
+# ══════════════════════════════════════════════
+# Main install flow
+# ══════════════════════════════════════════════
 
-if [ ! -f "$ENV_FILE" ]; then
-  cp "$EXAMPLE_ENV_FILE" "$ENV_FILE"
-  CREATED_ENV=1
-  printf 'Created .env from .env.example\n'
+header
+
+# ──────────────────────────────────────────────
+# [1/5] Checking prerequisites
+# ──────────────────────────────────────────────
+
+phase "1/5" "Checking prerequisites"
+
+MISSING=0
+
+for cmd in docker openssl curl python3; do
+  if command -v "$cmd" >/dev/null 2>&1; then
+    success "$cmd"
+  else
+    fail "$cmd not found"
+    MISSING=1
+  fi
+done
+
+if docker compose version >/dev/null 2>&1; then
+  success "docker compose"
 else
-  CREATED_ENV=0
-  printf 'Using existing .env\n'
+  fail "docker compose not available"
+  MISSING=1
 fi
 
-SUGGESTED_PORT="$(find_free_port "$DEFAULT_PORT")"
-if [ "$SUGGESTED_PORT" != "$DEFAULT_PORT" ]; then
-  printf 'Port %s is busy. Suggested free port: %s\n' "$DEFAULT_PORT" "$SUGGESTED_PORT"
-fi
-
-read -r -p "Default port [${SUGGESTED_PORT}]: " APP_PORT
-APP_PORT="${APP_PORT:-$SUGGESTED_PORT}"
-
-if ! port_is_free "$APP_PORT"; then
-  printf 'Port %s is already in use. Please rerun and choose a free port.\n' "$APP_PORT" >&2
+if [ "$MISSING" = 1 ]; then
+  printf '\n'
+  fail "Install the missing tools above and re-run ./install.sh"
   exit 1
 fi
 
-read -r -p "App URL [http://localhost:${APP_PORT}]: " APP_URL
-APP_URL="${APP_URL:-http://localhost:${APP_PORT}}"
+if ! docker info >/dev/null 2>&1; then
+  fail "Docker daemon is not running. Start Docker and try again."
+  exit 1
+fi
 
-replace_or_append AUTH_SECRET "$(generate_secret 32)"
-replace_or_append AUTH_TRUST_HOST "true"
-replace_or_append OPENSEO_ENCRYPTION_KEY "$(generate_secret 32)"
-replace_or_append PORT "$APP_PORT"
-replace_or_append NEXT_PUBLIC_API_BASE_URL ""
-replace_or_append NEXT_PUBLIC_SITE_URL "$APP_URL"
-replace_or_append FRONTEND_URL "$APP_URL"
-replace_or_append DATABASE_URL "$INTERNAL_DATABASE_URL"
-replace_or_append REDIS_URL "$INTERNAL_REDIS_URL"
+# ──────────────────────────────────────────────
+# [2/5] Preparing environment
+# ──────────────────────────────────────────────
 
-printf 'Building containers...\n'
-docker compose build
+phase "2/5" "Preparing environment"
 
-if [ "$CREATED_ENV" = "1" ]; then
-  printf 'Resetting any stale containers and volumes for a clean first install...\n'
+# Determine port
+if [ -n "$ARG_PORT" ]; then
+  APP_PORT="$ARG_PORT"
+  if ! port_is_free "$APP_PORT"; then
+    fail "Port $APP_PORT is already in use."
+    exit 1
+  fi
+  success "Using requested port $APP_PORT"
+else
+  APP_PORT="$(find_free_port "$DEFAULT_PORT")"
+  if [ "$APP_PORT" != "$DEFAULT_PORT" ]; then
+    warn "Port $DEFAULT_PORT is busy — using $APP_PORT instead"
+  else
+    success "Port $APP_PORT is available"
+  fi
+fi
+
+APP_URL="http://localhost:${APP_PORT}"
+
+# Create or reuse .env
+FRESH_INSTALL=0
+if [ ! -f "$ENV_FILE" ]; then
+  if [ ! -f "$EXAMPLE_ENV" ]; then
+    fail ".env.example not found — is this the right directory?"
+    exit 1
+  fi
+  cp "$EXAMPLE_ENV" "$ENV_FILE"
+  FRESH_INSTALL=1
+  success "Created .env from template"
+else
+  info "Using existing .env"
+fi
+
+# Write configuration
+env_set PORT "$APP_PORT"
+env_set NEXT_PUBLIC_API_BASE_URL ""
+env_set NEXT_PUBLIC_SITE_URL "$APP_URL"
+env_set FRONTEND_URL "$APP_URL"
+env_set DATABASE_URL "$INTERNAL_DB_URL"
+env_set REDIS_URL "$INTERNAL_REDIS_URL"
+env_set AUTH_TRUST_HOST "true"
+
+# Generate secrets only on fresh install
+if [ "$FRESH_INSTALL" = 1 ]; then
+  env_set AUTH_SECRET "$(generate_secret 32)"
+  env_set OPENSEO_ENCRYPTION_KEY "$(generate_secret 32)"
+  success "Generated encryption keys"
+else
+  info "Keeping existing secrets"
+fi
+
+# ──────────────────────────────────────────────
+# [3/5] Building containers
+# ──────────────────────────────────────────────
+
+phase "3/5" "Building containers"
+
+info "This may take a few minutes on first run..."
+printf '\n'
+if docker compose build; then
+  printf '\n'
+  success "Build complete"
+else
+  printf '\n'
+  fail "Build failed. Check the output above."
+  exit 1
+fi
+
+# ──────────────────────────────────────────────
+# [4/5] Starting services
+# ──────────────────────────────────────────────
+
+phase "4/5" "Starting services"
+
+# Clean slate on first install
+if [ "$FRESH_INSTALL" = 1 ]; then
   docker compose down -v --remove-orphans >/dev/null 2>&1 || true
 fi
 
-printf 'Starting internal services...\n'
-docker compose up -d --remove-orphans postgres redis
+# Start infrastructure
+info "Starting database and cache..."
+docker compose up -d --remove-orphans postgres redis >/dev/null 2>&1
+success "Postgres and Redis running (internal only)"
 
-printf 'Running database migrations...\n'
-docker compose run --rm app npx prisma migrate deploy
+# Migrations
+info "Running database migrations..."
+if docker compose run --rm app npx prisma migrate deploy >/dev/null 2>&1; then
+  success "Migrations complete"
+else
+  fail "Migration failed."
+  info "Re-run with visible output:"
+  info "  docker compose run --rm app npx prisma migrate deploy"
+  exit 1
+fi
 
-printf 'Starting application...\n'
-docker compose up -d --remove-orphans app
+# Start app
+info "Starting application..."
+docker compose up -d --remove-orphans app >/dev/null 2>&1
 
-printf 'Waiting for app healthcheck...\n'
-wait_for_health "$APP_URL/api/health"
+# ──────────────────────────────────────────────
+# [5/5] Waiting for health
+# ──────────────────────────────────────────────
 
-open_browser "$APP_URL/setup"
+phase "5/5" "Waiting for application"
 
-printf '\nOpenSEO is running at %s\n' "$APP_URL"
-printf 'Open %s/setup to create the first admin account.\n' "$APP_URL"
-printf 'Postgres and Redis stay internal by default.\n'
-printf 'For host debugging ports, run: docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d\n'
+info "Checking $APP_URL ..."
+if wait_for_health "$APP_URL/api/health"; then
+  success "Application is healthy"
+else
+  fail "Application did not become healthy within 3 minutes."
+  printf '\n'
+  info "Debug with:"
+  info "  docker compose logs app"
+  info "  docker compose ps"
+  exit 1
+fi
+
+# ──────────────────────────────────────────────
+# Success
+# ──────────────────────────────────────────────
+
+if [ "$ARG_NO_OPEN" = 0 ]; then
+  open_browser "$APP_URL/setup"
+fi
+
+printf '\n'
+printf '  %s\n' "$(green "$(bold "OpenSEO is running!")")"
+printf '\n'
+printf '  App:     %s\n' "$APP_URL"
+printf '  Setup:   %s\n' "$APP_URL/setup"
+printf '\n'
+printf '  %s\n' "$(dim "Commands:")"
+printf '  Stop:    docker compose down\n'
+printf '  Start:   docker compose up -d\n'
+printf '  Logs:    docker compose logs -f app\n'
+printf '  Reset:   ./install.sh --reset\n'
+printf '\n'
+printf '  %s\n' "$(dim "Debug (expose DB/Redis to host):")"
+printf '  docker compose -f docker-compose.yml \\\n'
+printf '    -f docker-compose.debug.yml up -d\n'
+printf '\n'

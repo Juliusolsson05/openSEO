@@ -46,7 +46,7 @@ export default function RegisterPage() {
       return
     }
 
-    localStorage.setItem('aurora:show-welcome-tour', '1')
+    localStorage.setItem('openseo:show-welcome-tour', '1')
     router.push('/login')
   }
 
