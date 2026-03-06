@@ -8,6 +8,7 @@ import { USER_TYPE_MAP, SESSION_MAX_AGE_SECONDS } from './constants/user'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  trustHost: true,
   secret: process.env.AUTH_SECRET ?? (() => {
     if (process.env.NODE_ENV === 'production') throw new Error('AUTH_SECRET must be set in production')
     return 'openseo-dev-secret-do-not-use-in-production'
