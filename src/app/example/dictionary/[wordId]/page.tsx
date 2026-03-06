@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation'
 import { WordRenderer } from '../../_components/WordRenderer'
 import { getDictionary, getWord } from '../../_lib/data'
 
+export const dynamic = 'force-dynamic'
+
 type PageProps = {
   params: Promise<{ wordId: string }>
 }

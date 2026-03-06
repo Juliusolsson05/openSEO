@@ -5,6 +5,8 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { PostRenderer } from '../../_components/PostRenderer'
 import { getPost, getPosts } from '../../_lib/data'
 
+export const dynamic = 'force-dynamic'
+
 type PageProps = {
   params: Promise<{ slug: string }>
 }
