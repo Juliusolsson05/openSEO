@@ -14,13 +14,15 @@ OpenSEO is a self-hostable AI-powered SEO content platform for generating, editi
 
 1. Copy `.env.example` to `.env`
 2. Install dependencies with `npm install`
-3. Start infrastructure with `docker compose up -d postgres redis`
+3. Start infrastructure with `docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d postgres redis`
 4. Run Prisma migrations with `npx prisma migrate dev`
 5. Start the app with `npm run dev`
 6. Open `http://localhost:4720`
 7. Finish first-run onboarding at `/setup`
 
-If you prefer to run the app entirely in containers, `docker compose up --build` now starts the app, Postgres, and Redis together.
+The default Compose setup does not expose Postgres or Redis to your host. That is intentional for self-hosted OSS installs. Use `docker-compose.debug.yml` only when you want host access for local debugging.
+
+If you prefer to run the app entirely in containers, `./install.sh` is the recommended path.
 
 ## One-command install
 
@@ -31,6 +33,19 @@ For a guided local install, run:
 ```
 
 The script creates `.env`, starts Docker services, runs Prisma migrations, waits for the app to become healthy, and then sends you to `/setup` for the first admin account.
+
+By default it exposes only the app port. Postgres and Redis remain internal to the Docker network.
+
+If you need host access for debugging, run:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d
+```
+
+This exposes:
+
+- Postgres on `15432`
+- Redis on `16379`
 
 ## Environment variables
 
@@ -46,6 +61,8 @@ Start from `.env.example` and configure at minimum:
 - `NEXT_PUBLIC_SITE_URL`
 
 AI and media provider keys are only required for the features you use.
+
+Never commit `.env`. The repository intentionally tracks only `.env.example`.
 
 ## Roadmap to public OSS launch
 

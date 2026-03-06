@@ -1,0 +1,8 @@
+services:
+  postgres:
+    ports:
+      - "15432:5432"
+
+  redis:
+    ports:
+      - "16379:6379"

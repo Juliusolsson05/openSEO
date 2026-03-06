@@ -1,14 +1,11 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: openseo-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: openseo
       POSTGRES_PASSWORD: openseo
       POSTGRES_DB: openseo
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -19,10 +16,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: openseo-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -34,7 +28,6 @@ services:
   app:
     build:
       context: .
-    container_name: openseo-app
     restart: unless-stopped
     depends_on:
       postgres:
