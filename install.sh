@@ -24,11 +24,29 @@ replace_or_append() {
   local key="$1"
   local value="$2"
 
-  if grep -q "^${key}=" "$ENV_FILE"; then
-    perl -0pi -e "s#^${key}=.*#${key}=${value}#m" "$ENV_FILE"
-  else
-    printf '\n%s=%s\n' "$key" "$value" >> "$ENV_FILE"
-  fi
+  python3 - "$ENV_FILE" "$key" "$value" <<'PY'
+from pathlib import Path
+import sys
+
+env_path = Path(sys.argv[1])
+key = sys.argv[2]
+value = sys.argv[3]
+
+lines = env_path.read_text().splitlines()
+updated = False
+for index, line in enumerate(lines):
+    if line.startswith(f"{key}="):
+        lines[index] = f"{key}={value}"
+        updated = True
+        break
+
+if not updated:
+    if lines and lines[-1] != "":
+        lines.append("")
+    lines.append(f"{key}={value}")
+
+env_path.write_text("\n".join(lines) + "\n")
+PY
 }
 
 port_is_free() {
@@ -98,8 +116,10 @@ fi
 
 if [ ! -f "$ENV_FILE" ]; then
   cp "$EXAMPLE_ENV_FILE" "$ENV_FILE"
+  CREATED_ENV=1
   printf 'Created .env from .env.example\n'
 else
+  CREATED_ENV=0
   printf 'Using existing .env\n'
 fi
 
@@ -131,14 +151,19 @@ replace_or_append REDIS_URL "$INTERNAL_REDIS_URL"
 printf 'Building containers...\n'
 docker compose build
 
+if [ "$CREATED_ENV" = "1" ]; then
+  printf 'Resetting any stale containers and volumes for a clean first install...\n'
+  docker compose down -v --remove-orphans >/dev/null 2>&1 || true
+fi
+
 printf 'Starting internal services...\n'
-docker compose up -d postgres redis
+docker compose up -d --remove-orphans postgres redis
 
 printf 'Running database migrations...\n'
 docker compose run --rm app npx prisma migrate deploy
 
 printf 'Starting application...\n'
-docker compose up -d app
+docker compose up -d --remove-orphans app
 
 printf 'Waiting for app healthcheck...\n'
 wait_for_health "$APP_URL/api/health"
