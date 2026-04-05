@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import {
   useCompanyProfileQuery,
   useUpdateCompanyProfileMutation,
@@ -41,7 +41,9 @@ export default function CompanyProfilePage() {
   const [localProfile, setLocalProfile] = useState<CompanyProfile>(emptyProfile)
   const [profileSynced, setProfileSynced] = useState(false)
 
-  if (profileData && !profileSynced) {
+  // Sync server profile data into local editable state once per load.
+  useEffect(() => {
+    if (!profileData || profileSynced) return
     setWebsiteUrl(profileData.website_url ?? '')
     setLocalProfile(
       profileData.profile
@@ -49,7 +51,7 @@ export default function CompanyProfilePage() {
         : { ...emptyProfile, detected_language: profileData.language ?? 'en' }
     )
     setProfileSynced(true)
-  }
+  }, [profileData, profileSynced])
 
   const companyName = profileData?.name ?? ''
 
@@ -59,14 +61,18 @@ export default function CompanyProfilePage() {
   })
 
   const jobStatus = jobData?.status
-  if (jobStatus === 'completed' && analyzeTaskId) {
-    setAnalyzeTaskId(null)
-    toast.success('Website analyzed successfully.')
-    setProfileSynced(false) // force re-sync when query refetches
-  } else if (jobStatus === 'failed' && analyzeTaskId) {
-    setAnalyzeTaskId(null)
-    toast.error(jobData?.error ?? 'Analysis failed.')
-  }
+  // React to analyze-job terminal states: clear the polling id and surface a toast.
+  useEffect(() => {
+    if (!analyzeTaskId) return
+    if (jobStatus === 'completed') {
+      setAnalyzeTaskId(null)
+      toast.success('Website analyzed successfully.')
+      setProfileSynced(false) // force re-sync when query refetches
+    } else if (jobStatus === 'failed') {
+      setAnalyzeTaskId(null)
+      toast.error(jobData?.error ?? 'Analysis failed.')
+    }
+  }, [jobStatus, analyzeTaskId, jobData?.error])
 
   const isAnalyzing = !!analyzeTaskId || analyzeCompany.isPending
 

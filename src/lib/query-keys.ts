@@ -5,6 +5,7 @@ export const QK = {
   categories:         ()                     => ['categories']                as const,
   analytics:          ()                     => ['analytics']                 as const,
   campaigns:          ()                     => ['cta', 'campaigns']          as const,
+  ctas:               ()                     => ['cta', 'ctas']               as const,
   elements:           (postId?: number)      => ['elements', postId]          as const,
   dictionaries:       (filters?: object)     => ['dictionaries', filters]     as const,
   generationSettings: ()                     => ['settings', 'generation']    as const,

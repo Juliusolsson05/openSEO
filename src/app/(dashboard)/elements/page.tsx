@@ -88,13 +88,15 @@ export default function ElementsPage() {
   const { data: genSettings, isLoading: loading } = useGenerationSettingsQuery()
   const updateGenSettings = useUpdateGenerationSettingsMutation()
 
-  if (genSettings && !settingsSynced) {
+  // Seed local element toggles from the server once the generation settings arrive.
+  useEffect(() => {
+    if (!genSettings || settingsSynced) return
     const saved = genSettings.initial_generation_elements
     if (saved && typeof saved === 'object') {
       setSettings(mergeFromApi(saved as Record<string, boolean>))
     }
     setSettingsSynced(true)
-  }
+  }, [genSettings, settingsSynced])
 
   useEffect(() => {
     if (!toast) return

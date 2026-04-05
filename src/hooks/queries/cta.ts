@@ -55,6 +55,7 @@ export function useCreateCampaignMutation() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
+      qc.invalidateQueries({ queryKey: QK.ctas() })
       toast.success('Campaign created')
     },
     onError: (err) => {
@@ -76,6 +77,7 @@ export function useEditCampaignMutation() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
+      qc.invalidateQueries({ queryKey: QK.ctas() })
       toast.success('Campaign updated')
     },
     onError: (err) => {
@@ -96,6 +98,7 @@ export function useDeleteCampaignMutation() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
+      qc.invalidateQueries({ queryKey: QK.ctas() })
       toast.success('Campaign deleted')
     },
     onError: (err) => {
@@ -147,6 +150,7 @@ export function useCreateCTAMutation() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
+      qc.invalidateQueries({ queryKey: QK.ctas() })
       toast.success('CTA created')
     },
     onError: (err) => {
@@ -197,6 +201,7 @@ export function useEditCTAMutation() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
+      qc.invalidateQueries({ queryKey: QK.ctas() })
       toast.success('CTA updated')
     },
     onError: (err) => {
@@ -217,6 +222,7 @@ export function useDeleteCTAMutation() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
+      qc.invalidateQueries({ queryKey: QK.ctas() })
       toast.success('CTA deleted')
     },
     onError: (err) => {

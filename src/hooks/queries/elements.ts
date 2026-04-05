@@ -12,7 +12,7 @@ import type { CTA } from '@/types/cta'
 /** Flat list of all CTAs across all campaigns (used in element editing) */
 export function useCTAListQuery(options?: { enabled?: boolean }) {
   return useQuery({
-    queryKey: QK.campaigns(),
+    queryKey: QK.ctas(),
     queryFn: async () => {
       const { data, error } = await api<any[]>('/api/aurora/blog/cta/list/')
       if (error) throw error
