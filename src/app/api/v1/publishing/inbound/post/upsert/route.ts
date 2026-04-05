@@ -45,7 +45,9 @@ export const POST = apiHandler(async ({ body }, req) => {
   }
 
   if (!post && postPayload.slug) {
-    post = await prisma.blogPost.findFirst({ where: { slug: postPayload.slug, companyId } })
+    post = await prisma.blogPost.findUnique({
+      where: { companyId_slug: { companyId, slug: postPayload.slug } },
+    })
   }
 
   if (!post) {

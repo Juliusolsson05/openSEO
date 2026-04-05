@@ -26,7 +26,11 @@ const imageSchema = z.object({
 })
 
 const shopifyProductSchema = z.object({
-  id: z.number().int().positive(),
+  // Shopify ids come across the wire as numbers for legacy REST payloads and
+  // as GID strings like "gid://shopify/Product/8123456789" for GraphQL. We
+  // store both as text in Product.externalId, so accept either here and let
+  // the service layer stringify before writing.
+  id: z.union([z.string(), z.number()]).optional(),
   title: z.string().min(1),
   description: z.string().default(''),
   vendor: z.string().default(''),

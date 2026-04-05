@@ -22,8 +22,11 @@ async function uniqueSlug(client: Prisma.TransactionClient | typeof prisma, base
   const cleaned = slugify(base) || 'category'
   let idx = 0
   while (true) {
-    const candidate = idx === 0 ? `${cleaned}-${companyId}` : `${cleaned}-${companyId}-${idx}`
-    const exists = await client.category.findUnique({ where: { slug: candidate }, select: { id: true } })
+    const candidate = idx === 0 ? cleaned : `${cleaned}-${idx}`
+    const exists = await client.category.findUnique({
+      where: { companyId_slug: { companyId, slug: candidate } },
+      select: { id: true },
+    })
     if (!exists) return candidate
     idx += 1
   }
@@ -49,7 +52,9 @@ export async function findById(id: number) {
 }
 
 export async function findOrCreateByName(client: Prisma.TransactionClient, companyId: number, name: string) {
-  const existing = await client.category.findFirst({ where: { companyId, name } })
+  const existing = await client.category.findUnique({
+    where: { companyId_name: { companyId, name } },
+  })
   if (existing) return { created: false, category: existing }
   const slug = await uniqueSlug(client, name, companyId)
   const category = await client.category.create({ data: { companyId, name, slug } })

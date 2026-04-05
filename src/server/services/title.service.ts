@@ -5,6 +5,7 @@ import { NotFoundError } from '@/server/api/errors'
 import { generateTitles as generateTitlesAI } from '@/server/ai/titles/generate-titles'
 import { generateSingleTitle } from '@/server/ai/titles/generate-single-title'
 import * as titleRepository from '@/server/repositories/title.repository'
+import { assertCategoryOwnership } from '@/server/services/_helpers/assert-category-ownership'
 
 type ListTitlesQuery = {
   page: number
@@ -48,6 +49,7 @@ export class TitleService {
   }
 
   async createTitle(companyId: number, data: CreateTitlePayload) {
+    await assertCategoryOwnership(prisma, companyId, data.categoryIds)
     return titleRepository.create({ companyId, ...data })
   }
 
@@ -55,7 +57,8 @@ export class TitleService {
     const existing = await titleRepository.findById(id, companyId)
     if (!existing) throw new NotFoundError('Title not found')
 
-    return titleRepository.update(id, data)
+    await assertCategoryOwnership(prisma, companyId, data.categoryIds)
+    return titleRepository.update(id, companyId, data)
   }
 
   async deleteTitle(id: number, companyId: number) {

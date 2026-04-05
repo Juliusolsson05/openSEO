@@ -219,8 +219,8 @@ model BulkSchedule {
 
 model Category {
   id         Int      @id @default(autoincrement())
-  name       String   @unique
-  slug       String   @unique
+  name       String
+  slug       String
   created_at DateTime @default(now())
   companyId  Int?
 
@@ -228,6 +228,8 @@ model Category {
   titles     Title[]
   blog_posts BlogPost[]
 
+  @@unique([companyId, name])
+  @@unique([companyId, slug])
   @@index([companyId])
 }
 
@@ -235,7 +237,7 @@ model Title {
   id             Int            @id @default(autoincrement())
   companyId      Int?
   title_text     String
-  slug           String         @unique
+  slug           String
   seo_title      String?
   focus_keyword  String?
   status         TitleStatus    @default(TO_BE_GENERATED)
@@ -256,6 +258,7 @@ model Title {
   post_linking_from TitlePostLink[] @relation("TitlePostLinkFrom")
   post_linking_to   TitlePostLink[] @relation("TitlePostLinkTo")
 
+  @@unique([companyId, slug])
   @@index([companyId])
   @@index([status])
   @@index([operation])
@@ -267,7 +270,7 @@ model BlogPost {
   id             Int            @id @default(autoincrement())
   companyId      Int?
   title_text     String
-  slug           String         @unique
+  slug           String
   seo_title      String?
   focus_keyword  String?
   status         TitleStatus    @default(TO_BE_GENERATED)
@@ -305,6 +308,7 @@ model BlogPost {
   post_linking_from BlogPostPostLink[] @relation("BlogPostPostLinkFrom")
   post_linking_to   BlogPostPostLink[] @relation("BlogPostPostLinkTo")
 
+  @@unique([companyId, slug])
   @@index([companyId])
   @@index([status])
   @@index([operation])
@@ -389,6 +393,11 @@ model ElementHyperlink {
 
 model Product {
   id           Int      @id @default(autoincrement())
+  /// External identifier (e.g. Shopify GID or numeric id). Stored as text so we
+  /// can accept `gid://shopify/Product/123` as well as plain numerics without
+  /// risking overflow, and typed as optional because products created directly
+  /// in OpenSEO have no external source of truth.
+  externalId   String?
   title        String
   description  String
   vendor       String
@@ -402,6 +411,7 @@ model Product {
   images   ProductImage[]
   tags     Tag[]
 
+  @@unique([companyId, externalId])
   @@index([title])
   @@index([vendor])
   @@index([product_type])
@@ -411,8 +421,11 @@ model Product {
 model ProductVariant {
   id                 Int      @id @default(autoincrement())
   productId          Int
+  /// Denormalized from Product.companyId so SKU uniqueness can be enforced
+  /// per merchant instead of globally. Nullable to mirror Product.companyId.
+  companyId          Int?
   title              String
-  sku                String   @unique
+  sku                String
   price              Decimal  @db.Decimal(10, 2)
   compare_at_price   Decimal? @db.Decimal(10, 2)
   inventory_quantity Int
@@ -426,7 +439,9 @@ model ProductVariant {
   product Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   images  ProductImage[]
 
+  @@unique([companyId, sku])
   @@index([productId])
+  @@index([companyId])
   @@index([title])
   @@index([sku])
 }
@@ -450,11 +465,12 @@ model ProductImage {
 
 model Tag {
   id        Int    @id @default(autoincrement())
-  name      String @unique
+  name      String
   productId Int
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
+  @@unique([productId, name])
   @@index([name])
   @@index([productId])
 }
@@ -471,11 +487,12 @@ model Dictionary {
   status         DictionaryStatus @default(KEYWORD_GENERATION)
   companyId      Int?
   faqs           Json             @default("[]")
-  slug           String           @unique @default("dictionary/")
+  slug           String           @default("dictionary/")
 
   company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
   words   Word[]
 
+  @@unique([companyId, slug])
   @@index([companyId])
 }
 
@@ -491,6 +508,7 @@ model Word {
   dictionary Dictionary            @relation(fields: [dictionaryId], references: [id], onDelete: Cascade)
   definition DictionaryDefinition?
 
+  @@unique([dictionaryId, keyword])
   @@index([dictionaryId])
 }
 

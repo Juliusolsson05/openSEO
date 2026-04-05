@@ -23,42 +23,36 @@ export class ProductService {
       const images = Array.isArray(product.images) ? product.images : []
       const tags = Array.isArray(product.tags) ? product.tags : []
 
-      if (product.id) {
-        const upserted = await productRepository.bulkCreate([{
-          where: { id: product.id },
-          update: {
-            title: product.title,
-            description: product.description ?? '',
-            vendor: product.vendor ?? '',
-            product_type: product.product_type ?? '',
-            companyId,
-            variants: { deleteMany: {}, create: variants },
-            images: { deleteMany: {}, create: images },
-            tags: { deleteMany: {}, create: tags.map((tag: string) => ({ name: tag })) },
-          },
-          create: {
-            id: product.id,
-            title: product.title,
-            description: product.description ?? '',
-            vendor: product.vendor ?? '',
-            product_type: product.product_type ?? '',
-            companyId,
-            variants: { create: variants },
-            images: { create: images },
-            tags: { create: tags.map((tag: string) => ({ name: tag })) },
-          },
-        }])
-        results.push(...(Array.isArray(upserted) ? upserted : [upserted]))
+      const payload = {
+        title: product.title ?? 'Untitled',
+        description: product.description ?? '',
+        vendor: product.vendor ?? '',
+        product_type: product.product_type ?? '',
+        variants,
+        images,
+        tagNames: tags,
+      }
+
+      if (product.id !== undefined && product.id !== null && product.id !== '') {
+        // Upsert by (companyId, externalId). Two companies importing the same
+        // Shopify id must each get their own Product row.
+        const upserted = await productRepository.upsertByExternal({
+          companyId,
+          externalId: String(product.id),
+          data: payload,
+        })
+        results.push(upserted)
       } else {
-        // No Shopify ID — just create
+        // No external id — plain create. The internal autoincrement PK handles
+        // uniqueness on its own.
         const created = await prisma.product.create({
           data: {
-            title: product.title ?? 'Untitled',
-            description: product.description ?? '',
-            vendor: product.vendor ?? '',
-            product_type: product.product_type ?? '',
             companyId,
-            variants: { create: variants },
+            title: payload.title,
+            description: payload.description,
+            vendor: payload.vendor,
+            product_type: payload.product_type,
+            variants: { create: variants.map((v) => ({ ...v, companyId })) },
             images: { create: images },
             tags: { create: tags.map((tag: string) => ({ name: tag })) },
           },

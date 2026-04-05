@@ -165,9 +165,9 @@ export async function findById(id: number, companyId: number) {
   return post ? withIsPublished(post) : null
 }
 
-export async function findBySlug(slug: string) {
+export async function findBySlug(companyId: number, slug: string) {
   return prisma.blogPost.findUnique({
-    where: { slug },
+    where: { companyId_slug: { companyId, slug } },
     select: { id: true, slug: true },
   })
 }

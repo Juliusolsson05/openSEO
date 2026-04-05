@@ -1,6 +1,7 @@
 import { Prisma, type TitleStatus } from '@prisma/client'
 
 import { prisma } from '@/lib/prisma'
+import { assertCategoryOwnership } from '@/server/services/_helpers/assert-category-ownership'
 
 type FindManyFilters = {
   page: number
@@ -34,12 +35,19 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, '')
 }
 
-async function uniqueSlug(client: Prisma.TransactionClient | typeof prisma, base: string) {
+async function uniqueSlug(
+  client: Prisma.TransactionClient | typeof prisma,
+  companyId: number,
+  base: string,
+) {
   const cleaned = slugify(base) || 'title'
   let idx = 0
   while (true) {
     const candidate = idx === 0 ? cleaned : `${cleaned}-${idx}`
-    const exists = await client.title.findUnique({ where: { slug: candidate }, select: { id: true } })
+    const exists = await client.title.findUnique({
+      where: { companyId_slug: { companyId, slug: candidate } },
+      select: { id: true },
+    })
     if (!exists) return candidate
     idx += 1
   }
@@ -84,7 +92,10 @@ export async function findById(id: number, companyId: number) {
 }
 
 export async function createWithClient(client: Prisma.TransactionClient | typeof prisma, data: CreateTitleArgs) {
-  const slug = await uniqueSlug(client, data.titleText)
+  if (data.categoryIds?.length) {
+    await assertCategoryOwnership(client, data.companyId, data.categoryIds)
+  }
+  const slug = await uniqueSlug(client, data.companyId, data.titleText)
   return client.title.create({
     data: {
       companyId: data.companyId,
@@ -109,9 +120,12 @@ export async function create(data: CreateTitleArgs) {
   return createWithClient(prisma, data)
 }
 
-export async function update(id: number, data: UpdateTitleArgs) {
+export async function update(id: number, companyId: number, data: UpdateTitleArgs) {
   return prisma.$transaction(async (tx) => {
-    const slug = data.titleText ? await uniqueSlug(tx, data.titleText) : undefined
+    if (data.categoryIds !== undefined) {
+      await assertCategoryOwnership(tx, companyId, data.categoryIds)
+    }
+    const slug = data.titleText ? await uniqueSlug(tx, companyId, data.titleText) : undefined
     return tx.title.update({
       where: { id },
       data: {

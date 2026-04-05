@@ -9,6 +9,7 @@ import { generateRecommendedPosts } from '@/server/ai/post-linking/generate-reco
 import { processHyperlinks } from '@/server/ai/keyword-linking/process-hyperlinks'
 import { ELEMENT_PROCESSING_MAP } from '@/server/ai/keyword-matching/find-matched-keywords'
 import * as blogRepository from '@/server/repositories/blog.repository'
+import { assertCategoryOwnership } from '@/server/services/_helpers/assert-category-ownership'
 import { toDbElementType } from '@/server/utils/element-type'
 import { sendJsonWebhook } from '@/server/services/webhook-delivery.service'
 import type {
@@ -35,13 +36,17 @@ function randomSuffix(): string {
   return Math.random().toString(36).slice(2, 8)
 }
 
-async function ensureUniqueSlug(baseSlug: string, excludeId?: number): Promise<string> {
+async function ensureUniqueSlug(
+  companyId: number,
+  baseSlug: string,
+  excludeId?: number,
+): Promise<string> {
   let candidate = baseSlug
-  let existing = await blogRepository.findBySlug(candidate)
+  let existing = await blogRepository.findBySlug(companyId, candidate)
 
   while (existing && existing.id !== excludeId) {
     candidate = `${baseSlug}-${randomSuffix()}`
-    existing = await blogRepository.findBySlug(candidate)
+    existing = await blogRepository.findBySlug(companyId, candidate)
   }
 
   return candidate
@@ -73,8 +78,9 @@ export class BlogService {
   }
 
   async createPost(companyId: number, data: CreateBlogPostInput) {
+    await assertCategoryOwnership(prisma, companyId, data.categoryIds)
     const baseSlug = slugify(data.titleText)
-    const slug = await ensureUniqueSlug(baseSlug)
+    const slug = await ensureUniqueSlug(companyId, baseSlug)
 
     const payload: Prisma.BlogPostCreateInput = {
       company: { connect: { id: companyId } },
@@ -105,10 +111,14 @@ export class BlogService {
       throw new NotFoundError('Blog post not found')
     }
 
+    if (data.categoryIds !== undefined) {
+      await assertCategoryOwnership(prisma, companyId, data.categoryIds)
+    }
+
     let nextSlug: string | undefined
     if (data.titleText && data.titleText !== existing.title_text) {
       const baseSlug = slugify(data.titleText)
-      nextSlug = await ensureUniqueSlug(baseSlug, id)
+      nextSlug = await ensureUniqueSlug(companyId, baseSlug, id)
     }
 
     const payload: Prisma.BlogPostUpdateInput = {
@@ -218,7 +228,9 @@ export class BlogService {
 
     await prisma.$transaction(async (tx) => {
       const baseSlug = slugify(title.title_text)
-      const slug = await ensureUniqueSlug(baseSlug)
+      // categories flow through from an already-verified title row, so they
+      // are trusted here — no assertCategoryOwnership call needed.
+      const slug = await ensureUniqueSlug(companyId, baseSlug)
 
       const post = await tx.blogPost.create({
         data: {

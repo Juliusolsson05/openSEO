@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client'
+
 import { prisma } from '@/lib/prisma'
 
 type FindManyFilters = {
@@ -49,8 +51,53 @@ export function findById(id: number, companyId: number) {
   })
 }
 
-export async function bulkCreate(products: Parameters<typeof prisma.product.upsert>[0][]) {
-  return Promise.all(products.map((product) => prisma.product.upsert(product)))
+type UpsertProductInput = {
+  companyId: number
+  externalId: string
+  data: {
+    title: string
+    description: string
+    vendor: string
+    product_type: string
+    variants: Array<Prisma.ProductVariantCreateWithoutProductInput>
+    images: Array<Prisma.ProductImageCreateWithoutProductInput>
+    tagNames: string[]
+  }
+}
+
+/**
+ * Upsert a product keyed on (companyId, externalId). This is the only
+ * correct way to idempotently import a Shopify (or any other external)
+ * product into OpenSEO — never key on the internal autoincrement PK.
+ */
+export async function upsertByExternal(input: UpsertProductInput) {
+  const { companyId, externalId, data } = input
+  return prisma.product.upsert({
+    where: { companyId_externalId: { companyId, externalId } },
+    update: {
+      title: data.title,
+      description: data.description,
+      vendor: data.vendor,
+      product_type: data.product_type,
+      variants: {
+        deleteMany: {},
+        create: data.variants.map((v) => ({ ...v, companyId })),
+      },
+      images: { deleteMany: {}, create: data.images },
+      tags: { deleteMany: {}, create: data.tagNames.map((name) => ({ name })) },
+    },
+    create: {
+      companyId,
+      externalId,
+      title: data.title,
+      description: data.description,
+      vendor: data.vendor,
+      product_type: data.product_type,
+      variants: { create: data.variants.map((v) => ({ ...v, companyId })) },
+      images: { create: data.images },
+      tags: { create: data.tagNames.map((name) => ({ name })) },
+    },
+  })
 }
 
 export function deleteProduct(id: number, companyId: number) {
