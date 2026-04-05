@@ -15,10 +15,9 @@ export function useGenerationSettingsQuery() {
   return useQuery({
     queryKey: QK.generationSettings(),
     queryFn: async () => {
-      const { data, error } = await api<{ settings?: GenerationSettings }>(
-        '/api/v1/settings/generation'
+      const data = await api<{ settings?: GenerationSettings }>(
+        '/api/v1/settings/generation',
       )
-      if (error) throw error
       return data?.settings ?? null
     },
   })
@@ -28,10 +27,9 @@ export function usePublishingSettingsQuery() {
   return useQuery({
     queryKey: QK.publishingSettings(),
     queryFn: async () => {
-      const { data, error } = await api<{ settings?: PublishingSettings }>(
-        '/api/v1/settings/publishing'
+      const data = await api<{ settings?: PublishingSettings }>(
+        '/api/v1/settings/publishing',
       )
-      if (error) throw error
       return data?.settings ?? null
     },
   })
@@ -41,10 +39,7 @@ export function useApiKeysQuery() {
   return useQuery({
     queryKey: QK.apiKeys(),
     queryFn: async () => {
-      const { data, error } = await api<ApiKey[]>(
-        '/api/v1/publishing/api-keys'
-      )
-      if (error) throw error
+      const data = await api<ApiKey[]>('/api/v1/publishing/api-keys')
       return data ?? []
     },
   })
@@ -54,8 +49,9 @@ export function useIntegrationsQuery() {
   return useQuery({
     queryKey: QK.integrations(),
     queryFn: async () => {
-      const { data, error } = await api<IntegrationSetting[]>('/api/v1/settings/integrations')
-      if (error) throw error
+      const data = await api<IntegrationSetting[]>(
+        '/api/v1/settings/integrations',
+      )
       return data ?? []
     },
   })
@@ -65,8 +61,7 @@ export function useSetupStatusQuery() {
   return useQuery({
     queryKey: QK.setupStatus(),
     queryFn: async () => {
-      const { data, error } = await api<SetupStatus>('/api/setup/status')
-      if (error) throw error
+      const data = await api<SetupStatus>('/api/setup/status')
       return data ?? null
     },
     staleTime: 10_000,
@@ -78,14 +73,11 @@ export function useSetupStatusQuery() {
 export function useUpdateGenerationSettingsMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (settings: Partial<GenerationSettings>) => {
-      const { data, error } = await api('/api/v1/settings/generation', {
+    mutationFn: (settings: Partial<GenerationSettings>) =>
+      api('/api/v1/settings/generation', {
         method: 'PATCH',
         body: JSON.stringify(settings),
-      })
-      if (error) throw error
-      return data
-    },
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.generationSettings() })
       toast.success('Generation settings saved')
@@ -99,17 +91,11 @@ export function useUpdateGenerationSettingsMutation() {
 export function useUpdatePublishingSettingsMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (payload: {
-      api_endpoint: string
-      api_key?: string
-    }) => {
-      const { data, error } = await api('/api/v1/settings/publishing', {
+    mutationFn: (payload: { api_endpoint: string; api_key?: string }) =>
+      api('/api/v1/settings/publishing', {
         method: 'PATCH',
         body: JSON.stringify(payload),
-      })
-      if (error) throw error
-      return data
-    },
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.publishingSettings() })
       toast.success('Credentials updated')
@@ -123,14 +109,8 @@ export function useUpdatePublishingSettingsMutation() {
 export function useCreateApiKeyMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ name }: { name: string }) => {
-      const { data, error } = await apiPost<ApiKey>(
-        '/api/v1/publishing/api-keys',
-        { name }
-      )
-      if (error) throw error
-      return data
-    },
+    mutationFn: ({ name }: { name: string }) =>
+      apiPost<ApiKey>('/api/v1/publishing/api-keys', { name }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.apiKeys() })
       toast.success('Inbound key created')
@@ -144,14 +124,8 @@ export function useCreateApiKeyMutation() {
 export function useRevokeApiKeyMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (id: number) => {
-      const { data, error } = await apiPost(
-        `/api/v1/publishing/api-keys/${id}/revoke`,
-        {}
-      )
-      if (error) throw error
-      return data
-    },
+    mutationFn: (id: number) =>
+      apiPost(`/api/v1/publishing/api-keys/${id}/revoke`, {}),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.apiKeys() })
     },
@@ -165,11 +139,10 @@ export function useUpsertIntegrationMutation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload: { key: string; value: string }) => {
-      const { data, error } = await apiPost<IntegrationSetting>(
+      const data = await apiPost<IntegrationSetting>(
         '/api/v1/settings/integrations',
         payload,
       )
-      if (error) throw error
       return data ?? null
     },
     onSuccess: () => {
@@ -186,13 +159,10 @@ export function useUpsertIntegrationMutation() {
 export function useDeleteIntegrationMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (key: string) => {
-      const { data, error } = await api(`/api/v1/settings/integrations/${encodeURIComponent(key)}`, {
+    mutationFn: (key: string) =>
+      api(`/api/v1/settings/integrations/${encodeURIComponent(key)}`, {
         method: 'DELETE',
-      })
-      if (error) throw error
-      return data
-    },
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.integrations() })
       qc.invalidateQueries({ queryKey: QK.setupStatus() })
@@ -207,11 +177,10 @@ export function useDeleteIntegrationMutation() {
 export function useTestIntegrationMutation() {
   return useMutation({
     mutationFn: async (payload: { key: string; value?: string }) => {
-      const { data, error } = await apiPost<{ ok: boolean; error?: string }>(
+      const data = await apiPost<{ ok: boolean; error?: string }>(
         '/api/v1/settings/integrations/test',
         payload,
       )
-      if (error) throw error
       return data ?? { ok: false, error: 'Unknown error' }
     },
   })

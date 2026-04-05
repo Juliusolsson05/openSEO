@@ -15,10 +15,9 @@ export function useCompaniesQuery(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: QK.companies(),
     queryFn: async () => {
-      const { data, error } = await api<
+      const data = await api<
         { companies: CompanyListItem[] } | CompanyListItem[]
       >('/api/admin/companies')
-      if (error) throw error
       return Array.isArray(data) ? data : (data?.companies ?? [])
     },
     enabled: options?.enabled ?? true,
@@ -29,10 +28,7 @@ export function useUsersQuery(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: QK.users(),
     queryFn: async () => {
-      const { data, error } = await api<{ data: InviteItem[] }>(
-        '/api/admin/users'
-      )
-      if (error) throw error
+      const data = await api<{ data: InviteItem[] }>('/api/admin/users')
       return data?.data ?? []
     },
     enabled: options?.enabled ?? true,
@@ -44,11 +40,8 @@ export function useUsersQuery(options?: { enabled?: boolean }) {
 export function useApproveUserEmailMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ email }: { email: string }) => {
-      const { data, error } = await apiPost('/api/admin/users', { email })
-      if (error) throw error
-      return data
-    },
+    mutationFn: ({ email }: { email: string }) =>
+      apiPost('/api/admin/users', { email }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.users() })
       toast.success('Email approved for signup')

@@ -32,10 +32,8 @@ export function useAnalyticsQuery() {
           api<ElementBreakdownResponse>('/api/aurora/analytics/blog/elements'),
         ])
 
-      const getVal = <T>(
-        r: PromiseSettledResult<{ data: T | null; error: any }>
-      ): T | null =>
-        r.status === 'fulfilled' && !r.value.error ? r.value.data : null
+      const getVal = <T>(r: PromiseSettledResult<T>): T | null =>
+        r.status === 'fulfilled' ? r.value : null
 
       const dictionaryData = getVal<DictionaryGeneralResponse>(dictionaryRes)
       const blogMetaData = getVal<BlogMetaResponse>(blogMetaRes)

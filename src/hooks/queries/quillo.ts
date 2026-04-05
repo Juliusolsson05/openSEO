@@ -33,14 +33,10 @@ export interface QuilloMessage {
 
 export function useQuilloAnalyzeMutation() {
   return useMutation({
-    mutationFn: async ({ blogPostId }: { blogPostId: number }) => {
-      const { data, error } = await apiPost<AnalysisResult>(
-        '/api/aurora/blog/quillo/analyze/',
-        { blog_post_id: blogPostId }
-      )
-      if (error) throw error
-      return data!
-    },
+    mutationFn: ({ blogPostId }: { blogPostId: number }) =>
+      apiPost<AnalysisResult>('/api/aurora/blog/quillo/analyze/', {
+        blog_post_id: blogPostId,
+      }),
     onError: (err) => {
       toast.error(getErrorMessage(err, 'Could not analyze. Please try again.'))
     },
@@ -49,20 +45,17 @@ export function useQuilloAnalyzeMutation() {
 
 export function useQuilloChatMutation() {
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       blogPostId,
       messages,
     }: {
       blogPostId: number
       messages: QuilloMessage[]
-    }) => {
-      const { data, error } = await apiPost<{ message: string }>(
-        '/api/aurora/blog/quillo/analyze/chat',
-        { blog_post_id: blogPostId, messages }
-      )
-      if (error) throw error
-      return data!
-    },
+    }) =>
+      apiPost<{ message: string }>('/api/aurora/blog/quillo/analyze/chat', {
+        blog_post_id: blogPostId,
+        messages,
+      }),
     onError: (err) => {
       toast.error(getErrorMessage(err, 'Chat request failed.'))
     },
@@ -78,11 +71,10 @@ export function useQuilloChatSendMutation() {
       blogPostId: number
       question: string
     }) => {
-      const { data, error } = await apiPost<string>(
+      const data = await apiPost<string>(
         '/api/aurora/blog/quillo/analyze/chat',
-        { blog_post_id: blogPostId, question }
+        { blog_post_id: blogPostId, question },
       )
-      if (error) throw error
       return data ?? 'No response.'
     },
   })
@@ -90,26 +82,19 @@ export function useQuilloChatSendMutation() {
 
 export function useConvertToFacebookMutation() {
   return useMutation({
-    mutationFn: async ({ blogPostId }: { blogPostId: number }) => {
-      const { data, error } = await apiPost<{ facebook_post?: string }>(
+    mutationFn: ({ blogPostId }: { blogPostId: number }) =>
+      apiPost<{ facebook_post?: string }>(
         '/api/aurora/blog/quillo/post/facebook',
-        { blog_post_id: blogPostId }
-      )
-      if (error) throw error
-      return data
-    },
+        { blog_post_id: blogPostId },
+      ),
   })
 }
 
 export function useConvertToLinkedInMutation() {
   return useMutation({
-    mutationFn: async ({ blogPostId }: { blogPostId: number }) => {
-      const { data, error } = await api<{ json: any; html: string }>(
-        '/api/aurora/blog/linkedin/convert',
-        { params: { blog_post_id: blogPostId } },
-      )
-      if (error) throw error
-      return data!
-    },
+    mutationFn: ({ blogPostId }: { blogPostId: number }) =>
+      api<{ json: any; html: string }>('/api/aurora/blog/linkedin/convert', {
+        params: { blog_post_id: blogPostId },
+      }),
   })
 }

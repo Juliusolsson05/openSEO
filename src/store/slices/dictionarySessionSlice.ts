@@ -34,15 +34,17 @@ export const startDictionaryGeneration = createAsyncThunk(
     language: string
     num_words: number
   }, { rejectWithValue }) => {
-    const { data, error } = await apiPost<{
-      session_id: number
-      keywords: Record<string, Keyword>
-    }>('/api/aurora/dictionary/generation/keywords/start/', formData)
+    try {
+      const data = await apiPost<{
+        session_id: number
+        keywords: Record<string, Keyword>
+      }>('/api/aurora/dictionary/generation/keywords/start/', formData)
 
-    if (error) return rejectWithValue(error.message)
-    if (!data?.session_id || !data.keywords) return rejectWithValue('Invalid response')
-
-    return { data, formData }
+      if (!data?.session_id || !data.keywords) return rejectWithValue('Invalid response')
+      return { data, formData }
+    } catch (e: any) {
+      return rejectWithValue(e?.message ?? 'Request failed')
+    }
   }
 )
 
@@ -56,18 +58,20 @@ export const acceptLetterKeywords = createAsyncThunk(
     const { sessionId, currentDictionary, removedKeywords } = state
     if (!sessionId || !currentDictionary) return rejectWithValue('No active session')
 
-    const { data, error } = await apiPost<{
-      letter?: string
-      keywords?: Record<string, Keyword>
-    }>('/api/aurora/dictionary/generation/keywords/review/', {
-      session_id: sessionId,
-      letter: currentDictionary.current_letter,
-      accepted: true,
-      removals: removedKeywords,
-    })
-
-    if (error) return rejectWithValue(error.message)
-    return { data, currentDictionary }
+    try {
+      const data = await apiPost<{
+        letter?: string
+        keywords?: Record<string, Keyword>
+      }>('/api/aurora/dictionary/generation/keywords/review/', {
+        session_id: sessionId,
+        letter: currentDictionary.current_letter,
+        accepted: true,
+        removals: removedKeywords,
+      })
+      return { data, currentDictionary }
+    } catch (e: any) {
+      return rejectWithValue(e?.message ?? 'Request failed')
+    }
   }
 )
 
@@ -81,16 +85,18 @@ export const rejectLetterKeywords = createAsyncThunk(
     const { sessionId, currentDictionary } = state
     if (!sessionId || !currentDictionary) return rejectWithValue('No active session')
 
-    const { data, error } = await apiPost<{
-      keywords?: Record<string, Keyword>
-    }>('/api/aurora/dictionary/generation/keywords/review/', {
-      session_id: sessionId,
-      letter: currentDictionary.current_letter,
-      accepted: false,
-    })
-
-    if (error) return rejectWithValue(error.message)
-    return data
+    try {
+      const data = await apiPost<{
+        keywords?: Record<string, Keyword>
+      }>('/api/aurora/dictionary/generation/keywords/review/', {
+        session_id: sessionId,
+        letter: currentDictionary.current_letter,
+        accepted: false,
+      })
+      return data
+    } catch (e: any) {
+      return rejectWithValue(e?.message ?? 'Request failed')
+    }
   }
 )
 
@@ -104,13 +110,14 @@ export const completeGeneration = createAsyncThunk(
     const { sessionId } = state
     if (!sessionId) return rejectWithValue('No active session')
 
-    const { error } = await apiPost(
-      '/api/aurora/dictionary/generation/keywords/end/',
-      { session_id: sessionId }
-    )
-
-    if (error) return rejectWithValue(error.message)
-    return null
+    try {
+      await apiPost('/api/aurora/dictionary/generation/keywords/end/', {
+        session_id: sessionId,
+      })
+      return null
+    } catch (e: any) {
+      return rejectWithValue(e?.message ?? 'Request failed')
+    }
   }
 )
 

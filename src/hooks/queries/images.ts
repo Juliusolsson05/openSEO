@@ -29,14 +29,11 @@ export function usePexelsSearchQuery(
 ) {
   return useQuery({
     queryKey: [...QK.pexels(query), page, perPage],
-    queryFn: async () => {
-      const { data, error } = await api<SearchImagesResponse>(
+    queryFn: () =>
+      api<SearchImagesResponse>(
         '/api/aurora/blog/images/stock_photos/search',
-        { params: { query, page, per_page: perPage } }
-      )
-      if (error) throw error
-      return data!
-    },
+        { params: { query, page, per_page: perPage } },
+      ),
     enabled: !!query.trim() && (options?.enabled ?? true),
   })
 }
@@ -45,7 +42,7 @@ export function usePexelsSearchQuery(
 
 export function useGenerateImagesMutation() {
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       postId,
       version = 2,
       magicPrompt = true,
@@ -55,16 +52,13 @@ export function useGenerateImagesMutation() {
       version?: number
       magicPrompt?: boolean
       gptPrompt?: boolean
-    }) => {
-      const { data, error } = await apiPost('/api/aurora/blog/images/generate/', {
+    }) =>
+      apiPost('/api/aurora/blog/images/generate/', {
         post_id: postId,
         version,
         magic_prompt: magicPrompt,
         gpt_prompt: gptPrompt,
-      })
-      if (error) throw error
-      return data
-    },
+      }),
     onSuccess: () => {
       toast.success('Image generation started')
     },
@@ -76,7 +70,7 @@ export function useGenerateImagesMutation() {
 
 export function useApplyImageMutation() {
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       blogId,
       imageNumber,
       imageUrl,
@@ -88,17 +82,14 @@ export function useApplyImageMutation() {
       imageUrl: string
       description?: string
       prompt?: string
-    }) => {
-      const { data, error } = await apiPost('/api/aurora/blog/images/apply/', {
+    }) =>
+      apiPost('/api/aurora/blog/images/apply/', {
         blog_post_id: blogId,
         image_number: imageNumber,
         image_url: imageUrl,
         description,
         prompt,
-      })
-      if (error) throw error
-      return data
-    },
+      }),
     onError: (err) => {
       toast.error(getErrorMessage(err, 'Failed to apply image'))
     },

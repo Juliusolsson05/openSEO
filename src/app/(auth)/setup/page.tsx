@@ -66,20 +66,21 @@ export default function SetupPage() {
       return
     }
 
-    const response = await apiPost<{ ok: boolean; error?: string }>(
-      '/api/setup/test',
-      { key, value },
-    )
-
-    if (response.error) {
+    try {
+      const result = await apiPost<{ ok: boolean; error?: string }>(
+        '/api/setup/test',
+        { key, value },
+      )
       setTests((prev) => ({
         ...prev,
-        [key]: { ok: false, error: response.error?.message ?? 'Request failed' },
+        [key]: result ?? { ok: false, error: 'Unknown error' },
       }))
-      return
+    } catch (e: any) {
+      setTests((prev) => ({
+        ...prev,
+        [key]: { ok: false, error: e?.message ?? 'Request failed' },
+      }))
     }
-
-    setTests((prev) => ({ ...prev, [key]: response.data ?? { ok: false, error: 'Unknown error' } }))
   }
 
   async function submitSetup(event: FormEvent) {
@@ -87,11 +88,11 @@ export default function SetupPage() {
     setSubmitting(true)
     setError('')
 
-    const { data, error: requestError } = await apiPost('/api/setup', form)
-
-    if (requestError) {
+    try {
+      await apiPost('/api/setup', form)
+    } catch (e: any) {
       setSubmitting(false)
-      setError(requestError.message)
+      setError(e?.message ?? 'Setup failed')
       return
     }
 
@@ -108,9 +109,7 @@ export default function SetupPage() {
       return
     }
 
-    if (data) {
-      router.push('/blog?welcome=1')
-    }
+    router.push('/blog?welcome=1')
   }
 
   if (loading) return null

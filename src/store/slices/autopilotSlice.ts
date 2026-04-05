@@ -49,16 +49,18 @@ export const startAutopilot = createAsyncThunk<
   number,
   { rejectValue: string }
 >('autopilot/start', async (postId, { rejectWithValue }) => {
-  const { data, error } = await api<AutopilotStartResponse>(
-    '/api/aurora/blog/quillo/post/autopilot/',
-    { method: 'POST', body: JSON.stringify({ blog_post_id: postId }) }
-  )
-
-  if (error || !data?.task_id || data.status !== 'accepted') {
-    return rejectWithValue(error?.message || 'Invalid response from autopilot')
+  try {
+    const data = await api<AutopilotStartResponse>(
+      '/api/aurora/blog/quillo/post/autopilot/',
+      { method: 'POST', body: JSON.stringify({ blog_post_id: postId }) },
+    )
+    if (!data?.task_id || data.status !== 'accepted') {
+      return rejectWithValue('Invalid response from autopilot')
+    }
+    return { taskId: data.task_id, postId }
+  } catch (e: any) {
+    return rejectWithValue(e?.message || 'Invalid response from autopilot')
   }
-
-  return { taskId: data.task_id, postId }
 })
 
 export const autopilotSlice = createSlice({
@@ -297,11 +299,11 @@ async function fetchAndProcessLogs(
   const lastLogTimestamp = state.autopilot.lastLogTimestamp
 
   try {
-    const { data, error } = await api<{ logs: AutopilotLog[]; status: string }>(
-      `/api/aurora/blog/quillo/post/autopilot-status/${taskId}/`
+    const data = await api<{ logs: AutopilotLog[]; status: string }>(
+      `/api/aurora/blog/quillo/post/autopilot-status/${taskId}/`,
     )
 
-    if (error || !data?.logs) return
+    if (!data?.logs) return
 
     const logs = data.logs
     const newLogs = lastLogTimestamp

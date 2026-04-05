@@ -31,23 +31,21 @@ export default function RegisterPage() {
     }
 
     setLoading(true)
-    const { error } = await apiPost('/api/auth/register/', {
-      name,
-      email,
-      password,
-      password_confirm: confirm,
-      company_name: companyName,
-      company_url: companyUrl,
-    })
-
-    if (error) {
-      setError(error.message || 'Could not create account. Please try again.')
+    try {
+      await apiPost('/api/auth/register/', {
+        name,
+        email,
+        password,
+        password_confirm: confirm,
+        company_name: companyName,
+        company_url: companyUrl,
+      })
+      localStorage.setItem('openseo:show-welcome-tour', '1')
+      router.push('/login')
+    } catch (e: any) {
+      setError(e?.message || 'Could not create account. Please try again.')
       setLoading(false)
-      return
     }
-
-    localStorage.setItem('openseo:show-welcome-tour', '1')
-    router.push('/login')
   }
 
   return (

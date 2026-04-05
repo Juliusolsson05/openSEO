@@ -34,7 +34,7 @@ export function useDictionariesQuery(
   const filters = { searchQuery, itemsPerPage, page, sortBy, orderBy }
   return useQuery({
     queryKey: QK.dictionaries(filters),
-    queryFn: async () => {
+    queryFn: () => {
       const params: Record<string, string | number | undefined> = {
         q: searchQuery,
         itemsPerPage,
@@ -42,12 +42,10 @@ export function useDictionariesQuery(
         sortBy,
         orderBy,
       }
-      const { data, error } = await api<ListDictionariesResult>(
+      return api<ListDictionariesResult>(
         '/api/aurora/dictionary/dictionaries',
-        { params }
+        { params },
       )
-      if (error) throw error
-      return data!
     },
   })
 }
@@ -57,13 +55,8 @@ export function useDictionariesQuery(
 export function useDeleteDictionaryMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (dictionaryId: number) => {
-      const { data, error } = await apiDelete(
-        `/api/aurora/dictionary/modify/${dictionaryId}`,
-      )
-      if (error) throw error
-      return data
-    },
+    mutationFn: (dictionaryId: number) =>
+      apiDelete(`/api/aurora/dictionary/modify/${dictionaryId}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['dictionaries'] })
       toast.success('Dictionary deleted')
@@ -79,11 +72,7 @@ export function useDeleteDictionaryMutation() {
 export function useDictionaryQuery(id: number | string | undefined, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['dictionary', String(id)],
-    queryFn: async () => {
-      const { data, error } = await api<Dictionary>(`/api/aurora/dictionary/dictionary/${id}`)
-      if (error) throw error
-      return data!
-    },
+    queryFn: () => api<Dictionary>(`/api/aurora/dictionary/dictionary/${id}`),
     enabled: !!id && (options?.enabled ?? true),
   })
 }
@@ -93,14 +82,11 @@ export function useDictionaryQuery(id: number | string | undefined, options?: { 
 export function useGenerateDefinitionsMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (payload: { dictionary_id: number; word_ids?: number[] }) => {
-      const { data, error } = await apiPost(
+    mutationFn: (payload: { dictionary_id: number; word_ids?: number[] }) =>
+      apiPost(
         '/api/aurora/dictionary/generation/definition/generate/',
-        payload
-      )
-      if (error) throw error
-      return data
-    },
+        payload,
+      ),
     onSuccess: (_d, { dictionary_id }) => {
       qc.invalidateQueries({ queryKey: ['dictionary', String(dictionary_id)] })
       toast.success('Definitions generated')
@@ -112,15 +98,11 @@ export function useGenerateDefinitionsMutation() {
 export function useUpdateWordMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       wordId,
-      dictionaryId,
       patch,
-    }: { wordId: number; dictionaryId: number; patch: object }) => {
-      const { data, error } = await apiPut(`/api/aurora/dictionary/modify/word/${wordId}`, patch)
-      if (error) throw error
-      return data
-    },
+    }: { wordId: number; dictionaryId: number; patch: object }) =>
+      apiPut(`/api/aurora/dictionary/modify/word/${wordId}`, patch),
     onSuccess: (_d, { dictionaryId }) => {
       qc.invalidateQueries({ queryKey: ['dictionary', String(dictionaryId)] })
     },
@@ -130,13 +112,10 @@ export function useUpdateWordMutation() {
 
 export function usePublishDictionaryMutation() {
   return useMutation({
-    mutationFn: async ({ dictionaryId }: { dictionaryId: number }) => {
-      const { data, error } = await apiPost('/api/v1/publishing/sync/dictionaries/one', {
+    mutationFn: ({ dictionaryId }: { dictionaryId: number }) =>
+      apiPost('/api/v1/publishing/sync/dictionaries/one', {
         dictionary_id: dictionaryId,
-      })
-      if (error) throw error
-      return data
-    },
+      }),
     onSuccess: () => { toast.success('Dictionary published') },
     onError: (err) => { toast.error(getErrorMessage(err, 'Failed to publish dictionary')) },
   })
@@ -144,17 +123,14 @@ export function usePublishDictionaryMutation() {
 
 export function useExportDictionaryMutation() {
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       dictionaryId,
       format = 'json',
-    }: { dictionaryId: number; format?: string }) => {
-      const { data, error } = await apiPost<{ download_url?: string; url?: string }>(
+    }: { dictionaryId: number; format?: string }) =>
+      apiPost<{ download_url?: string; url?: string }>(
         '/api/aurora/dictionary/dictionary/export/all/',
-        { dictionary_id: dictionaryId, format }
-      )
-      if (error) throw error
-      return data
-    },
+        { dictionary_id: dictionaryId, format },
+      ),
     onError: (err) => { toast.error(getErrorMessage(err, 'Failed to export dictionary')) },
   })
 }
@@ -162,14 +138,10 @@ export function useExportDictionaryMutation() {
 export function useDeleteWordMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       wordId,
-      dictionaryId,
-    }: { wordId: number; dictionaryId: number }) => {
-      const { data, error } = await apiDelete(`/api/aurora/dictionary/modify/word/${wordId}`)
-      if (error) throw error
-      return data
-    },
+    }: { wordId: number; dictionaryId: number }) =>
+      apiDelete(`/api/aurora/dictionary/modify/word/${wordId}`),
     onSuccess: (_d, { dictionaryId }) => {
       qc.invalidateQueries({ queryKey: ['dictionary', String(dictionaryId)] })
       toast.success('Word deleted')
@@ -186,13 +158,10 @@ export function useWordDefinitionQuery(
 ) {
   return useQuery({
     queryKey: ['dictionary', dictionaryId, 'word', wordId],
-    queryFn: async () => {
-      const { data, error } = await api<DashboardWord>(
-        `/api/aurora/dictionary/dictionary/${dictionaryId}/word/${wordId}/`
-      )
-      if (error) throw error
-      return data!
-    },
+    queryFn: () =>
+      api<DashboardWord>(
+        `/api/aurora/dictionary/dictionary/${dictionaryId}/word/${wordId}/`,
+      ),
     enabled: !!dictionaryId && !!wordId && (options?.enabled ?? true),
   })
 }

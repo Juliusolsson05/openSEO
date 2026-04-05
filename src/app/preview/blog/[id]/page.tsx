@@ -99,14 +99,15 @@ export default function BlogPreviewPage() {
       setLoading(true)
       setError(false)
 
-      const { data, error: err } = await api<BlogPost>(`/api/aurora/blog/posts?post_id=${postId}`)
-      if (err || !data) {
+      try {
+        const data = await api<BlogPost>(`/api/aurora/blog/posts?post_id=${postId}`)
+        if (!data) setError(true)
+        else setPost(data)
+      } catch {
         setError(true)
-      } else {
-        setPost(data)
+      } finally {
+        setLoading(false)
       }
-
-      setLoading(false)
     }
 
     if (postId) fetchPost()

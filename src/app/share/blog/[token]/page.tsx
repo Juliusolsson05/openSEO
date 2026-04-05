@@ -49,11 +49,14 @@ function Message({ text }: { text: string }) {
 }
 
 async function fetchPost(postId: number): Promise<SharedPost | null> {
-  const { data } = await api<SharedPost>(`/api/aurora/blog/posts?post_id=${postId}`, {
-    method: 'GET',
-  })
-
-  if (data && typeof data === 'object') return data
+  try {
+    const data = await api<SharedPost>(`/api/aurora/blog/posts?post_id=${postId}`, {
+      method: 'GET',
+    })
+    if (data && typeof data === 'object') return data
+  } catch {
+    // fall through to local prisma lookup
+  }
 
   const local = await prisma.blogPost.findUnique({
     where: { id: postId },

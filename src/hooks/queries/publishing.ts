@@ -24,10 +24,9 @@ export function useJobStatusQuery(
   return useQuery({
     queryKey: QK.jobStatus(jobId ?? ''),
     queryFn: async (): Promise<JobStatusResult> => {
-      const { data, error } = await api<Record<string, unknown>>(
-        `/api/v1/publishing/jobs/${jobId}`
+      const data = await api<Record<string, unknown>>(
+        `/api/v1/publishing/jobs/${jobId}`,
       )
-      if (error) throw error
       const inner = (data ?? {}) as Record<string, unknown>
 
       return {
@@ -47,12 +46,10 @@ export function useJobStatusQuery(
 export function useSyncAllPostsMutation() {
   return useMutation({
     mutationFn: async () => {
-      const { data, error } = await apiPost<Record<string, unknown>>(
+      const data = await apiPost<Record<string, unknown>>(
         '/api/v1/publishing/sync/posts/all',
-        {}
+        {},
       )
-      if (error) throw error
-
       const inner = (data ?? null) as Record<string, unknown> | null
       const jobId = inner?.job_id as string | undefined
       if (!jobId) throw new Error(`Could not read job_id from response`)
@@ -70,12 +67,10 @@ export function useSyncAllPostsMutation() {
 export function useSyncAllDictionariesMutation() {
   return useMutation({
     mutationFn: async () => {
-      const { data, error } = await apiPost<Record<string, unknown>>(
+      const data = await apiPost<Record<string, unknown>>(
         '/api/v1/publishing/sync/dictionaries/all',
-        {}
+        {},
       )
-      if (error) throw error
-
       const inner = (data ?? null) as Record<string, unknown> | null
       const jobId = inner?.job_id as string | undefined
       if (!jobId) throw new Error(`Could not read job_id from response`)

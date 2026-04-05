@@ -14,8 +14,7 @@ export function useCTAListQuery(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: QK.ctas(),
     queryFn: async () => {
-      const { data, error } = await api<any[]>('/api/aurora/blog/cta/list/')
-      if (error) throw error
+      const data = await api<any[]>('/api/aurora/blog/cta/list/')
       const raw = data ?? []
       return raw.flatMap((campaign: any) =>
         (campaign.ctas ?? []).map((cta: any) => ({
@@ -35,7 +34,7 @@ export function useCTAListQuery(options?: { enabled?: boolean }) {
 export function useUpdateElementMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       elementId,
       content,
       blogPostId,
@@ -43,14 +42,11 @@ export function useUpdateElementMutation() {
       elementId: number
       content: unknown
       blogPostId: number
-    }) => {
-      const { data, error } = await apiPut(
-        `/api/aurora/blog/posts/update-element/${elementId}/`,
-        { content, blog_post: blogPostId }
-      )
-      if (error) throw error
-      return data
-    },
+    }) =>
+      apiPut(`/api/aurora/blog/posts/update-element/${elementId}/`, {
+        content,
+        blog_post: blogPostId,
+      }),
     onSuccess: (_data, { blogPostId }) => {
       qc.invalidateQueries({ queryKey: QK.post(blogPostId) })
     },
@@ -63,19 +59,16 @@ export function useUpdateElementMutation() {
 export function useDeleteElementMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       blogPostId,
       elementId,
     }: {
       blogPostId: number
       elementId: number
-    }) => {
-      const { data, error } = await apiDelete(
-        `/api/aurora/blog/posts/delete-element/?blog_post_id=${blogPostId}&element_id=${elementId}`
-      )
-      if (error) throw error
-      return data
-    },
+    }) =>
+      apiDelete(
+        `/api/aurora/blog/posts/delete-element/?blog_post_id=${blogPostId}&element_id=${elementId}`,
+      ),
     onSuccess: (_data, { blogPostId }) => {
       qc.invalidateQueries({ queryKey: QK.post(blogPostId) })
     },
@@ -88,20 +81,13 @@ export function useDeleteElementMutation() {
 export function useRegenerateElementMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (payload: {
+    mutationFn: (payload: {
       blog_post_id: number
       blog_element_id: number
       regeneration_note: string
       new_element_type?: string
       new_element_count?: number
-    }) => {
-      const { data, error } = await apiPost(
-        '/api/aurora/blog/posts/elements/regenerate/',
-        payload
-      )
-      if (error) throw error
-      return data
-    },
+    }) => apiPost('/api/aurora/blog/posts/elements/regenerate/', payload),
     onSuccess: (_data, { blog_post_id }) => {
       qc.invalidateQueries({ queryKey: QK.post(blog_post_id) })
     },
@@ -114,20 +100,17 @@ export function useRegenerateElementMutation() {
 export function useEnhanceElementMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       blogPostId,
       elementId,
     }: {
       blogPostId: number
       elementId: number
-    }) => {
-      const { data, error } = await apiPost(
-        '/api/aurora/blog/posts/elements/enhance/',
-        { blog_post_id: blogPostId, blog_element_id: elementId }
-      )
-      if (error) throw error
-      return data
-    },
+    }) =>
+      apiPost('/api/aurora/blog/posts/elements/enhance/', {
+        blog_post_id: blogPostId,
+        blog_element_id: elementId,
+      }),
     onSuccess: (_data, { blogPostId }) => {
       qc.invalidateQueries({ queryKey: QK.post(blogPostId) })
     },
@@ -140,20 +123,17 @@ export function useEnhanceElementMutation() {
 export function useHumanizeElementMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       blogPostId,
       elementId,
     }: {
       blogPostId: number
       elementId: number
-    }) => {
-      const { data, error } = await apiPost(
-        '/api/aurora/blog/posts/elements/humanize/',
-        { blog_post_id: blogPostId, blog_element_id: elementId }
-      )
-      if (error) throw error
-      return data
-    },
+    }) =>
+      apiPost('/api/aurora/blog/posts/elements/humanize/', {
+        blog_post_id: blogPostId,
+        blog_element_id: elementId,
+      }),
     onSuccess: (_data, { blogPostId }) => {
       qc.invalidateQueries({ queryKey: QK.post(blogPostId) })
     },
@@ -166,7 +146,7 @@ export function useHumanizeElementMutation() {
 export function useAddElementMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (payload: {
+    mutationFn: (payload: {
       blog_post_id: number
       element_id: number
       element_type?: string
@@ -176,9 +156,7 @@ export function useAddElementMutation() {
       const url = payload.cta_id
         ? '/api/aurora/blog/cta/add-cta/'
         : '/api/aurora/blog/posts/elements/add/'
-      const { data, error } = await apiPost(url, payload)
-      if (error) throw error
-      return data
+      return apiPost(url, payload)
     },
     onSuccess: (_data, { blog_post_id }) => {
       qc.invalidateQueries({ queryKey: QK.post(blog_post_id) })

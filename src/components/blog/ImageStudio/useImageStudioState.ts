@@ -60,7 +60,7 @@ export function useImageStudioState(opts: Options) {
   const onGenerate = useCallback(async () => {
     setIsGenerating(true)
     try {
-      const { data, error } = await regenerateBlogImage({
+      const data = await regenerateBlogImage({
         post_id: blogId,
         image_number: imageNumber,
         force_prompt: prompt,
@@ -74,7 +74,9 @@ export function useImageStudioState(opts: Options) {
         nano_model: nanoModel,
         aspect_ratio: provider === 'nano-banana' ? nanoAspectRatio : provider === 'imagen' ? imagenAspectRatio : undefined,
       })
-      if (!error && data?.new_url) addToHistory(data.new_url, provider)
+      if (data?.new_url) addToHistory(data.new_url, provider)
+    } catch {
+      // ignore — UI stays in current state
     } finally {
       setIsGenerating(false)
     }
@@ -93,8 +95,10 @@ export function useImageStudioState(opts: Options) {
   const onStockSelect = useCallback(async (url: string) => {
     setIsGenerating(true)
     try {
-      const { data } = await useStockPhoto({ post_id: blogId, image_number: imageNumber, image_url: url })
+      const data = await useStockPhoto({ post_id: blogId, image_number: imageNumber, image_url: url })
       if (data?.new_url) addToHistory(data.new_url, 'stock')
+    } catch {
+      // ignore — UI stays in current state
     } finally {
       setIsGenerating(false)
     }

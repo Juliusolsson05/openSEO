@@ -30,8 +30,7 @@ export function useNotificationsQuery(options?: { refetchInterval?: number | fal
   return useQuery({
     queryKey: QK.notifications(),
     queryFn: async () => {
-      const { data, error } = await api<NotificationFeedItem[]>('/api/v1/notifications')
-      if (error) throw error
+      const data = await api<NotificationFeedItem[]>('/api/v1/notifications')
       return data ?? []
     },
     refetchInterval: options?.refetchInterval ?? 30000,
@@ -45,10 +44,9 @@ export function useGlobalSearchQuery(
   return useQuery({
     queryKey: QK.globalSearch(q),
     queryFn: async () => {
-      const { data, error } = await api<GlobalSearchItem[]>('/api/v1/search/global', {
+      const data = await api<GlobalSearchItem[]>('/api/v1/search/global', {
         params: { q },
       })
-      if (error) throw error
       return data ?? []
     },
     enabled: !!q.trim() && (options?.enabled ?? true),

@@ -37,7 +37,7 @@ export function StockPhotoControls({ onSelect, initialQuery = '' }: Props) {
     setLoading(true)
     setSelected(null)
     try {
-      const { data } = await searchStockPhotos(
+      const data = await searchStockPhotos(
         term,
         p,
         perPage,
@@ -47,6 +47,9 @@ export function StockPhotoControls({ onSelect, initialQuery = '' }: Props) {
       setImages(data?.images ?? [])
       setTotalResults(data?.total_results ?? 0)
       setPage(p)
+    } catch {
+      setImages([])
+      setTotalResults(0)
     } finally {
       setLoading(false)
     }

@@ -29,7 +29,14 @@ type ApiHandlerOptions = {
 }
 
 function isBodyMethod(method: string): boolean {
-  return method === 'POST' || method === 'PUT' || method === 'PATCH'
+  // DELETE is included because the HTTP spec permits DELETE bodies and
+  // several routes accept JSON payloads (e.g. bulk-delete endpoints).
+  return (
+    method === 'POST' ||
+    method === 'PUT' ||
+    method === 'PATCH' ||
+    method === 'DELETE'
+  )
 }
 
 function isLegacyAuroraPath(pathname: string): boolean {

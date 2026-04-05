@@ -47,8 +47,7 @@ export function useCampaignsQuery(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: QK.campaigns(),
     queryFn: async () => {
-      const { data, error } = await api<any[]>('/api/aurora/blog/cta/list/')
-      if (error) throw error
+      const data = await api<any[]>('/api/aurora/blog/cta/list/')
       return transformCampaigns(data ?? [])
     },
     enabled: options?.enabled ?? true,
@@ -60,11 +59,8 @@ export function useCampaignsQuery(options?: { enabled?: boolean }) {
 export function useCreateCampaignMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ name }: { name: string }) => {
-      const { data, error } = await apiPost('/api/aurora/blog/cta/campaign/create/', { name })
-      if (error) throw error
-      return data
-    },
+    mutationFn: ({ name }: { name: string }) =>
+      apiPost('/api/aurora/blog/cta/campaign/create/', { name }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
       qc.invalidateQueries({ queryKey: QK.ctas() })
@@ -79,14 +75,8 @@ export function useCreateCampaignMutation() {
 export function useEditCampaignMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, name }: { id: number; name: string }) => {
-      const { data, error } = await apiPut(
-        `/api/aurora/blog/cta/campaign/edit/${id}/`,
-        { name }
-      )
-      if (error) throw error
-      return data
-    },
+    mutationFn: ({ id, name }: { id: number; name: string }) =>
+      apiPut(`/api/aurora/blog/cta/campaign/edit/${id}/`, { name }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
       qc.invalidateQueries({ queryKey: QK.ctas() })
@@ -101,13 +91,8 @@ export function useEditCampaignMutation() {
 export function useDeleteCampaignMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (id: number) => {
-      const { data, error } = await apiDelete(
-        `/api/aurora/blog/cta/campaign/delete/${id}/`
-      )
-      if (error) throw error
-      return data
-    },
+    mutationFn: (id: number) =>
+      apiDelete(`/api/aurora/blog/cta/campaign/delete/${id}/`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
       qc.invalidateQueries({ queryKey: QK.ctas() })
@@ -225,13 +210,8 @@ export function useEditCTAMutation() {
 export function useDeleteCTAMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (ctaId: number) => {
-      const { data, error } = await apiDelete(
-        `/api/aurora/blog/cta/delete/${ctaId}/`
-      )
-      if (error) throw error
-      return data
-    },
+    mutationFn: (ctaId: number) =>
+      apiDelete(`/api/aurora/blog/cta/delete/${ctaId}/`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.campaigns() })
       qc.invalidateQueries({ queryKey: QK.ctas() })

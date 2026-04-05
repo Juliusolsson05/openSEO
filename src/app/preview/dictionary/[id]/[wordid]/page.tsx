@@ -40,15 +40,17 @@ export default function DictionaryPublicPreviewPage() {
     const load = async () => {
       setLoading(true)
       setError(false)
-      const { data, error: err } = await api<WordDefinition>(
-        `/api/aurora/dictionary/dictionary/${params.id}/word/${params.wordid}/`,
-      )
-      if (err || !data) {
+      try {
+        const data = await api<WordDefinition>(
+          `/api/aurora/dictionary/dictionary/${params.id}/word/${params.wordid}/`,
+        )
+        if (!data) setError(true)
+        else setWord(data)
+      } catch {
         setError(true)
-      } else {
-        setWord(data)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     void load()
   }, [params.id, params.wordid])

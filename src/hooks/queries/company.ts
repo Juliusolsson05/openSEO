@@ -14,13 +14,8 @@ export type { CompanyProfile, CompanyProfileResponse, AnalyzeResponse }
 export function useCompanyProfileQuery() {
   return useQuery({
     queryKey: QK.companyProfile(),
-    queryFn: async () => {
-      const { data, error } = await api<CompanyProfileResponse>(
-        '/api/v1/company/profile'
-      )
-      if (error) throw error
-      return data!
-    },
+    queryFn: () =>
+      api<CompanyProfileResponse>('/api/v1/company/profile'),
   })
 }
 
@@ -29,14 +24,11 @@ export function useCompanyProfileQuery() {
 export function useUpdateCompanyProfileMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (profile: Partial<CompanyProfile>) => {
-      const { data, error } = await api('/api/v1/company/profile', {
+    mutationFn: (profile: Partial<CompanyProfile>) =>
+      api('/api/v1/company/profile', {
         method: 'PATCH',
         body: JSON.stringify({ profile }),
-      })
-      if (error) throw error
-      return data
-    },
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.companyProfile() })
       toast.success('Company profile updated')
@@ -49,14 +41,10 @@ export function useUpdateCompanyProfileMutation() {
 
 export function useAnalyzeCompanyMutation() {
   return useMutation({
-    mutationFn: async ({ websiteUrl }: { websiteUrl: string }) => {
-      const { data, error } = await apiPost<AnalyzeResponse>(
-        '/api/v1/company/analyze',
-        { website_url: websiteUrl }
-      )
-      if (error) throw error
-      return data!
-    },
+    mutationFn: ({ websiteUrl }: { websiteUrl: string }) =>
+      apiPost<AnalyzeResponse>('/api/v1/company/analyze', {
+        website_url: websiteUrl,
+      }),
     onSuccess: () => {
       toast.success('Website analysis started')
     },
