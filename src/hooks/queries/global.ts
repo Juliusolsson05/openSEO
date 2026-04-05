@@ -30,9 +30,9 @@ export function useNotificationsQuery(options?: { refetchInterval?: number | fal
   return useQuery({
     queryKey: QK.notifications(),
     queryFn: async () => {
-      const { data, error } = await api<NotificationFeedItem[] | { data: NotificationFeedItem[] }>('/api/v1/notifications')
+      const { data, error } = await api<NotificationFeedItem[]>('/api/v1/notifications')
       if (error) throw error
-      return Array.isArray(data) ? data : (data?.data ?? [])
+      return data ?? []
     },
     refetchInterval: options?.refetchInterval ?? 30000,
   })

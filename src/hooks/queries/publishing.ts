@@ -28,20 +28,13 @@ export function useJobStatusQuery(
         `/api/v1/publishing/jobs/${jobId}`
       )
       if (error) throw error
-      const inner =
-        typeof data === 'object' &&
-        data !== null &&
-        'data' in data &&
-        data.data &&
-        typeof data.data === 'object'
-          ? (data.data as Record<string, unknown>)
-          : (data as Record<string, unknown>)
+      const inner = (data ?? {}) as Record<string, unknown>
 
       return {
-        status: (inner?.status as SyncJobStatus) ?? 'not_available',
-        job_id: inner?.job_id as string | undefined,
-        logs: inner?.logs as unknown[] | undefined,
-        error: inner?.error as string | null | undefined,
+        status: (inner.status as SyncJobStatus) ?? 'not_available',
+        job_id: inner.job_id as string | undefined,
+        logs: inner.logs as unknown[] | undefined,
+        error: inner.error as string | null | undefined,
       }
     },
     enabled: !!jobId && (options?.enabled ?? true),
@@ -60,11 +53,7 @@ export function useSyncAllPostsMutation() {
       )
       if (error) throw error
 
-      const inner =
-        data && typeof data === 'object' && 'data' in data && data.data
-          ? (data.data as Record<string, unknown>)
-          : (data as Record<string, unknown> | null)
-
+      const inner = (data ?? null) as Record<string, unknown> | null
       const jobId = inner?.job_id as string | undefined
       if (!jobId) throw new Error(`Could not read job_id from response`)
       return { jobId, status: (inner?.status as SyncJobStatus) ?? 'accepted' }
@@ -87,11 +76,7 @@ export function useSyncAllDictionariesMutation() {
       )
       if (error) throw error
 
-      const inner =
-        data && typeof data === 'object' && 'data' in data && data.data
-          ? (data.data as Record<string, unknown>)
-          : (data as Record<string, unknown> | null)
-
+      const inner = (data ?? null) as Record<string, unknown> | null
       const jobId = inner?.job_id as string | undefined
       if (!jobId) throw new Error(`Could not read job_id from response`)
       return { jobId, status: (inner?.status as SyncJobStatus) ?? 'accepted' }

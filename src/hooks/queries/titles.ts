@@ -31,11 +31,11 @@ export function useTitlesQuery() {
   return useQuery({
     queryKey: QK.titles(),
     queryFn: async () => {
-      const { data, error } = await api<{ data: BlogTitle[]; total: number } | BlogTitle[]>(
+      const { data, error } = await api<{ data: BlogTitle[]; total: number }>(
         '/api/aurora/blog/titles/'
       )
       if (error) throw error
-      return Array.isArray(data) ? data : (data?.data ?? [])
+      return data?.data ?? []
     },
   })
 }

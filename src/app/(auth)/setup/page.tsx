@@ -66,7 +66,7 @@ export default function SetupPage() {
       return
     }
 
-    const response = await apiPost<{ success?: boolean; data?: { ok: boolean; error?: string } }>(
+    const response = await apiPost<{ ok: boolean; error?: string }>(
       '/api/setup/test',
       { key, value },
     )
@@ -79,7 +79,7 @@ export default function SetupPage() {
       return
     }
 
-    setTests((prev) => ({ ...prev, [key]: response.data?.data ?? { ok: false, error: 'Unknown error' } }))
+    setTests((prev) => ({ ...prev, [key]: response.data ?? { ok: false, error: 'Unknown error' } }))
   }
 
   async function submitSetup(event: FormEvent) {

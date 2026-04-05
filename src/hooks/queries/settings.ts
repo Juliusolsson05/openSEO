@@ -15,12 +15,11 @@ export function useGenerationSettingsQuery() {
   return useQuery({
     queryKey: QK.generationSettings(),
     queryFn: async () => {
-      const { data, error } = await api<{
-        success?: boolean
-        data?: { settings?: GenerationSettings }
-      }>('/api/v1/settings/generation')
+      const { data, error } = await api<{ settings?: GenerationSettings }>(
+        '/api/v1/settings/generation'
+      )
       if (error) throw error
-      return data?.data?.settings ?? null
+      return data?.settings ?? null
     },
   })
 }
@@ -42,11 +41,11 @@ export function useApiKeysQuery() {
   return useQuery({
     queryKey: QK.apiKeys(),
     queryFn: async () => {
-      const { data, error } = await api<ApiKey[] | { data: ApiKey[] }>(
+      const { data, error } = await api<ApiKey[]>(
         '/api/v1/publishing/api-keys'
       )
       if (error) throw error
-      return Array.isArray(data) ? data : (data?.data ?? [])
+      return data ?? []
     },
   })
 }
@@ -55,9 +54,9 @@ export function useIntegrationsQuery() {
   return useQuery({
     queryKey: QK.integrations(),
     queryFn: async () => {
-      const { data, error } = await api<{ success?: boolean; data?: IntegrationSetting[] }>('/api/v1/settings/integrations')
+      const { data, error } = await api<IntegrationSetting[]>('/api/v1/settings/integrations')
       if (error) throw error
-      return data?.data ?? []
+      return data ?? []
     },
   })
 }
@@ -66,9 +65,9 @@ export function useSetupStatusQuery() {
   return useQuery({
     queryKey: QK.setupStatus(),
     queryFn: async () => {
-      const { data, error } = await api<{ success?: boolean; data?: SetupStatus }>('/api/setup/status')
+      const { data, error } = await api<SetupStatus>('/api/setup/status')
       if (error) throw error
-      return data?.data ?? null
+      return data ?? null
     },
     staleTime: 10_000,
   })
@@ -125,16 +124,12 @@ export function useCreateApiKeyMutation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ name }: { name: string }) => {
-      const { data, error } = await apiPost<ApiKey | { data: ApiKey }>(
+      const { data, error } = await apiPost<ApiKey>(
         '/api/v1/publishing/api-keys',
         { name }
       )
       if (error) throw error
-      const payload =
-        data && typeof data === 'object' && 'data' in data
-          ? (data.data as ApiKey)
-          : (data as ApiKey | null)
-      return payload
+      return data
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.apiKeys() })
@@ -170,12 +165,12 @@ export function useUpsertIntegrationMutation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload: { key: string; value: string }) => {
-      const { data, error } = await apiPost<{ success?: boolean; data?: IntegrationSetting }>(
+      const { data, error } = await apiPost<IntegrationSetting>(
         '/api/v1/settings/integrations',
         payload,
       )
       if (error) throw error
-      return data?.data ?? null
+      return data ?? null
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.integrations() })
@@ -212,12 +207,12 @@ export function useDeleteIntegrationMutation() {
 export function useTestIntegrationMutation() {
   return useMutation({
     mutationFn: async (payload: { key: string; value?: string }) => {
-      const { data, error } = await apiPost<{ success?: boolean; data?: { ok: boolean; error?: string } }>(
+      const { data, error } = await apiPost<{ ok: boolean; error?: string }>(
         '/api/v1/settings/integrations/test',
         payload,
       )
       if (error) throw error
-      return data?.data ?? { ok: false, error: 'Unknown error' }
+      return data ?? { ok: false, error: 'Unknown error' }
     },
   })
 }
