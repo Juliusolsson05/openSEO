@@ -3,8 +3,8 @@ import { MarketingHeader } from '@/components/marketing/MarketingHeader'
 import { MarketingFooter } from '@/components/marketing/MarketingFooter'
 
 export const metadata: Metadata = {
-  title: 'Aurora Blog & Dictionary',
-  description: 'Aurora-generated blog posts and SEO dictionary.',
+  title: 'OpenSEO Blog & Dictionary',
+  description: 'OpenSEO-generated blog posts and SEO dictionary.',
 }
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {

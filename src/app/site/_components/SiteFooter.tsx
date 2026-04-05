@@ -9,10 +9,10 @@ export function SiteFooter() {
           <div>
             <Link href="/landing" className="flex items-center gap-2">
               <OpenSeoLogo size={20} />
-              <span className="text-[13px] font-semibold text-neutral-900">Aurora</span>
+              <span className="text-[13px] font-semibold text-neutral-900">OpenSEO</span>
             </Link>
             <p className="mt-3 text-[11px] leading-relaxed text-neutral-400">
-              AI-powered content generation by Nordtools.
+              AI-powered content generation.
             </p>
           </div>
 
@@ -44,7 +44,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-8 pt-5 border-t border-neutral-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <p className="text-[11px] text-neutral-400">© {new Date().getFullYear()} Nordtools. All rights reserved.</p>
+          <p className="text-[11px] text-neutral-400">© {new Date().getFullYear()} OpenSEO. All rights reserved.</p>
           <Link href="/sitemap.xml" className="text-[11px] text-neutral-400 hover:text-blue-600">Sitemap</Link>
         </div>
       </div>

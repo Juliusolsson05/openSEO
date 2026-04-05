@@ -9,7 +9,7 @@ import { ApiReference } from '@scalar/nextjs-api-reference'
 
 export const GET = ApiReference({
   url: '/api/docs/openapi.json',
-  pageTitle: 'Aurora API Reference',
+  pageTitle: 'OpenSEO API Reference',
   theme: 'kepler',
   customCss: `
     .scalar-app { --scalar-color-1: #0078D4; }

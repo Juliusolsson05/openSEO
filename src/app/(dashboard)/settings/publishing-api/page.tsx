@@ -272,7 +272,7 @@ const envelopeFields = [
 ]
 
 const postFields = [
-  { name: 'id', type: 'number', required: false, description: 'Aurora post ID. Used for matching on upsert; required for delete if slug/remote_id not given.' },
+  { name: 'id', type: 'number', required: false, description: 'OpenSEO post ID. Used for matching on upsert; required for delete if slug/remote_id not given.' },
   { name: 'title_text', type: 'string', required: true, description: 'Post title (plain text).' },
   { name: 'slug', type: 'string', required: false, description: 'URL-safe slug. Used as alternate lookup key.' },
   { name: 'seo_title', type: 'string', required: false, description: 'SEO-optimized title for search engines.' },
@@ -284,14 +284,14 @@ const postFields = [
 ]
 
 const elementFields = [
-  { name: 'id', type: 'number', required: false, description: 'Element ID in Aurora.' },
+  { name: 'id', type: 'number', required: false, description: 'Element ID in OpenSEO.' },
   { name: 'order', type: 'number', required: true, description: 'Display order (1-indexed).' },
   { name: 'element_type', type: 'string', required: true, description: 'Type: introduction, paragraph, conclusion, faq, list, cta, etc.' },
   { name: 'content', type: 'object', required: true, description: 'Content object. Shape depends on element_type. Usually { text } or { title, text }.' },
 ]
 
 const dictionaryFields = [
-  { name: 'id', type: 'number', required: false, description: 'Aurora dictionary ID. Used for matching on upsert.' },
+  { name: 'id', type: 'number', required: false, description: 'OpenSEO dictionary ID. Used for matching on upsert.' },
   { name: 'title', type: 'string', required: true, description: 'Dictionary title. Used as alternate lookup key.' },
   { name: 'subject', type: 'string', required: true, description: 'Subject area (e.g. "Digital Marketing").' },
   { name: 'language', type: 'string', required: true, description: 'Language code (e.g. "en", "sv").' },
@@ -301,7 +301,7 @@ const dictionaryFields = [
 ]
 
 const termFields = [
-  { name: 'id', type: 'number', required: false, description: 'Aurora term/word ID. Used for matching.' },
+  { name: 'id', type: 'number', required: false, description: 'OpenSEO term/word ID. Used for matching.' },
   { name: 'keyword', type: 'string', required: true, description: 'The term keyword. Also used as lookup key within dictionary.' },
   { name: 'letter', type: 'string', required: false, description: 'Alphabetical letter. Defaults to first letter of keyword.' },
   { name: 'description', type: 'string', required: true, description: 'Short description of the term.' },
@@ -361,19 +361,19 @@ export default function PublishingApiDocsPage() {
       </Card>
 
       {/* ─── 1. Overview ─── */}
-      <Section id="overview" title="1. Overview" description="How Aurora's publishing system works at a high level.">
+      <Section id="overview" title="1. Overview" description="How OpenSEO's publishing system works at a high level.">
         <p className="text-muted-foreground">
-          Aurora supports bidirectional content sync between your CMS/frontend and Aurora through JSON webhooks.
+          OpenSEO supports bidirectional content sync between your CMS/frontend and OpenSEO through JSON webhooks.
         </p>
         <ul className="list-disc space-y-1.5 pl-5 text-muted-foreground">
-          <li><strong>Outbound (Aurora → Your system):</strong> Aurora pushes content to your configured endpoint when you trigger a sync. Posts and dictionaries are delivered as JSON envelopes containing full content payloads.</li>
-          <li><strong>Inbound (Your system → Aurora):</strong> Your system sends content updates to Aurora&apos;s inbound endpoints using an API key you generate inside Aurora. Supports create, update, and delete operations for posts, dictionaries, and terms.</li>
+          <li><strong>Outbound (OpenSEO → Your system):</strong> OpenSEO pushes content to your configured endpoint when you trigger a sync. Posts and dictionaries are delivered as JSON envelopes containing full content payloads.</li>
+          <li><strong>Inbound (Your system → OpenSEO):</strong> Your system sends content updates to OpenSEO&apos;s inbound endpoints using an API key you generate inside OpenSEO. Supports create, update, and delete operations for posts, dictionaries, and terms.</li>
           <li><strong>Jobs:</strong> Bulk sync operations run asynchronously. You receive a <Code>job_id</Code> immediately and can poll for status updates until completion.</li>
         </ul>
         <div className="rounded-sm border border-border bg-secondary/20 p-3">
           <p className="text-xs font-medium">Data flow</p>
-          <pre className="mt-1 text-xs text-muted-foreground">{`Your system ←── outbound (Aurora pushes JSON to your endpoint)
-Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</pre>
+          <pre className="mt-1 text-xs text-muted-foreground">{`Your system ←── outbound (OpenSEO pushes JSON to your endpoint)
+Your system ──→ inbound  (You POST JSON to OpenSEO's inbound endpoints)`}</pre>
         </div>
       </Section>
 
@@ -381,12 +381,12 @@ Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</
       <Section id="auth" title="2. Authentication" description="Two separate key models: one for outbound delivery, one for inbound writes.">
         <div className="space-y-3">
           <div>
-            <p className="font-medium">Outbound key (Aurora → Your system)</p>
-            <p className="text-muted-foreground">Configured in Settings → API Configuration. Aurora sends this key as <Code>Authorization: Bearer {'<key>'}</Code> to your endpoint so you can verify requests are from Aurora.</p>
+            <p className="font-medium">Outbound key (OpenSEO → Your system)</p>
+            <p className="text-muted-foreground">Configured in Settings → API Configuration. OpenSEO sends this key as <Code>Authorization: Bearer {'<key>'}</Code> to your endpoint so you can verify requests are from OpenSEO.</p>
           </div>
           <div>
-            <p className="font-medium">Inbound key (Your system → Aurora)</p>
-            <p className="text-muted-foreground">Generated in Settings → Inbound API Keys. Send it to Aurora as one of:</p>
+            <p className="font-medium">Inbound key (Your system → OpenSEO)</p>
+            <p className="text-muted-foreground">Generated in Settings → Inbound API Keys. Send it to OpenSEO as one of:</p>
             <ul className="mt-1 list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
               <li><Code>Authorization: Bearer {'<aurora_inbound_key>'}</Code></li>
               <li><Code>X-Aurora-Inbound-Key: {'<aurora_inbound_key>'}</Code></li>
@@ -402,7 +402,7 @@ Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</
       <Section id="envelope" title="3. Envelope format" description="Every outbound event and inbound request uses the same top-level structure.">
         <FieldTable fields={envelopeFields} />
         <p className="text-xs text-muted-foreground">
-          For outbound events, <Code>event_id</Code> is auto-generated by Aurora (format: <Code>evt_{'<uuid>'}</Code>). For inbound requests, you must provide your own unique <Code>event_id</Code>.
+          For outbound events, <Code>event_id</Code> is auto-generated by OpenSEO (format: <Code>evt_{'<uuid>'}</Code>). For inbound requests, you must provide your own unique <Code>event_id</Code>.
         </p>
       </Section>
 
@@ -410,11 +410,11 @@ Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</
       <Section id="idempotency" title="4. Idempotency" description="Duplicate event protection for safe retries.">
         <p className="text-muted-foreground">
           Every inbound request requires an <Code>event_id</Code> that is unique within your company scope.
-          If Aurora receives a request with an <Code>event_id</Code> that has already been processed, it returns:
+          If OpenSEO receives a request with an <Code>event_id</Code> that has already been processed, it returns:
         </p>
         <Json data={{ status: 'duplicate_ignored', event_id: 'my-system-evt-001' }} />
         <p className="text-muted-foreground">
-          This means you can safely retry failed requests without worrying about double-writes. Aurora checks the <Code>event_id</Code> against all previously processed inbound events for your company.
+          This means you can safely retry failed requests without worrying about double-writes. OpenSEO checks the <Code>event_id</Code> against all previously processed inbound events for your company.
         </p>
         <div className="rounded-sm border border-border bg-secondary/20 p-2.5 text-xs text-muted-foreground">
           <strong>Recommendation:</strong> Use a deterministic event ID format like <Code>{'<entity>-<action>-<your-id>-<timestamp>'}</Code> (e.g. <Code>post-upsert-456-1707307200</Code>).
@@ -436,7 +436,7 @@ Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</
           <Json data={outboundPostEnvelope} />
         </div>
         <p className="text-xs text-muted-foreground">
-          Aurora expects your endpoint to return 2xx. Optionally include <Code>delivery_id</Code>, <Code>remote_id</Code>, or <Code>id</Code> in your JSON response — Aurora stores it as the remote publish mapping.
+          OpenSEO expects your endpoint to return 2xx. Optionally include <Code>delivery_id</Code>, <Code>remote_id</Code>, or <Code>id</Code> in your JSON response — OpenSEO stores it as the remote publish mapping.
         </p>
       </Section>
 
@@ -489,7 +489,7 @@ Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</
       </Section>
 
       {/* ─── 8. Inbound: Post upsert ─── */}
-      <Section id="inbound-post-upsert" title="8. Inbound: Post upsert" description="Create or update a post in Aurora from your system.">
+      <Section id="inbound-post-upsert" title="8. Inbound: Post upsert" description="Create or update a post in OpenSEO from your system.">
         <div className="space-y-1">
           <p><Badge variant="outline">POST</Badge> <Code>/api/v1/publishing/inbound/post/upsert</Code></p>
           <p className="text-xs text-muted-foreground">Requires inbound API key. Upserts a blog post and optionally its content elements.</p>
@@ -497,7 +497,7 @@ Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</
         <div>
           <p className="text-xs font-medium">Matching logic</p>
           <ol className="list-decimal space-y-0.5 pl-5 text-xs text-muted-foreground">
-            <li>Match by <Code>payload.post.id</Code> (Aurora post ID) if provided.</li>
+            <li>Match by <Code>payload.post.id</Code> (OpenSEO post ID) if provided.</li>
             <li>Match by <Code>payload.post.slug</Code> within your company if no ID match.</li>
             <li>If no match found → creates a new post.</li>
             <li>If match found → updates existing post fields (only fields present in payload are changed).</li>
@@ -514,7 +514,7 @@ Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</
       </Section>
 
       {/* ─── 9. Inbound: Post delete ─── */}
-      <Section id="inbound-post-delete" title="9. Inbound: Post delete" description="Delete a post from Aurora.">
+      <Section id="inbound-post-delete" title="9. Inbound: Post delete" description="Delete a post from OpenSEO.">
         <div className="space-y-1">
           <p><Badge variant="outline">POST</Badge> <Code>/api/v1/publishing/inbound/post/delete</Code></p>
           <p className="text-xs text-muted-foreground">Requires inbound API key. Permanently deletes a post.</p>
@@ -522,7 +522,7 @@ Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</
         <div>
           <p className="text-xs font-medium">Matching logic</p>
           <ol className="list-decimal space-y-0.5 pl-5 text-xs text-muted-foreground">
-            <li>Match by <Code>payload.post.id</Code> (Aurora post ID).</li>
+            <li>Match by <Code>payload.post.id</Code> (OpenSEO post ID).</li>
             <li>Match by <Code>payload.post.remote_id</Code> (via publish mapping).</li>
             <li>Match by <Code>payload.post.slug</Code>.</li>
             <li>If no match → returns validation error.</li>
@@ -539,7 +539,7 @@ Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</
       </Section>
 
       {/* ─── 10. Inbound: Dictionary upsert ─── */}
-      <Section id="inbound-dictionary-upsert" title="10. Inbound: Dictionary upsert" description="Create or update a dictionary in Aurora.">
+      <Section id="inbound-dictionary-upsert" title="10. Inbound: Dictionary upsert" description="Create or update a dictionary in OpenSEO.">
         <div className="space-y-1">
           <p><Badge variant="outline">POST</Badge> <Code>/api/v1/publishing/inbound/dictionary/upsert</Code></p>
           <p className="text-xs text-muted-foreground">Requires inbound API key.</p>
@@ -684,7 +684,7 @@ Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</
       </Section>
 
       {/* ─── 16. Reference receiver ─── */}
-      <Section id="receiver" title="16. Reference receiver" description="Example implementation for receiving outbound webhooks from Aurora.">
+      <Section id="receiver" title="16. Reference receiver" description="Example implementation for receiving outbound webhooks from OpenSEO.">
         <pre className="overflow-auto rounded-sm border border-border bg-secondary/30 p-3 text-xs leading-relaxed">{receiverExample}</pre>
         <p className="text-xs text-muted-foreground">
           This is a minimal Next.js API route. Adapt the auth check, idempotency storage, and CMS integration to your stack.
@@ -698,7 +698,7 @@ Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</
           <li>The <Code>contract_version</Code> field in outbound envelopes tracks the schema version.</li>
           <li>Additive changes (new optional fields) are shipped without a version bump.</li>
           <li>Breaking changes (field removal, type changes, required field additions) trigger a version bump.</li>
-          <li>Aurora will include a deprecation notice in the envelope for at least one release before removing fields.</li>
+          <li>OpenSEO will include a deprecation notice in the envelope for at least one release before removing fields.</li>
           <li>Your receiver should handle unknown fields gracefully (ignore, don&apos;t reject).</li>
         </ul>
       </Section>
@@ -709,7 +709,7 @@ Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</
           <details className="rounded-sm border border-border">
             <summary className="cursor-pointer bg-background px-3 py-2 text-xs font-medium">Sync job shows &quot;failed&quot; immediately</summary>
             <div className="border-t border-border p-3 text-xs text-muted-foreground">
-              <p>Check that your publishing endpoint is configured in Settings → API Configuration. The endpoint must be reachable from Aurora&apos;s server and return 2xx.</p>
+              <p>Check that your publishing endpoint is configured in Settings → API Configuration. The endpoint must be reachable from OpenSEO&apos;s server and return 2xx.</p>
             </div>
           </details>
           <details className="rounded-sm border border-border">
@@ -727,7 +727,7 @@ Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</
           <details className="rounded-sm border border-border">
             <summary className="cursor-pointer bg-background px-3 py-2 text-xs font-medium">Post upsert creates a new post instead of updating</summary>
             <div className="border-t border-border p-3 text-xs text-muted-foreground">
-              <p>Aurora matches by <Code>id</Code> first, then <Code>slug</Code>. Make sure you&apos;re sending the Aurora post ID or the exact slug. Title alone is not used for matching.</p>
+              <p>OpenSEO matches by <Code>id</Code> first, then <Code>slug</Code>. Make sure you&apos;re sending the OpenSEO post ID or the exact slug. Title alone is not used for matching.</p>
             </div>
           </details>
           <details className="rounded-sm border border-border">
@@ -745,7 +745,7 @@ Your system ──→ inbound  (You POST JSON to Aurora's inbound endpoints)`}</
           <details className="rounded-sm border border-border">
             <summary className="cursor-pointer bg-background px-3 py-2 text-xs font-medium">Outbound webhook not reaching my endpoint</summary>
             <div className="border-t border-border p-3 text-xs text-muted-foreground">
-              <p>Verify: (1) your endpoint URL is correct in Settings, (2) it accepts POST with JSON, (3) there&apos;s no firewall blocking Aurora&apos;s IP, (4) check the job logs for HTTP status codes — they&apos;ll show exactly what response Aurora received.</p>
+              <p>Verify: (1) your endpoint URL is correct in Settings, (2) it accepts POST with JSON, (3) there&apos;s no firewall blocking OpenSEO&apos;s IP, (4) check the job logs for HTTP status codes — they&apos;ll show exactly what response OpenSEO received.</p>
             </div>
           </details>
         </div>

@@ -147,7 +147,7 @@ export default function SettingsPage() {
 
       <Card className="rounded-sm border-border bg-white">
         <CardHeader>
-          <CardTitle>Inbound API Keys (client → Aurora)</CardTitle>
+          <CardTitle>Inbound API Keys (client → OpenSEO)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <form onSubmit={createInboundKey} className="flex flex-wrap items-center gap-2">

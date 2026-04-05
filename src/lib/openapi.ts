@@ -128,10 +128,10 @@ const ref500: Response = { description: 'Internal server error', content: { 'app
 export const spec: Record<string, unknown> = {
   openapi: '3.1.0',
   info: {
-    title: 'Aurora / OpenSEO API',
+    title: 'OpenSEO API',
     version: '1.0.0',
     description: `
-**Aurora** is an AI-powered SEO content platform for generating, managing, and publishing blog posts, dictionaries, and brand content.
+**OpenSEO** is an AI-powered SEO content platform for generating, managing, and publishing blog posts, dictionaries, and brand content.
 
 ## Authentication
 Most endpoints require a Bearer token obtained via \`POST /api/auth/login\`.

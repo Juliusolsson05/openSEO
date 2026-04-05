@@ -15,7 +15,7 @@ export default async function SiteBlogIndex() {
       <div className="mb-10">
         <p className="text-[12px] font-semibold uppercase tracking-widest text-blue-600">Blog</p>
         <h1 className="mt-1 text-[28px] font-semibold tracking-tight text-neutral-900">Insights & Guides</h1>
-        <p className="mt-1 text-[14px] text-neutral-500">Articles generated and maintained by Aurora.</p>
+        <p className="mt-1 text-[14px] text-neutral-500">Articles generated and maintained by OpenSEO.</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

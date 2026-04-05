@@ -24,14 +24,14 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: 'Segoe UI, Arial, sans-serif' }}>
       <header className="border-b border-border bg-white">
         <div className="mx-auto flex max-w-[720px] items-center justify-between px-4 py-3">
-          <div className="text-[18px] font-semibold text-primary">Aurora</div>
+          <div className="text-[18px] font-semibold text-primary">OpenSEO</div>
           <Badge>Shared preview</Badge>
         </div>
       </header>
       <main className="mx-auto max-w-[720px] px-4 py-8">{children}</main>
       <footer className="mt-10 border-t border-border bg-white">
         <div className="mx-auto max-w-[720px] px-4 py-4 text-[12px] text-muted-foreground">
-          Powered by Aurora — Nordtools
+          Powered by OpenSEO
         </div>
       </footer>
     </div>

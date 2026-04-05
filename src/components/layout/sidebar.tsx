@@ -125,7 +125,7 @@ export function Sidebar() {
       <div className="flex h-12 items-center gap-2.5 px-4 border-b border-sidebar-border">
         <OpenSeoLogo size={24} light />
         <span className="text-[15px] font-semibold text-white tracking-tight">
-          Aurora
+          OpenSEO
         </span>
       </div>
 
@@ -172,7 +172,7 @@ export function Sidebar() {
               {userData?.name || userData?.email?.split('@')[0] || 'User'}
             </p>
             <p className="text-[11px] text-sidebar-foreground/50 truncate">
-              {userData?.company?.name || 'Nordtools'}
+              {userData?.company?.name || 'OpenSEO'}
             </p>
           </div>
           <Button

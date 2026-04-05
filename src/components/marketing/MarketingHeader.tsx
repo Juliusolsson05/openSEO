@@ -30,10 +30,8 @@ export function MarketingHeader() {
         <Link href="/landing" className="flex items-center gap-2">
           <OpenSeoLogo size={22} />
           <span className="text-[14px] font-semibold" style={{ color: '#1A1A1A', letterSpacing: '-0.01em' }}>
-            Aurora
+            OpenSEO
           </span>
-          <div className="hidden sm:block h-4 w-px mx-1" style={{ background: '#E1E1E1' }} />
-          <span className="hidden sm:inline text-[11px]" style={{ color: '#A0A0A0' }}>by Nordtools</span>
         </Link>
 
         <nav className="hidden items-center gap-0 md:flex">
@@ -61,7 +59,7 @@ export function MarketingHeader() {
             className="text-[13px] font-semibold text-white px-4 py-[6px]"
             style={{ background: '#0078D4', borderRadius: 2 }}
           >
-            Try Aurora free
+            Try OpenSEO free
           </Link>
         </div>
 
@@ -95,7 +93,7 @@ export function MarketingHeader() {
               className="block py-2 text-center text-[13px] font-semibold text-white"
               style={{ background: '#0078D4', borderRadius: 2 }}
             >
-              Try Aurora free
+              Try OpenSEO free
             </Link>
           </div>
         </div>

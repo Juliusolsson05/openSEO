@@ -13,8 +13,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-12 max-w-[1080px] items-center justify-between px-6">
         <Link href="/landing" className="flex items-center gap-2">
           <OpenSeoLogo size={22} />
-          <span className="text-[14px] font-semibold text-neutral-900">Aurora</span>
-          <span className="text-[11px] text-neutral-400 hidden sm:inline">by Nordtools</span>
+          <span className="text-[14px] font-semibold text-neutral-900">OpenSEO</span>
         </Link>
 
         <nav className="hidden items-center gap-5 md:flex">
@@ -24,7 +23,7 @@ export function SiteHeader() {
 
         <div className="hidden md:flex items-center gap-4">
           <Link href="/login" className="text-[13px] text-blue-600">Sign in</Link>
-          <Link href="/register" className="text-[13px] font-semibold text-white px-4 py-[6px] bg-blue-600 rounded-sm">Try Aurora free</Link>
+          <Link href="/register" className="text-[13px] font-semibold text-white px-4 py-[6px] bg-blue-600 rounded-sm">Try OpenSEO free</Link>
         </div>
 
         <button className="md:hidden text-neutral-600" onClick={() => setOpen((v) => !v)}>

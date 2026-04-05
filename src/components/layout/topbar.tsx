@@ -227,7 +227,7 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
   return (
     <header className="sticky top-0 z-30 flex h-12 items-center gap-4 border-b border-border bg-white px-6">
       <div className="flex items-center gap-2">
-        <span className="text-[13px] text-muted-foreground">Aurora</span>
+        <span className="text-[13px] text-muted-foreground">OpenSEO</span>
         <span className="text-[13px] text-muted-foreground">/</span>
         <span className="text-[13px] font-semibold text-foreground">{title}</span>
       </div>
