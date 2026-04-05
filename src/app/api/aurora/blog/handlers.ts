@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 import { prisma } from '@/lib/prisma'
 import { NotFoundError, ValidationError } from '@/server/api/errors'
 import { apiHandler } from '@/server/api/handler'
@@ -424,6 +426,36 @@ export const stockSearchHandler = apiHandler(async (ctx) => {
 
 export const stockUseHandler = apiHandler(async (ctx) => {
   try { return raw(await imageService.useStockPhoto(ctx.companyId!, ctx.body)) } catch (err) { return djangoDetailError(err) }
+})
+
+const applyImageSchema = z
+  .object({
+    post_id: z.number().int().positive().optional(),
+    blog_post_id: z.number().int().positive().optional(),
+    image_number: z.number().int().nonnegative(),
+    image_url: z.string().url(),
+  })
+  .refine(
+    (b) => b.post_id != null || b.blog_post_id != null,
+    { message: 'post_id or blog_post_id is required' },
+  )
+  .refine(
+    (b) => b.post_id == null || b.blog_post_id == null || b.post_id === b.blog_post_id,
+    { message: 'post_id and blog_post_id disagree' },
+  )
+
+export const applyImageHandler = apiHandler(async (ctx) => {
+  try {
+    const parsed = validate(applyImageSchema, ctx.body)
+    const normalized = {
+      post_id: parsed.post_id ?? parsed.blog_post_id!,
+      image_number: parsed.image_number,
+      image_url: parsed.image_url,
+    }
+    return raw(await imageService.useStockPhoto(ctx.companyId!, normalized))
+  } catch (err) {
+    return djangoDetailError(err)
+  }
 })
 
 export const quilloAnalyzeHandler = apiHandler(async (ctx) => {

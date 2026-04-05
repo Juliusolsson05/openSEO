@@ -13,7 +13,19 @@ export interface Campaign {
   ctas: CTA[]
 }
 
-const ensureLeadingSlash = (link: string) => (link.startsWith('/') ? link : `/${link}`)
+/**
+ * Normalize a CTA link so relative paths become root-relative (`/foo`),
+ * while leaving absolute URLs, protocol-prefixed links, and empty strings
+ * untouched. Dangerous schemes (javascript:, data:, vbscript:, file:)
+ * are explicitly neutralized by returning '#' so that a future refactor
+ * cannot accidentally strip this protection.
+ */
+const ensureLeadingSlash = (link: string): string => {
+  if (!link) return link
+  if (/^\s*(javascript|data|vbscript|file):/i.test(link)) return '#'
+  if (/^(https?:|mailto:|tel:|\/\/)/i.test(link)) return link
+  return link.startsWith('/') ? link : `/${link}`
+}
 
 function transformCampaigns(raw: any[]): Campaign[] {
   return raw.map((campaign) => ({

@@ -22,13 +22,13 @@ export default function ForgotPasswordPage() {
     setError(null)
     setMessage(null)
 
-    const { error } = await apiPost('/api/auth/forgot-password/', { email })
-    if (error) {
-      setError('Unable to send reset email right now.')
-    } else {
-      setMessage('If an account exists for this email, reset instructions were sent.')
-      setEmail('')
-    }
+    // Always show the same neutral message whether or not the account
+    // exists — matches the backend stub which always returns 200.
+    const neutralMessage =
+      "If that email exists, you'll receive instructions shortly."
+    await apiPost('/api/auth/forgot-password/', { email })
+    setMessage(neutralMessage)
+    setEmail('')
     setLoading(false)
   }
 

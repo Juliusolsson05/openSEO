@@ -58,9 +58,8 @@ export function useDeleteDictionaryMutation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (dictionaryId: number) => {
-      const { data, error } = await apiPost(
-        '/api/aurora/dictionary/dictionary/words/delete',
-        { dictionary_id: dictionaryId }
+      const { data, error } = await apiDelete(
+        `/api/aurora/dictionary/modify/${dictionaryId}`,
       )
       if (error) throw error
       return data

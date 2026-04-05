@@ -57,7 +57,7 @@ export function useQuilloChatMutation() {
       messages: QuilloMessage[]
     }) => {
       const { data, error } = await apiPost<{ message: string }>(
-        '/api/aurora/blog/quillo/chat/',
+        '/api/aurora/blog/quillo/analyze/chat',
         { blog_post_id: blogPostId, messages }
       )
       if (error) throw error
@@ -105,7 +105,8 @@ export function useConvertToLinkedInMutation() {
   return useMutation({
     mutationFn: async ({ blogPostId }: { blogPostId: number }) => {
       const { data, error } = await api<{ json: any; html: string }>(
-        `/api/aurora/debug/testing_linkedin_whole/?blog_post_id=${blogPostId}`
+        '/api/aurora/blog/linkedin/convert',
+        { params: { blog_post_id: blogPostId } },
       )
       if (error) throw error
       return data!
