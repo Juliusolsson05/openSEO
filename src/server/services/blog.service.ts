@@ -407,14 +407,12 @@ export class BlogService {
   }
 
   async syncRecommendedPosts(companyId: number) {
-    // Only consider posts that have actually been generated — titles still
-    // waiting for content (TO_BE_GENERATED, APPROVED, REJECTED) must not
-    // appear as related-post targets.
-    // NOTE: PUBLISHED exists in Prisma schema but not yet migrated to DB.
-    // Add it back here once the migration runs.
-    const generatedStatuses = ['GENERATED'] as const
+    // Only consider posts that have actual content — titles still waiting on
+    // generation (TO_BE_GENERATED, APPROVED, REJECTED) must not appear as
+    // related-post targets. Both GENERATED and PUBLISHED count as "has content".
+    const publishableStatuses = ['GENERATED', 'PUBLISHED'] as const
     const posts = await prisma.blogPost.findMany({
-      where: { companyId, status: { in: [...generatedStatuses] } },
+      where: { companyId, status: { in: [...publishableStatuses] } },
       select: { id: true, title_text: true },
       orderBy: { id: 'asc' },
     })

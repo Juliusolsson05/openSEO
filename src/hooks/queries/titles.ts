@@ -9,13 +9,14 @@ import type { BlogTitle, Category } from '@/types/blog'
 
 // ─── Number → Status mapping (same as titlesApi) ────────────────────────────
 
-type StatusInput = BlogTitle['status'] | 'TO_BE_GENERATED' | 'GENERATED' | 'APPROVED' | 'REJECTED'
+type StatusInput = BlogTitle['status'] | 'TO_BE_GENERATED' | 'GENERATED' | 'APPROVED' | 'REJECTED' | 'PUBLISHED'
 
-const numberToStatus: Record<number, 'TO_BE_GENERATED' | 'GENERATED' | 'APPROVED' | 'REJECTED'> = {
+const numberToStatus: Record<number, 'TO_BE_GENERATED' | 'GENERATED' | 'APPROVED' | 'REJECTED' | 'PUBLISHED'> = {
   1: 'TO_BE_GENERATED',
   2: 'GENERATED',
   3: 'APPROVED',
   4: 'REJECTED',
+  5: 'PUBLISHED',
 }
 
 function toStatus(value: StatusInput | undefined) {

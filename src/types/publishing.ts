@@ -18,7 +18,7 @@ export interface InboundPostPayload {
   post?: InboundPostRef & {
     title_text?: string; seo_title?: string; focus_keyword?: string
     excerpt?: string; meta_description?: string
-    status?: 'TO_BE_GENERATED' | 'APPROVED' | 'REJECTED' | 'GENERATED'
+    status?: 'TO_BE_GENERATED' | 'APPROVED' | 'REJECTED' | 'GENERATED' | 'PUBLISHED'
   }
 }
 

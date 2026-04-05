@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 type ListBlogPostsFilters = {
   page: number
   pageSize: number
-  status?: 'TO_BE_GENERATED' | 'APPROVED' | 'REJECTED' | 'GENERATED'
+  status?: 'TO_BE_GENERATED' | 'APPROVED' | 'REJECTED' | 'GENERATED' | 'PUBLISHED'
   search?: string
   categoryIds?: number[]
   publishStatus?: 'published' | 'drafts' | 'all'
@@ -119,7 +119,7 @@ const blogPostInclude = {
   },
   post_linking_from: {
     where: {
-      toBlogPost: { status: { in: ['GENERATED'] } },
+      toBlogPost: { status: { in: ['GENERATED', 'PUBLISHED'] } },
     },
     include: {
       toBlogPost: {

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const blogStatusSchema = z.enum(['TO_BE_GENERATED', 'APPROVED', 'REJECTED', 'GENERATED'])
+const blogStatusSchema = z.enum(['TO_BE_GENERATED', 'APPROVED', 'REJECTED', 'GENERATED', 'PUBLISHED'])
 const blogOperationSchema = z.enum(['NONE', 'POST_SYNCING', 'KEYWORD_SYNCING'])
 
 const blogSortSchema = z.enum([
