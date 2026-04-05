@@ -158,6 +158,46 @@ model Company {
   sync_deliveries          SyncDelivery[]
   sync_conflicts           SyncConflict[]
   inbound_events           InboundEvent[]
+  background_jobs          BackgroundJob[]
+}
+
+/// --- Durable background job queue (P24A) ---
+///
+/// Generic Postgres-backed job table. Claimed atomically via
+/// `SELECT ... FOR UPDATE SKIP LOCKED` (see src/server/jobs/queue.ts).
+/// Intentionally independent of the domain-specific `SyncJob` model above.
+enum BackgroundJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELED
+}
+
+model BackgroundJob {
+  id           String              @id @default(cuid())
+  job_type     String
+  payload      Json                @default("{}")
+  status       BackgroundJobStatus @default(PENDING)
+  attempts     Int                 @default(0)
+  max_attempts Int                 @default(3)
+  next_run_at  DateTime            @default(now())
+  locked_at    DateTime?
+  locked_by    String?
+  result       Json?
+  error        String?
+  logs         Json                @default("[]")
+  companyId    Int?
+  created_at   DateTime            @default(now())
+  updated_at   DateTime            @updatedAt
+  started_at   DateTime?
+  finished_at  DateTime?
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([status, next_run_at])
+  @@index([job_type, status])
+  @@index([companyId])
 }
 
 /// --- Blog ---
