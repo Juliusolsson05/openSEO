@@ -33,13 +33,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/site/dictionary`, changeFrequency: 'daily', priority: 0.8 },
   ]
 
-  /* ── Example pages ── */
-  const examplePages: MetadataRoute.Sitemap = [
-    { url: `${BASE}/example`, changeFrequency: 'weekly', priority: 0.6 },
-    { url: `${BASE}/example/blog`, changeFrequency: 'weekly', priority: 0.5 },
-    { url: `${BASE}/example/dictionary`, changeFrequency: 'weekly', priority: 0.5 },
-  ]
-
   /* ── Comparison pages (dynamic from Prisma) ── */
   const comparisonPages: MetadataRoute.Sitemap = comparisonSlugs.map((slug) => ({
     url: `${BASE}/landing/compare/${slug}`,
@@ -65,8 +58,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...corePages,
     ...contentIndexPages,
-    ...examplePages,
-    ...comparisonPages,
+...comparisonPages,
     ...blogPages,
     ...dictPages,
   ]

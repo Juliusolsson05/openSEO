@@ -5,6 +5,7 @@ import { MarketingFooter } from '@/components/marketing/MarketingFooter'
 export const metadata: Metadata = {
   title: 'OpenSEO Blog & Dictionary',
   description: 'OpenSEO-generated blog posts and SEO dictionary.',
+  robots: { index: true, follow: true },
 }
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
