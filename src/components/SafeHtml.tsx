@@ -1,3 +1,5 @@
+'use client'
+
 import type { ElementType, HTMLAttributes } from 'react'
 import { sanitize, type SafeHtmlProfile } from './SafeHtml.sanitize'
 
