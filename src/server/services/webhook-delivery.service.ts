@@ -1,7 +1,38 @@
+/**
+ * Canonical outbound webhook envelope.
+ *
+ * This is the ONLY place where outbound payloads get wrapped. Upstream
+ * services MUST pass the raw, event-specific payload (e.g. `{ post, processed_content }`
+ * for `post.upsert`) and let `sendJsonWebhook` attach envelope metadata.
+ *
+ * Wire shape:
+ *   {
+ *     contract_version: "2026-02-1",
+ *     event: "post.upsert",
+ *     event_id: "evt_<uuid>",
+ *     sent_at: "<ISO8601>",
+ *     payload: <raw event payload>
+ *   }
+ */
+export type WebhookEnvelope<T = unknown> = {
+  contract_version: string
+  event: string
+  event_id: string
+  sent_at: string
+  payload: T
+}
+
+export const OUTBOUND_CONTRACT_VERSION = '2026-02-1'
+
 export type WebhookDeliveryInput = {
   endpoint: string
   apiKey?: string | null
   eventType: string
+  /**
+   * The raw event-specific payload. Do NOT pre-wrap this in an envelope —
+   * `sendJsonWebhook` will attach `contract_version`, `event`, `event_id`,
+   * and `sent_at` automatically.
+   */
   payload: unknown
   timeoutMs?: number
 }
@@ -24,9 +55,11 @@ export async function sendJsonWebhook(input: WebhookDeliveryInput): Promise<Webh
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), input.timeoutMs ?? 15000)
 
-  const body = {
+  const envelope: WebhookEnvelope = {
+    contract_version: OUTBOUND_CONTRACT_VERSION,
     event: input.eventType,
-    timestamp: new Date().toISOString(),
+    event_id: `evt_${crypto.randomUUID()}`,
+    sent_at: new Date().toISOString(),
     payload: input.payload,
   }
 
@@ -37,7 +70,7 @@ export async function sendJsonWebhook(input: WebhookDeliveryInput): Promise<Webh
         'Content-Type': 'application/json',
         ...(input.apiKey ? { Authorization: `Bearer ${input.apiKey}` } : {}),
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(envelope),
       signal: controller.signal,
     })
 

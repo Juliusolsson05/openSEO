@@ -114,7 +114,7 @@ export const updatePostHandler = apiHandler(async (ctx) => {
 export const sharePostHandler = apiHandler(async (ctx) => {
   const postId = Number(ctx.searchParams.get('post_id') ?? (ctx.body as any)?.post_id)
   if (!postId) throw new ValidationError('post_id is required')
-  return raw(await blogService.sharePost(ctx.companyId!, postId))
+  return raw(await blogService.sharePost(ctx.companyId!, postId, ctx.user?.id ?? null))
 })
 
 export const syncRecommendedHandler = apiHandler(async (ctx) => raw(await blogService.syncRecommendedPosts(ctx.companyId!)))

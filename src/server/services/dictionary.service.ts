@@ -382,22 +382,14 @@ export class DictionaryService {
 
     const exportData = await this.exportAll(companyId, dictionaryId)
 
-    const envelope = {
-      contract_version: '2026-02-1',
-      event: 'dictionary.upsert',
-      event_id: `evt_${crypto.randomUUID()}`,
-      sent_at: new Date().toISOString(),
-      payload: {
-        dictionary: exportData.dictionary_info,
-        terms: exportData.words,
-      },
-    }
-
     const delivery = await sendJsonWebhook({
       endpoint: company.api_endpoint,
       apiKey: company.api_key,
       eventType: 'dictionary.upsert',
-      payload: envelope,
+      payload: {
+        dictionary: exportData.dictionary_info,
+        terms: exportData.words,
+      },
     })
 
     if (!delivery.ok) {
@@ -433,22 +425,14 @@ export class DictionaryService {
     for (const dict of dictionaries) {
       try {
         const exportData = await this.exportAll(companyId, dict.id)
-        const envelope = {
-          contract_version: '2026-02-1',
-          event: 'dictionary.upsert',
-          event_id: `evt_${crypto.randomUUID()}`,
-          sent_at: new Date().toISOString(),
-          payload: {
-            dictionary: exportData.dictionary_info,
-            terms: exportData.words,
-          },
-        }
-
         const delivery = await sendJsonWebhook({
           endpoint: company.api_endpoint,
           apiKey: company.api_key,
           eventType: 'dictionary.upsert',
-          payload: envelope,
+          payload: {
+            dictionary: exportData.dictionary_info,
+            terms: exportData.words,
+          },
         })
 
         if (!delivery.ok) {

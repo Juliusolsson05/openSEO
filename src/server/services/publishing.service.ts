@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client'
+
 import { prisma } from '@/lib/prisma'
 import { NotFoundError, ValidationError } from '@/server/api/errors'
 import { sendJsonWebhook } from '@/server/services/webhook-delivery.service'
@@ -53,15 +55,40 @@ export class PublishingService {
   }
 
   async updateCompanyMetadata(companyId: number, payload: MetadataPayload) {
-    const company = await prisma.company.findUnique({ where: { id: companyId }, select: { id: true } })
-    if (!company) throw new NotFoundError('Company not found')
+    const existing = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { id: true, metadata: true },
+    })
+    if (!existing) throw new NotFoundError('Company not found')
+
+    const hasMetadataField =
+      payload.business_description !== undefined || payload.industry_description !== undefined
+    const hasUrlField = payload.url !== undefined
+
+    if (!hasMetadataField && !hasUrlField) {
+      throw new ValidationError('No metadata fields provided')
+    }
+
+    const currentMetadata =
+      existing.metadata && typeof existing.metadata === 'object' && !Array.isArray(existing.metadata)
+        ? (existing.metadata as Record<string, unknown>)
+        : {}
+
+    const nextMetadata: Record<string, unknown> = { ...currentMetadata }
+    if (payload.business_description !== undefined) {
+      nextMetadata.business_description = payload.business_description
+    }
+    if (payload.industry_description !== undefined) {
+      nextMetadata.industry_description = payload.industry_description
+    }
 
     const data: Record<string, unknown> = {}
-    if (payload.business_description !== undefined) data.business_description = payload.business_description
-    if (payload.industry_description !== undefined) data.industry_description = payload.industry_description
-    if (payload.url !== undefined) data.website_url = payload.url
-
-    if (Object.keys(data).length === 0) throw new ValidationError('No metadata fields provided')
+    if (hasMetadataField) {
+      data.metadata = nextMetadata as Prisma.InputJsonValue
+    }
+    if (hasUrlField) {
+      data.website_url = payload.url
+    }
 
     return prisma.company.update({ where: { id: companyId }, data })
   }
@@ -97,11 +124,10 @@ export class PublishingService {
 
     if (!company?.api_endpoint) throw new ValidationError('Publishing endpoint is not configured')
 
-    const envelope = {
-      contract_version: '2026-02-1',
-      event: 'post.publish',
-      event_id: `evt_${crypto.randomUUID()}`,
-      sent_at: new Date().toISOString(),
+    const delivery = await sendJsonWebhook({
+      endpoint: company.api_endpoint,
+      apiKey: company.api_key,
+      eventType: 'post.publish',
       payload: {
         post: {
           id: post.id,
@@ -124,13 +150,6 @@ export class PublishingService {
           })),
         },
       },
-    }
-
-    const delivery = await sendJsonWebhook({
-      endpoint: company.api_endpoint,
-      apiKey: company.api_key,
-      eventType: 'post.publish',
-      payload: envelope,
     })
 
     if (!delivery.ok) {
@@ -161,21 +180,22 @@ export class PublishingService {
       select: { api_endpoint: true, api_key: true },
     })
 
-    if (company?.api_endpoint) {
-      const envelope = {
-        contract_version: '2026-02-1',
-        event: 'post.unpublish',
-        event_id: `evt_${crypto.randomUUID()}`,
-        sent_at: new Date().toISOString(),
-        payload: { post: { id: postId } },
-      }
+    if (!company?.api_endpoint) {
+      throw new ValidationError('Publishing endpoint is not configured')
+    }
 
-      await sendJsonWebhook({
-        endpoint: company.api_endpoint,
-        apiKey: company.api_key,
-        eventType: 'post.unpublish',
-        payload: envelope,
-      })
+    const delivery = await sendJsonWebhook({
+      endpoint: company.api_endpoint,
+      apiKey: company.api_key,
+      eventType: 'post.unpublish',
+      payload: { post: { id: postId } },
+    })
+
+    if (!delivery.ok) {
+      // Do NOT flip local state — leave the post as PUBLISHED so the
+      // caller can retry. Local and remote must agree before we mark
+      // the post unpublished locally.
+      throw new ValidationError(`Unpublish delivery failed: HTTP ${delivery.status}`)
     }
 
     await prisma.blogPost.update({
@@ -183,7 +203,7 @@ export class PublishingService {
       data: { status: 'GENERATED' },
     })
 
-    return { post_id: postId, status: 'unpublished' }
+    return { post_id: postId, status: 'unpublished', remote_id: delivery.deliveryId }
   }
 }
 

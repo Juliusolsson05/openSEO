@@ -11,6 +11,7 @@ import { ELEMENT_PROCESSING_MAP } from '@/server/ai/keyword-matching/find-matche
 import * as blogRepository from '@/server/repositories/blog.repository'
 import { assertCategoryOwnership } from '@/server/services/_helpers/assert-category-ownership'
 import { toDbElementType } from '@/server/utils/element-type'
+import { generateShareToken } from '@/server/lib/share-token'
 import { sendJsonWebhook } from '@/server/services/webhook-delivery.service'
 import type {
   CreateBlogPostInput,
@@ -307,32 +308,22 @@ export class BlogService {
       throw new NotFoundError('BlogPost not found or not in a regenerable state.')
     }
 
-    await prisma.$transaction(async (tx) => {
-      await tx.blogPostElement.deleteMany({ where: { blogPostId: blogPost.id } })
-      await tx.blogPublish.deleteMany({ where: { blogPostId: blogPost.id } })
-
-      await tx.blogPost.update({
-        where: { id: blogPost.id },
-        data: {
-          cover_image: { url: DEFAULT_IMAGE, description: '' } as any,
-          meta_description: null,
-          excerpt: null,
-          generated_date: new Date(),
-          image_generation: false,
-          keyword_synced: false,
-          keyword_linked: false,
-          posts_synced: false,
-          reviewed: false,
-        },
-      })
+    // Step 1: load generation settings. No DB writes yet — the existing post
+    // and its elements remain intact so a failure here leaves the post
+    // exactly as it was.
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { settings: true },
     })
-
-    const settings = ((await prisma.company.findUnique({ where: { id: companyId }, select: { settings: true } }))?.settings ?? {}) as Record<string, any>
+    const settings = (company?.settings ?? {}) as Record<string, any>
     const blogSettings = settings['aurora.blog'] ?? {}
     const structureModel = blogSettings.blog_post_structure_model ?? MODELS.OPENAI_SMART
     const contentModel = blogSettings.blog_post_content_model ?? MODELS.OPENAI_DEFAULT
     const allowedElements = blogSettings.initial_generation_elements ?? DEFAULT_GENERATION_ELEMENTS
 
+    // Step 2: generate the new content into in-memory staging. If either AI
+    // call throws, we never touched the database and the caller will see the
+    // error with the post untouched.
     const { structure } = await generateStructure(blogPost.title_text, structureModel, allowedElements)
     const { elements } = await generateBlogPost(
       blogPost.seo_title ?? blogPost.title_text,
@@ -343,10 +334,11 @@ export class BlogService {
       false,
     )
 
+    // Step 3: normalize generated elements into staging variables.
     let metaDescription: string | null = null
     let excerpt: string | null = null
     let coverImage: Record<string, unknown> | null = null
-    const filtered: Array<{ type: string; content: Record<string, unknown> }> = []
+    const stagedElements: Array<{ type: string; content: Record<string, unknown> }> = []
 
     for (const element of elements) {
       const type = String(element.type ?? '')
@@ -354,22 +346,30 @@ export class BlogService {
       if (type === 'meta_description') metaDescription = (content.text as string) ?? null
       else if (type === 'excerpt') excerpt = (content.text as string) ?? null
       else if (type === 'cover_image') coverImage = { ...content, url: DEFAULT_IMAGE }
-      else filtered.push({ type, content })
+      else stagedElements.push({ type, content })
     }
 
+    // Step 4: atomic swap. Delete old elements + publish mappings and create
+    // the new elements + update the post inside a single transaction. If any
+    // step throws, Prisma rolls the whole transaction back and the original
+    // post survives. BlogPublish mappings are removed because the remote post
+    // binding is stale after regeneration.
     await prisma.$transaction(async (tx) => {
-      for (let index = 0; index < filtered.length; index += 1) {
-        const dbType = toDbElementType(filtered[index].type)
+      await tx.blogPostElement.deleteMany({ where: { blogPostId: blogPost.id } })
+      await tx.blogPublish.deleteMany({ where: { blogPostId: blogPost.id } })
+
+      for (let index = 0; index < stagedElements.length; index += 1) {
+        const dbType = toDbElementType(stagedElements[index].type)
         if (!dbType) continue
-        const content = filtered[index].type === 'image'
-          ? { ...filtered[index].content, url: DEFAULT_IMAGE }
-          : filtered[index].content
+        const content = stagedElements[index].type === 'image'
+          ? { ...stagedElements[index].content, url: DEFAULT_IMAGE }
+          : stagedElements[index].content
 
         await tx.blogPostElement.create({
           data: {
             blogPostId: blogPost.id,
             element_type: dbType,
-            content: content as any,
+            content: content as Prisma.InputJsonValue,
             order: index,
           },
         })
@@ -380,7 +380,7 @@ export class BlogService {
         data: {
           status: TitleStatus.GENERATED,
           generated_date: new Date(),
-          cover_image: (coverImage ?? { url: DEFAULT_IMAGE, description: '' }) as any,
+          cover_image: (coverImage ?? { url: DEFAULT_IMAGE, description: '' }) as Prisma.InputJsonValue,
           meta_description: metaDescription,
           excerpt,
           image_generation: false,
@@ -404,17 +404,43 @@ export class BlogService {
     }
   }
 
-  async sharePost(companyId: number, postId: number) {
-    const post = await prisma.blogPost.findFirst({ where: { id: postId, companyId }, select: { id: true } })
+  async sharePost(companyId: number, postId: number, createdByUserId: string | null) {
+    const post = await prisma.blogPost.findFirst({
+      where: { id: postId, companyId },
+      select: { id: true },
+    })
     if (!post) throw new NotFoundError('Blog post not found or does not belong to your company')
 
-    const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
     const frontendBaseUrl = process.env.FRONTEND_URL ?? 'http://localhost:4720'
-    const shareToken = Buffer.from(`post:${postId}:company:${companyId}:exp:${expiresAt.toISOString()}`).toString('base64url')
+    const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+    const token = generateShareToken()
+
+    // Upsert: one share link per post (matches @@unique([postId])).
+    // When a new link is minted, clear any prior revocation.
+    const link = await prisma.shareLink.upsert({
+      where: { postId },
+      update: {
+        token,
+        enabled: true,
+        expiresAt,
+        revokedAt: null,
+        createdByUserId,
+        companyId,
+      },
+      create: {
+        postId,
+        companyId,
+        createdByUserId,
+        token,
+        enabled: true,
+        expiresAt,
+      },
+    })
 
     return {
-      share_url: `${frontendBaseUrl}/apps/blog/preview/${postId}?share_token=${shareToken}`,
-      expires_at: expiresAt.toISOString(),
+      share_url: `${frontendBaseUrl}/share/blog/${link.token}`,
+      share_token: link.token,
+      expires_at: link.expiresAt!.toISOString(),
     }
   }
 

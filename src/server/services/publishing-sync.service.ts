@@ -3,16 +3,6 @@ import { ValidationError } from '@/server/api/errors'
 import { appendTaskLog, completeTask, createTask, failTask, setTaskRunning } from '@/server/tasks/runtime'
 import { sendJsonWebhook } from '@/server/services/webhook-delivery.service'
 
-function createEnvelope(eventType: string, payload: unknown) {
-  return {
-    contract_version: '2026-02-1',
-    event: eventType,
-    event_id: `evt_${crypto.randomUUID()}`,
-    sent_at: new Date().toISOString(),
-    payload,
-  }
-}
-
 export class PublishingSyncService {
   private async getCompanyPublishingConfig(companyId: number): Promise<{ api_endpoint: string; api_key: string | null }> {
     const company = await prisma.company.findUnique({
@@ -45,35 +35,33 @@ export class PublishingSyncService {
       throw new ValidationError('Post not found')
     }
 
-    const envelope = createEnvelope('post.upsert', {
-      post: {
-        id: post.id,
-        title_text: post.title_text,
-        slug: post.slug,
-        seo_title: post.seo_title,
-        focus_keyword: post.focus_keyword,
-        excerpt: post.excerpt,
-        meta_description: post.meta_description,
-        cover_image: post.cover_image,
-        status: post.status,
-        categories: post.categories.map((c) => c.name),
-      },
-      processed_content: {
-        id: post.id,
-        elements: post.elements.map((el) => ({
-          id: el.id,
-          order: el.order,
-          element_type: el.element_type.toLowerCase(),
-          content: el.content,
-        })),
-      },
-    })
-
     const delivery = await sendJsonWebhook({
       endpoint: company.api_endpoint,
       apiKey: company.api_key,
       eventType: 'post.upsert',
-      payload: envelope,
+      payload: {
+        post: {
+          id: post.id,
+          title_text: post.title_text,
+          slug: post.slug,
+          seo_title: post.seo_title,
+          focus_keyword: post.focus_keyword,
+          excerpt: post.excerpt,
+          meta_description: post.meta_description,
+          cover_image: post.cover_image,
+          status: post.status,
+          categories: post.categories.map((c) => c.name),
+        },
+        processed_content: {
+          id: post.id,
+          elements: post.elements.map((el) => ({
+            id: el.id,
+            order: el.order,
+            element_type: el.element_type.toLowerCase(),
+            content: el.content,
+          })),
+        },
+      },
     })
 
     if (!delivery.ok) {
@@ -112,44 +100,42 @@ export class PublishingSyncService {
       throw new ValidationError('Dictionary not found')
     }
 
-    const envelope = createEnvelope('dictionary.upsert', {
-      dictionary: {
-        id: dictionary.id,
-        title: dictionary.title,
-        subject: dictionary.subject,
-        language: dictionary.language,
-        status: dictionary.status,
-        current_letter: dictionary.current_letter,
-        num_words: dictionary.num_words,
-      },
-      terms: dictionary.words.map((w) => ({
-        id: w.id,
-        letter: w.letter,
-        keyword: w.keyword,
-        description: w.description,
-        priority: w.priority,
-        focus_keyword: w.focus_keyword,
-        definition: w.definition
-          ? {
-              title: w.definition.title,
-              featured_google_snippet: w.definition.featured_google_snippet,
-              meta_description: w.definition.meta_description,
-              seo_title: w.definition.seo_title,
-              synonyms: w.definition.synonyms,
-              antonyms: w.definition.antonyms,
-              usage_examples: w.definition.usage_examples,
-              related_keywords: w.definition.related_keywords,
-              faqs: w.definition.faqs,
-            }
-          : null,
-      })),
-    })
-
     const delivery = await sendJsonWebhook({
       endpoint: company.api_endpoint,
       apiKey: company.api_key,
       eventType: 'dictionary.upsert',
-      payload: envelope,
+      payload: {
+        dictionary: {
+          id: dictionary.id,
+          title: dictionary.title,
+          subject: dictionary.subject,
+          language: dictionary.language,
+          status: dictionary.status,
+          current_letter: dictionary.current_letter,
+          num_words: dictionary.num_words,
+        },
+        terms: dictionary.words.map((w) => ({
+          id: w.id,
+          letter: w.letter,
+          keyword: w.keyword,
+          description: w.description,
+          priority: w.priority,
+          focus_keyword: w.focus_keyword,
+          definition: w.definition
+            ? {
+                title: w.definition.title,
+                featured_google_snippet: w.definition.featured_google_snippet,
+                meta_description: w.definition.meta_description,
+                seo_title: w.definition.seo_title,
+                synonyms: w.definition.synonyms,
+                antonyms: w.definition.antonyms,
+                usage_examples: w.definition.usage_examples,
+                related_keywords: w.definition.related_keywords,
+                faqs: w.definition.faqs,
+              }
+            : null,
+        })),
+      },
     })
 
     if (!delivery.ok) {
@@ -189,34 +175,32 @@ export class PublishingSyncService {
         })
 
         for (const post of posts) {
-          const envelope = createEnvelope('post.upsert', {
-            post: {
-              id: post.id,
-              title_text: post.title_text,
-              slug: post.slug,
-              seo_title: post.seo_title,
-              focus_keyword: post.focus_keyword,
-              excerpt: post.excerpt,
-              meta_description: post.meta_description,
-              status: post.status,
-              categories: post.categories.map((c) => c.name),
-            },
-            processed_content: {
-              id: post.id,
-              elements: post.elements.map((el) => ({
-                id: el.id,
-                order: el.order,
-                element_type: el.element_type.toLowerCase(),
-                content: el.content,
-              })),
-            },
-          })
-
           const delivery = await sendJsonWebhook({
             endpoint: company.api_endpoint,
             apiKey: company.api_key,
             eventType: 'post.upsert',
-            payload: envelope,
+            payload: {
+              post: {
+                id: post.id,
+                title_text: post.title_text,
+                slug: post.slug,
+                seo_title: post.seo_title,
+                focus_keyword: post.focus_keyword,
+                excerpt: post.excerpt,
+                meta_description: post.meta_description,
+                status: post.status,
+                categories: post.categories.map((c) => c.name),
+              },
+              processed_content: {
+                id: post.id,
+                elements: post.elements.map((el) => ({
+                  id: el.id,
+                  order: el.order,
+                  element_type: el.element_type.toLowerCase(),
+                  content: el.content,
+                })),
+              },
+            },
           })
 
           if (!delivery.ok) {
@@ -273,44 +257,42 @@ export class PublishingSyncService {
         })
 
         for (const dictionary of dictionaries) {
-          const envelope = createEnvelope('dictionary.upsert', {
-            dictionary: {
-              id: dictionary.id,
-              title: dictionary.title,
-              subject: dictionary.subject,
-              language: dictionary.language,
-              status: dictionary.status,
-              current_letter: dictionary.current_letter,
-              num_words: dictionary.num_words,
-            },
-            terms: dictionary.words.map((w) => ({
-              id: w.id,
-              letter: w.letter,
-              keyword: w.keyword,
-              description: w.description,
-              priority: w.priority,
-              focus_keyword: w.focus_keyword,
-              definition: w.definition
-                ? {
-                    title: w.definition.title,
-                    featured_google_snippet: w.definition.featured_google_snippet,
-                    meta_description: w.definition.meta_description,
-                    seo_title: w.definition.seo_title,
-                    synonyms: w.definition.synonyms,
-                    antonyms: w.definition.antonyms,
-                    usage_examples: w.definition.usage_examples,
-                    related_keywords: w.definition.related_keywords,
-                    faqs: w.definition.faqs,
-                  }
-                : null,
-            })),
-          })
-
           const delivery = await sendJsonWebhook({
             endpoint: company.api_endpoint,
             apiKey: company.api_key,
             eventType: 'dictionary.upsert',
-            payload: envelope,
+            payload: {
+              dictionary: {
+                id: dictionary.id,
+                title: dictionary.title,
+                subject: dictionary.subject,
+                language: dictionary.language,
+                status: dictionary.status,
+                current_letter: dictionary.current_letter,
+                num_words: dictionary.num_words,
+              },
+              terms: dictionary.words.map((w) => ({
+                id: w.id,
+                letter: w.letter,
+                keyword: w.keyword,
+                description: w.description,
+                priority: w.priority,
+                focus_keyword: w.focus_keyword,
+                definition: w.definition
+                  ? {
+                      title: w.definition.title,
+                      featured_google_snippet: w.definition.featured_google_snippet,
+                      meta_description: w.definition.meta_description,
+                      seo_title: w.definition.seo_title,
+                      synonyms: w.definition.synonyms,
+                      antonyms: w.definition.antonyms,
+                      usage_examples: w.definition.usage_examples,
+                      related_keywords: w.definition.related_keywords,
+                      faqs: w.definition.faqs,
+                    }
+                  : null,
+              })),
+            },
           })
 
           if (!delivery.ok) {
