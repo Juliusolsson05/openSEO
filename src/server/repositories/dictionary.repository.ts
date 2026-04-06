@@ -1,18 +1,22 @@
-import type { Prisma } from '@prisma/client'
+import { DictionaryStatus, type Prisma } from '@prisma/client'
 
 import { prisma } from '@/lib/prisma'
+
+type DictionaryStatusFilter = 'all' | 'active' | 'completed'
 
 type FindManyFilters = {
   search?: string
   page?: number
   pageSize?: number
+  status?: DictionaryStatusFilter
 }
 
-export async function findMany(companyId: number, filters: FindManyFilters = {}) {
-  const page = Math.max(1, filters.page ?? 1)
-  const pageSize = Math.max(1, Math.min(100, filters.pageSize ?? 50))
-
-  const where = {
+function buildWhere(
+  companyId: number,
+  filters: { search?: string; status?: DictionaryStatusFilter },
+): Prisma.DictionaryWhereInput {
+  const status = filters.status ?? 'all'
+  return {
     companyId,
     ...(filters.search
       ? {
@@ -22,7 +26,19 @@ export async function findMany(companyId: number, filters: FindManyFilters = {})
           ],
         }
       : {}),
+    ...(status === 'completed'
+      ? { status: DictionaryStatus.COMPLETED }
+      : status === 'active'
+      ? { status: { not: DictionaryStatus.COMPLETED } }
+      : {}),
   }
+}
+
+export async function findMany(companyId: number, filters: FindManyFilters = {}) {
+  const page = Math.max(1, filters.page ?? 1)
+  const pageSize = Math.max(1, Math.min(100, filters.pageSize ?? 50))
+
+  const where = buildWhere(companyId, { search: filters.search, status: filters.status })
 
   const [items, total] = await Promise.all([
     prisma.dictionary.findMany({
@@ -40,6 +56,22 @@ export async function findMany(companyId: number, filters: FindManyFilters = {})
   ])
 
   return { items, total }
+}
+
+export async function countByStatus(
+  companyId: number,
+  filters: { search?: string } = {},
+) {
+  const baseWhere = buildWhere(companyId, { search: filters.search, status: 'all' })
+  const [inProgress, completed] = await Promise.all([
+    prisma.dictionary.count({
+      where: { ...baseWhere, status: { not: DictionaryStatus.COMPLETED } },
+    }),
+    prisma.dictionary.count({
+      where: { ...baseWhere, status: DictionaryStatus.COMPLETED },
+    }),
+  ])
+  return { inProgress, completed }
 }
 
 export function findById(id: number, companyId: number) {

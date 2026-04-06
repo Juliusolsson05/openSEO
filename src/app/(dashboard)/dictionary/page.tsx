@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useDictionariesQuery } from '@/hooks/queries/dictionary'
 import { useAppSelector } from '@/store/hooks'
@@ -27,24 +27,17 @@ export default function DictionaryPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all')
   const itemsPerPage = 10
 
-  const { data, isLoading } = useDictionariesQuery({ searchQuery, itemsPerPage, page })
+  const { data, isLoading } = useDictionariesQuery({ searchQuery, itemsPerPage, page, status: statusFilter })
   const dictionaries = data?.dictionaries ?? []
   const totalDictionaries = data?.total ?? 0
+  const inProgress = data?.inProgressTotal ?? 0
+  const completed = data?.completedTotal ?? 0
 
   const currentDictionary = useAppSelector((s) => s.dictionarySession.currentDictionary)
   const isGenerating = useAppSelector((s) => s.dictionarySession.isGenerating)
 
-  const rows = useMemo(() => {
-    if (statusFilter === 'all') return dictionaries
-    return dictionaries.filter((d) => {
-      const done = !['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '')
-      return statusFilter === 'completed' ? done : !done
-    })
-  }, [dictionaries, statusFilter])
-
+  const rows = dictionaries
   const totalPages = Math.max(1, Math.ceil(totalDictionaries / itemsPerPage))
-  const inProgress = dictionaries.filter((d) => ['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '')).length
-  const completed = dictionaries.filter((d) => !['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '')).length
 
   return (
     <div className="space-y-4">
@@ -74,9 +67,9 @@ export default function DictionaryPage() {
             />
 
             <div className="ml-auto flex gap-2">
-              <Button variant={statusFilter === 'all' ? 'default' : 'outline'} className="h-8 rounded-sm" onClick={() => setStatusFilter('all')}>All</Button>
-              <Button variant={statusFilter === 'active' ? 'default' : 'outline'} className="h-8 rounded-sm" onClick={() => setStatusFilter('active')}>In progress</Button>
-              <Button variant={statusFilter === 'completed' ? 'default' : 'outline'} className="h-8 rounded-sm" onClick={() => setStatusFilter('completed')}>Completed</Button>
+              <Button variant={statusFilter === 'all' ? 'default' : 'outline'} className="h-8 rounded-sm" onClick={() => { setPage(1); setStatusFilter('all') }}>All</Button>
+              <Button variant={statusFilter === 'active' ? 'default' : 'outline'} className="h-8 rounded-sm" onClick={() => { setPage(1); setStatusFilter('active') }}>In progress</Button>
+              <Button variant={statusFilter === 'completed' ? 'default' : 'outline'} className="h-8 rounded-sm" onClick={() => { setPage(1); setStatusFilter('completed') }}>Completed</Button>
             </div>
           </div>
 
@@ -119,7 +112,7 @@ export default function DictionaryPage() {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Link href={`/dictionary/${d.id}`}><Button size="sm" variant="outline" className="h-7 rounded-sm">Open</Button></Link>
-                          {['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '') ? (
+                          {['generating', 'in_progress', 'definition_generation'].includes(d.status ?? '') && currentDictionary?.id === d.id ? (
                             <Link href="/dictionary/generate/keywords"><Button size="sm" className="h-7 rounded-sm">Resume</Button></Link>
                           ) : null}
                         </div>

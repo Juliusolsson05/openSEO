@@ -7,17 +7,22 @@ import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/get-error-message'
 import type { DashboardDictionary as Dictionary, DashboardWord } from '@/types/dictionary'
 
+export type DictionaryStatusFilter = 'all' | 'active' | 'completed'
+
 interface ListDictionariesArg {
   searchQuery?: string
   itemsPerPage?: number
   page?: number
   sortBy?: string
   orderBy?: string
+  status?: DictionaryStatusFilter
 }
 
 interface ListDictionariesResult {
   dictionaries: Dictionary[]
   total: number
+  inProgressTotal: number
+  completedTotal: number
 }
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
@@ -29,9 +34,10 @@ export function useDictionariesQuery(
     page = 1,
     sortBy,
     orderBy,
+    status = 'all',
   }: ListDictionariesArg = {}
 ) {
-  const filters = { searchQuery, itemsPerPage, page, sortBy, orderBy }
+  const filters = { searchQuery, itemsPerPage, page, sortBy, orderBy, status }
   return useQuery({
     queryKey: QK.dictionaries(filters),
     queryFn: () => {
@@ -41,6 +47,7 @@ export function useDictionariesQuery(
         page,
         sortBy,
         orderBy,
+        status,
       }
       return api<ListDictionariesResult>(
         '/api/aurora/dictionary/dictionaries',

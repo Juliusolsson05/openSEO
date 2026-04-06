@@ -14,11 +14,21 @@ import type {
   ModifyWordInput,
 } from '@/server/validators/dictionary.validators'
 
+export type DictionaryListStatusFilter = 'all' | 'active' | 'completed'
+
 export class DictionaryService {
-  async listDictionaries(companyId: number, query?: { search?: string; page?: number; pageSize?: number }) {
+  async listDictionaries(
+    companyId: number,
+    query?: { search?: string; page?: number; pageSize?: number; status?: DictionaryListStatusFilter },
+  ) {
     const page = Math.max(1, query?.page ?? 1)
     const pageSize = Math.max(1, Math.min(100, query?.pageSize ?? 20))
-    const { items, total } = await dictionaryRepository.findMany(companyId, { ...query, page, pageSize })
+    const status = query?.status ?? 'all'
+
+    const [{ items, total }, statusCounts] = await Promise.all([
+      dictionaryRepository.findMany(companyId, { ...query, page, pageSize, status }),
+      dictionaryRepository.countByStatus(companyId, { search: query?.search }),
+    ])
 
     return {
       dictionaries: items.map((d) => ({
@@ -33,6 +43,8 @@ export class DictionaryService {
         status: toDjangoDictionaryStatus(String(d.status)),
       })),
       total,
+      inProgressTotal: statusCounts.inProgress,
+      completedTotal: statusCounts.completed,
       page,
       pageSize,
     }
