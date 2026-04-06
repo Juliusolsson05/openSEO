@@ -45,7 +45,9 @@ export function resolveMediaUrl(path: string | null | undefined): string {
 export function extractDomain(url: string | null | undefined): string {
   if (!url) return ''
   try {
-    return new URL(url).hostname
+    // Prepend protocol if missing so URL constructor can parse it.
+    const normalized = url.includes('://') ? url : `https://${url}`
+    return new URL(normalized).hostname
   } catch {
     return ''
   }
