@@ -10,7 +10,7 @@ permissions:
   id-token: write
 
 env:
-  GHCR_IMAGE: ghcr.io/${{ github.repository }}
+  GHCR_IMAGE: ghcr.io/juliusolsson05/openseo
   DOCKERHUB_IMAGE: ${{ secrets.DOCKERHUB_USERNAME && format('{0}/openseo', secrets.DOCKERHUB_USERNAME) || '' }}
 
 jobs:
