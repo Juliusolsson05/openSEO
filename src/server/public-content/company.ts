@@ -1,5 +1,5 @@
-/** Resolve tenant company id: explicit arg → PUBLIC_CONTENT_COMPANY_ID env → throw. */
-export function resolvePublicCompanyId(explicit?: number | string | null): number {
+/** Resolve tenant company id: explicit arg → PUBLIC_CONTENT_COMPANY_ID env → null. */
+export function resolvePublicCompanyId(explicit?: number | string | null): number | null {
   if (explicit != null && explicit !== '') {
     const n = typeof explicit === 'number' ? explicit : parseInt(explicit, 10)
     if (Number.isInteger(n) && n > 0) return n
@@ -11,8 +11,5 @@ export function resolvePublicCompanyId(explicit?: number | string | null): numbe
     if (Number.isInteger(n) && n > 0) return n
   }
 
-  throw new Error(
-    'resolvePublicCompanyId: no company id available. ' +
-      'Pass an explicit id from request context or set PUBLIC_CONTENT_COMPANY_ID.',
-  )
+  return null
 }

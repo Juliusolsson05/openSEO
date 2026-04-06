@@ -63,6 +63,7 @@ services:
       PORT: 3000
       HOSTNAME: 0.0.0.0
       DISABLE_INLINE_WORKER: ${DISABLE_INLINE_WORKER:-0}
+      PUBLIC_CONTENT_COMPANY_ID: ${PUBLIC_CONTENT_COMPANY_ID:-}
     ports:
       - "${PORT:-4720}:3000"
     volumes:
@@ -96,6 +97,7 @@ services:
       IDEOGRAM: ${IDEOGRAM:-}
       PEXELS: ${PEXELS:-}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:4720}
+      PUBLIC_CONTENT_COMPANY_ID: ${PUBLIC_CONTENT_COMPANY_ID:-}
       SKIP_MIGRATIONS: "1"
     command: ["npm", "run", "worker"]
     volumes:

@@ -31,11 +31,11 @@ function authenticate(req: NextRequest): boolean {
  * Resolve the target tenant for an inbound publish event.
  *
  * Order: `x-company-id` header, then `?company_id=` query, then
- * `PUBLIC_CONTENT_COMPANY_ID` env (via resolvePublicCompanyId). Throws if
+ * `PUBLIC_CONTENT_COMPANY_ID` env (via resolvePublicCompanyId). Returns null if
  * none are provided — we refuse to silently default to company 1, because
  * that caused cross-tenant writes to the public-content tables.
  */
-function resolveInboundCompanyId(req: NextRequest): number {
+function resolveInboundCompanyId(req: NextRequest): number | null {
   const header = req.headers.get('x-company-id')
   if (header) return resolvePublicCompanyId(header)
 
@@ -133,10 +133,8 @@ function toPublicDictionary(payload: Record<string, unknown>): { dict: PublicDic
 export async function POST(req: NextRequest) {
   if (!authenticate(req)) return json({ error: 'Unauthorized' }, 401)
 
-  let companyId: number
-  try {
-    companyId = resolveInboundCompanyId(req)
-  } catch (err) {
+  const companyId = resolveInboundCompanyId(req)
+  if (companyId === null) {
     return json(
       {
         error:

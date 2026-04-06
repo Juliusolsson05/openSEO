@@ -11,6 +11,7 @@ type PageProps = { params: Promise<{ wordId: string }> }
 export default async function SiteDictionaryWordPage({ params }: PageProps) {
   const { wordId } = await params
   const companyId = resolvePublicCompanyId()
+  if (companyId === null) notFound()
   const word = await getWord(companyId, wordId)
 
   if (!word) notFound()

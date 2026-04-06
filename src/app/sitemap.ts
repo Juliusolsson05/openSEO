@@ -13,6 +13,7 @@ async function getComparisonSlugs(): Promise<string[]> {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const companyId = resolvePublicCompanyId()
+  if (companyId === null) return []
   const posts = await getPosts(companyId)
   const dict = await getDictionary(companyId)
   const words = dict?.words ?? []

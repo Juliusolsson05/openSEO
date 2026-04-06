@@ -33,6 +33,7 @@ function TableOfContents({ elements }: { elements: { id: string; element_type: s
 export default async function SiteBlogPostPage({ params }: PageProps) {
   const { slug } = await params
   const companyId = resolvePublicCompanyId()
+  if (companyId === null) notFound()
   const post = await getPost(companyId, slug)
   if (!post) notFound()
 

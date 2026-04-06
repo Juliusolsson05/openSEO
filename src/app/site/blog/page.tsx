@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { ArrowRight } from 'lucide-react'
 import { getPosts } from '@/server/public-content/data'
 import { resolvePublicCompanyId } from '@/server/public-content/company'
@@ -7,6 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function SiteBlogIndex() {
   const companyId = resolvePublicCompanyId()
+  if (companyId === null) notFound()
   const posts = await getPosts(companyId)
   const featured = posts[0]
   const sidebar = posts.slice(1, 4)
