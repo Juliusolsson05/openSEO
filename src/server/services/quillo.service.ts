@@ -6,6 +6,7 @@ import { createFacebookPost } from '@/server/ai/quillo/create-facebook-post'
 import { generateSeoAnalysis } from '@/server/ai/quillo/generate-seo-analysis'
 import { elementService } from '@/server/services/element.service'
 import * as quilloRepository from '@/server/repositories/quillo.repository'
+import * as publishingRepository from '@/server/repositories/publishing.repository'
 import { appendTaskLog, completeTask, createTask, failTask, setTaskRunning } from '@/server/tasks/runtime'
 import { getElementSuggestions } from '@/server/ai/quillo/autopilot/get-element-suggestions'
 import { getParagraphSuggestions } from '@/server/ai/quillo/autopilot/get-paragraph-suggestions'
@@ -532,8 +533,13 @@ export class QuilloService {
     const post = await quilloRepository.findBlogPost(companyId, postId)
     if (!post) throw new NotFoundError('Blog post not found')
 
+    const company = await publishingRepository.findCompany(companyId)
     const elements = JSON.stringify(post.elements.map((e) => e.content))
-    const generated = await createFacebookPost(elements, post.slug)
+    const generated = await createFacebookPost({
+      elements,
+      slug: post.slug,
+      companyUrl: company?.website_url ?? null,
+    })
     return { facebook_post: generated }
   }
 }
