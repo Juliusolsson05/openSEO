@@ -2,6 +2,9 @@ import Link from 'next/link'
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { getAllElementDocs } from '@/components/blog/elements/docs-registry'
+import { CopyToggleBar } from './CopyToggleBar'
+import { buildFullMarkdown } from './PublishingDocsMarkdown'
 
 /* ─── sample payloads ─── */
 
@@ -324,12 +327,29 @@ const definitionFields = [
 /* ─── page ─── */
 
 export default function PublishingApiDocsPage() {
+  const elementDocs = getAllElementDocs()
+  const markdown = buildFullMarkdown(elementDocs, {
+    outboundPost: outboundPostEnvelope,
+    outboundDictionary: outboundDictionaryEnvelope,
+    inboundPostUpsert,
+    inboundPostDelete,
+    inboundDictionaryUpsert,
+    inboundTermUpsert,
+    inboundTermDelete,
+    inboundDictionaryDelete,
+    jobStatus: jobStatusResponse,
+    errorResponse,
+    receiverExample,
+  })
+
   return (
     <div className="space-y-4" style={{ fontSize: 13 }}>
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Publishing API Documentation</h1>
         <Link href="/settings" className="text-sm text-primary hover:underline">Back to settings</Link>
       </div>
+
+      <CopyToggleBar markdown={markdown}>
 
       {/* ─── Table of contents ─── */}
       <Card className="rounded-sm border-border bg-white">
@@ -356,7 +376,9 @@ export default function PublishingApiDocsPage() {
             <li><a href="#receiver" className="text-primary hover:underline">Reference receiver</a></li>
             <li><a href="#versioning" className="text-primary hover:underline">Versioning policy</a></li>
             <li><a href="#troubleshooting" className="text-primary hover:underline">Troubleshooting</a></li>
-            <li><a href="/settings/publishing-api/content-guide" className="text-primary hover:underline">Content Shape & Integration Guide ↗</a></li>
+            <li><a href="#element-catalog" className="text-primary hover:underline">Element content shapes</a></li>
+            <li><a href="#hyperlinks" className="text-primary hover:underline">Dictionary hyperlinks</a></li>
+            <li><a href="#considerations" className="text-primary hover:underline">Integration considerations</a></li>
           </ol>
         </CardContent>
       </Card>
@@ -375,9 +397,6 @@ export default function PublishingApiDocsPage() {
           <p className="text-xs font-medium">Data flow</p>
           <pre className="mt-1 text-xs text-muted-foreground">{`Your system ←── outbound (OpenSEO pushes JSON to your endpoint)
 Your system ──→ inbound  (You POST JSON to OpenSEO's inbound endpoints)`}</pre>
-        </div>
-        <div className="rounded-sm border border-blue-200 bg-blue-50 p-2.5 text-xs text-blue-800">
-          <strong>Content shapes:</strong> For detailed documentation of every element type&apos;s JSON structure, rendering examples, and the dictionary hyperlinking system, see the <Link href="/settings/publishing-api/content-guide" className="font-medium underline">Content Shape & Integration Guide</Link>.
         </div>
       </Section>
 
@@ -754,6 +773,97 @@ Your system ──→ inbound  (You POST JSON to OpenSEO's inbound endpoints)`}<
           </details>
         </div>
       </Section>
+
+      {/* ─── 19. Element content shapes ─── */}
+      <Section id="element-catalog" title="19. Element content shapes" description={`Every element_type and its content JSON shape (${elementDocs.length} types).`}>
+        <p className="text-muted-foreground">
+          When OpenSEO pushes a post, <Code>processed_content.elements[]</Code> contains typed content blocks. Each element has an <Code>element_type</Code> string and a <Code>content</Code> object whose shape depends on the type.
+        </p>
+        {elementDocs.map(({ type, docs }) => (
+          <details key={type} className="rounded-sm border border-border">
+            <summary className="cursor-pointer bg-background px-3 py-2 text-xs font-medium">
+              <Code>{type}</Code> — {docs.description}
+            </summary>
+            <div className="border-t border-border p-3 space-y-3">
+              <div className="overflow-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="pb-1.5 pr-3 font-medium">Field</th>
+                      <th className="pb-1.5 pr-3 font-medium">Type</th>
+                      <th className="pb-1.5 pr-3 font-medium">Req?</th>
+                      <th className="pb-1.5 font-medium">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {docs.fields.map((f) => (
+                      <tr key={f.name} className="border-b border-border/50">
+                        <td className="py-1 pr-3 font-mono">{f.name}</td>
+                        <td className="py-1 pr-3 text-muted-foreground">{f.type}</td>
+                        <td className="py-1 pr-3">{f.required ? <Badge variant="default" className="text-[9px]">yes</Badge> : <span className="text-muted-foreground">no</span>}</td>
+                        <td className="py-1 text-muted-foreground">{f.description}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Json data={docs.example} />
+              {docs.hyperlinkFields && docs.hyperlinkFields.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  <strong>Hyperlink-capable fields:</strong>{' '}
+                  {docs.hyperlinkFields.map((f, i) => (
+                    <span key={f}>{i > 0 && ', '}<Code>{f}</Code></span>
+                  ))}
+                </p>
+              )}
+              {docs.legacyNotes && (
+                <div className="rounded-sm border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
+                  <strong>Legacy note:</strong> {docs.legacyNotes}
+                </div>
+              )}
+            </div>
+          </details>
+        ))}
+      </Section>
+
+      {/* ─── 20. Dictionary hyperlinks ─── */}
+      <Section id="hyperlinks" title="20. Dictionary hyperlinks" description="How OpenSEO links dictionary terms within element content.">
+        <p className="text-muted-foreground">
+          When a company has a dictionary, OpenSEO matches dictionary keywords within post content and stores character-offset-based matches per text field. Each element can have an optional <Code>hyperlink</Code> field containing a <Code>matched_keywords</Code> object.
+        </p>
+        <div>
+          <p className="text-xs font-medium">HyperlinkMatch structure</p>
+          <Json data={{ keyword: 'A/B testing', description: 'A method of comparing...', matched_positions: [[45, 55]] }} />
+          <p className="mt-1 text-xs text-muted-foreground">
+            <Code>matched_positions</Code> is an array of <Code>[start, end)</Code> tuples. Wrap the text from <Code>start</Code> to <Code>end</Code> (exclusive) in a link to <Code>/dictionary/{'{keyword}'}</Code>.
+          </p>
+        </div>
+        <div>
+          <p className="text-xs font-medium">Standard elements — keyed by field name</p>
+          <Json data={{ title: [{ keyword: 'conversion rate', description: '...', matched_positions: [[18, 33]] }], text: [{ keyword: 'A/B testing', description: '...', matched_positions: [[0, 11]] }] }} />
+        </div>
+        <div>
+          <p className="text-xs font-medium">FAQ elements — per-item parallel array</p>
+          <Json data={{ items: [{ question: [{ keyword: 'SEO', description: '...', matched_positions: [[8, 11]] }], answer: [] }] }} />
+        </div>
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
+          <strong>Legacy support:</strong> Older data may lack <Code>matched_positions</Code>. Fall back to simple substring matching if the array is missing.
+        </div>
+      </Section>
+
+      {/* ─── 21. Integration considerations ─── */}
+      <Section id="considerations" title="21. Integration considerations" description="Practical notes for building a robust integration.">
+        <ul className="list-disc space-y-2 pl-5 text-muted-foreground">
+          <li><strong>Element ordering:</strong> Always sort by <Code>order</Code> (ascending, 0-indexed). Do not rely on array position.</li>
+          <li><strong>HTML in text fields:</strong> Text may contain basic HTML (bold, italic, links). Sanitize with DOMPurify before using <Code>dangerouslySetInnerHTML</Code>.</li>
+          <li><strong>Image URL resolution:</strong> Absolute URLs — use as-is. Paths starting with <Code>/</Code> — prefix with API base URL. Bare filenames — prefix with <Code>{'{base_url}/media/'}</Code>.</li>
+          <li><strong>Cover image:</strong> Post-level cover image is at <Code>payload.post.cover_image</Code> — object with <Code>{'{url, description}'}</Code>. Separate from inline <Code>image</Code> elements.</li>
+          <li><strong>Unknown element types:</strong> Render <Code>content.title</Code> + <Code>content.text</Code> as fallback. New types may be added.</li>
+          <li><strong>Elements upsert:</strong> Sending <Code>elements</Code> in inbound post.upsert does a <strong>replace-all</strong>. Omitting leaves them untouched. Send <Code>elements: []</Code> to clear.</li>
+        </ul>
+      </Section>
+
+      </CopyToggleBar>
 
       <div className="pb-8 text-center text-xs text-muted-foreground">
         Contract version: 2026-02-1 · <Link href="/settings" className="text-primary hover:underline">Back to settings</Link>
