@@ -5,6 +5,7 @@ import { NumberedListParagraphLoading } from './NumberedListParagraphLoading'
 import Icon from './Icon'
 import { numberedListParagraphEditSchema } from './edit_schema'
 import { numberedListParagraphExample } from './example'
+import { numberedListParagraphDocs } from './docs'
 
 export { NumberedListParagraph } from './NumberedListParagraph'
 export { NumberedListParagraphPreview } from './NumberedListParagraphPreview'
@@ -19,4 +20,5 @@ registerElement('numbered_list_paragraph', {
   icon: Icon,
   editSchema: numberedListParagraphEditSchema,
   example: numberedListParagraphExample,
+  docs: numberedListParagraphDocs,
 })

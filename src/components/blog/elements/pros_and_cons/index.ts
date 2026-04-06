@@ -5,6 +5,7 @@ import { ProsAndConsLoading } from './ProsAndConsLoading'
 import Icon from './Icon'
 import { prosAndConsEditSchema } from './edit_schema'
 import { prosAndConsExample } from './example'
+import { prosAndConsDocs } from './docs'
 
 registerElement('pros_and_cons', {
   component: ProsAndCons,
@@ -13,6 +14,7 @@ registerElement('pros_and_cons', {
   icon: Icon,
   editSchema: prosAndConsEditSchema,
   example: prosAndConsExample,
+  docs: prosAndConsDocs,
 })
 
 export { ProsAndCons }

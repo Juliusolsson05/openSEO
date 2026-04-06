@@ -4,6 +4,7 @@ import { CallToActionPreview } from './CallToActionPreview'
 import { CallToActionLoading } from './CallToActionLoading'
 import Icon from './Icon'
 import { callToActionExample } from './example'
+import { callToActionDocs } from './docs'
 
 export { CallToAction } from './CallToAction'
 export { CallToActionPreview } from './CallToActionPreview'
@@ -16,6 +17,7 @@ const config = {
   loading: CallToActionLoading,
   icon: Icon,
   example: callToActionExample,
+  docs: callToActionDocs,
 }
 
 registerElement('call_to_action', config)

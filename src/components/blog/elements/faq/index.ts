@@ -5,6 +5,7 @@ import { FAQLoading } from './FAQLoading'
 import Icon from './Icon'
 import { faqEditSchema } from './edit_schema'
 import { faqExample } from './example'
+import { faqDocs } from './docs'
 
 registerElement('faq', {
   component: FAQ,
@@ -13,6 +14,7 @@ registerElement('faq', {
   icon: Icon,
   editSchema: faqEditSchema,
   example: faqExample,
+  docs: faqDocs,
 })
 
 export { FAQ, FAQPreview, FAQLoading, faqEditSchema, faqExample }

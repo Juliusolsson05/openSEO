@@ -356,6 +356,7 @@ export default function PublishingApiDocsPage() {
             <li><a href="#receiver" className="text-primary hover:underline">Reference receiver</a></li>
             <li><a href="#versioning" className="text-primary hover:underline">Versioning policy</a></li>
             <li><a href="#troubleshooting" className="text-primary hover:underline">Troubleshooting</a></li>
+            <li><a href="/settings/publishing-api/content-guide" className="text-primary hover:underline">Content Shape & Integration Guide ↗</a></li>
           </ol>
         </CardContent>
       </Card>
@@ -374,6 +375,9 @@ export default function PublishingApiDocsPage() {
           <p className="text-xs font-medium">Data flow</p>
           <pre className="mt-1 text-xs text-muted-foreground">{`Your system ←── outbound (OpenSEO pushes JSON to your endpoint)
 Your system ──→ inbound  (You POST JSON to OpenSEO's inbound endpoints)`}</pre>
+        </div>
+        <div className="rounded-sm border border-blue-200 bg-blue-50 p-2.5 text-xs text-blue-800">
+          <strong>Content shapes:</strong> For detailed documentation of every element type&apos;s JSON structure, rendering examples, and the dictionary hyperlinking system, see the <Link href="/settings/publishing-api/content-guide" className="font-medium underline">Content Shape & Integration Guide</Link>.
         </div>
       </Section>
 

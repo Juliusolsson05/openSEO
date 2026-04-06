@@ -5,6 +5,7 @@ import { BarChartLoading } from './BarChartLoading'
 import Icon from './Icon'
 import { barChartEditSchema } from './edit_schema'
 import { barChartExample } from './example'
+import { barChartDocs } from './docs'
 
 export { BarChart } from './BarChart'
 export { BarChartPreview } from './BarChartPreview'
@@ -19,4 +20,5 @@ registerElement('bar_chart', {
   icon: Icon,
   editSchema: barChartEditSchema,
   example: barChartExample,
+  docs: barChartDocs,
 })

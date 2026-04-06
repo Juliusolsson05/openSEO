@@ -5,6 +5,7 @@ import { QuoteLoading } from './QuoteLoading'
 import Icon from './Icon'
 import { quoteEditSchema } from './edit_schema'
 import { quoteExample } from './example'
+import { quoteDocs } from './docs'
 
 export { Quote } from './Quote'
 export { QuotePreview } from './QuotePreview'
@@ -19,4 +20,5 @@ registerElement('quote', {
   icon: Icon,
   editSchema: quoteEditSchema,
   example: quoteExample,
+  docs: quoteDocs,
 })

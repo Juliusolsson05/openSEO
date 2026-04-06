@@ -4,6 +4,7 @@ import { ChecklistPreview } from './ChecklistPreview'
 import { ChecklistLoading } from './ChecklistLoading'
 import Icon from './Icon'
 import { checklistExample } from './example'
+import { checklistDocs } from './docs'
 
 registerElement('checklist', {
   component: Checklist,
@@ -11,6 +12,7 @@ registerElement('checklist', {
   loading: ChecklistLoading,
   icon: Icon,
   example: checklistExample,
+  docs: checklistDocs,
 })
 
 export { Checklist }

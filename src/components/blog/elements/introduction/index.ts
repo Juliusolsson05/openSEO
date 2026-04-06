@@ -5,6 +5,7 @@ import { IntroductionLoading } from './IntroductionLoading'
 import Icon from './Icon'
 import { introductionEditSchema } from './edit_schema'
 import { introductionExample } from './example'
+import { introductionDocs } from './docs'
 
 export { Introduction } from './Introduction'
 export { IntroductionPreview } from './IntroductionPreview'
@@ -19,4 +20,5 @@ registerElement('introduction', {
   icon: Icon,
   editSchema: introductionEditSchema,
   example: introductionExample,
+  docs: introductionDocs,
 })

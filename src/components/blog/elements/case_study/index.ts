@@ -5,6 +5,7 @@ import { CaseStudyLoading } from './CaseStudyLoading'
 import Icon from './Icon'
 import { caseStudyEditSchema } from './edit_schema'
 import { caseStudyExample } from './example'
+import { caseStudyDocs } from './docs'
 
 registerElement('case_study', {
   component: CaseStudy,
@@ -13,6 +14,7 @@ registerElement('case_study', {
   icon: Icon,
   editSchema: caseStudyEditSchema,
   example: caseStudyExample,
+  docs: caseStudyDocs,
 })
 
 export { CaseStudy }

@@ -4,6 +4,7 @@ import { GlossaryPreview } from './GlossaryPreview'
 import { GlossaryLoading } from './GlossaryLoading'
 import { glossaryEditSchema } from './edit_schema'
 import { glossaryExample } from './example'
+import { glossaryDocs } from './docs'
 import GlossaryIcon from './Icon'
 
 registerElement('glossary', {
@@ -12,6 +13,7 @@ registerElement('glossary', {
   loading: GlossaryLoading,
   editSchema: glossaryEditSchema,
   example: glossaryExample,
+  docs: glossaryDocs,
   icon: GlossaryIcon,
 })
 

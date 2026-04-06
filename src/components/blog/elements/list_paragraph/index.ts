@@ -5,6 +5,7 @@ import { ListParagraphLoading } from './ListParagraphLoading'
 import Icon from './Icon'
 import { listParagraphEditSchema } from './edit_schema'
 import { listParagraphExample } from './example'
+import { listParagraphDocs } from './docs'
 
 registerElement('list_paragraph', {
   component: ListParagraph,
@@ -13,6 +14,7 @@ registerElement('list_paragraph', {
   icon: Icon,
   editSchema: listParagraphEditSchema,
   example: listParagraphExample,
+  docs: listParagraphDocs,
 })
 
 export { ListParagraph }

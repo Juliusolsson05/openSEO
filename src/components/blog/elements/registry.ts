@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import type { ElementType, EditSchema } from './types'
+import type { ElementDocs } from './docs-types'
 import { DefaultComponent, DefaultLoading, DefaultPreview } from './DefaultComponent'
 
 // Component props that every element receives
@@ -44,6 +45,7 @@ const loadingRegistry: Partial<Record<ElementType, ComponentType>> = {}
 const editSchemaRegistry: Partial<Record<ElementType, EditSchema>> = {}
 const exampleRegistry: Partial<Record<ElementType, any>> = {}
 const iconRegistry: Partial<Record<ElementType, ComponentType<{ width?: number | string; height?: number | string; className?: string }>>> = {}
+const docsRegistry: Partial<Record<ElementType, ElementDocs>> = {}
 
 // ─── Registration functions (used by each element module) ────────────
 
@@ -56,6 +58,7 @@ export function registerElement(
     editSchema?: EditSchema
     example?: any
     icon?: ComponentType<{ width?: number | string; height?: number | string; className?: string }>
+    docs?: ElementDocs
   }
 ) {
   componentRegistry[type] = config.component
@@ -64,6 +67,7 @@ export function registerElement(
   if (config.editSchema) editSchemaRegistry[type] = config.editSchema
   if (config.example) exampleRegistry[type] = config.example
   if (config.icon) iconRegistry[type] = config.icon
+  if (config.docs) docsRegistry[type] = config.docs
 }
 
 // ─── Lookup functions ────────────────────────────────────────────────
@@ -96,6 +100,10 @@ export function getExample(type: ElementType): any | null {
 
 export function getIcon(type: ElementType): ComponentType<{ width?: number | string; height?: number | string; className?: string }> | null {
   return iconRegistry[normalize(type)] || null
+}
+
+export function getDocsRegistry(): Partial<Record<ElementType, ElementDocs>> {
+  return docsRegistry
 }
 
 // ─── Element renderer helper ─────────────────────────────────────────

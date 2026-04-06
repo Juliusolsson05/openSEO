@@ -5,6 +5,7 @@ import { ImageLoading } from './ImageLoading'
 import Icon from './Icon'
 import { imageEditSchema } from './edit_schema'
 import { imageExample } from './example'
+import { imageDocs } from './docs'
 
 export { ImageElement } from './ImageElement'
 export { ImagePreview } from './ImagePreview'
@@ -19,4 +20,5 @@ registerElement('image', {
   icon: Icon,
   editSchema: imageEditSchema,
   example: imageExample,
+  docs: imageDocs,
 })

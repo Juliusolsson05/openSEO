@@ -5,6 +5,7 @@ import { TimelineLoading } from './TimelineLoading'
 import Icon from './Icon'
 import { timelineEditSchema } from './edit_schema'
 import { timelineExample } from './example'
+import { timelineDocs } from './docs'
 
 export { Timeline } from './Timeline'
 export { TimelinePreview } from './TimelinePreview'
@@ -19,4 +20,5 @@ registerElement('timeline', {
   icon: Icon,
   editSchema: timelineEditSchema,
   example: timelineExample,
+  docs: timelineDocs,
 })

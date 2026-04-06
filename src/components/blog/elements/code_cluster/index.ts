@@ -4,6 +4,7 @@ import { CodeClusterPreview } from './CodeClusterPreview'
 import { CodeClusterLoading } from './CodeClusterLoading'
 import Icon from './Icon'
 import { codeClusterExample } from './example'
+import { codeClusterDocs } from './docs'
 
 export { CodeCluster } from './CodeCluster'
 export { CodeClusterPreview } from './CodeClusterPreview'
@@ -16,4 +17,5 @@ registerElement('code_cluster', {
   loading: CodeClusterLoading,
   icon: Icon,
   example: codeClusterExample,
+  docs: codeClusterDocs,
 })

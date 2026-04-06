@@ -5,6 +5,7 @@ import { ConclusionLoading } from './ConclusionLoading'
 import Icon from './Icon'
 import { conclusionEditSchema } from './edit_schema'
 import { conclusionExample } from './example'
+import { conclusionDocs } from './docs'
 
 export { Conclusion } from './Conclusion'
 export { ConclusionPreview } from './ConclusionPreview'
@@ -19,4 +20,5 @@ registerElement('conclusion', {
   icon: Icon,
   editSchema: conclusionEditSchema,
   example: conclusionExample,
+  docs: conclusionDocs,
 })

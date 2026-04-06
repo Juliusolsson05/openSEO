@@ -5,6 +5,7 @@ import { SnippetBlockLoading } from './SnippetBlockLoading'
 import Icon from './Icon'
 import { snippetBlockEditSchema } from './edit_schema'
 import { snippetBlockExample } from './example'
+import { snippetBlockDocs } from './docs'
 
 export { SnippetBlock } from './SnippetBlock'
 export { SnippetBlockPreview } from './SnippetBlockPreview'
@@ -19,4 +20,5 @@ registerElement('featured_snippet_block', {
   icon: Icon,
   editSchema: snippetBlockEditSchema,
   example: snippetBlockExample,
+  docs: snippetBlockDocs,
 })

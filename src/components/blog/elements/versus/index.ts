@@ -5,6 +5,7 @@ import { VersusLoading } from './VersusLoading'
 import Icon from './Icon'
 import { versusEditSchema } from './edit_schema'
 import { versusExample } from './example'
+import { versusDocs } from './docs'
 
 registerElement('versus', {
   component: Versus,
@@ -13,6 +14,7 @@ registerElement('versus', {
   icon: Icon,
   editSchema: versusEditSchema,
   example: versusExample,
+  docs: versusDocs,
 })
 
 export { Versus, VersusPreview, VersusLoading, versusEditSchema, versusExample }

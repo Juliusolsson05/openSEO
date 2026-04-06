@@ -5,6 +5,7 @@ import { ParagraphLoading } from './ParagraphLoading'
 import Icon from './Icon'
 import { paragraphEditSchema } from './edit_schema'
 import { paragraphExample } from './example'
+import { paragraphDocs } from './docs'
 
 registerElement('paragraph', {
   component: Paragraph,
@@ -13,6 +14,7 @@ registerElement('paragraph', {
   icon: Icon,
   editSchema: paragraphEditSchema,
   example: paragraphExample,
+  docs: paragraphDocs,
 })
 
 export { Paragraph, ParagraphPreview, ParagraphLoading, paragraphEditSchema, paragraphExample }

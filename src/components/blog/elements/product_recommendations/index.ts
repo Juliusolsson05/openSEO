@@ -5,6 +5,7 @@ import { ProductRecommendationsLoading } from './ProductRecommendationsLoading'
 import Icon from './Icon'
 import { productRecommendationsEditSchema } from './edit_schema'
 import { productRecommendationsExample } from './example'
+import { productRecommendationsDocs } from './docs'
 
 export { ProductRecommendations } from './ProductRecommendations'
 export { ProductRecommendationsPreview } from './ProductRecommendationsPreview'
@@ -19,4 +20,5 @@ registerElement('product_recommendations', {
   icon: Icon,
   editSchema: productRecommendationsEditSchema,
   example: productRecommendationsExample,
+  docs: productRecommendationsDocs,
 })

@@ -5,6 +5,7 @@ import { ToolRecommendationLoading } from './ToolRecommendationLoading'
 import Icon from './Icon'
 import { toolRecommendationEditSchema } from './edit_schema'
 import { toolRecommendationExample } from './example'
+import { toolRecommendationDocs } from './docs'
 
 registerElement('tool_recommendation', {
   component: ToolRecommendation,
@@ -13,6 +14,7 @@ registerElement('tool_recommendation', {
   icon: Icon,
   editSchema: toolRecommendationEditSchema,
   example: toolRecommendationExample,
+  docs: toolRecommendationDocs,
 })
 
 export { ToolRecommendation }

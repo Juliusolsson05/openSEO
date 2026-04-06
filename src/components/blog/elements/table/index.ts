@@ -5,6 +5,7 @@ import { TableLoading } from './TableLoading'
 import Icon from './Icon'
 import { tableEditSchema } from './edit_schema'
 import { tableExample } from './example'
+import { tableDocs } from './docs'
 
 export { Table } from './Table'
 export { TablePreview } from './TablePreview'
@@ -19,4 +20,5 @@ registerElement('table', {
   icon: Icon,
   editSchema: tableEditSchema,
   example: tableExample,
+  docs: tableDocs,
 })
