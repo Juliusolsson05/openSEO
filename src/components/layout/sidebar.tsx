@@ -29,6 +29,7 @@ interface NavItem {
   icon: React.ElementType
   tourId?: string
   children?: NavItem[]
+  requiresAdmin?: boolean
 }
 
 interface NavSection {
@@ -130,18 +131,24 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto py-3">
-        {navigation.map((section, i) => (
-          <div key={i} className="mb-1">
-            {section.heading && (
-              <p className="px-4 pt-3 pb-1 text-[11px] font-semibold tracking-[0.08em] text-sidebar-foreground/40">
-                {section.heading}
-              </p>
-            )}
-            {section.items.map((item) => (
-              <NavLink key={item.href} item={item} pathname={pathname} />
-            ))}
-          </div>
-        ))}
+        {navigation.map((section, i) => {
+          const visibleItems = section.items.filter(
+            (item) => !item.requiresAdmin || isAdmin,
+          )
+          if (visibleItems.length === 0) return null
+          return (
+            <div key={i} className="mb-1">
+              {section.heading && (
+                <p className="px-4 pt-3 pb-1 text-[11px] font-semibold tracking-[0.08em] text-sidebar-foreground/40">
+                  {section.heading}
+                </p>
+              )}
+              {visibleItems.map((item) => (
+                <NavLink key={item.href} item={item} pathname={pathname} />
+              ))}
+            </div>
+          )
+        })}
 
         {isAdmin ? (
           <div className="mb-1">

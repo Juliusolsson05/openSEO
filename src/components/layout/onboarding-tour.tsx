@@ -74,23 +74,32 @@ export function OnboardingTour({ userId, enabled, onFinish }: Props) {
     }
 
     let cancelled = false
+    const deadline = Date.now() + 10_000 // 10s max wait for targets
 
     const checkTargets = () => {
+      if (cancelled) return
+
       const allReady = STEPS.every((step) => {
         if (typeof step.target !== 'string') return false
         return !!document.querySelector(step.target)
       })
 
-      if (cancelled) return
-
       if (allReady) {
         setTargetsReady(true)
         setStepIndex(0)
         setRun(true)
-      } else {
-        setTargetsReady(false)
-        window.setTimeout(checkTargets, 100)
+        return
       }
+
+      if (Date.now() >= deadline) {
+        // Targets never appeared on this route — silently cancel the tour for this page.
+        setTargetsReady(false)
+        setRun(false)
+        return
+      }
+
+      setTargetsReady(false)
+      window.setTimeout(checkTargets, 100)
     }
 
     window.setTimeout(checkTargets, 0)

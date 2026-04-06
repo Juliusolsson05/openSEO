@@ -150,6 +150,11 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
 
   // ─── Notifications ─────────────────────────────────────────────────────────
   const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [lastSeenAt, setLastSeenAt] = useState<number>(() => {
+    if (typeof window === 'undefined') return 0
+    const raw = localStorage.getItem(LAST_SEEN_KEY)
+    return raw ? new Date(raw).getTime() : 0
+  })
 
   const { data: notifications = [] } = useNotificationsQuery()
 
@@ -193,12 +198,11 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
     [groupedSearchResults]
   )
 
-  const unreadCount = useMemo(() => {
-    const lastSeenAtRaw =
-      typeof window !== 'undefined' ? localStorage.getItem(LAST_SEEN_KEY) : null
-    const lastSeenAt = lastSeenAtRaw ? new Date(lastSeenAtRaw).getTime() : 0
-    return notifications.filter((n) => new Date(n.createdAt).getTime() > lastSeenAt).length
-  }, [notifications])
+  const unreadCount = useMemo(
+    () =>
+      notifications.filter((n) => new Date(n.createdAt).getTime() > lastSeenAt).length,
+    [notifications, lastSeenAt],
+  )
 
   const handleSearchEnter = () => {
     const trimmed = query.trim()
@@ -220,7 +224,9 @@ export function Topbar({ onStartTour }: { onStartTour?: () => void }) {
   const openNotifications = () => {
     setNotificationsOpen((prev) => !prev)
     if (!notificationsOpen) {
-      localStorage.setItem(LAST_SEEN_KEY, new Date().toISOString())
+      const now = new Date()
+      localStorage.setItem(LAST_SEEN_KEY, now.toISOString())
+      setLastSeenAt(now.getTime())
     }
   }
 

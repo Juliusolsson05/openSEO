@@ -21,11 +21,15 @@ import {
   GENERATION_ELEMENT_OPTIONS,
   MODEL_OPTIONS,
 } from '@/lib/constants/generation'
+import { useAppSelector } from '@/store/hooks'
+import { USER_TYPES } from '@/types/auth'
 
 const pretty = (value: string) =>
   value.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
 
 export default function SettingsPage() {
+  const userData = useAppSelector((s) => s.auth.userData)
+  const isAdmin = userData?.userType === USER_TYPES.Administrator
   const { data: savedSettings, isLoading: isLoadingGeneration } = useGenerationSettingsQuery()
   const updateGeneration = useUpdateGenerationSettingsMutation()
   const { data: inboundKeys = [] } = useApiKeysQuery()
@@ -71,9 +75,11 @@ export default function SettingsPage() {
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-semibold">Settings</h1>
         <div className="flex items-center gap-4 text-sm">
-          <Link href="/settings/integrations" className="text-primary hover:underline">
-            Manage integrations
-          </Link>
+          {isAdmin ? (
+            <Link href="/settings/integrations" className="text-primary hover:underline">
+              Manage integrations
+            </Link>
+          ) : null}
           <Link href="/settings/publishing-api" className="text-primary hover:underline">
             View Publishing API docs
           </Link>

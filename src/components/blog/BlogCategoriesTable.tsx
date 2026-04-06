@@ -110,8 +110,10 @@ export default function BlogCategoriesTable() {
     deleteSelected: bulkDeleteMutation.isPending,
     add: createCategoryMutation.isPending,
     edit: updateCategoryMutation.isPending,
-    deleteOneId: 0,
-  }
+    deleteOneId: deleteCategoryMutation.isPending
+      ? deleteCategoryMutation.variables
+      : undefined,
+  } as const
 
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [addOpen, setAddOpen] = useState(false)
@@ -186,6 +188,7 @@ export default function BlogCategoriesTable() {
   const deleteOne = async (id: number) => {
     try {
       await deleteCategoryMutation.mutateAsync(id)
+      setSelectedIds((prev) => prev.filter((selectedId) => selectedId !== id))
     } catch {
     }
   }
