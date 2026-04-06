@@ -42,6 +42,7 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.ts ./
 COPY --from=builder /app/instrumentation.ts ./
+COPY --from=builder /app/tsconfig.json ./
 # Copy source for standalone worker (tsx runs TypeScript directly)
 COPY --from=builder /app/src ./src
 
