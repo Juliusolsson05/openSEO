@@ -1,5 +1,5 @@
-import { getOpenAIClient, MODELS } from '@/server/ai/clients';
-import { parseJsonResponse } from '@/server/ai/utils';
+import { MODELS } from '@/server/ai/clients';
+import { callModel } from '@/server/ai/providers';
 
 export async function generateTitles(
   industry: string,
@@ -40,29 +40,26 @@ Rules for good titles:
     requiredKeys.push(key);
   }
 
-  const response = await (await getOpenAIClient()).chat.completions.create({
+  const { json } = await callModel<Record<string, unknown>>({
     model: MODELS.OPENAI_DEFAULT,
+    system: systemMessage,
     messages: [
-      { role: 'system', content: systemMessage },
       {
         role: 'user',
         content: `Generate ${numTitles} blog titles for the industry: ${industry}.`,
       },
     ],
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
-        name: 'generate_blog_titles',
-        strict: true,
-        schema: {
-          type: 'object',
-          properties: titleProperties,
-          required: requiredKeys,
-          additionalProperties: false,
-        },
+    jsonSchema: {
+      name: 'generate_blog_titles',
+      schema: {
+        type: 'object',
+        properties: titleProperties,
+        required: requiredKeys,
+        additionalProperties: false,
       },
     },
   });
 
-  return parseJsonResponse(response);
+  if (!json) throw new Error('generate-titles: no JSON returned from model');
+  return json;
 }

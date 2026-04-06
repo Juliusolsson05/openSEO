@@ -1,5 +1,5 @@
-import { getOpenAIClient, MODELS } from '@/server/ai/clients';
-import { parseJsonResponse } from '@/server/ai/utils';
+import { MODELS } from '@/server/ai/clients';
+import { callModel } from '@/server/ai/providers';
 
 export async function generateCategories(
   titles: string[],
@@ -14,35 +14,30 @@ export async function generateCategories(
 
   if (additionalPrompt) systemMessage = `${additionalPrompt}\n\n${systemMessage}`;
 
-  const response = await (await getOpenAIClient()).chat.completions.create({
+  const { json } = await callModel<{ categories?: string[] }>({
     model: MODELS.OPENAI_SMART,
+    system: systemMessage,
     messages: [
-      { role: 'system', content: systemMessage },
       {
         role: 'user',
         content: `Based on the following titles, generate a list of at least ${minCategories} categories. Provide the categories in ${language}:\n${JSON.stringify(titlesList)}`,
       },
     ],
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
-        name: 'generate_categories',
-        strict: true,
-        schema: {
-          type: 'object',
-          properties: {
-            categories: {
-              type: 'array',
-              items: { type: 'string', description: 'A relevant category generated from the titles' },
-            },
+    jsonSchema: {
+      name: 'generate_categories',
+      schema: {
+        type: 'object',
+        properties: {
+          categories: {
+            type: 'array',
+            items: { type: 'string', description: 'A relevant category generated from the titles' },
           },
-          required: ['categories'],
-          additionalProperties: false,
         },
+        required: ['categories'],
+        additionalProperties: false,
       },
     },
   });
 
-  const json = parseJsonResponse<{ categories?: string[] }>(response);
-  return json.categories ?? [];
+  return json?.categories ?? [];
 }

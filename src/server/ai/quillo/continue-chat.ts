@@ -1,4 +1,5 @@
-import { getAnthropicClient, getOpenAIClient, MODELS } from '../clients';
+import { MODELS } from '../clients';
+import { callModel, type ChatMessage as ProviderMessage } from '../providers';
 
 import type { ChatMessage } from '@/types/quillo';
 
@@ -9,34 +10,24 @@ export async function continueChat(messages: ChatMessage[], userQuestion: string
       content: `The user has provided the following question, if the question is something that is not related to the blog post, refuse to answer it, but if the qusetion is related to the blog post you should not say that, then just go on as normal: ${userQuestion}`,
     });
 
-    const response = await (await getOpenAIClient()).chat.completions.create({
+    // Extract the first system message for the provider's system field.
+    const systemMsg = messages.find((m) => m.role === 'system')?.content;
+    const nonSystem: ProviderMessage[] = messages
+      .filter((m) => m.role !== 'system')
+      .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+
+    const { text, raw } = await callModel({
       model: MODELS.OPENAI_DEFAULT,
-      messages,
+      system: systemMsg,
+      messages: nonSystem,
     });
 
-    const message = response.choices[0]?.message;
-    let newAnalysisResult: unknown;
-
-    if (message?.function_call) {
-      try {
-        newAnalysisResult = JSON.parse(message.function_call.arguments);
-      } catch (jsonError) {
-        const content = message.content ?? '';
-        newAnalysisResult = {
-          error: 'Failed to parse API response',
-          details: jsonError instanceof Error ? jsonError.message : String(jsonError),
-          raw_content: content.slice(0, 1000),
-        };
-      }
-    } else {
-      newAnalysisResult = message?.content ?? '';
-    }
-
-    messages.push({ role: 'assistant', content: message?.content ?? '' });
+    const newAnalysisResult: unknown = text ?? '';
+    messages.push({ role: 'assistant', content: text ?? '' });
 
     return {
       new_analysis_result: newAnalysisResult,
-      raw_response: response,
+      raw_response: raw,
       messages,
     };
   } catch (error) {
@@ -47,5 +38,3 @@ export async function continueChat(messages: ChatMessage[], userQuestion: string
     };
   }
 }
-
-void getAnthropicClient;

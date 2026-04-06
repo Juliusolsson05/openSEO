@@ -1,5 +1,6 @@
-import { getAnthropicClient, MODELS } from '@/server/ai/clients'
+import { MODELS } from '@/server/ai/clients'
 import { BLOCK_SCHEMAS } from '@/server/ai/constants/block-schemas'
+import { callModel, type ChatMessage } from '@/server/ai/providers'
 
 export async function improveLanguage(
   elementType: string,
@@ -32,35 +33,32 @@ ${JSON.stringify(schema, null, 2)}`
     'Add formatting: <strong> for 2-3 key concepts per text block, <em> for 1-2 emphasis points, <br><br> between distinct ideas. Use sparingly.',
   ]
 
-  const msg = (text: string) => ({ role: 'user' as const, content: [{ type: 'text' as const, text }] })
-
-  const client = await getAnthropicClient()
-  const messages: Array<{ role: 'user' | 'assistant'; content: Array<{ type: 'text'; text: string }> }> = [
-    msg(JSON.stringify(originalJsonContent)),
+  const messages: ChatMessage[] = [
+    { role: 'user', content: JSON.stringify(originalJsonContent) },
   ]
 
-  let response = await client.messages.create({
+  let result = await callModel({
     model: MODELS.ANTHROPIC_DEFAULT,
-    max_tokens: 1000,
-    temperature: 0.5,
     system: systemPrompt,
     messages,
+    temperature: 0.5,
+    maxTokens: 1000,
   })
 
-  let current = response.content[0]?.type === 'text' ? response.content[0].text : '{}'
-  messages.push({ role: 'assistant', content: [{ type: 'text', text: current }] })
+  let current = result.text || '{}'
+  messages.push({ role: 'assistant', content: current })
 
   for (const feedback of feedbackSteps) {
-    messages.push(msg(feedback));
-    response = await client.messages.create({
+    messages.push({ role: 'user', content: feedback })
+    result = await callModel({
       model: MODELS.ANTHROPIC_DEFAULT,
-      max_tokens: 1000,
-      temperature: 0.5,
       system: systemPrompt,
       messages,
+      temperature: 0.5,
+      maxTokens: 1000,
     })
-    current = response.content[0]?.type === 'text' ? response.content[0].text : current
-    messages.push({ role: 'assistant', content: [{ type: 'text', text: current }] })
+    current = result.text || current
+    messages.push({ role: 'assistant', content: current })
   }
 
   // Strip markdown code fences if present (```json ... ```)

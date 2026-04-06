@@ -1,33 +1,3 @@
-import OpenAI from 'openai'
-
-export function parseToolArguments(response: OpenAI.Chat.Completions.ChatCompletion): string {
-  const message = response.choices[0]?.message
-  const toolCall = message?.tool_calls?.[0] as { function?: { arguments?: string } } | undefined
-  const toolArgs = toolCall?.function?.arguments
-  if (toolArgs) return toolArgs
-  return message?.content ?? '{}'
-}
-
-/**
- * Parse the JSON content from a response that used `response_format: json_schema`.
- * Returns the parsed object, or throws if the model refused or content is missing.
- */
-export function parseJsonResponse<T = unknown>(response: OpenAI.Chat.Completions.ChatCompletion): T {
-  const message = response.choices[0]?.message
-  const finishReason = response.choices[0]?.finish_reason
-  if (message?.refusal) {
-    throw new Error(`Model refused to respond: ${message.refusal}`)
-  }
-  if (finishReason === 'length') {
-    throw new Error('Generation hit token limit — response was cut off. Try a simpler element or shorter context.')
-  }
-  const content = message?.content
-  if (!content) {
-    throw new Error(`No content in response (finish_reason: ${finishReason})`)
-  }
-  return JSON.parse(content) as T
-}
-
 /**
  * Make a JSON schema compatible with OpenAI strict structured outputs.
  * - Adds `additionalProperties: false` to every object

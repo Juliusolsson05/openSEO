@@ -57,4 +57,5 @@ export const MODEL_OPTIONS: string[] = [
   'gpt-5-mini',
   'gpt-5.2',
   'claude-sonnet-4-5-20250929',
+  'gemini-2.5-pro',
 ]

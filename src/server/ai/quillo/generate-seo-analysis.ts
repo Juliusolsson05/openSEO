@@ -1,25 +1,17 @@
-import { getAnthropicClient, getOpenAIClient, MODELS } from '../clients';
+import { MODELS } from '../clients';
+import { callModel } from '../providers';
 
 export async function generateSeoAnalysis(analyticsData: unknown) {
   const analyticsJson = JSON.stringify(analyticsData);
-  const messages = [
-    {
-      role: 'system' as const,
-      content: "You are responsible for analyzing a company's SEO profile. You should provide clear and understandable English explanations about the company's SEO performance and recommend focus keywords.",
-    },
-    { role: 'user' as const, content: analyticsJson },
-  ];
 
-  const response = await (await getOpenAIClient()).chat.completions.create({
-    model: MODELS.OPENAI_DEFAULT,
-    messages,
-    temperature: 1,
-    top_p: 1,
-    frequency_penalty: 0,
-    presence_penalty: 0,
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
+  try {
+    const { json } = await callModel<Record<string, unknown>>({
+      model: MODELS.OPENAI_DEFAULT,
+      system:
+        "You are responsible for analyzing a company's SEO profile. You should provide clear and understandable English explanations about the company's SEO performance and recommend focus keywords.",
+      messages: [{ role: 'user', content: analyticsJson }],
+      temperature: 1,
+      jsonSchema: {
         name: 'seo_profile_analysis',
         strict: false,
         schema: {
@@ -47,19 +39,13 @@ export async function generateSeoAnalysis(analyticsData: unknown) {
           additionalProperties: false,
         },
       },
-    },
-  });
+    });
 
-  try {
-    return JSON.parse(response.choices[0]?.message.content ?? '{}');
+    return json ?? {};
   } catch (jsonError) {
-    const content = response.choices[0]?.message.content ?? '';
     return {
       error: 'Failed to parse API response',
       details: jsonError instanceof Error ? jsonError.message : String(jsonError),
-      raw_content: content.slice(0, 1000),
     };
   }
 }
-
-void getAnthropicClient;

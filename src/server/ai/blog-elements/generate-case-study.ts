@@ -1,7 +1,7 @@
-import { getOpenAIClient, MODELS } from '@/server/ai/clients';
-import { parseJsonResponse } from '@/server/ai/utils';
+import { MODELS } from '@/server/ai/clients';
 import { fetchLogoUrl } from '@/server/ai/blog-elements/fetch-logo-url';
 import { uploadToCloudinary } from '@/server/ai/blog-elements/upload-to-cloudinary';
+import { callModel } from '@/server/ai/providers';
 
 export async function generateCaseStudy(blogTitle: string, focusKeyword: string): Promise<Record<string, unknown>> {
   const caseStudySchema = {
@@ -49,12 +49,9 @@ export async function generateCaseStudy(blogTitle: string, focusKeyword: string)
     additionalProperties: false,
   };
 
-  const response = await (await getOpenAIClient()).chat.completions.create({
+  const { json } = await callModel<any>({
     model: MODELS.OPENAI_DEFAULT,
-    messages: [
-      {
-        role: 'system',
-        content: `You are a case study writer. Generate a case study featuring a well-known, verifiable company that is relevant to the blog topic.
+    system: `You are a case study writer. Generate a case study featuring a well-known, verifiable company that is relevant to the blog topic.
 
 Requirements:
 - Use a REAL company that readers would recognize — e.g. Slack, HubSpot, Shopify, Stripe, Notion, Airbnb, etc.
@@ -63,32 +60,29 @@ Requirements:
 - The testimonial should sound natural, not corporate. Use a real executive name and title if possible.
 - Match the header color to the company's actual brand colors.
 - Do not use placeholder names like "XYZ Corp" or "Acme Inc."`,
-      },
+    messages: [
       { role: 'user', content: `Blog Title: ${blogTitle}\nFocus Keyword: ${focusKeyword}\n\nGenerate a relevant case study for this topic.` },
     ],
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
-        name: 'generate_case_study',
-        strict: true,
-        schema: {
-          type: 'object',
-          properties: {
-            block: {
-              type: 'object',
-              properties: { content: caseStudySchema },
-              required: ['content'],
-              additionalProperties: false,
-            },
+    jsonSchema: {
+      name: 'generate_case_study',
+      schema: {
+        type: 'object',
+        properties: {
+          block: {
+            type: 'object',
+            properties: { content: caseStudySchema },
+            required: ['content'],
+            additionalProperties: false,
           },
-          required: ['block'],
-          additionalProperties: false,
         },
+        required: ['block'],
+        additionalProperties: false,
       },
     },
   });
 
-  let content = parseJsonResponse<any>(response);
+  if (!json) throw new Error('generate-case-study: no JSON returned');
+  let content = json;
   if (content.block?.content) content = content.block.content;
 
   const companyWebsite = content.companyWebsite;

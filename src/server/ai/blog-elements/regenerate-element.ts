@@ -1,8 +1,8 @@
-import { getOpenAIClient, MODELS } from '@/server/ai/clients';
+import { MODELS } from '@/server/ai/clients';
 import { generateElementFunctionParameters } from '@/server/ai/blog-elements/generate-function-parameters';
 import { fetchLogoUrl } from '@/server/ai/blog-elements/fetch-logo-url';
 import { uploadToCloudinary } from '@/server/ai/blog-elements/upload-to-cloudinary';
-import { parseJsonResponse } from '@/server/ai/utils';
+import { callModel } from '@/server/ai/providers';
 
 export async function regenerateElement(
   elementType: string,
@@ -19,12 +19,9 @@ export async function regenerateElement(
   const targetCount = newElementType ? newElementCount : 1;
   const schema = generateElementFunctionParameters(targetType, targetCount);
 
-  const response = await (await getOpenAIClient()).chat.completions.create({
+  const { json } = await callModel<any>({
     model: MODELS.OPENAI_DEFAULT,
-    messages: [
-      {
-        role: 'system',
-        content: `You are a senior content writer regenerating a blog post element. Transform a '${elementType}' into ${targetCount} element(s) of type '${targetType}'.
+    system: `You are a senior content writer regenerating a blog post element. Transform a '${elementType}' into ${targetCount} element(s) of type '${targetType}'.
 
 Rules:
 - The content must be specific and valuable — include real companies, tools, statistics, or outcomes.
@@ -32,9 +29,9 @@ Rules:
 - Use <br><br> for line breaks, <strong> for key concepts, <em> for emphasis.
 - Ensure the content fits seamlessly within the blog post context.
 - Do not hallucinate facts — if you reference a statistic, it should be plausible and grounded.`,
-      },
+    messages: [
       {
-        role: 'system',
+        role: 'user',
         content: `Context:
 Old element: ${JSON.stringify(elementStructure, null, 4)}
 Above: ${aboveElement ? JSON.stringify(aboveElement, null, 4) : 'None'}
@@ -50,17 +47,14 @@ Blog excerpt: ${blogExcerpt}
 Regeneration note (primary instruction — follow this above all else): "${regenerationNote}"`,
       },
     ],
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
-        name: 'regenerate_blog_element',
-        strict: true,
-        schema,
-      },
+    jsonSchema: {
+      name: 'regenerate_blog_element',
+      schema,
     },
   });
 
-  let regeneratedElements = parseJsonResponse<any>(response);
+  if (!json) throw new Error('regenerate-element: no JSON returned');
+  let regeneratedElements = json;
 
   if (targetCount === 1) {
     if (regeneratedElements.block?.content) regeneratedElements = regeneratedElements.block.content;

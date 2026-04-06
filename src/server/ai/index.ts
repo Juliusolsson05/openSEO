@@ -1,4 +1,5 @@
 export * from '@/server/ai/clients';
+export * from '@/server/ai/providers';
 
 export * from '@/server/ai/constants/block-schemas';
 export * from '@/server/ai/constants/restricted-schemas';

@@ -1,6 +1,6 @@
-import { getOpenAIClient, MODELS } from '@/server/ai/clients';
+import { MODELS } from '@/server/ai/clients';
 import { generateBlogFunctionParameters } from '@/server/ai/blog-elements/generate-function-parameters';
-import { parseJsonResponse } from '@/server/ai/utils';
+import { callModel, type ChatMessage } from '@/server/ai/providers';
 
 export async function generateBlogPost(
   seoTitle: string,
@@ -16,10 +16,7 @@ export async function generateBlogPost(
     throw new Error('business_description and business_name must be provided when business_aware is True');
   }
 
-  const messages: Array<{ role: 'system' | 'user'; content: string }> = [
-    {
-      role: 'system',
-      content: `You are a senior content writer. You write blog posts that readers actually want to finish — posts that teach something specific, take a clear position, and leave the reader with actionable knowledge.
+  const systemPrompt = `You are a senior content writer. You write blog posts that readers actually want to finish — posts that teach something specific, take a clear position, and leave the reader with actionable knowledge.
 
 WRITING PHILOSOPHY:
 - Every paragraph must teach something specific. If a paragraph could apply to any company in any industry, it is too generic — you must include a named company, a real tool, a specific statistic, or a concrete outcome.
@@ -67,8 +64,9 @@ WORDS AND PHRASES TO NEVER USE:
 STRUCTURE RULES:
 - List blocks should never contain product recommendations — we have a separate block for that.
 - Each paragraph block must be at least 165 words.
-- End sections with a concrete takeaway, not a summary sentence like "As we can see..."`,
-    },
+- End sections with a concrete takeaway, not a summary sentence like "As we can see..."`;
+
+  const messages: ChatMessage[] = [
     {
       role: 'user',
       content: `Write a blog post titled "${title}".
@@ -93,39 +91,37 @@ Company description:
 
   const schema = generateBlogFunctionParameters(JSON.stringify(structure));
 
-  const response = await (await getOpenAIClient()).chat.completions.create({
+  const { json, usage } = await callModel<{
+    blocks: Record<string, unknown>[] | Record<string, unknown>;
+  }>({
     model,
+    system: systemPrompt,
     messages,
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
-        name: 'generate_blog_post',
-        strict: true,
-        schema,
-      },
+    jsonSchema: {
+      name: 'generate_blog_post',
+      schema,
     },
   });
 
-  const generatedContent = parseJsonResponse<{ blocks: Record<string, unknown>[] | Record<string, unknown> }>(response);
+  if (!json) throw new Error('generate-blog-post: no JSON returned from model');
 
   const elements: Array<Record<string, unknown>> = [];
-  if (Array.isArray(generatedContent.blocks)) {
-    for (const block of generatedContent.blocks) {
+  if (Array.isArray(json.blocks)) {
+    for (const block of json.blocks) {
       for (const [blockKey, blockValue] of Object.entries(block)) {
         const [elementType] = blockKey.split(/_(?=\d+$)/);
         elements.push({ type: elementType, content: blockValue });
       }
     }
   } else {
-    for (const [blockKey, blockValue] of Object.entries(generatedContent.blocks)) {
+    for (const [blockKey, blockValue] of Object.entries(json.blocks)) {
       const [elementType] = blockKey.split(/_(?=\d+$)/);
       elements.push({ type: elementType, content: blockValue });
     }
   }
 
-  const usage = response.usage ?? { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
-  const inputTokens = usage.prompt_tokens ?? 0;
-  const outputTokens = usage.completion_tokens ?? 0;
+  const inputTokens = usage.inputTokens;
+  const outputTokens = usage.outputTokens;
   const inputCost = (inputTokens / 1_000_000) * 0.15;
   const outputCost = (outputTokens / 1_000_000) * 0.6;
 

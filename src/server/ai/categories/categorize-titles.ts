@@ -1,5 +1,5 @@
-import { getOpenAIClient, MODELS } from '@/server/ai/clients';
-import { parseJsonResponse } from '@/server/ai/utils';
+import { MODELS } from '@/server/ai/clients';
+import { callModel } from '@/server/ai/providers';
 
 import type { Category } from '@/types/blog'
 
@@ -40,35 +40,30 @@ export async function categorizeTitles(
       requiredKeys.push(key);
     }
 
-    const response = await (await getOpenAIClient()).chat.completions.create({
+    const { json: categorizedTitles } = await callModel<
+      Record<string, { id: number; categories: number[] }>
+    >({
       model: MODELS.OPENAI_SMART,
+      system:
+        'You are an AI that categorizes a list of titles into the given categories. For each title, assign the most relevant categories based on the content of the title. Return the list of titles with the corresponding category IDs.',
       messages: [
-        {
-          role: 'system',
-          content:
-            'You are an AI that categorizes a list of titles into the given categories. For each title, assign the most relevant categories based on the content of the title. Return the list of titles with the corresponding category IDs.',
-        },
         {
           role: 'user',
           content: `Categorize the following titles into these categories: ${JSON.stringify(categoriesList)}\nTitles: ${JSON.stringify(titlesList)}`,
         },
       ],
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
-          name: 'categorize_titles',
-          strict: true,
-          schema: {
-            type: 'object',
-            properties: titleProperties,
-            required: requiredKeys,
-            additionalProperties: false,
-          },
+      jsonSchema: {
+        name: 'categorize_titles',
+        schema: {
+          type: 'object',
+          properties: titleProperties,
+          required: requiredKeys,
+          additionalProperties: false,
         },
       },
     });
 
-    const categorizedTitles = parseJsonResponse<Record<string, { id: number; categories: number[] }>>(response);
+    if (!categorizedTitles) throw new Error('categorize-titles: no JSON returned');
 
     const formatted = Object.keys(categorizedTitles).map((key) => ({
       id: categorizedTitles[key].id,

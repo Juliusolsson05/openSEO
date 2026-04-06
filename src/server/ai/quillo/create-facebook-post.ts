@@ -1,30 +1,19 @@
-import { getAnthropicClient, getOpenAIClient, MODELS } from '../clients';
+import { MODELS } from '../clients';
+import { callModel } from '../providers';
 
 export async function createFacebookPost(elements: string, slug: string) {
   try {
-    const systemMessage = {
-      role: 'system' as const,
-      content:
+    const { text } = await callModel({
+      model: MODELS.OPENAI_DEFAULT,
+      system:
         'You turn blog posts and articles into Facebook posts. The post should be human sounding and NOT cliche. Use emojis and hashtags for emphasis, but no markdown or formatting like bold or italics. ' +
         `Use this URL format for the post slug: https://nordwebb.com/${slug}/.`,
-    };
-
-    const userMessage = { role: 'user' as const, content: elements };
-
-    const response = await (await getOpenAIClient()).chat.completions.create({
-      model: MODELS.OPENAI_DEFAULT,
-      messages: [systemMessage, userMessage],
+      messages: [{ role: 'user', content: elements }],
       temperature: 1,
-      top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      response_format: { type: 'text' },
     });
 
-    return response.choices[0]?.message.content ?? '';
+    return text;
   } catch (error) {
     return `An error occurred: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
-
-void getAnthropicClient;

@@ -1,5 +1,6 @@
-import { getAnthropicClient, MODELS } from '@/server/ai/clients'
+import { MODELS } from '@/server/ai/clients'
 import { BLOCK_SCHEMAS } from '@/server/ai/constants/block-schemas'
+import { callModel, type ChatMessage } from '@/server/ai/providers'
 
 export function getHumanizeFunctionSchema(elementType: string): Record<string, unknown> {
   const blockSchema = (BLOCK_SCHEMAS as Record<string, unknown>)[elementType] ?? {}
@@ -39,40 +40,35 @@ YOU MUST RETURN VALID JSON MATCHING THIS SCHEMA:
 ${JSON.stringify(schema, null, 2)}`
   }
 
-  private createMessageObject(text: string) {
-    return { role: 'user' as const, content: [{ type: 'text' as const, text }] }
-  }
-
   async processContent(initialText: string): Promise<string[]> {
-    const client = await getAnthropicClient()
-    const messages: Array<{ role: 'user' | 'assistant'; content: Array<{ type: 'text'; text: string }> }> = []
+    const messages: ChatMessage[] = []
     const responses: string[] = []
 
-    messages.push(this.createMessageObject(initialText))
-    let response = await client.messages.create({
+    messages.push({ role: 'user', content: initialText })
+    let result = await callModel({
       model: MODELS.ANTHROPIC_DEFAULT,
-      max_tokens: 1000,
-      temperature: 0.5,
       system: this.systemPrompt,
       messages,
+      temperature: 0.5,
+      maxTokens: 1000,
     })
 
-    let currentResponse = response.content[0]?.type === 'text' ? response.content[0].text : ''
+    let currentResponse = result.text
     responses.push(currentResponse)
-    messages.push({ role: 'assistant', content: [{ type: 'text', text: currentResponse }] })
+    messages.push({ role: 'assistant', content: currentResponse })
 
     for (const feedback of this.feedbackSteps) {
-      messages.push(this.createMessageObject(feedback))
-      response = await client.messages.create({
+      messages.push({ role: 'user', content: feedback })
+      result = await callModel({
         model: MODELS.ANTHROPIC_DEFAULT,
-        max_tokens: 1000,
-        temperature: 0.5,
         system: this.systemPrompt,
         messages,
+        temperature: 0.5,
+        maxTokens: 1000,
       })
-      currentResponse = response.content[0]?.type === 'text' ? response.content[0].text : currentResponse
+      currentResponse = result.text || currentResponse
       responses.push(currentResponse)
-      messages.push({ role: 'assistant', content: [{ type: 'text', text: currentResponse }] })
+      messages.push({ role: 'assistant', content: currentResponse })
     }
 
     return responses
