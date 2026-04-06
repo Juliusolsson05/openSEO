@@ -56,10 +56,10 @@ done
 printf '\n  %s\n' "$(bold "OpenSEO Upgrade")"
 
 # ──────────────────────────────────────────────
-# [1/5] Backup current .env
+# [1/4] Backup current .env
 # ──────────────────────────────────────────────
 
-phase "1/5" "Backing up configuration"
+phase "1/4" "Backing up configuration"
 
 if [ ! -f "$ENV_FILE" ]; then
   fail "No .env file found. Run ./install.sh first."
@@ -79,10 +79,10 @@ else
 fi
 
 # ──────────────────────────────────────────────
-# [2/5] Merge new environment variables
+# [2/4] Merge new environment variables
 # ──────────────────────────────────────────────
 
-phase "2/5" "Checking for new configuration options"
+phase "2/4" "Checking for new configuration options"
 
 if [ -f "$EXAMPLE_ENV" ]; then
   # Find keys in .env.example that are missing from .env
@@ -127,12 +127,13 @@ if [ "$DRY_RUN" = 1 ]; then
 fi
 
 # ──────────────────────────────────────────────
-# [3/5] Pull latest code
+# [3/4] Pull latest version
 # ──────────────────────────────────────────────
 
-phase "3/5" "Pulling latest version"
+phase "3/4" "Pulling latest version"
 
 if [ -d "$ROOT_DIR/.git" ]; then
+  # Git-based install: pull code + rebuild
   BEFORE="$(git -C "$ROOT_DIR" rev-parse HEAD)"
   if git -C "$ROOT_DIR" pull --ff-only; then
     AFTER="$(git -C "$ROOT_DIR" rev-parse HEAD)"
@@ -145,30 +146,33 @@ if [ -d "$ROOT_DIR/.git" ]; then
     fail "git pull failed. Resolve conflicts manually, then re-run."
     exit 1
   fi
+
+  info "Building new image..."
+  if docker compose build; then
+    success "Build complete"
+  else
+    fail "Build failed. Your previous version is still running."
+    if [ -n "${BACKUP_FILE:-}" ]; then
+      fail "Restore with: cp $BACKUP_FILE .env"
+    fi
+    exit 1
+  fi
 else
-  warn "Not a git repo — skipping code pull. If you use Docker images, run 'docker compose pull' manually."
+  # Image-based install: just pull the latest image
+  info "Pulling latest images..."
+  if docker compose pull; then
+    success "Images updated"
+  else
+    fail "Image pull failed. Check your network connection."
+    exit 1
+  fi
 fi
 
 # ──────────────────────────────────────────────
-# [4/5] Rebuild
+# [4/4] Restart services
 # ──────────────────────────────────────────────
 
-phase "4/5" "Rebuilding containers"
-
-info "Building new image..."
-if docker compose build; then
-  success "Build complete"
-else
-  fail "Build failed. Your previous version is still running."
-  fail "Restore with: cp $BACKUP_FILE .env"
-  exit 1
-fi
-
-# ──────────────────────────────────────────────
-# [5/5] Restart services
-# ──────────────────────────────────────────────
-
-phase "5/5" "Restarting services"
+phase "4/4" "Restarting services"
 
 info "Restarting containers (migrations run automatically)..."
 
@@ -189,6 +193,8 @@ fi
 printf '\n'
 printf '  %s\n' "$(green "$(bold "Upgrade complete!")")"
 printf '\n'
-printf '  %s\n' "$(dim "Backup: $BACKUP_FILE")"
+if [ -n "${BACKUP_FILE:-}" ]; then
+  printf '  %s\n' "$(dim "Backup: $BACKUP_FILE")"
+fi
 printf '  %s\n' "$(dim "Logs:   docker compose logs -f app")"
 printf '\n'
