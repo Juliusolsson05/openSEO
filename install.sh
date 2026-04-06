@@ -20,8 +20,6 @@ ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ENV_FILE="$ROOT_DIR/.env"
 EXAMPLE_ENV="$ROOT_DIR/.env.example"
 DEFAULT_PORT=4720
-INTERNAL_DB_URL="postgresql://openseo:openseo@postgres:5432/openseo"
-INTERNAL_REDIS_URL="redis://redis:6379"
 
 # ──────────────────────────────────────────────
 # Output helpers
@@ -208,10 +206,10 @@ fi
 header
 
 # ──────────────────────────────────────────────
-# [1/5] Checking prerequisites
+# [1/4] Checking prerequisites
 # ──────────────────────────────────────────────
 
-phase "1/5" "Checking prerequisites"
+phase "1/4" "Checking prerequisites"
 
 MISSING=0
 
@@ -243,10 +241,10 @@ if ! docker info >/dev/null 2>&1; then
 fi
 
 # ──────────────────────────────────────────────
-# [2/5] Preparing environment
+# [2/4] Preparing environment
 # ──────────────────────────────────────────────
 
-phase "2/5" "Preparing environment"
+phase "2/4" "Preparing environment"
 
 # Determine port
 if [ -n "$ARG_PORT" ]; then
@@ -283,27 +281,30 @@ fi
 
 # Write configuration
 env_set PORT "$APP_PORT"
-env_set NEXT_PUBLIC_API_BASE_URL ""
 env_set NEXT_PUBLIC_SITE_URL "$APP_URL"
 env_set FRONTEND_URL "$APP_URL"
-env_set DATABASE_URL "$INTERNAL_DB_URL"
-env_set REDIS_URL "$INTERNAL_REDIS_URL"
 env_set AUTH_TRUST_HOST "true"
 
 # Generate secrets only on fresh install
 if [ "$FRESH_INSTALL" = 1 ]; then
   env_set AUTH_SECRET "$(generate_secret 32)"
   env_set OPENSEO_ENCRYPTION_KEY "$(generate_secret 32)"
+  env_set DB_PASSWORD "$(generate_secret 32 | tr -dc 'a-zA-Z0-9' | head -c 24)"
   success "Generated encryption keys"
 else
   info "Keeping existing secrets"
 fi
 
 # ──────────────────────────────────────────────
-# [3/5] Building containers
+# [3/4] Building and starting services
 # ──────────────────────────────────────────────
 
-phase "3/5" "Building containers"
+phase "3/4" "Building and starting services"
+
+# Clean slate on first install
+if [ "$FRESH_INSTALL" = 1 ]; then
+  docker compose down -v --remove-orphans >/dev/null 2>&1 || true
+fi
 
 info "This may take a few minutes on first run..."
 printf '\n'
@@ -316,42 +317,14 @@ else
   exit 1
 fi
 
-# ──────────────────────────────────────────────
-# [4/5] Starting services
-# ──────────────────────────────────────────────
-
-phase "4/5" "Starting services"
-
-# Clean slate on first install
-if [ "$FRESH_INSTALL" = 1 ]; then
-  docker compose down -v --remove-orphans >/dev/null 2>&1 || true
-fi
-
-# Start infrastructure
-info "Starting database and cache..."
-docker compose up -d --remove-orphans postgres redis >/dev/null 2>&1
-success "Postgres and Redis running (internal only)"
-
-# Migrations
-info "Running database migrations..."
-if docker compose run --rm app npx prisma migrate deploy >/dev/null 2>&1; then
-  success "Migrations complete"
-else
-  fail "Migration failed."
-  info "Re-run with visible output:"
-  info "  docker compose run --rm app npx prisma migrate deploy"
-  exit 1
-fi
-
-# Start app
-info "Starting application..."
-docker compose up -d --remove-orphans app >/dev/null 2>&1
+info "Starting services..."
+docker compose up -d --remove-orphans >/dev/null 2>&1
 
 # ──────────────────────────────────────────────
-# [5/5] Waiting for health
+# [4/4] Waiting for health
 # ──────────────────────────────────────────────
 
-phase "5/5" "Waiting for application"
+phase "4/4" "Waiting for application"
 
 info "Checking $APP_URL ..."
 if wait_for_health "$APP_URL/api/health"; then
@@ -386,6 +359,5 @@ printf '  Logs:    docker compose logs -f app\n'
 printf '  Reset:   ./install.sh --reset\n'
 printf '\n'
 printf '  %s\n' "$(dim "Debug (expose DB/Redis to host):")"
-printf '  docker compose -f docker-compose.yml \\\n'
-printf '    -f docker-compose.debug.yml up -d\n'
+printf '  docker compose -f compose.yml -f compose.dev.yml up -d\n'
 printf '\n'
