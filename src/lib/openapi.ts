@@ -268,7 +268,7 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
           letter: { type: 'string' },
           keyword: { type: 'string' },
           description: { type: 'string', nullable: true },
-          priority: { type: 'string', enum: ['HIGH', 'LOW'] },
+          priority: { type: 'integer', description: '1=HIGH, 2=LOW' },
           focus_keyword: { type: 'string', nullable: true },
           definition: { type: 'object', nullable: true },
         },
@@ -299,7 +299,7 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         type: 'object',
         properties: {
           id: { type: 'string' },
-          status: { type: 'string', enum: ['pending', 'running', 'completed', 'failed'] },
+          status: { type: 'string', enum: ['accepted', 'running', 'completed', 'failed'] },
           progress: { type: 'number' },
           result: { type: 'object', nullable: true },
           error: { type: 'string', nullable: true },
@@ -423,7 +423,7 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
                   username: { type: 'string' },
                   user_type: { type: 'integer', description: '1=DEMO, 2=CLIENT, 3=AGENCY, 4=ADMINISTRATOR' },
                   abilityRules: { type: 'array', items: { type: 'string' } },
-                  company: { type: 'object', nullable: true, properties: { id: { type: 'integer' }, name: { type: 'string' } } },
+                  company: { type: 'object', nullable: true, properties: { id: { type: 'integer' }, name: { type: 'string' }, language: { type: 'string' } } },
                 },
               },
             },
@@ -520,6 +520,31 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         operationId: 'getCsrf',
         responses: {
           '200': jsonResponse({ type: 'object', properties: { csrfToken: { type: 'string' } } }),
+        },
+      },
+    },
+    '/auth/forgot-password': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Request a password reset email',
+        security: [],
+        operationId: 'forgotPassword',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email'],
+                properties: {
+                  email: { type: 'string', format: 'email' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': jsonResponse({ type: 'object', properties: { ok: { type: 'boolean' }, status: { type: 'string' } } }, 'Reset email sent if account exists'),
         },
       },
     },
@@ -680,6 +705,38 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         responses: { '200': jsonResponse({ type: 'object', properties: { categorized: { type: 'integer' } } }) },
       },
     },
+    '/aurora/blog/titles/categories/{id}': {
+      put: {
+        tags: ['Blog Titles'],
+        summary: 'Update a title category by ID',
+        operationId: 'updateTitleCategoryById',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' }, description: { type: 'string' } } } } },
+        },
+        responses: { '200': jsonResponse({ $ref: '#/components/schemas/Category' }) },
+      },
+      delete: {
+        tags: ['Blog Titles'],
+        summary: 'Delete a title category by ID',
+        operationId: 'deleteTitleCategoryById',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: { '200': jsonResponse({ type: 'object', properties: { deleted: { type: 'boolean' } } }) },
+      },
+    },
+    '/aurora/blog/titles/categories/bulk-delete': {
+      post: {
+        tags: ['Blog Titles'],
+        summary: 'Bulk delete title categories',
+        operationId: 'bulkDeleteTitleCategories',
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { type: 'object', required: ['ids'], properties: { ids: { type: 'array', items: { type: 'integer' } } } } } },
+        },
+        responses: { '200': jsonResponse({ type: 'object', properties: { deleted: { type: 'integer' } } }) },
+      },
+    },
 
     /* ======================== BLOG POSTS ======================== */
     '/aurora/blog/posts': {
@@ -766,6 +823,18 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         requestBody: {
           required: true,
           content: { 'application/json': { schema: { type: 'object', properties: { title: { type: 'string' }, seo_title: { type: 'string' }, meta_description: { type: 'string' }, focus_keyword: { type: 'string' }, keywords: { type: 'array', items: { type: 'string' } } } } } },
+        },
+        responses: { '200': jsonResponse({ $ref: '#/components/schemas/BlogPost' }) },
+      },
+    },
+    '/aurora/blog/posts/update': {
+      put: {
+        tags: ['Blog Posts'],
+        summary: 'Update a blog post (ID in body)',
+        operationId: 'updateBlogPostByBody',
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { type: 'object', properties: { id: { type: 'integer' }, title: { type: 'string' }, seo_title: { type: 'string' }, meta_description: { type: 'string' }, focus_keyword: { type: 'string' }, keywords: { type: 'array', items: { type: 'string' } } } } } },
         },
         responses: { '200': jsonResponse({ $ref: '#/components/schemas/BlogPost' }) },
       },
@@ -1004,6 +1073,40 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
     },
     '/aurora/blog/images/stock_photos/use': {
       post: { tags: ['Blog Images'], summary: 'Use stock photo for post', operationId: 'useStockPhoto', responses: { '200': jsonResponse({ type: 'object', properties: { url: { type: 'string' } } }) } },
+    },
+    '/aurora/blog/images/apply': {
+      post: {
+        tags: ['Blog Images'],
+        summary: 'Apply an image to a blog post',
+        operationId: 'applyImage',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['image_url', 'image_number'],
+                properties: {
+                  post_id: { type: 'integer', description: 'Post ID (or use blog_post_id)' },
+                  blog_post_id: { type: 'integer', description: 'Post ID (alias for post_id)' },
+                  image_number: { type: 'integer', minimum: 0 },
+                  image_url: { type: 'string', format: 'uri' },
+                },
+              },
+            },
+          },
+        },
+        responses: { '200': jsonResponse({ type: 'object' }) },
+      },
+    },
+    '/aurora/blog/linkedin/convert': {
+      get: {
+        tags: ['Blog Posts'],
+        summary: 'Convert blog post to LinkedIn format',
+        operationId: 'linkedinConvert',
+        parameters: [{ name: 'blog_post_id', in: 'query', required: true, schema: { type: 'integer' } }],
+        responses: { '200': jsonResponse({ type: 'object', properties: { json: { type: 'object' }, html: { type: 'string' } } }) },
+      },
     },
     '/aurora/blog/focus-keywords': {
       get: { tags: ['Blog Posts'], summary: 'List all focus keywords', operationId: 'listFocusKeywords', responses: { '200': jsonResponse({ type: 'array', items: { type: 'string' } }) } },
@@ -1410,6 +1513,12 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         },
       },
     },
+    '/aurora/dictionary/dictionary/export/third-party': {
+      post: { tags: ['Dictionary'], summary: 'Export dictionary to third-party platform', operationId: 'exportDictionaryThirdParty', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['dictionary_id'], properties: { dictionary_id: { type: 'integer' } } } } } }, responses: { '200': jsonResponse({ type: 'object', properties: { status: { type: 'string' }, message: { type: 'string' } } }) } },
+    },
+    '/aurora/dictionary/dictionary/export/third-party/all': {
+      post: { tags: ['Dictionary'], summary: 'Export all dictionaries to third-party platform', operationId: 'exportAllDictionariesThirdParty', responses: { '200': jsonResponse({ type: 'object', properties: { status: { type: 'string' }, message: { type: 'string' } } }) } },
+    },
     '/aurora/dictionary/dictionary/upload': {
       post: {
         tags: ['Dictionary'],
@@ -1497,6 +1606,15 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
       put: { tags: ['Blog Posts'], summary: 'Update blog post category', operationId: 'updateBlogCategory', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ $ref: '#/components/schemas/Category' }) } },
       delete: { tags: ['Blog Posts'], summary: 'Delete blog post category', operationId: 'deleteBlogCategory', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ type: 'object', properties: { deleted: { type: 'boolean' } } }) } },
     },
+    '/aurora/blog/categories/bulk-delete': {
+      post: { tags: ['Blog Posts'], summary: 'Bulk delete blog post categories', operationId: 'bulkDeleteBlogCategories', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['ids'], properties: { ids: { type: 'array', items: { type: 'integer' } } } } } } }, responses: { '200': jsonResponse({ type: 'object', properties: { deleted: { type: 'integer' } } }) } },
+    },
+    '/aurora/blog/categories/categorize': {
+      post: { tags: ['Blog Posts'], summary: 'Auto-categorize blog posts into categories', operationId: 'categorizeBlogPosts', responses: { '200': jsonResponse({ type: 'object' }) } },
+    },
+    '/aurora/blog/categories/generate': {
+      post: { tags: ['Blog Posts'], summary: 'Auto-generate blog post categories with AI', operationId: 'generateBlogCategories', responses: { '200': jsonResponse({ type: 'array', items: { $ref: '#/components/schemas/Category' } }) } },
+    },
 
     /* ======================== V1 — COMPANY ======================== */
     '/v1/company/profile': {
@@ -1504,7 +1622,7 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
         tags: ['Company'],
         summary: 'Get company profile',
         operationId: 'getCompanyProfile',
-        responses: { '200': jsonResponse(successEnvelope({ $ref: '#/components/schemas/CompanyProfile' })) },
+        responses: { '200': jsonResponse(successEnvelope({ type: 'object', properties: { website_url: { type: 'string', nullable: true }, name: { type: 'string', nullable: true }, business_type: { type: 'string', nullable: true }, language: { type: 'string', nullable: true }, keywords: { type: 'array', items: { type: 'string' } }, profile: { type: 'object', nullable: true, description: 'Structured company profile' } } })) },
       },
       patch: {
         tags: ['Company'],
@@ -1557,6 +1675,17 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
       patch: { tags: ['Settings'], summary: 'Update settings for a domain', operationId: 'patchSettingsDomain', parameters: [{ name: 'domain', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': jsonResponse(successEnvelope({ $ref: '#/components/schemas/SettingsDomain' })) } },
     },
 
+    '/v1/settings/integrations': {
+      get: { tags: ['Settings'], summary: 'List integration settings (admin only)', operationId: 'listIntegrations', security: [{ bearerAuth: ['admin'] }], responses: { '200': jsonResponse(successEnvelope({ type: 'array', items: { type: 'object', properties: { key: { type: 'string' }, label: { type: 'string' }, configured: { type: 'boolean' }, masked_value: { type: 'string', nullable: true } } } })) } },
+      post: { tags: ['Settings'], summary: 'Upsert an integration key (admin only)', operationId: 'upsertIntegration', security: [{ bearerAuth: ['admin'] }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['key', 'value'], properties: { key: { type: 'string' }, value: { type: 'string' } } } } } }, responses: { '200': jsonResponse(successEnvelope({ type: 'object', properties: { key: { type: 'string' }, label: { type: 'string' }, configured: { type: 'boolean' } } })) } },
+    },
+    '/v1/settings/integrations/{key}': {
+      delete: { tags: ['Settings'], summary: 'Delete an integration key (admin only)', operationId: 'deleteIntegration', security: [{ bearerAuth: ['admin'] }], parameters: [{ name: 'key', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': jsonResponse(successEnvelope({ type: 'object', properties: { deleted: { type: 'boolean' }, key: { type: 'string' } } })) } },
+    },
+    '/v1/settings/integrations/test': {
+      post: { tags: ['Settings'], summary: 'Test an integration key (admin only)', operationId: 'testIntegration', security: [{ bearerAuth: ['admin'] }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['key'], properties: { key: { type: 'string' }, value: { type: 'string', description: 'If omitted, tests the currently saved value' } } } } } }, responses: { '200': jsonResponse(successEnvelope({ type: 'object', properties: { ok: { type: 'boolean' }, error: { type: 'string', nullable: true } } })) } },
+    },
+
     /* ======================== V1 — SEARCH ======================== */
     '/v1/search/global': {
       get: { tags: ['Search'], summary: 'Global search across titles, posts, dictionaries, words', operationId: 'globalSearch', parameters: [{ name: 'q', in: 'query', required: true, schema: { type: 'string' } }, { name: 'limit', in: 'query', schema: { type: 'integer', default: 8, minimum: 1, maximum: 20 } }], responses: { '200': jsonResponse(successEnvelope({ type: 'array', items: { type: 'object', properties: { type: { type: 'string' }, id: { type: 'integer' }, title: { type: 'string' }, subtitle: { type: 'string' } } } })) } },
@@ -1569,8 +1698,8 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
 
     /* ======================== V1 — PUBLISHING ======================== */
     '/v1/publishing/api-keys': {
-      get: { tags: ['Publishing'], summary: 'List publishing API keys', operationId: 'listApiKeys', responses: { '200': jsonResponse(successEnvelope({ type: 'array', items: { $ref: '#/components/schemas/PublishingApiKey' } })) } },
-      post: { tags: ['Publishing'], summary: 'Create publishing API key', operationId: 'createApiKey', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['name'], properties: { name: { type: 'string' } } } } } }, responses: { '201': jsonResponse(successEnvelope({ type: 'object', properties: { key: { type: 'string', description: 'Full API key (only shown once)' }, id: { type: 'integer' }, name: { type: 'string' }, prefix: { type: 'string' } } })) } },
+      get: { tags: ['Publishing'], summary: 'List publishing API keys', operationId: 'listApiKeys', responses: { '200': jsonResponse(successEnvelope({ type: 'array', items: { type: 'object', properties: { id: { type: 'integer' }, name: { type: 'string' }, key_prefix: { type: 'string' }, is_active: { type: 'boolean' }, created_at: { type: 'string', format: 'date-time' }, last_used_at: { type: 'string', format: 'date-time', nullable: true }, revoked_at: { type: 'string', format: 'date-time', nullable: true } } } })) } },
+      post: { tags: ['Publishing'], summary: 'Create publishing API key', operationId: 'createApiKey', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['name'], properties: { name: { type: 'string', minLength: 3, maxLength: 120 } } } } } }, responses: { '201': jsonResponse(successEnvelope({ type: 'object', properties: { key: { type: 'string', description: 'Full API key (only shown once)' }, id: { type: 'integer' }, name: { type: 'string' }, key_prefix: { type: 'string' }, created_at: { type: 'string', format: 'date-time' }, warning: { type: 'string' } } })) } },
     },
     '/v1/publishing/api-keys/{id}/revoke': {
       post: { tags: ['Publishing'], summary: 'Revoke a publishing API key', operationId: 'revokeApiKey', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse(successEnvelope({ type: 'object', properties: { revoked: { type: 'boolean' } } })) } },
@@ -1588,25 +1717,202 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
       post: { tags: ['Publishing'], summary: 'Sync all dictionaries', operationId: 'syncAllDictionaries', responses: { '200': jsonResponse(successEnvelope({ $ref: '#/components/schemas/SyncJob' })) } },
     },
     '/v1/publishing/jobs/{jobId}': {
-      get: { tags: ['Publishing'], summary: 'Get sync job status', operationId: 'getSyncJob', parameters: [{ name: 'jobId', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': jsonResponse({ $ref: '#/components/schemas/SyncJob' }) } },
+      get: { tags: ['Publishing'], summary: 'Get sync job status', operationId: 'getSyncJob', parameters: [{ name: 'jobId', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': jsonResponse({ type: 'object', properties: { job_id: { type: 'string' }, status: { type: 'string', enum: ['accepted', 'running', 'completed', 'failed'] }, logs: { type: 'array', items: { type: 'string' } }, error: { type: 'string', nullable: true } } }), '404': jsonResponse({ type: 'object', properties: { job_id: { type: 'string' }, status: { type: 'string', enum: ['not_available'] }, detail: { type: 'string' } } }, 'Job not found or expired') } },
     },
     '/v1/publishing/inbound/post/upsert': {
-      post: { tags: ['Publishing'], summary: 'Inbound: upsert blog post', operationId: 'inboundUpsertPost', security: [{ apiKeyAuth: [] }], responses: { '200': jsonResponse(successEnvelope({ type: 'object' })) } },
+      post: {
+        tags: ['Publishing'],
+        summary: 'Inbound: upsert blog post',
+        operationId: 'inboundUpsertPost',
+        security: [{ apiKeyAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['event_id'],
+                properties: {
+                  contract_version: { type: 'string' },
+                  event: { type: 'string' },
+                  event_id: { type: 'string' },
+                  payload: {
+                    type: 'object',
+                    properties: {
+                      post: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'integer' },
+                          remote_id: { type: 'string' },
+                          slug: { type: 'string' },
+                          title_text: { type: 'string' },
+                          seo_title: { type: 'string' },
+                          focus_keyword: { type: 'string' },
+                          excerpt: { type: 'string' },
+                          meta_description: { type: 'string' },
+                          cover_image: { type: 'object', properties: { url: { type: 'string' }, description: { type: 'string' } } },
+                          categories: { type: 'array', items: { type: 'string' } },
+                          status: { type: 'string', enum: ['TO_BE_GENERATED', 'APPROVED', 'REJECTED', 'GENERATED', 'PUBLISHED'] },
+                        },
+                      },
+                      elements: { type: 'array', items: { type: 'object', properties: { id: { type: 'integer' }, order: { type: 'integer' }, element_type: { type: 'string' }, content: {} } } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': jsonResponse(successEnvelope({ type: 'object', properties: { status: { type: 'string' }, post_id: { type: 'integer' }, event_id: { type: 'string' } } })),
+          '401': ref401,
+          '422': ref422,
+        },
+      },
     },
     '/v1/publishing/inbound/post/delete': {
-      post: { tags: ['Publishing'], summary: 'Inbound: delete blog post', operationId: 'inboundDeletePost', security: [{ apiKeyAuth: [] }], responses: { '200': jsonResponse(successEnvelope({ type: 'object' })) } },
+      post: {
+        tags: ['Publishing'],
+        summary: 'Inbound: delete blog post',
+        operationId: 'inboundDeletePost',
+        security: [{ apiKeyAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['event_id'],
+                properties: {
+                  event: { type: 'string' },
+                  event_id: { type: 'string' },
+                  payload: {
+                    type: 'object',
+                    properties: {
+                      post: { type: 'object', properties: { id: { type: 'integer' }, remote_id: { type: 'string' }, slug: { type: 'string' } } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': jsonResponse(successEnvelope({ type: 'object', properties: { status: { type: 'string' }, deleted_post_id: { type: 'integer' }, event_id: { type: 'string' } } })),
+          '401': ref401,
+          '422': ref422,
+        },
+      },
     },
     '/v1/publishing/inbound/dictionary/upsert': {
-      post: { tags: ['Publishing'], summary: 'Inbound: upsert dictionary', operationId: 'inboundUpsertDictionary', security: [{ apiKeyAuth: [] }], responses: { '200': jsonResponse(successEnvelope({ type: 'object' })) } },
+      post: {
+        tags: ['Publishing'],
+        summary: 'Inbound: upsert dictionary',
+        operationId: 'inboundUpsertDictionary',
+        security: [{ apiKeyAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['event_id'],
+                properties: {
+                  event: { type: 'string' },
+                  event_id: { type: 'string' },
+                  payload: {
+                    type: 'object',
+                    properties: {
+                      dictionary: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'integer' },
+                          title: { type: 'string' },
+                          subject: { type: 'string' },
+                          language: { type: 'string' },
+                          num_words: { type: 'integer' },
+                          current_letter: { type: 'string' },
+                          status: { type: 'string', enum: ['IN_PROGRESS', 'KEYWORD_GENERATION', 'DEFINITION_GENERATION', 'COMPLETED'] },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': jsonResponse(successEnvelope({ type: 'object', properties: { status: { type: 'string' }, dictionary_id: { type: 'integer' }, event_id: { type: 'string' } } })),
+          '401': ref401,
+          '422': ref422,
+        },
+      },
     },
     '/v1/publishing/inbound/dictionary/delete': {
-      post: { tags: ['Publishing'], summary: 'Inbound: delete dictionary', operationId: 'inboundDeleteDictionary', security: [{ apiKeyAuth: [] }], responses: { '200': jsonResponse(successEnvelope({ type: 'object' })) } },
+      post: { tags: ['Publishing'], summary: 'Inbound: delete dictionary', operationId: 'inboundDeleteDictionary', security: [{ apiKeyAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['event_id'], properties: { event: { type: 'string' }, event_id: { type: 'string' }, payload: { type: 'object', properties: { dictionary: { type: 'object', properties: { id: { type: 'integer' }, title: { type: 'string' } } } } } } } } } }, responses: { '200': jsonResponse(successEnvelope({ type: 'object', properties: { status: { type: 'string' }, dictionary_id: { type: 'integer' }, event_id: { type: 'string' } } })), '401': ref401, '422': ref422 } },
     },
     '/v1/publishing/inbound/dictionary/term/upsert': {
-      post: { tags: ['Publishing'], summary: 'Inbound: upsert dictionary term', operationId: 'inboundUpsertTerm', security: [{ apiKeyAuth: [] }], responses: { '200': jsonResponse(successEnvelope({ type: 'object' })) } },
+      post: {
+        tags: ['Publishing'],
+        summary: 'Inbound: upsert dictionary term',
+        operationId: 'inboundUpsertTerm',
+        security: [{ apiKeyAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['event_id'],
+                properties: {
+                  event: { type: 'string' },
+                  event_id: { type: 'string' },
+                  payload: {
+                    type: 'object',
+                    properties: {
+                      dictionary: { type: 'object', properties: { id: { type: 'integer' }, title: { type: 'string' } } },
+                      term: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'integer' },
+                          keyword: { type: 'string' },
+                          letter: { type: 'string' },
+                          description: { type: 'string' },
+                          priority: { type: 'string', enum: ['HIGH', 'LOW'] },
+                          focus_keyword: { type: 'string' },
+                          definition: {
+                            type: 'object',
+                            properties: {
+                              title: { type: 'string' },
+                              featured_google_snippet: { type: 'string' },
+                              meta_description: { type: 'string' },
+                              seo_title: { type: 'string' },
+                              synonyms: { type: 'array', items: { type: 'string' } },
+                              antonyms: { type: 'array', items: { type: 'string' } },
+                              usage_examples: { type: 'array', items: { type: 'string' } },
+                              related_keywords: { type: 'array', items: { type: 'string' } },
+                              faqs: { type: 'array', items: { type: 'object', properties: { question: { type: 'string' }, answer: { type: 'string' } } } },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': jsonResponse(successEnvelope({ type: 'object', properties: { status: { type: 'string' }, dictionary_id: { type: 'integer' }, word_id: { type: 'integer' }, event_id: { type: 'string' } } })),
+          '401': ref401,
+          '422': ref422,
+        },
+      },
     },
     '/v1/publishing/inbound/dictionary/term/delete': {
-      post: { tags: ['Publishing'], summary: 'Inbound: delete dictionary term', operationId: 'inboundDeleteTerm', security: [{ apiKeyAuth: [] }], responses: { '200': jsonResponse(successEnvelope({ type: 'object' })) } },
+      post: { tags: ['Publishing'], summary: 'Inbound: delete dictionary term', operationId: 'inboundDeleteTerm', security: [{ apiKeyAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['event_id'], properties: { event: { type: 'string' }, event_id: { type: 'string' }, payload: { type: 'object', properties: { dictionary: { type: 'object', properties: { id: { type: 'integer' }, title: { type: 'string' } } }, term: { type: 'object', properties: { id: { type: 'integer' }, keyword: { type: 'string' } } } } } } } } } }, responses: { '200': jsonResponse(successEnvelope({ type: 'object', properties: { status: { type: 'string' }, dictionary_id: { type: 'integer' }, word_id: { type: 'integer' }, event_id: { type: 'string' } } })), '401': ref401, '422': ref422 } },
     },
 
     /* ======================== E-COMMERCE ======================== */
@@ -1619,16 +1925,50 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
 
     /* ======================== ADMIN ======================== */
     '/admin/companies': {
-      get: { tags: ['Admin'], summary: 'List all companies (admin only)', operationId: 'adminListCompanies', responses: { '200': jsonResponse({ type: 'array', items: { type: 'object' } }) } },
+      get: { tags: ['Admin'], summary: 'List all companies (admin only)', operationId: 'adminListCompanies', security: [{ bearerAuth: ['admin'] }], responses: { '200': jsonResponse({ type: 'array', items: { type: 'object' } }) } },
     },
     '/admin/users': {
-      get: { tags: ['Admin'], summary: 'List all users (admin only)', operationId: 'adminListUsers', responses: { '200': jsonResponse({ type: 'array', items: { type: 'object' } }) } },
-      post: { tags: ['Admin'], summary: 'Create user (admin only)', operationId: 'adminCreateUser', responses: { '201': jsonResponse({ type: 'object' }) } },
+      get: { tags: ['Admin'], summary: 'List all users (admin only)', operationId: 'adminListUsers', security: [{ bearerAuth: ['admin'] }], responses: { '200': jsonResponse({ type: 'array', items: { type: 'object' } }) } },
+      post: { tags: ['Admin'], summary: 'Create user (admin only)', operationId: 'adminCreateUser', security: [{ bearerAuth: ['admin'] }], responses: { '201': jsonResponse({ type: 'object' }) } },
+    },
+    '/admin/jobs': {
+      get: {
+        tags: ['Admin'],
+        summary: 'List background jobs (admin only)',
+        operationId: 'adminListJobs',
+        security: [{ bearerAuth: ['admin'] }],
+        parameters: [
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELED'] } },
+          { name: 'type', in: 'query', schema: { type: 'string' }, description: 'Job type filter (e.g. "quillo.autopilot")' },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 50, minimum: 1, maximum: 200 } },
+        ],
+        responses: { '200': jsonResponse({ type: 'object', properties: { jobs: { type: 'array', items: { type: 'object' } }, meta: { type: 'object', properties: { count: { type: 'integer' }, oldest_pending_age_seconds: { type: 'integer', nullable: true } } } } }) },
+      },
+    },
+    '/admin/jobs/{jobId}': {
+      get: { tags: ['Admin'], summary: 'Get a single background job (admin only)', operationId: 'adminGetJob', security: [{ bearerAuth: ['admin'] }], parameters: [{ name: 'jobId', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': jsonResponse({ type: 'object' }), '404': ref404 } },
+    },
+    '/admin/jobs/{jobId}/retry': {
+      post: { tags: ['Admin'], summary: 'Retry a failed/canceled job (admin only)', operationId: 'adminRetryJob', security: [{ bearerAuth: ['admin'] }], parameters: [{ name: 'jobId', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': jsonResponse({ type: 'object' }), '404': ref404 } },
+    },
+    '/admin/jobs/{jobId}/cancel': {
+      post: { tags: ['Admin'], summary: 'Cancel a pending/running job (admin only)', operationId: 'adminCancelJob', security: [{ bearerAuth: ['admin'] }], parameters: [{ name: 'jobId', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': jsonResponse({ type: 'object' }), '404': ref404 } },
     },
 
     /* ======================== EXAMPLE SITE ======================== */
     '/example/posts': {
-      get: { tags: ['Example Site'], summary: 'List published posts (public demo)', operationId: 'exampleListPosts', security: [], responses: { '200': jsonResponse({ type: 'array', items: { $ref: '#/components/schemas/BlogPost' } }) } },
+      get: {
+        tags: ['Example Site'],
+        summary: 'List published posts (public demo)',
+        operationId: 'exampleListPosts',
+        security: [],
+        parameters: [
+          { name: 'full', in: 'query', schema: { type: 'string', enum: ['true', 'false'] }, description: 'Include all posts (not just published)' },
+          { name: 'limit', in: 'query', schema: { type: 'integer' }, description: 'Max posts to return (0 = all)' },
+          { name: 'offset', in: 'query', schema: { type: 'integer', default: 0 } },
+        ],
+        responses: { '200': jsonResponse({ type: 'object', properties: { posts: { type: 'array', items: { type: 'object' } }, total: { type: 'integer' }, offset: { type: 'integer' }, limit: { type: 'integer', nullable: true } } }) },
+      },
     },
     '/example/posts/{slug}': {
       get: { tags: ['Example Site'], summary: 'Get post by slug (public demo)', operationId: 'exampleGetPost', security: [], parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': jsonResponse({ $ref: '#/components/schemas/BlogPost' }), '404': ref404 } },
@@ -1638,6 +1978,89 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
     },
     '/example/dictionary/{wordId}': {
       get: { tags: ['Example Site'], summary: 'Get word by ID (public demo)', operationId: 'exampleGetWord', security: [], parameters: [{ name: 'wordId', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': jsonResponse({ $ref: '#/components/schemas/Word' }), '404': ref404 } },
+    },
+    '/example/inbound': {
+      post: {
+        tags: ['Example Site'],
+        summary: 'Inbound webhook for the example/demo site',
+        description: 'Receives content push events from Aurora. Auth: Bearer token validated against EXAMPLE_INBOUND_KEY env var.',
+        operationId: 'exampleInbound',
+        security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['event'], properties: { event: { type: 'string', description: 'Event type (post.upsert, post.delete, dictionary.upsert, dictionary.delete, etc.)' }, payload: { type: 'object' } } } } } },
+        responses: {
+          '200': jsonResponse({ type: 'object', properties: { status: { type: 'string' }, delivery_id: { type: 'string' } } }),
+          '401': ref401,
+        },
+      },
+    },
+
+    /* ======================== PUBLISHING INBOUND (LEGACY) ======================== */
+    '/publishing/inbound': {
+      post: {
+        tags: ['Publishing'],
+        summary: 'Legacy inbound webhook for public content',
+        description: 'Receives content push events. Auth: Bearer token validated against PUBLIC_CONTENT_INBOUND_KEY env var.',
+        operationId: 'publishingInbound',
+        security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['event'], properties: { event: { type: 'string' }, payload: { type: 'object' } } } } } },
+        responses: {
+          '200': jsonResponse({ type: 'object', properties: { status: { type: 'string' }, delivery_id: { type: 'string' } } }),
+          '401': ref401,
+        },
+      },
+    },
+
+    /* ======================== SETUP ======================== */
+    '/setup/status': {
+      get: {
+        tags: ['Settings'],
+        summary: 'Check if initial setup is complete',
+        security: [],
+        operationId: 'getSetupStatus',
+        responses: { '200': jsonResponse(successEnvelope({ type: 'object', properties: { complete: { type: 'boolean' }, hasUser: { type: 'boolean' }, hasCompany: { type: 'boolean' }, hasAiKey: { type: 'boolean' } } })) },
+      },
+    },
+    '/setup': {
+      post: {
+        tags: ['Settings'],
+        summary: 'Complete initial setup (creates admin user and company)',
+        security: [],
+        operationId: 'completeSetup',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['name', 'email', 'password', 'companyName'],
+                properties: {
+                  name: { type: 'string' },
+                  email: { type: 'string', format: 'email' },
+                  password: { type: 'string', minLength: 8 },
+                  companyName: { type: 'string' },
+                  websiteUrl: { type: 'string' },
+                  integrations: { type: 'object', additionalProperties: { type: 'string' }, description: 'Key-value map of integration keys (e.g. OPENAI_API_KEY)' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': jsonResponse(successEnvelope({ type: 'object', properties: { userId: { type: 'string' }, email: { type: 'string' }, companyId: { type: 'integer' } } })),
+          '403': ref403,
+          '422': ref422,
+        },
+      },
+    },
+    '/setup/test': {
+      post: {
+        tags: ['Settings'],
+        summary: 'Test an integration key during setup',
+        security: [],
+        operationId: 'testSetupIntegration',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['key', 'value'], properties: { key: { type: 'string' }, value: { type: 'string' } } } } } },
+        responses: { '200': jsonResponse(successEnvelope({ type: 'object', properties: { ok: { type: 'boolean' }, error: { type: 'string', nullable: true } } })) },
+      },
     },
   },
 }
