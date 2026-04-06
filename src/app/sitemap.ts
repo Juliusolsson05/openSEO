@@ -13,10 +13,6 @@ async function getComparisonSlugs(): Promise<string[]> {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const companyId = resolvePublicCompanyId()
-  if (companyId === null) return []
-  const posts = await getPosts(companyId)
-  const dict = await getDictionary(companyId)
-  const words = dict?.words ?? []
   const comparisonSlugs = await getComparisonSlugs()
 
   /* ── Core pages ── */
@@ -30,18 +26,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/landing/cookies`, changeFrequency: 'yearly', priority: 0.3 },
   ]
 
-  /* ── Blog & Dictionary index pages ── */
-  const contentIndexPages: MetadataRoute.Sitemap = [
-    { url: `${BASE}/site/blog`, changeFrequency: 'daily', priority: 0.9 },
-    { url: `${BASE}/site/dictionary`, changeFrequency: 'daily', priority: 0.8 },
-  ]
-
   /* ── Comparison pages (dynamic from Prisma) ── */
   const comparisonPages: MetadataRoute.Sitemap = comparisonSlugs.map((slug) => ({
     url: `${BASE}/landing/compare/${slug}`,
     changeFrequency: 'weekly' as const,
     priority: 0.7,
   }))
+
+  // /site/* content pages require PUBLIC_CONTENT_COMPANY_ID
+  if (companyId === null) {
+    return [...corePages, ...comparisonPages]
+  }
+
+  const posts = await getPosts(companyId)
+  const dict = await getDictionary(companyId)
+  const words = dict?.words ?? []
+
+  /* ── Blog & Dictionary index pages ── */
+  const contentIndexPages: MetadataRoute.Sitemap = [
+    { url: `${BASE}/site/blog`, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE}/site/dictionary`, changeFrequency: 'daily', priority: 0.8 },
+  ]
 
   /* ── Blog posts ── */
   const blogPages: MetadataRoute.Sitemap = posts.map((post) => ({
@@ -61,7 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...corePages,
     ...contentIndexPages,
-...comparisonPages,
+    ...comparisonPages,
     ...blogPages,
     ...dictPages,
   ]
