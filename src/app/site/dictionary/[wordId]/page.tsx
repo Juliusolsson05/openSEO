@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { SiteWordRenderer } from '@/app/site/_components/SiteWordRenderer'
 import { getDictionary, getWord } from '@/server/public-content/data'
+import { resolvePublicCompanyId } from '@/server/public-content/company'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,11 +10,12 @@ type PageProps = { params: Promise<{ wordId: string }> }
 
 export default async function SiteDictionaryWordPage({ params }: PageProps) {
   const { wordId } = await params
-  const word = await getWord(wordId)
+  const companyId = resolvePublicCompanyId()
+  const word = await getWord(companyId, wordId)
 
   if (!word) notFound()
 
-  const dictionary = await getDictionary()
+  const dictionary = await getDictionary(companyId)
   const related = dictionary.words.filter((item) => item.id !== word.id).slice(0, 5)
 
   return (

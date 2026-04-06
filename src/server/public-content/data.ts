@@ -1,34 +1,42 @@
 import { EXAMPLE_DICTIONARY, EXAMPLE_POSTS } from '@/app/example/_lib/fixtures'
 import { getSyncedDictionaries, getSyncedPosts } from './store'
-import type { PublicPost } from './types'
+import type { PublicDictionary, PublicPost } from './types'
 
-function getCompanyId(): number {
-  const raw = process.env.PUBLIC_CONTENT_COMPANY_ID ?? process.env.EXAMPLE_COMPANY_ID ?? '1'
-  return parseInt(raw, 10)
+/**
+ * Options accepted by every public-content read.
+ *
+ * `includeFixtures` defaults to `false`. Fixtures are demo content and must
+ * NEVER be merged into real public routes (`/site/*`, `sitemap.ts`). Only
+ * opt in from a surface that is explicitly labelled as a demo/preview.
+ */
+export type PublicContentOptions = {
+  includeFixtures?: boolean
 }
 
-function fixturesEnabled(): boolean {
-  const v = process.env.PUBLIC_CONTENT_USE_FIXTURES
-  if (v != null) return v !== 'false'
-  return process.env.EXAMPLE_USE_FIXTURES !== 'false'
+const EMPTY_DICTIONARY: PublicDictionary = {
+  id: '',
+  name: '',
+  description: '',
+  word_count: 0,
+  words: [],
 }
 
-export async function getAllPosts(): Promise<PublicPost[]> {
-  const companyId = getCompanyId()
+export async function getAllPosts(
+  companyId: number,
+  options: PublicContentOptions = {},
+): Promise<PublicPost[]> {
   const synced = await getSyncedPosts(companyId)
-
-  if (!fixturesEnabled()) return synced
+  if (!options.includeFixtures) return synced
 
   const syncedSlugs = new Set(synced.map((p) => p.slug))
   const fixtures = EXAMPLE_POSTS.filter((p) => !syncedSlugs.has(p.slug))
-
   return [...synced, ...fixtures].sort(
     (a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
   )
 }
 
-export async function getPosts() {
-  const all = await getAllPosts()
+export async function getPosts(companyId: number, options: PublicContentOptions = {}) {
+  const all = await getAllPosts(companyId, options)
   return all.map((post) => ({
     id: post.id,
     slug: post.slug,
@@ -39,21 +47,30 @@ export async function getPosts() {
   }))
 }
 
-export async function getPost(slug: string) {
-  const all = await getAllPosts()
+export async function getPost(
+  companyId: number,
+  slug: string,
+  options: PublicContentOptions = {},
+) {
+  const all = await getAllPosts(companyId, options)
   return all.find((post) => post.slug === slug) ?? null
 }
 
-export async function getDictionary() {
-  const companyId = getCompanyId()
+export async function getDictionary(
+  companyId: number,
+  options: PublicContentOptions = {},
+): Promise<PublicDictionary> {
   const synced = await getSyncedDictionaries(companyId)
-
   if (synced.length > 0) return synced[0]
-  if (!fixturesEnabled()) return { id: '', name: '', description: '', word_count: 0, words: [] }
+  if (!options.includeFixtures) return EMPTY_DICTIONARY
   return EXAMPLE_DICTIONARY
 }
 
-export async function getWord(wordId: string) {
-  const dict = await getDictionary()
+export async function getWord(
+  companyId: number,
+  wordId: string,
+  options: PublicContentOptions = {},
+) {
+  const dict = await getDictionary(companyId, options)
   return dict.words.find((word) => word.id === wordId) ?? null
 }

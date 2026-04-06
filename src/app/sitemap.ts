@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { getPosts, getDictionary } from '@/server/public-content/data'
+import { resolvePublicCompanyId } from '@/server/public-content/company'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,8 +12,9 @@ async function getComparisonSlugs(): Promise<string[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const posts = await getPosts()
-  const dict = await getDictionary()
+  const companyId = resolvePublicCompanyId()
+  const posts = await getPosts(companyId)
+  const dict = await getDictionary(companyId)
   const words = dict?.words ?? []
   const comparisonSlugs = await getComparisonSlugs()
 

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { SitePostRenderer } from '@/app/site/_components/SitePostRenderer'
 import { getPost, getPosts } from '@/server/public-content/data'
+import { resolvePublicCompanyId } from '@/server/public-content/company'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,10 +32,11 @@ function TableOfContents({ elements }: { elements: { id: string; element_type: s
 
 export default async function SiteBlogPostPage({ params }: PageProps) {
   const { slug } = await params
-  const post = await getPost(slug)
+  const companyId = resolvePublicCompanyId()
+  const post = await getPost(companyId, slug)
   if (!post) notFound()
 
-  const allPosts = await getPosts()
+  const allPosts = await getPosts(companyId)
   const currentIdx = allPosts.findIndex((p) => p.slug === slug)
   const prevPost = currentIdx > 0 ? allPosts[currentIdx - 1] : null
   const nextPost = currentIdx < allPosts.length - 1 ? allPosts[currentIdx + 1] : null
@@ -52,8 +54,17 @@ export default async function SiteBlogPostPage({ params }: PageProps) {
       <h1 className="text-[32px] font-semibold tracking-tight text-neutral-900 leading-tight max-w-3xl">{post.title}</h1>
       <p className="mt-2 text-[13px] text-neutral-400">{post.published_at}</p>
 
-      <div className="mt-6 flex aspect-[16/7] items-center justify-center rounded-xl border border-neutral-200 bg-neutral-100">
-        <span className="text-neutral-300 text-[14px]">Featured image</span>
+      <div className="mt-6 flex aspect-[16/7] items-center justify-center overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100">
+        {post.cover_image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={post.cover_image_url}
+            alt={post.title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <span className="text-neutral-300 text-[14px]">Featured image</span>
+        )}
       </div>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_240px]">
