@@ -1,3 +1,4 @@
+import { SafeHtml } from '@/components/SafeHtml'
 import { RichText } from './RichText'
 
 type Props = { value: string; label: string; description?: string }
@@ -12,7 +13,7 @@ export function Statistic({ value, label, description }: Props) {
 
   return (
     <div className="rounded-lg bg-neutral-100/70 p-6">
-      {label ? <h3 className="mb-4 text-center text-2xl font-semibold text-neutral-900" dangerouslySetInnerHTML={{ __html: label }} /> : null}
+      {label ? <SafeHtml as="h3" profile="inline" className="mb-4 text-center text-2xl font-semibold text-neutral-900" html={label} /> : null}
 
       <div className="my-5 flex justify-center">
         {hasValidPercentage ? (

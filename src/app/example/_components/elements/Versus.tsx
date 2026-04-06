@@ -1,3 +1,4 @@
+import { SafeHtml } from '@/components/SafeHtml'
 import { RichText } from './RichText'
 
 type Option = { name: string; points: string[] }
@@ -20,18 +21,18 @@ export function Versus({ title, option_a, option_b, criteria = [] }: Props) {
 
   return (
     <section>
-      {title ? <h3 className="mb-6 text-2xl font-semibold text-neutral-900" dangerouslySetInnerHTML={{ __html: title }} /> : null}
+      {title ? <SafeHtml as="h3" profile="inline" className="mb-6 text-2xl font-semibold text-neutral-900" html={title} /> : null}
 
       <div className="my-8 overflow-hidden rounded-lg border border-neutral-200">
         <div className="grid grid-cols-2 bg-neutral-100 font-semibold md:grid-cols-[30%_1fr_1fr]">
           <div className="hidden border-b border-neutral-200 p-4 md:block" />
-          <div className="border-b border-neutral-200 p-4 text-center text-sm text-neutral-900" dangerouslySetInnerHTML={{ __html: option_a.name }} />
-          <div className="border-b border-neutral-200 p-4 text-center text-sm text-neutral-900" dangerouslySetInnerHTML={{ __html: option_b.name }} />
+          <SafeHtml profile="inline" className="border-b border-neutral-200 p-4 text-center text-sm text-neutral-900" html={option_a.name} />
+          <SafeHtml profile="inline" className="border-b border-neutral-200 p-4 text-center text-sm text-neutral-900" html={option_b.name} />
         </div>
 
         {rows.map((criterion, index) => (
           <div key={index} className="grid grid-cols-1 border-b border-neutral-200 last:border-b-0 md:grid-cols-[30%_1fr_1fr]">
-            <div className="bg-neutral-50 p-4 font-semibold text-neutral-800" dangerouslySetInnerHTML={{ __html: criterion.name || '' }} />
+            <SafeHtml profile="inline" className="bg-neutral-50 p-4 font-semibold text-neutral-800" html={criterion.name || ''} />
 
             {(criterion.details || []).map((detail, detailIndex) => {
               const isWinner = criterion.winner === detailIndex

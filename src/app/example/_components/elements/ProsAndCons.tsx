@@ -1,3 +1,4 @@
+import { SafeHtml } from '@/components/SafeHtml'
 import { RichText } from './RichText'
 
 type Props = { title?: string; pros: string[]; cons: string[]; text_before?: string; text_after?: string }
@@ -5,7 +6,7 @@ type Props = { title?: string; pros: string[]; cons: string[]; text_before?: str
 export function ProsAndCons({ title, pros, cons, text_before, text_after }: Props) {
   return (
     <section>
-      {title ? <h3 className="mb-6 text-2xl font-semibold text-neutral-900" dangerouslySetInnerHTML={{ __html: title }} /> : null}
+      {title ? <SafeHtml as="h3" profile="inline" className="mb-6 text-2xl font-semibold text-neutral-900" html={title} /> : null}
       {text_before ? <RichText html={text_before} className="my-6 text-[1.05rem] leading-relaxed text-neutral-600" /> : null}
 
       <div className="my-8 grid grid-cols-1 gap-8 md:grid-cols-2">

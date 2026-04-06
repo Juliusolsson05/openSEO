@@ -1,5 +1,6 @@
 import { Building2, CheckCircle2, Quote as QuoteIcon } from 'lucide-react'
 
+import { SafeHtml } from '@/components/SafeHtml'
 import { RichText } from './RichText'
 
 type Testimonial = { quote?: string; author?: string }
@@ -23,13 +24,13 @@ export function CaseStudy({ title, problem, solution, result, clientName, indust
   return (
     <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
       <div className="px-8 py-7 text-white" style={{ backgroundColor: safeHeader }}>
-        <h3 className="text-[22px] font-semibold leading-tight" dangerouslySetInnerHTML={{ __html: title }} />
+        <SafeHtml as="h3" profile="inline" className="text-[22px] font-semibold leading-tight" html={title} />
         {(clientName || industry) && (
           <div className="mt-3 flex items-center gap-2 text-[14px] font-medium text-white/85">
             <Building2 className="h-3.5 w-3.5" />
-            {clientName ? <span dangerouslySetInnerHTML={{ __html: clientName }} /> : null}
+            {clientName ? <SafeHtml as="span" profile="inline" html={clientName} /> : null}
             {clientName && industry ? <span className="text-white/60">·</span> : null}
-            {industry ? <span dangerouslySetInnerHTML={{ __html: industry }} /> : null}
+            {industry ? <SafeHtml as="span" profile="inline" html={industry} /> : null}
           </div>
         )}
       </div>
@@ -67,7 +68,7 @@ export function CaseStudy({ title, problem, solution, result, clientName, indust
         {testimonial?.quote && (
           <div className="relative rounded-lg border border-neutral-200 bg-neutral-50 px-6 py-5">
             <QuoteIcon className="absolute left-4 top-4 h-5 w-5 text-neutral-300" />
-            <blockquote className="pl-6 text-[16px] font-light italic leading-[1.7] text-neutral-800" dangerouslySetInnerHTML={{ __html: testimonial.quote }} />
+            <SafeHtml as="blockquote" className="pl-6 text-[16px] font-light italic leading-[1.7] text-neutral-800" html={testimonial.quote} />
             {testimonial.author ? <p className="mt-3 pl-6 text-[13px] font-semibold text-neutral-500">— {testimonial.author}</p> : null}
           </div>
         )}

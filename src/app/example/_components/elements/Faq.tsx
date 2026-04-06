@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Minus, Plus } from 'lucide-react'
 
+import { SafeHtml } from '@/components/SafeHtml'
 import { RichText } from './RichText'
 
 type FaqItem = { question: string; answer: string }
@@ -29,7 +30,7 @@ export function Faq({ title = 'Frequently asked questions', items }: FaqProps) {
                 onClick={() => setOpenIndex((current) => (current === index ? null : index))}
                 className="flex w-full items-center justify-between gap-4 px-6 py-4 text-left"
               >
-                <span className="font-medium text-neutral-900" dangerouslySetInnerHTML={{ __html: item.question }} />
+                <SafeHtml as="span" profile="inline" className="font-medium text-neutral-900" html={item.question} />
                 {expanded ? <Minus className="h-4 w-4 shrink-0 text-neutral-600" /> : <Plus className="h-4 w-4 shrink-0 text-neutral-600" />}
               </button>
 
