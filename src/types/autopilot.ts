@@ -65,7 +65,7 @@ export interface ImageSummary {
 }
 
 export interface AutopilotOperation {
-  elementId: number
+  elementId?: number
   type: 'new' | 'enhancement' | 'regeneration'
   status: 'planned' | 'in_progress' | 'completed' | 'error'
   position?: {

@@ -9,7 +9,9 @@ interface Options {
   currentUrl?: string
   currentDescription?: string
   postTitle?: string
-  onImageApplied?: () => Promise<void> | void
+  /** Called once the user confirms Apply. Receives the URL that was applied
+   *  (this is the currently selected preview URL, i.e. editableImageUrl). */
+  onImageApplied?: (newUrl: string) => Promise<void> | void
   onClose: () => void
 }
 
@@ -105,14 +107,19 @@ export function useImageStudioState(opts: Options) {
   }, [blogId, imageNumber, addToHistory])
 
   const onApply = useCallback(async () => {
+    const appliedUrl = editableImageUrl
+    if (!appliedUrl) {
+      onClose()
+      return
+    }
     setIsApplying(true)
     try {
-      await onImageApplied?.()
+      await onImageApplied?.(appliedUrl)
     } finally {
       setIsApplying(false)
       onClose()
     }
-  }, [onImageApplied, onClose])
+  }, [editableImageUrl, onImageApplied, onClose])
 
   return {
     provider, setProvider,

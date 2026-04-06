@@ -5,12 +5,12 @@
  * Ported from aurora_dashboard/views/apps/blog/elements/base.vue
  */
 
-import { useState, useCallback, useRef, type ReactNode } from 'react'
+import { useState, useCallback, type ReactNode } from 'react'
 import { Pencil, RefreshCw, Sparkles, Heart, Trash2, Plus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useElementsApi } from '@/hooks/use-elements-api'
 import { useAppDispatch } from '@/store/hooks'
-import { insertSkeletonLoader, removeSkeletonLoaderByOperationId, invalidatePost } from '@/store/slices/blogUiSlice'
+import { insertSkeletonLoader, removeSkeletonLoaderByOperationId, invalidatePost, newOperationId } from '@/store/slices/blogUiSlice'
 import { BaseEdit } from './BaseEdit'
 import { RegenerateModal } from './modals/RegenerateModal'
 import { ConfirmDeleteModal } from './modals/ConfirmDeleteModal'
@@ -65,7 +65,6 @@ export function BaseElement({
 
   const dispatch = useAppDispatch()
   const elementsApi = useElementsApi()
-  const opIdRef = useRef(0)
 
   const handleContentUpdated = useCallback(
     (updatedContent: any) => {
@@ -82,7 +81,7 @@ export function BaseElement({
       new_element_count?: number
     }) => {
       setShowRegenerateModal(false)
-      const opId = ++opIdRef.current
+      const opId = newOperationId()
       dispatch(insertSkeletonLoader(blogId, opId, {
         elementId,
         type: 'regeneration',
@@ -115,7 +114,7 @@ export function BaseElement({
 
   const handleEnhance = useCallback(async () => {
     setShowEnhanceModal(false)
-    const opId = ++opIdRef.current
+    const opId = newOperationId()
     dispatch(insertSkeletonLoader(blogId, opId, {
       elementId,
       type: 'enhancement',
@@ -138,7 +137,7 @@ export function BaseElement({
   }, [blogId, elementId, elementsApi, dispatch])
 
   const handleHumanize = useCallback(async () => {
-    const opId = ++opIdRef.current
+    const opId = newOperationId()
     dispatch(insertSkeletonLoader(blogId, opId, {
       elementId,
       type: 'enhancement',
@@ -182,7 +181,7 @@ export function BaseElement({
   const handleAddElement = useCallback(
     async (elementType: ElementType, note?: string) => {
       setShowAddElementModal(false)
-      const opId = ++opIdRef.current
+      const opId = newOperationId()
       dispatch(insertSkeletonLoader(blogId, opId, {
         elementId,
         type: 'new',
@@ -223,7 +222,7 @@ export function BaseElement({
   }, [])
 
   const handleCtaSelected = useCallback(async (ctaId: number) => {
-    const opId = ++opIdRef.current
+    const opId = newOperationId()
     const toastId = toast.loading('Adding CTA...')
 
     dispatch(insertSkeletonLoader(blogId, opId, {

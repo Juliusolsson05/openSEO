@@ -6,6 +6,7 @@ import {
   removeSkeletonLoaders,
   removeSkeletonLoaderByOperationId,
   invalidatePost,
+  newOperationId,
 } from './blogUiSlice'
 import type {
   AutopilotStage,
@@ -25,7 +26,7 @@ interface AutopilotStartResponse {
 export interface AutopilotState {
   isRunning: boolean
   currentStage: AutopilotStage | string | null
-  operations: Record<number, AutopilotOperation>
+  operations: Record<string, AutopilotOperation>
   lastLogTimestamp: string | null
   taskId: string | null
   postId: number | null
@@ -42,7 +43,9 @@ const initialState: AutopilotState = {
   postId: null,
 }
 
-let operationCounter = 1
+// Maps real element_id (Phase 3/4) or generated opId (Phase 1/2) to the
+// skeleton operation id passed to insertSkeletonLoader / removeSkeletonLoaderByOperationId.
+let pendingSkeletonIds: Record<string, string> = {}
 
 export const startAutopilot = createAsyncThunk<
   { taskId: string; postId: number },
@@ -76,7 +79,7 @@ export const autopilotSlice = createSlice({
     stageChanged(state, action: PayloadAction<string>) {
       state.currentStage = action.payload
     },
-    operationsUpdated(state, action: PayloadAction<Record<number, AutopilotOperation>>) {
+    operationsUpdated(state, action: PayloadAction<Record<string, AutopilotOperation>>) {
       state.operations = action.payload
     },
     timestampUpdated(state, action: PayloadAction<string>) {
@@ -122,6 +125,7 @@ export const stopAutopilot = (postId?: number) => (dispatch: Dispatch, getState:
   if (activePostId) {
     dispatch(removeSkeletonLoaders(activePostId) as any)
   }
+  pendingSkeletonIds = {}
   dispatch(autopilotStopped())
 }
 
@@ -176,6 +180,7 @@ async function processLog(
     log.data.status === 'completed'
   ) {
     dispatch(removeSkeletonLoaders(postId) as any)
+    pendingSkeletonIds = {}
     dispatch(autopilotStopped())
     return
   }
@@ -188,15 +193,15 @@ async function processLog(
   if (log.stage === ('element_analysis' as any) && log.type === 'planned') {
     const recommendations = log.data.recommendations_summary as RecommendationSummary[]
     recommendations?.forEach((rec) => {
-      const opId = operationCounter++
+      const opId = newOperationId()
       const operation: AutopilotOperation = {
-        elementId: -opId,
         type: 'new',
         status: 'planned',
         position: { afterElementId: rec.after_element_id },
         elementType: rec.element_type,
       }
-      operations[-opId] = operation
+      operations[opId] = operation
+      pendingSkeletonIds[opId] = opId
       dispatch(insertSkeletonLoader(postId, opId, operation) as any)
     })
     dispatch(operationsUpdated(operations))
@@ -211,15 +216,15 @@ async function processLog(
   if (log.stage === ('paragraph_analysis' as any) && log.type === 'planned') {
     const recommendations = log.data.recommendations_summary as RecommendationSummary[]
     recommendations?.forEach((rec) => {
-      const opId = operationCounter++
+      const opId = newOperationId()
       const operation: AutopilotOperation = {
-        elementId: -opId,
         type: 'new',
         status: 'planned',
         position: { afterElementId: rec.after_element_id },
         elementType: 'paragraph',
       }
-      operations[-opId] = operation
+      operations[opId] = operation
+      pendingSkeletonIds[opId] = opId
       dispatch(insertSkeletonLoader(postId, opId, operation) as any)
     })
     dispatch(operationsUpdated(operations))
@@ -241,8 +246,10 @@ async function processLog(
         elementType: imp.element_type,
         tools: imp.tools,
       }
-      operations[imp.element_id] = operation
-      dispatch(insertSkeletonLoader(postId, imp.element_id, operation) as any)
+      operations[String(imp.element_id)] = operation
+      const skeletonId = newOperationId()
+      pendingSkeletonIds[String(imp.element_id)] = skeletonId
+      dispatch(insertSkeletonLoader(postId, skeletonId, operation) as any)
     })
     dispatch(operationsUpdated(operations))
   }
@@ -262,17 +269,23 @@ async function processLog(
         status: 'planned',
         elementType: 'image',
       }
-      operations[img.element_id] = operation
-      dispatch(insertSkeletonLoader(postId, img.element_id, operation) as any)
+      operations[String(img.element_id)] = operation
+      const skeletonId = newOperationId()
+      pendingSkeletonIds[String(img.element_id)] = skeletonId
+      dispatch(insertSkeletonLoader(postId, skeletonId, operation) as any)
     })
     dispatch(operationsUpdated(operations))
   }
 
   if (log.stage === 'image_generation' && log.type === 'completed') {
     const elementId = log.data.element_id
-    if (elementId && operations[elementId]) {
-      delete operations[elementId]
-      dispatch(removeSkeletonLoaderByOperationId(postId, elementId) as any)
+    if (elementId && operations[String(elementId)]) {
+      delete operations[String(elementId)]
+      const skeletonId = pendingSkeletonIds[String(elementId)]
+      if (skeletonId) {
+        dispatch(removeSkeletonLoaderByOperationId(postId, skeletonId) as any)
+        delete pendingSkeletonIds[String(elementId)]
+      }
       dispatch(operationsUpdated(operations))
     }
   }
@@ -280,9 +293,12 @@ async function processLog(
   if (log.stage === 'image_generation' && log.type === ('finished' as any)) {
     const imageOps = Object.entries(operations).filter(([, op]) => op.elementType === 'image')
     imageOps.forEach(([id]) => {
-      const opId = Number(id)
-      delete operations[opId]
-      dispatch(removeSkeletonLoaderByOperationId(postId, opId) as any)
+      delete operations[id]
+      const skeletonId = pendingSkeletonIds[id]
+      if (skeletonId) {
+        dispatch(removeSkeletonLoaderByOperationId(postId, skeletonId) as any)
+        delete pendingSkeletonIds[id]
+      }
     })
     dispatch(operationsUpdated(operations))
     dispatch(invalidatePost(postId) as any)
@@ -320,11 +336,13 @@ async function fetchAndProcessLogs(
 
     if (data.status === 'completed') {
       dispatch(removeSkeletonLoaders(postId) as any)
+      pendingSkeletonIds = {}
       dispatch(autopilotStopped())
     }
   } catch (error) {
     console.error('[Autopilot] Error fetching logs:', error)
     dispatch(removeSkeletonLoaders(postId) as any)
+    pendingSkeletonIds = {}
     dispatch(autopilotStopped())
   }
 }

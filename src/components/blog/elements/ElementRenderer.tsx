@@ -48,7 +48,7 @@ export function ElementRenderer({
       <Component
         content={element.content}
         blogId={blogId}
-        elementId={element.id}
+        elementId={element.id as number}
         hyperlink={element.hyperlink}
         onContentUpdated={onContentUpdated}
         onElementAdded={onElementAdded}
@@ -63,7 +63,7 @@ export function ElementRenderer({
     <PreviewComponent
       content={element.content}
       blogId={blogId}
-      elementId={element.id}
+      elementId={element.id as number}
       hyperlink={element.hyperlink}
       {...previewProps}
     />

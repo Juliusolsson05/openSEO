@@ -40,7 +40,9 @@ export function InlineEditProvider({ children }: { children: ReactNode }) {
     const onPointerDown = (event: MouseEvent | TouchEvent) => {
       const target = event.target as HTMLElement | null
       if (!target) return
-      const insideInlineEditor = target.closest('[data-inline-edit-root="true"]')
+      const insideInlineEditor =
+        target.closest('[data-inline-edit-root="true"]') ||
+        target.closest('[data-inline-editor-action="true"]')
       if (!insideInlineEditor) {
         setActiveElementId(null)
       }

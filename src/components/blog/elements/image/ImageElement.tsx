@@ -8,6 +8,7 @@ import { useAppDispatch } from '@/store/hooks'
 import { invalidatePost } from '@/store/slices/blogUiSlice'
 import { ImageStudio } from '@/components/blog/ImageStudio'
 import { Button } from '@/components/ui/button'
+import { resolveMediaUrl } from '@/lib/media'
 
 type ImageContent = {
   url?: string
@@ -16,17 +17,6 @@ type ImageContent = {
 }
 
 const DEFAULT_IMAGE = 'https://via.placeholder.com/800x400?text=No+Image'
-
-const resolveImageUrl = (url?: string) => {
-  if (!url) return DEFAULT_IMAGE
-  if (url.startsWith('http://') || url.startsWith('https://')) return url
-
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ''
-  const normalizedBase = baseUrl.replace(/\/$/, '')
-  const normalizedPath = url.startsWith('/') ? url : `/${url}`
-
-  return `${normalizedBase}${normalizedPath}`
-}
 
 export function ImageElement({ content, blogId, elementId, onContentUpdated, onElementDeleted, onElementAdded }: ElementComponentProps) {
   const parsedContent = (content ?? {}) as ImageContent
@@ -47,12 +37,12 @@ export function ImageElement({ content, blogId, elementId, onContentUpdated, onE
     return index >= 0 ? index + 2 : 1
   }, [elementId, parsedContent.image_number, post?.elements])
 
-  const src = resolveImageUrl(parsedContent.url)
+  const src = resolveMediaUrl(parsedContent.url) || DEFAULT_IMAGE
   const alt = parsedContent.description || 'Blog image'
 
-  const onApplied = async () => {
+  const onApplied = async (newUrl: string) => {
     dispatch(invalidatePost(blogId) as any)
-    onContentUpdated?.({ ...parsedContent, url: src })
+    onContentUpdated?.({ ...parsedContent, url: newUrl })
   }
 
   return (

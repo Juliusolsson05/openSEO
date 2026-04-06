@@ -25,7 +25,12 @@ export interface HyperlinkData {
 }
 
 export interface BlogPostElement {
-  id: number
+  /**
+   * Real server-assigned elements use a numeric id. Client-only skeleton
+   * placeholders inserted before the server responds use a string id of the
+   * form `op_<uuid>` so they can never collide with a real numeric id.
+   */
+  id: number | string
   element_type: string
   order?: number
   content: Record<string, unknown>
@@ -33,6 +38,11 @@ export interface BlogPostElement {
   created_at: string
   blog_post: number
   isLoading?: boolean
+  /** Operation id of the in-flight regenerate/enhance/humanize/add call. */
+  loadingOperationId?: string
+  /** Snapshot of the original element for overlay-style skeletons; used to
+   *  restore the cache entry if the operation fails. Absent on pure inserts. */
+  previousElement?: BlogPostElement
 }
 
 export interface LinkedPost {

@@ -34,10 +34,10 @@ export function InlineEditorShell({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+          <Button type="button" variant="outline" size="sm" data-inline-editor-action="true" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="button" size="sm" onClick={() => void onSave()} disabled={!isDirty || status === 'saving'}>
+          <Button type="button" size="sm" data-inline-editor-action="true" onClick={() => void onSave()} disabled={!isDirty || status === 'saving'}>
             Save
           </Button>
         </div>

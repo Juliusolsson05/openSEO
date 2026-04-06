@@ -73,7 +73,7 @@ function getImageNumbers(elements: BlogPostElement[]) {
   elements.forEach((element) => {
     if (String(element.element_type).toLowerCase() === 'image') {
       count += 1
-      numbers[element.id] = count
+      numbers[element.id as number] = count
     }
   })
 
@@ -222,9 +222,9 @@ export default function BlogPreviewPage() {
                         preview
                         previewProps={{
                           blogId: post.id,
-                          elementId: element.id,
+                          elementId: element.id as number,
                           postTitle: post.title_text,
-                          imageNumber: imageNumbers[element.id] ? imageNumbers[element.id] + 1 : null,
+                          imageNumber: imageNumbers[element.id as number] ? imageNumbers[element.id as number] + 1 : null,
                           hyperlink: element.hyperlink,
                         }}
                       />

@@ -17,7 +17,7 @@ interface Props {
   currentUrl?: string
   currentDescription?: string
   postTitle?: string
-  onImageApplied?: () => Promise<void> | void
+  onImageApplied?: (newUrl: string) => Promise<void> | void
 }
 
 export function ImageStudio(props: Props) {
