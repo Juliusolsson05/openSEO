@@ -64,7 +64,7 @@ const outboundDictionaryEnvelope = {
           antonyms: [],
           usage_examples: ['We ran an A/B test on the landing page.'],
           related_keywords: ['multivariate testing', 'conversion optimization'],
-          faqs: [{ q: 'How long should an A/B test run?', a: 'At least 2 weeks...' }],
+          faqs: [{ question: 'How long should an A/B test run?', answer: 'At least 2 weeks...' }],
         },
       },
     ],
@@ -135,7 +135,7 @@ const inboundTermUpsert = {
         antonyms: [],
         usage_examples: ['We ran an A/B test.'],
         related_keywords: ['multivariate testing'],
-        faqs: [{ q: 'How long?', a: 'At least 2 weeks.' }],
+        faqs: [{ question: 'How long?', answer: 'At least 2 weeks.' }],
       },
     },
   },
@@ -318,7 +318,7 @@ const definitionFields = [
   { name: 'antonyms', type: 'string[]', required: false, description: 'List of antonyms.' },
   { name: 'usage_examples', type: 'string[]', required: false, description: 'Example sentences using the term.' },
   { name: 'related_keywords', type: 'string[]', required: false, description: 'Semantically related keywords.' },
-  { name: 'faqs', type: 'Array<{q,a}>', required: false, description: 'Frequently asked questions with answers.' },
+  { name: 'faqs', type: 'Array<{question,answer}>', required: false, description: 'Frequently asked questions with answers. Each item has string "question" and "answer" fields.' },
 ]
 
 /* ─── page ─── */

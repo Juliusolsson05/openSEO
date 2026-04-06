@@ -7,6 +7,7 @@ import {
   deleteSyncedDictionary,
 } from '@/server/public-content/store'
 import type { PublicDictionary, PublicPost, PublicWord } from '@/server/public-content/types'
+import { resolvePublicCompanyId } from '@/server/public-content/company'
 
 const envelopeSchema = z.object({
   event: z.string(),
@@ -26,9 +27,22 @@ function authenticate(req: NextRequest): boolean {
   return auth.slice(7).trim() === expected
 }
 
-function getCompanyId(): number {
-  const raw = process.env.PUBLIC_CONTENT_COMPANY_ID ?? process.env.EXAMPLE_COMPANY_ID ?? '1'
-  return parseInt(raw, 10)
+/**
+ * Resolve the target tenant for an inbound publish event.
+ *
+ * Order: `x-company-id` header, then `?company_id=` query, then
+ * `PUBLIC_CONTENT_COMPANY_ID` env (via resolvePublicCompanyId). Throws if
+ * none are provided — we refuse to silently default to company 1, because
+ * that caused cross-tenant writes to the public-content tables.
+ */
+function resolveInboundCompanyId(req: NextRequest): number {
+  const header = req.headers.get('x-company-id')
+  if (header) return resolvePublicCompanyId(header)
+
+  const query = req.nextUrl.searchParams.get('company_id')
+  if (query) return resolvePublicCompanyId(query)
+
+  return resolvePublicCompanyId()
 }
 
 import type { RawElement } from '@/types/publishing'
@@ -62,6 +76,10 @@ function toPublicPost(payload: Record<string, unknown>): { post: PublicPost; aur
     content: typeof el.content === 'string' ? (() => { try { return JSON.parse(el.content as string) } catch { return {} } })() : (el.content as Record<string, unknown>),
   }))
 
+  const coverImage = post.cover_image as { url?: unknown } | undefined
+  const coverImageUrl =
+    typeof coverImage?.url === 'string' ? coverImage.url : ''
+
   return {
     auroraId: post.id as number | undefined,
     post: {
@@ -69,7 +87,7 @@ function toPublicPost(payload: Record<string, unknown>): { post: PublicPost; aur
       slug: String(post.slug),
       title: String(post.title_text),
       excerpt: String(post.excerpt ?? post.meta_description ?? ''),
-      cover_image_url: '',
+      cover_image_url: coverImageUrl,
       published_at: new Date().toISOString().slice(0, 10),
       elements,
     },
@@ -115,7 +133,18 @@ function toPublicDictionary(payload: Record<string, unknown>): { dict: PublicDic
 export async function POST(req: NextRequest) {
   if (!authenticate(req)) return json({ error: 'Unauthorized' }, 401)
 
-  const companyId = getCompanyId()
+  let companyId: number
+  try {
+    companyId = resolveInboundCompanyId(req)
+  } catch (err) {
+    return json(
+      {
+        error:
+          'Missing tenant: provide x-company-id header, ?company_id= query, or set PUBLIC_CONTENT_COMPANY_ID.',
+      },
+      400,
+    )
+  }
 
   let raw: unknown
   try {

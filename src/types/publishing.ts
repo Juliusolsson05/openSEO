@@ -18,8 +18,11 @@ export interface InboundPostPayload {
   post?: InboundPostRef & {
     title_text?: string; seo_title?: string; focus_keyword?: string
     excerpt?: string; meta_description?: string
+    cover_image?: { url?: string; description?: string }
+    categories?: string[]
     status?: 'TO_BE_GENERATED' | 'APPROVED' | 'REJECTED' | 'GENERATED' | 'PUBLISHED'
   }
+  elements?: RawElement[]
 }
 
 export interface InboundPostDeletePayload { post?: InboundPostRef }
