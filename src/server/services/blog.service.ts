@@ -733,7 +733,7 @@ export class BlogService {
     const rows = await prisma.blogPost.findMany({
       where: {
         companyId,
-        elements: { some: { element_type: 'GLOSSARY' } },
+        elements: { some: { element_type: 'code_cluster' } },
       },
       distinct: ['id'],
       select: { title_text: true },

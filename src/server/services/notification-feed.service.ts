@@ -33,9 +33,9 @@ export class NotificationFeedService {
       }),
       prisma.dictionary.findMany({
         where: { companyId },
-        orderBy: { id: 'desc' },
+        orderBy: { updated_at: 'desc' },
         take,
-        select: { id: true, title: true, status: true, current_letter: true },
+        select: { id: true, title: true, status: true, current_letter: true, updated_at: true },
       }),
       prisma.blogPost.findMany({
         where: { companyId, scheduled_date: { not: null } },
@@ -78,7 +78,7 @@ export class NotificationFeedService {
         subtitle: done
           ? dictionary.title
           : `${dictionary.title} · letter ${(dictionary.current_letter || 'a').toUpperCase()}`,
-        createdAt: new Date().toISOString(),
+        createdAt: dictionary.updated_at.toISOString(),
         url: `/dictionary/${dictionary.id}`,
         level: done ? 'success' : 'warning',
       })

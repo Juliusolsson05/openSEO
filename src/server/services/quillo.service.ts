@@ -395,8 +395,8 @@ export class QuilloService {
                 })
                 appliedTools.push('regenerate')
               } else if (toolName === 'humanize') {
-                // Keep parity with legacy autopilot where humanize was skipped in this phase.
-                appliedTools.push('humanize_skipped')
+                await elementService.humanizeElementByContext(companyId, blogPostId, elementId)
+                appliedTools.push('humanize')
               }
             }
           } catch (e) {

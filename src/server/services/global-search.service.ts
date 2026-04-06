@@ -52,8 +52,8 @@ export class GlobalSearchService {
           ],
         },
         take,
-        orderBy: { id: 'desc' },
-        select: { id: true, title: true, subject: true },
+        orderBy: { updated_at: 'desc' },
+        select: { id: true, title: true, subject: true, updated_at: true },
       }),
       prisma.product.findMany({
         where: {
@@ -93,7 +93,7 @@ export class GlobalSearchService {
         title: dictionary.title,
         subtitle: dictionary.subject,
         url: `/dictionary/${dictionary.id}`,
-        updatedAt: new Date().toISOString(),
+        updatedAt: dictionary.updated_at.toISOString(),
       })),
       ...products.map((product) => ({
         id: `product-${product.id}`,
@@ -107,7 +107,7 @@ export class GlobalSearchService {
 
     return results
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      .slice(0, take * 2)
+      .slice(0, take)
   }
 }
 

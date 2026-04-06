@@ -115,6 +115,7 @@ export class SettingsService {
         pulse_enabled: true,
         echo_enabled: true,
         created_at: true,
+        updated_at: true,
       },
     })
 
@@ -173,7 +174,7 @@ export class SettingsService {
     return {
       version: SETTINGS_VERSION,
       company_id: company.id,
-      updated_at: company.created_at.toISOString(),
+      updated_at: company.updated_at.toISOString(),
       domains: this.extractDomains(company),
     }
   }

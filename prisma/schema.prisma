@@ -488,6 +488,8 @@ model Dictionary {
   companyId      Int?
   faqs           Json             @default("[]")
   slug           String           @default("dictionary/")
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @default(now()) @updatedAt
 
   company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
   words   Word[]

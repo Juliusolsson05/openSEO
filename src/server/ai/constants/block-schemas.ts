@@ -407,7 +407,11 @@ export const BLOCK_SCHEMAS = {
       },
       "age": {
         "type": "string",
-        "description": "Age group, SHOULD be either 'Baby', 'Toddler', 'Kids', 'Adult'"
+        "description": "Audience age group. MUST be one of: 'Baby', 'Toddler', 'Kids', 'Adult'. This is a demographic descriptor, NOT a freshness filter."
+      },
+      "recency_days": {
+        "type": "integer",
+        "description": "Optional. If set, only consider products whose created_at is within the last N days. Leave unset to include all products regardless of age."
       }
     },
     "required": [

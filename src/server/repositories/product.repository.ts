@@ -104,7 +104,7 @@ export function deleteProduct(id: number, companyId: number) {
   return prisma.product.deleteMany({ where: { id, companyId } })
 }
 
-export async function search(companyId: number, query: string, age?: number, amount = 10) {
+export async function search(companyId: number, query: string, recencyDays?: number, amount = 10) {
   const where = {
     companyId,
     ...(query
@@ -118,10 +118,10 @@ export async function search(companyId: number, query: string, age?: number, amo
           ],
         }
       : {}),
-    ...(age !== undefined
+    ...(recencyDays !== undefined
       ? {
           created_at: {
-            gte: new Date(Date.now() - age * 24 * 60 * 60 * 1000),
+            gte: new Date(Date.now() - recencyDays * 24 * 60 * 60 * 1000),
           },
         }
       : {}),

@@ -164,6 +164,7 @@ export class DictionaryService {
 
     return {
       detail: `${removed.count} words successfully removed from the dictionary`,
+      // `num_words` is words-per-letter, not a total. Kept for API back-compat.
       new_word_count: refreshed.num_words,
     }
   }
@@ -181,10 +182,9 @@ export class DictionaryService {
 
     await dictionaryRepository.deleteWord(wordId)
 
-    const dictionary = await dictionaryRepository.findById(word.dictionaryId, companyId)
-    if (dictionary) {
-      await dictionaryRepository.update(word.dictionaryId, { num_words: dictionary.words.length })
-    }
+    // NOTE: `num_words` is words-per-letter (used by generation) and MUST NOT be
+    // overwritten with the total word count. The total is derived on read as
+    // `num_words * 26` in listDictionaries.
   }
 
   async startKeywordGeneration(companyId: number, payload: unknown) {

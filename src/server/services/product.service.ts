@@ -64,8 +64,8 @@ export class ProductService {
     return results
   }
 
-  async searchProducts(companyId: number, query: string, age?: number, amount?: number) {
-    return productRepository.search(companyId, query, age, amount)
+  async searchProducts(companyId: number, query: string, recencyDays?: number, amount?: number) {
+    return productRepository.search(companyId, query, recencyDays, amount)
   }
 
   async populateRecommendations(companyId: number, postId?: number) {
@@ -80,11 +80,15 @@ export class ProductService {
 
     const content = (element.content as any) || {}
     const query = String(content.niche ?? '')
-    const age = Number(content.age ?? 0) || undefined
+    // `age` stays as audience descriptor (e.g. "Kids") — do not convert to a number.
+    // `recency_days` is the optional freshness filter passed to the repository.
+    const recencyDays = Number.isFinite(Number(content.recency_days))
+      ? Number(content.recency_days)
+      : undefined
     const amount = Number(content.count ?? 0) || 3
 
-    const resultProducts = await productRepository.search(companyId, query, age, amount)
-    const restProducts = await productRepository.search(companyId, query, age, Math.max(30, amount * 3))
+    const resultProducts = await productRepository.search(companyId, query, recencyDays, amount)
+    const restProducts = await productRepository.search(companyId, query, recencyDays, Math.max(30, amount * 3))
 
     let recommendedProducts: any = []
 

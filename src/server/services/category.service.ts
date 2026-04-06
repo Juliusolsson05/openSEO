@@ -162,17 +162,17 @@ export class CategoryService {
     if (categories.length === 0) throw new ValidationError('No categories exist. Create categories first.')
 
     const results = await categorizeTitlesAI(
-      [{ id: title.id, text: title.title_text } as any],
+      [{ id: title.id, title_text: title.title_text }],
       categories.map((c) => ({ id: c.id, name: c.name })),
     )
 
-    const match = results.find((r: any) => r.titleId === titleId)
-    const assignedIds = (match as any)?.categoryIds ?? []
+    const match = results.find((r) => r.id === titleId)
+    const assignedIds: number[] = (match?.categories ?? []).map((c) => c.id)
     if (assignedIds.length > 0) {
       await prisma.title.update({
         where: { id: titleId },
         data: {
-          categories: { set: assignedIds.map((id: number) => ({ id })) },
+          categories: { set: assignedIds.map((id) => ({ id })) },
         },
       })
     }
