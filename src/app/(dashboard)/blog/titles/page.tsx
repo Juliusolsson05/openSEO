@@ -43,12 +43,12 @@ const statusMap: Record<number, { text: string; variant: 'outline' | 'default' |
   2: { text: 'Generated', variant: 'success' },
   3: { text: 'Approved', variant: 'default' },
   4: { text: 'Rejected', variant: 'destructive' },
+  5: { text: 'Published', variant: 'success' },
 }
 
 const intervalMap: Record<string, number> = {
   daily: 1,
   every2days: 2,
-  threePerWeek: 2,
   weekly: 7,
   biweekly: 14,
 }
@@ -81,6 +81,9 @@ export default function BlogTitlesPage() {
     fetchCategories,
     assignCategory,
     createCategory,
+    fetchNextPage: fetchMoreTitles,
+    hasNextPage: hasMoreTitles,
+    isFetchingNextPage: loadingMoreTitles,
   } = useTitlesApi()
 
   const [search, setSearch] = useState('')
@@ -109,7 +112,6 @@ export default function BlogTitlesPage() {
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
   const [intervalType, setIntervalType] = useState('daily')
   const [intervalStartDate, setIntervalStartDate] = useState('')
-  const [weekdays, setWeekdays] = useState<string[]>([])
   const [schedulingBulk, setSchedulingBulk] = useState(false)
   const [perPage, setPerPage] = useState(25)
   const [page, setPage] = useState(1)
@@ -156,6 +158,13 @@ export default function BlogTitlesPage() {
   }, [filtered, page, perPage])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
+
+  useEffect(() => {
+    if (page >= totalPages && hasMoreTitles && !loadingMoreTitles) {
+      void fetchMoreTitles()
+    }
+  }, [page, totalPages, hasMoreTitles, loadingMoreTitles, fetchMoreTitles])
+
   const hasScheduledColumn = titlesData.some((t) => !!t.scheduledDate)
 
   const pendingCount = titlesData.filter((t) => t.status === 1).length
@@ -587,7 +596,6 @@ export default function BlogTitlesPage() {
                 <SelectContent>
                   <SelectItem value="daily">Daily</SelectItem>
                   <SelectItem value="every2days">Every 2 days</SelectItem>
-                  <SelectItem value="threePerWeek">3x/week</SelectItem>
                   <SelectItem value="weekly">Weekly</SelectItem>
                   <SelectItem value="biweekly">Biweekly</SelectItem>
                 </SelectContent>
@@ -596,14 +604,6 @@ export default function BlogTitlesPage() {
             <div>
               <Label className="text-[12px]">Start date</Label>
               <Input type="datetime-local" className="mt-1" value={intervalStartDate} onChange={(e) => setIntervalStartDate(e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-[12px]">Days of week</Label>
-              <div className="mt-1 grid grid-cols-4 gap-2 text-[12px]">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
-                  <label key={d} className="flex items-center gap-1"><Checkbox checked={weekdays.includes(d)} onCheckedChange={() => setWeekdays((prev) => prev.includes(d) ? prev.filter((v) => v !== d) : [...prev, d])} />{d}</label>
-                ))}
-              </div>
             </div>
           </div>
           <DialogFooter>

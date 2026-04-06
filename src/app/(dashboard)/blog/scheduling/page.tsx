@@ -9,7 +9,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import type { EventClickArg, EventDropArg } from '@fullcalendar/core'
 import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 
-import { useTitlesQuery, useSchedulePostMutation, useReschedulePostMutation, useBulkCreateScheduleMutation, useBulkAssignScheduleMutation } from '@/hooks/queries/titles'
+import { useAllTitlesQuery, useSchedulePostMutation, useReschedulePostMutation, useBulkCreateScheduleMutation, useBulkAssignScheduleMutation } from '@/hooks/queries/titles'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -68,13 +68,13 @@ function buildMiniCalendarWeeks(year: number, month: number) {
 export default function BlogSchedulingPage() {
   const calendarRef = useRef<FullCalendar>(null)
 
-  const { data: rawTitles = [], isLoading: loading } = useTitlesQuery()
+  const { data: rawTitles = [], isLoading: loading } = useAllTitlesQuery()
   const scheduleReschedule = useReschedulePostMutation()
   const schedulePost_ = useSchedulePostMutation()
   const bulkCreate = useBulkCreateScheduleMutation()
   const bulkAssign = useBulkAssignScheduleMutation()
   const posts: SchedulingTitle[] = (rawTitles as any[]).filter(
-    (t: any) => t.status === 'GENERATED' || t.status === 4 || Boolean(t.scheduled_date)
+    (t: any) => t.status === 'GENERATED' || t.status === 2 || Boolean(t.scheduled_date)
   ) as SchedulingTitle[]
   const [sidebarOpen, setSidebarOpen] = useState(true)
 

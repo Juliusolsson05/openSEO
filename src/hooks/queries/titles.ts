@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { QK } from '@/lib/query-keys'
 import { toast } from 'sonner'
@@ -27,14 +27,59 @@ function toStatus(value: StatusInput | undefined) {
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
-export function useTitlesQuery() {
-  return useQuery({
-    queryKey: QK.titles(),
-    queryFn: async () => {
-      const data = await api<{ data: BlogTitle[]; total: number }>(
-        '/api/aurora/blog/titles/',
+type TitlesPage = {
+  data: BlogTitle[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+const TITLES_PAGE_SIZE = 100
+
+export function useTitlesQuery(filters?: object) {
+  return useInfiniteQuery({
+    queryKey: ['titles', 'infinite', filters ?? null] as const,
+    queryFn: async ({ pageParam }) => {
+      const data = await api<TitlesPage | BlogTitle[]>(
+        `/api/aurora/blog/titles/?page=${pageParam}&pageSize=${TITLES_PAGE_SIZE}`
       )
-      return data?.data ?? []
+      if (Array.isArray(data)) {
+        return { data, total: data.length, page: 1, pageSize: data.length } as TitlesPage
+      }
+      return (data ?? { data: [], total: 0, page: 1, pageSize: TITLES_PAGE_SIZE }) as TitlesPage
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      if (!lastPage) return undefined
+      const totalPages = Math.max(1, Math.ceil(lastPage.total / TITLES_PAGE_SIZE))
+      return (lastPageParam as number) < totalPages ? (lastPageParam as number) + 1 : undefined
+    },
+  })
+}
+
+/**
+ * Fetches ALL titles by looping pages internally. Use for analytics,
+ * scheduling, and other aggregate consumers that need the complete
+ * dataset. For list UIs with visible pagination, prefer `useTitlesQuery`.
+ */
+export function useAllTitlesQuery(filters?: object) {
+  return useQuery({
+    queryKey: ['titles', 'all', filters ?? null] as const,
+    queryFn: async (): Promise<BlogTitle[]> => {
+      const pageSize = 100
+      const all: BlogTitle[] = []
+      let page = 1
+      for (let i = 0; i < 100; i++) {
+        const data = await api<TitlesPage | BlogTitle[]>(
+          `/api/aurora/blog/titles/?page=${page}&pageSize=${pageSize}`
+        )
+        const pageData = Array.isArray(data) ? data : (data?.data ?? [])
+        all.push(...pageData)
+        const total = Array.isArray(data) ? pageData.length : (data?.total ?? 0)
+        if (all.length >= total || pageData.length < pageSize) break
+        page += 1
+      }
+      return all
     },
   })
 }
@@ -59,7 +104,7 @@ export function useCreateTitleMutation() {
     mutationFn: (titleText: string) =>
       apiPost('/api/aurora/blog/titles/create/', { title_text: titleText }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QK.titles() })
+      qc.invalidateQueries({ queryKey: ['titles'] })
       toast.success('Title created')
     },
     onError: (err) => {
@@ -89,7 +134,7 @@ export function useUpdateTitleMutation() {
       return apiPut(`/api/aurora/blog/titles/update/${titleId}/`, payload)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QK.titles() })
+      qc.invalidateQueries({ queryKey: ['titles'] })
     },
     onError: (err) => {
       toast.error(getErrorMessage(err, 'Failed to update title'))
@@ -103,7 +148,7 @@ export function useDeleteTitleMutation() {
     mutationFn: (titleId: number) =>
       apiDelete(`/api/aurora/blog/titles/delete/${titleId}/`),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QK.titles() })
+      qc.invalidateQueries({ queryKey: ['titles'] })
       toast.success('Title deleted')
     },
     onError: (err) => {
@@ -118,7 +163,7 @@ export function useRegenerateTitleMutation() {
     mutationFn: (titleId: number) =>
       apiPost(`/api/aurora/blog/titles/regenerate/${titleId}/`, {}),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QK.titles() })
+      qc.invalidateQueries({ queryKey: ['titles'] })
       toast.success('Title regenerated')
     },
     onError: (err) => {
@@ -141,7 +186,7 @@ export function useSchedulePostMutation() {
         date: new Date(scheduledDate).toISOString(),
       }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QK.titles() })
+      qc.invalidateQueries({ queryKey: ['titles'] })
     },
     onError: (err) => {
       toast.error(getErrorMessage(err, 'Failed to schedule post'))
@@ -167,7 +212,7 @@ export function useScheduleByIntervalMutation() {
         intervalDays,
       }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QK.titles() })
+      qc.invalidateQueries({ queryKey: ['titles'] })
     },
     onError: (err) => {
       toast.error(getErrorMessage(err, 'Failed to schedule by interval'))
@@ -181,7 +226,7 @@ export function useGenerateTitlePostMutation() {
     mutationFn: (titleId: number) =>
       apiPost('/api/aurora/blog/posts/generate/', { title_id: titleId }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QK.titles() })
+      qc.invalidateQueries({ queryKey: ['titles'] })
       toast.success('Post generation started')
     },
     onError: (err) => {
@@ -207,7 +252,7 @@ export function useAssignCategoryMutation() {
         category_ids: categoryId ? [categoryId] : [],
       }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QK.titles() })
+      qc.invalidateQueries({ queryKey: ['titles'] })
     },
     onError: (err) => {
       toast.error(getErrorMessage(err, 'Failed to assign category'))
@@ -237,7 +282,7 @@ export function useGenerateTitlesMutation() {
     mutationFn: ({ topic, count }: { topic: string; count: number }) =>
       apiPost('/api/aurora/blog/titles/generate/', { topic, count }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QK.titles() })
+      qc.invalidateQueries({ queryKey: ['titles'] })
       toast.success('Titles generated')
     },
     onError: (err) => {
@@ -302,7 +347,7 @@ export function useAutoCategorizesMutation() {
       apiPost('/api/aurora/blog/categories/categorize/', {}),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.categories() })
-      qc.invalidateQueries({ queryKey: QK.titles() })
+      qc.invalidateQueries({ queryKey: ['titles'] })
       toast.success('Auto-categorize completed')
     },
     onError: (err) => { toast.error(getErrorMessage(err, 'Failed to auto-categorize')) },
@@ -314,7 +359,7 @@ export function useReschedulePostMutation() {
   return useMutation({
     mutationFn: ({ postId, date }: { postId: number | string; date: string }) =>
       apiPut(`/api/aurora/blog/schedule/reschedule/${postId}/`, { date }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: QK.titles() }) },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['titles'] }) },
     onError: (err) => { toast.error(getErrorMessage(err, 'Failed to reschedule')) },
   })
 }
@@ -324,7 +369,7 @@ export function useBulkCreateScheduleMutation() {
   return useMutation({
     mutationFn: (payload: object) =>
       apiPost<{ id: number }>('/api/aurora/blog/schedule/bulk/create/', payload),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: QK.titles() }) },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['titles'] }) },
     onError: (err) => { toast.error(getErrorMessage(err, 'Failed to create schedule')) },
   })
 }
@@ -334,7 +379,7 @@ export function useBulkAssignScheduleMutation() {
   return useMutation({
     mutationFn: (payload: object) =>
       apiPost('/api/aurora/blog/schedule/bulk/assign/', payload),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: QK.titles() }) },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['titles'] }) },
     onError: (err) => { toast.error(getErrorMessage(err, 'Failed to assign schedule')) },
   })
 }

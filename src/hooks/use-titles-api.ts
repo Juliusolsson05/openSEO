@@ -5,7 +5,7 @@
  * as the old useTitlesStore, so the existing titles page doesn't need rewriting.
  */
 
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import {
   useTitlesQuery,
   useCategoriesQuery,
@@ -22,7 +22,11 @@ import {
 import type { BlogTitle } from '@/types/blog'
 
 export function useTitlesApi() {
-  const { data: titlesData = [], isLoading } = useTitlesQuery()
+  const { data: titlesPages, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useTitlesQuery()
+  const titlesData = useMemo<BlogTitle[]>(
+    () => titlesPages?.pages.flatMap((p) => p.data) ?? [],
+    [titlesPages],
+  )
   const { data: categories = [] } = useCategoriesQuery()
 
   const createTitleMutation = useCreateTitleMutation()
@@ -131,5 +135,8 @@ export function useTitlesApi() {
     fetchCategories: () => {}, // same
     assignCategory,
     createCategory,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   }
 }

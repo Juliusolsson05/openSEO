@@ -45,11 +45,11 @@ function AnalyticsSkeleton() {
 
 export default function AnalyticsPage() {
   const [fullView, setFullView] = useState(false)
-  const { data, isLoading, isError, refetch } = useAnalyticsQuery()
+  const { data, isLoading, hasErrors, refetch } = useAnalyticsQuery()
 
   if (isLoading) return <AnalyticsSkeleton />
 
-  if (isError || !data) {
+  if (hasErrors) {
     return (
       <Card>
         <CardContent className="py-16 text-center">

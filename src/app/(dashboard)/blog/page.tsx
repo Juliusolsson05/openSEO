@@ -26,7 +26,7 @@ import { usePostsQuery, useGeneratePostMutation } from '@/hooks/queries/blog'
 import { useTitlesQuery } from '@/hooks/queries/titles'
 
 import type { BlogTitle, BlogPostSummary } from '@/types/blog'
-import { unwrapList } from '@/lib/utils'
+
 
 const statusConfig = (status: number | string, published: boolean) => {
   if (published)
@@ -47,9 +47,22 @@ function BlogPageContent() {
   const [view, setView] = useState<'list' | 'grid'>('list')
   const [searchQuery, setSearchQuery] = useState('')
 
-  const { data: posts = [], isLoading: loading } = usePostsQuery()
-  const { data: rawTitles = [] } = useTitlesQuery()
-  const titles = rawTitles as BlogTitle[]
+  const {
+    data: postsPagesData,
+    isLoading: loading,
+    fetchNextPage: fetchMorePosts,
+    hasNextPage: hasMorePosts,
+    isFetchingNextPage: loadingMorePosts,
+  } = usePostsQuery()
+  const posts = useMemo<BlogPostSummary[]>(
+    () => postsPagesData?.pages.flatMap((p) => p.data) ?? [],
+    [postsPagesData],
+  )
+  const { data: rawTitlesPages } = useTitlesQuery()
+  const titles = useMemo<BlogTitle[]>(
+    () => rawTitlesPages?.pages.flatMap((p) => p.data) ?? [],
+    [rawTitlesPages],
+  )
   const generatePost = useGeneratePostMutation()
 
   const postsLeftToGenerate = titles.filter((t) => {
@@ -275,6 +288,18 @@ function BlogPageContent() {
               </Card>
             )
           })}
+          {hasMorePosts && (
+            <div className="flex justify-center py-4 col-span-full">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void fetchMorePosts()}
+                disabled={loadingMorePosts}
+              >
+                {loadingMorePosts ? 'Loading…' : 'Load more posts'}
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
         /* ─── List view ─────────────────────────────────────── */
@@ -354,6 +379,18 @@ function BlogPageContent() {
                 </div>
               )
             })}
+            {hasMorePosts && (
+              <div className="flex justify-center py-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void fetchMorePosts()}
+                  disabled={loadingMorePosts}
+                >
+                  {loadingMorePosts ? 'Loading…' : 'Load more posts'}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
