@@ -42,10 +42,16 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.ts ./
 COPY --from=builder /app/instrumentation.ts ./
+# Copy source for standalone worker (tsx runs TypeScript directly)
+COPY --from=builder /app/src ./src
 
 # Create uploads directory for local storage
 RUN mkdir -p /app/uploads
 
+COPY docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
+
 EXPOSE 3000
 
+ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["npm", "start"]

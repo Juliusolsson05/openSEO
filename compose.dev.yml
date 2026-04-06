@@ -1,0 +1,11 @@
+# compose.dev.yml — Development overrides (committed)
+# Usage: docker compose -f compose.yml -f compose.dev.yml up
+# Exposes DB and Redis to the host for local dev tooling.
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"

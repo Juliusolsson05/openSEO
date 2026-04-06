@@ -15,3 +15,5 @@ uploads/*
 !uploads/.gitkeep
 .claude/
 file-dumps/
+compose.override.yml
+.backups/
