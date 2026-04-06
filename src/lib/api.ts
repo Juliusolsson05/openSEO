@@ -27,7 +27,7 @@
  *
  * Wraps fetch with:
  *  - baseURL from env
- *  - credentials: 'include' (cookie auth)
+ *  - credentials: 'same-origin' (cookie auth; 'include' only for cross-origin)
  *  - optional Company-ID header from cookie
  */
 
@@ -121,8 +121,18 @@ export async function api<T = any>(
 
   const { params: _, ...fetchOptions } = options
 
+  // Same-origin when NEXT_PUBLIC_API_BASE_URL is unset (the browser default):
+  // cookies flow to our own origin but will not leak on an accidental
+  // cross-origin redirect. Fall back to 'include' only when the caller has
+  // configured a cross-origin API base URL.
+  const crossOrigin =
+    typeof window !== 'undefined' &&
+    !!process.env.NEXT_PUBLIC_API_BASE_URL &&
+    !process.env.NEXT_PUBLIC_API_BASE_URL.startsWith(window.location.origin)
+  const credentials: RequestCredentials = crossOrigin ? 'include' : 'same-origin'
+
   const res = await fetch(fullUrl, {
-    credentials: 'include',
+    credentials,
     ...fetchOptions,
     headers: {
       'Content-Type': 'application/json',
@@ -196,9 +206,15 @@ export async function apiPostForm<T = any>(
   const companyId =
     (typeof window !== 'undefined' ? getCookie('companyId') : null) ?? null
 
+  const crossOrigin =
+    typeof window !== 'undefined' &&
+    !!process.env.NEXT_PUBLIC_API_BASE_URL &&
+    !process.env.NEXT_PUBLIC_API_BASE_URL.startsWith(window.location.origin)
+  const credentials: RequestCredentials = crossOrigin ? 'include' : 'same-origin'
+
   const res = await fetch(`${baseUrl}${url}`, {
     method: 'POST',
-    credentials: 'include',
+    credentials,
     headers: {
       ...(companyId ? { 'Company-ID': String(companyId) } : {}),
     },

@@ -2,7 +2,12 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
-ARG AUTH_SECRET=docker-build-auth-secret
+# Build-time-ONLY placeholders. NextAuth and the settings vault import their
+# secrets at module-init time, so `next build` needs *some* value present.
+# These values are NOT inherited by the runner stage and never ship in the
+# final image. Real secrets must be supplied at runtime via --env-file,
+# Docker secrets, or an orchestrator (Compose / K8s / Fly / etc.).
+ARG AUTH_SECRET=build-time-placeholder-not-a-real-secret
 ARG OPENSEO_ENCRYPTION_KEY=QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE=
 ENV AUTH_SECRET=$AUTH_SECRET
 ENV OPENSEO_ENCRYPTION_KEY=$OPENSEO_ENCRYPTION_KEY
@@ -20,10 +25,9 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ARG AUTH_SECRET=docker-build-auth-secret
-ARG OPENSEO_ENCRYPTION_KEY=QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE=
-ENV AUTH_SECRET=$AUTH_SECRET
-ENV OPENSEO_ENCRYPTION_KEY=$OPENSEO_ENCRYPTION_KEY
+# NO AUTH_SECRET / OPENSEO_ENCRYPTION_KEY defaults here on purpose.
+# The server's instrumentation hook refuses to boot unless both are supplied
+# at runtime.
 
 # Install only production dependencies
 COPY package.json package-lock.json .npmrc ./
@@ -37,6 +41,7 @@ RUN npx prisma generate
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.ts ./
+COPY --from=builder /app/instrumentation.ts ./
 
 EXPOSE 3000
 
