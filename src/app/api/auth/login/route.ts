@@ -7,6 +7,7 @@ import { apiHandler } from '@/server/api/handler'
 import { raw } from '@/server/api/response'
 import { UnauthorizedError } from '@/server/api/errors'
 import { validate } from '@/server/api/validate'
+import { enforceRateLimit, RATE_LIMIT_BUCKETS } from '@/server/api/rate-limit'
 import {
   USER_TYPE_MAP,
   ABILITY_RULES_BY_TYPE,
@@ -21,6 +22,8 @@ const loginSchema = z.object({
 
 export const POST = apiHandler(
   async (ctx, req) => {
+    enforceRateLimit(req, RATE_LIMIT_BUCKETS.auth)
+
     const { email, password } = validate(loginSchema, ctx.body)
 
     const user = await prisma.user.findUnique({
@@ -47,7 +50,9 @@ export const POST = apiHandler(
         name: user.name ?? user.email,
         userType,
         companyId: user.companyId,
-        company: user.company ? { id: user.company.id, name: user.company.name } : null,
+        company: user.company
+          ? { id: user.company.id, name: user.company.name, language: user.company.language }
+          : null,
       },
       secret: authSecret,
       salt: SESSION_COOKIE,
@@ -60,7 +65,9 @@ export const POST = apiHandler(
         username: user.name ?? (user.email ? user.email.split('@')[0] : ''),
         user_type: userType,
         abilityRules: ABILITY_RULES_BY_TYPE[userType] ?? [],
-        company: user.company ? { id: user.company.id, name: user.company.name } : null,
+        company: user.company
+          ? { id: user.company.id, name: user.company.name, language: user.company.language }
+          : null,
       },
     })
 

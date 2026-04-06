@@ -7,11 +7,17 @@ export const USER_TYPES = {
 
 export type UserType = (typeof USER_TYPES)[keyof typeof USER_TYPES]
 
+export type AuthCompany = {
+  id: number
+  name: string | null
+  language: string | null
+}
+
 export interface AuthUser {
   id: string
   email: string
   name?: string | null
   userType: number | null
   companyId: number | null
-  company?: { id: number | string; name: string | null; [key: string]: unknown } | null
+  company?: AuthCompany | null
 }

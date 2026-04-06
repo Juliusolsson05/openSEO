@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs'
 
 import { prisma } from './prisma'
 import { USER_TYPE_MAP, SESSION_MAX_AGE_SECONDS } from './constants/user'
+import type { SessionCompany } from '@/types/next-auth'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -38,7 +39,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const user = await prisma.user.findUnique({
           where: { email },
-          include: { company: true },
+          // Select ONLY the fields we need. Never include the full company row
+          // here — sensitive fields (api_key, settings, metadata, profile) must
+          // be fetched server-side on demand via ctx.companyId, not stored on
+          // the JWT/session.
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            password: true,
+            userType: true,
+            companyId: true,
+            company: {
+              select: {
+                id: true,
+                name: true,
+                language: true,
+              },
+            },
+          },
         })
 
         if (!user?.password) {
@@ -51,13 +70,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null
         }
 
+        const safeCompany: SessionCompany | null = user.company
+          ? { id: user.company.id, name: user.company.name, language: user.company.language }
+          : null
+
         return {
           id: String(user.id),
           email: user.email,
           name: user.name ?? user.email,
           userType: USER_TYPE_MAP[user.userType],
           companyId: user.companyId,
-          company: user.company,
+          company: safeCompany,
         }
       },
     }),
@@ -68,7 +91,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id
         token.userType = user.userType ?? null
         token.companyId = user.companyId ?? null
+        // Re-project defensively: even if `user` was widened upstream, we only
+        // ever persist the safe projection on the token.
         token.company = user.company
+          ? {
+              id: user.company.id,
+              name: user.company.name,
+              language: user.company.language,
+            }
+          : null
       }
 
       return token
@@ -78,7 +109,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string
         session.user.userType = (token.userType as number | null) ?? null
         session.user.companyId = (token.companyId as number | null) ?? null
-        session.user.company = (token.company as typeof session.user.company) ?? null
+        session.user.company = (token.company as SessionCompany | null) ?? null
       }
 
       return session

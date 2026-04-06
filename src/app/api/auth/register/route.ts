@@ -6,6 +6,7 @@ import { apiHandler } from '@/server/api/handler'
 import { raw } from '@/server/api/response'
 import { ForbiddenError } from '@/server/api/errors'
 import { validate } from '@/server/api/validate'
+import { enforceRateLimit, RATE_LIMIT_BUCKETS } from '@/server/api/rate-limit'
 import { analyzeWebsiteAsync } from '@/server/services/website-analyzer'
 
 function parseHost(url: string): string | null {
@@ -33,7 +34,9 @@ const registerSchema = z.object({
 })
 
 export const POST = apiHandler(
-  async (ctx) => {
+  async (ctx, req) => {
+    enforceRateLimit(req, RATE_LIMIT_BUCKETS.auth)
+
     const { name, email, password, company_name, company_url } = validate(registerSchema, ctx.body)
 
     const invited = await prisma.user.findUnique({ where: { email } })
