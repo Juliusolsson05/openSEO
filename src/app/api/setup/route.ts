@@ -7,7 +7,6 @@ import { apiHandler } from '@/server/api/handler'
 import { ForbiddenError, ValidationError } from '@/server/api/errors'
 import { success } from '@/server/api/response'
 import { validate } from '@/server/api/validate'
-import { enforceRateLimit, RATE_LIMIT_BUCKETS } from '@/server/api/rate-limit'
 import { getSetupStatus } from '@/server/setup'
 
 const setupSchema = z.object({
@@ -22,8 +21,6 @@ const setupSchema = z.object({
 const REQUIRED_AI_KEYS = ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY'] as const
 
 export const POST = apiHandler(async ({ body }, req) => {
-  enforceRateLimit(req, RATE_LIMIT_BUCKETS.setup)
-
   const status = await getSetupStatus()
   if (status.complete) {
     throw new ForbiddenError('Setup has already been completed')

@@ -4,7 +4,6 @@ import type { Session } from 'next-auth'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { AppError, ForbiddenError, UnauthorizedError } from '@/server/api/errors'
-import { TooManyRequestsError } from '@/server/api/rate-limit'
 import { error as errorResponse } from '@/server/api/response'
 import { createRequestId } from '@/server/api/request-id'
 
@@ -141,9 +140,6 @@ export function apiHandler(handler: RouteHandler, options: ApiHandlerOptions = {
           code: err.code,
           requestId,
         })
-        if (err instanceof TooManyRequestsError) {
-          response.headers.set('Retry-After', String(err.retryAfterSeconds))
-        }
         return applyStandardHeaders(response, req, requestId)
       }
 

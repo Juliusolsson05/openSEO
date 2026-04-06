@@ -7,7 +7,6 @@ import { apiHandler } from '@/server/api/handler'
 import { raw } from '@/server/api/response'
 import { UnauthorizedError } from '@/server/api/errors'
 import { validate } from '@/server/api/validate'
-import { enforceRateLimit, RATE_LIMIT_BUCKETS } from '@/server/api/rate-limit'
 import {
   USER_TYPE_MAP,
   ABILITY_RULES_BY_TYPE,
@@ -22,8 +21,6 @@ const loginSchema = z.object({
 
 export const POST = apiHandler(
   async (ctx, req) => {
-    enforceRateLimit(req, RATE_LIMIT_BUCKETS.auth)
-
     const { email, password } = validate(loginSchema, ctx.body)
 
     const user = await prisma.user.findUnique({
