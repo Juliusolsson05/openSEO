@@ -1,5 +1,6 @@
 import { BasePreview } from '../BasePreview'
 import type { PreviewComponentProps } from '../registry'
+import { resolveMediaUrl } from '@/lib/media'
 
 type ImageContent = {
   url?: string
@@ -8,20 +9,9 @@ type ImageContent = {
 
 const DEFAULT_IMAGE = 'https://via.placeholder.com/800x400?text=No+Image'
 
-const resolveImageUrl = (url?: string) => {
-  if (!url) return DEFAULT_IMAGE
-  if (url.startsWith('http://') || url.startsWith('https://')) return url
-
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ''
-  const normalizedBase = baseUrl.replace(/\/$/, '')
-  const normalizedPath = url.startsWith('/') ? url : `/${url}`
-
-  return `${normalizedBase}${normalizedPath}`
-}
-
 export function ImagePreview({ content }: PreviewComponentProps) {
   const parsedContent = (content ?? {}) as ImageContent
-  const src = resolveImageUrl(parsedContent.url)
+  const src = resolveMediaUrl(parsedContent.url) || DEFAULT_IMAGE
   const alt = parsedContent.description || 'Blog image'
 
   return (

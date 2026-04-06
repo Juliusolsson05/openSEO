@@ -6,13 +6,10 @@ import { ExternalLink, Check, Star } from 'lucide-react'
 import type { PreviewComponentProps } from '../registry'
 
 import type { ToolRecommendationContent } from '@/types/content-elements'
+import { extractDomain } from '@/lib/media'
 
 interface ToolRecommendationPreviewProps extends Omit<PreviewComponentProps, 'content'> {
   content: ToolRecommendationContent
-}
-
-const extractDomain = (url: string): string => {
-  return String(url || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
 }
 
 export function ToolRecommendationPreview({ content }: ToolRecommendationPreviewProps) {

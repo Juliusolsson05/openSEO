@@ -4,6 +4,7 @@ import { BaseElement } from '../BaseElement'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import { ExternalLink, CheckCircle2, Quote, Building2, ArrowRight } from 'lucide-react'
 import type { ElementComponentProps } from '../registry'
+import { extractDomain } from '@/lib/media'
 
 export interface CaseStudyContent {
   title: string
@@ -22,12 +23,6 @@ export interface CaseStudyContent {
 
 interface CaseStudyProps extends Omit<ElementComponentProps, 'content'> {
   content: CaseStudyContent
-}
-
-const extractDomain = (url: string): string => {
-  return String(url || '')
-    .replace(/^https?:\/\/(www\.)?/, '')
-    .replace(/\/$/, '')
 }
 
 export function CaseStudy({ content, blogId, elementId, onContentUpdated, onElementDeleted }: CaseStudyProps) {

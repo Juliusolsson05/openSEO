@@ -5,13 +5,10 @@ import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import { ExternalLink, CheckCircle2, Quote, Building2, ArrowRight } from 'lucide-react'
 import type { PreviewComponentProps } from '../registry'
 import type { CaseStudyContent } from './CaseStudy'
+import { extractDomain } from '@/lib/media'
 
 interface CaseStudyPreviewProps extends Omit<PreviewComponentProps, 'content'> {
   content: CaseStudyContent
-}
-
-const extractDomain = (url: string): string => {
-  return String(url || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
 }
 
 export function CaseStudyPreview({ content }: CaseStudyPreviewProps) {

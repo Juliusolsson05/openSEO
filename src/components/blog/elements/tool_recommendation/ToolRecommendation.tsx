@@ -6,15 +6,10 @@ import { ExternalLink, Check, Star } from 'lucide-react'
 import type { ElementComponentProps } from '../registry'
 
 import type { ToolRecommendationContent } from '@/types/content-elements'
+import { extractDomain } from '@/lib/media'
 
 interface ToolRecommendationProps extends Omit<ElementComponentProps, 'content'> {
   content: ToolRecommendationContent
-}
-
-const extractDomain = (url: string): string => {
-  return String(url || '')
-    .replace(/^https?:\/\/(www\.)?/, '')
-    .replace(/\/$/, '')
 }
 
 export function ToolRecommendation({ content, blogId, elementId, onContentUpdated, onElementDeleted }: ToolRecommendationProps) {
