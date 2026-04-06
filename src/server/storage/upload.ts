@@ -52,10 +52,31 @@ function isSafeUrl(url: string): boolean {
   try {
     const parsed = new URL(url)
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false
-    const hostname = parsed.hostname
+    const hostname = parsed.hostname.toLowerCase()
+
+    // Loopback
     if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') return false
-    if (hostname.startsWith('10.') || hostname.startsWith('192.168.') || hostname.startsWith('172.')) return false
+    if (hostname === '[::1]') return false
+
+    // IPv4 private ranges
+    if (hostname.startsWith('10.')) return false
+    if (hostname.startsWith('192.168.')) return false
+    if (hostname.startsWith('169.254.')) return false // Link-local / cloud metadata
+
+    // 172.16.0.0/12 = 172.16.x.x through 172.31.x.x
+    if (hostname.startsWith('172.')) {
+      const second = parseInt(hostname.split('.')[1], 10)
+      if (second >= 16 && second <= 31) return false
+    }
+
+    // IPv6 private/link-local (fc00::/7, fe80::/10)
+    if (hostname.startsWith('fc') || hostname.startsWith('fd')) return false
+    if (hostname.startsWith('fe80')) return false
+    if (hostname.startsWith('[fc') || hostname.startsWith('[fd') || hostname.startsWith('[fe80')) return false
+
+    // Internal TLDs
     if (hostname.endsWith('.local') || hostname.endsWith('.internal')) return false
+
     return true
   } catch {
     return false
