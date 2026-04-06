@@ -77,11 +77,42 @@ function countKeywordOccurrences(text: string, keyword: string): number {
   return (stripHtml(text).match(re) ?? []).length
 }
 
+/**
+ * Walks a `matched_keywords` JSON value (as stored on ElementHyperlink) and
+ * yields the keyword string of each leaf match. The shape is typically:
+ *   { text: [{ keyword, ... }, ...], title: [...], list_items: [[...], ...],
+ *     question: [...], answer: [...], ... }
+ * but can also be a flat array or a raw string. We defensively walk anything
+ * that looks like an object/array and treat any leaf with a `keyword` property
+ * as a match. Bare strings are treated as their own keyword.
+ */
+function* iterateMatchedKeywords(value: unknown): Generator<string> {
+  if (value == null) return
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (trimmed) yield trimmed
+    return
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) yield* iterateMatchedKeywords(item)
+    return
+  }
+  if (typeof value === 'object') {
+    const obj = value as Record<string, unknown>
+    // If this looks like a leaf match ({ keyword, ... }), yield its keyword.
+    if (typeof obj.keyword === 'string' && obj.keyword.trim()) {
+      yield obj.keyword.trim()
+      return
+    }
+    // Otherwise recurse into every value (field-name keyed container).
+    for (const v of Object.values(obj)) yield* iterateMatchedKeywords(v)
+  }
+}
+
 function toMatchedKeywordCount(value: unknown): number {
-  if (Array.isArray(value)) return value.length
-  if (typeof value === 'string') return value.trim() ? 1 : 0
-  if (value && typeof value === 'object') return Object.keys(value as Record<string, unknown>).length
-  return 0
+  let count = 0
+  for (const _ of iterateMatchedKeywords(value)) count += 1
+  return count
 }
 
 function round(value: number, digits = 2): number {
@@ -495,30 +526,9 @@ export async function getDictionaryAnalytics(companyId: number, includeAllWordsL
   let totalHyperlinks = 0
 
   for (const hyperlink of hyperlinks) {
-    const matched = hyperlink.matched_keywords
-    if (Array.isArray(matched)) {
-      for (const item of matched) {
-        const key = String(item).trim()
-        if (!key) continue
-        const normalized = key.toLowerCase()
-        linkCounts.set(normalized, (linkCounts.get(normalized) ?? 0) + 1)
-        totalHyperlinks += 1
-      }
-      continue
-    }
-
-    if (matched && typeof matched === 'object') {
-      for (const key of Object.keys(matched as Record<string, unknown>)) {
-        const normalized = key.trim().toLowerCase()
-        if (!normalized) continue
-        linkCounts.set(normalized, (linkCounts.get(normalized) ?? 0) + 1)
-        totalHyperlinks += 1
-      }
-      continue
-    }
-
-    if (typeof matched === 'string' && matched.trim()) {
-      const normalized = matched.trim().toLowerCase()
+    for (const keyword of iterateMatchedKeywords(hyperlink.matched_keywords)) {
+      const normalized = keyword.toLowerCase()
+      if (!normalized) continue
       linkCounts.set(normalized, (linkCounts.get(normalized) ?? 0) + 1)
       totalHyperlinks += 1
     }

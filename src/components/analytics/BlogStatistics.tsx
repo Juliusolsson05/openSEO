@@ -36,10 +36,12 @@ export function BlogStatistics({ blogTitles }: BlogStatisticsProps) {
     const density = possible > 0 ? (links / possible) * 100 : 0
     const avg = n > 0 ? links / n : 0
 
+    const knownIds = new Set<number>(blogTitles.map((p) => p.id))
     const indegree = new Map<number, number>()
-    for (const post of blogTitles) indegree.set(post.id, 0)
+    for (const id of knownIds) indegree.set(id, 0)
     for (const post of blogTitles) {
       for (const to of post.post_linking || []) {
+        if (!knownIds.has(to)) continue
         indegree.set(to, (indegree.get(to) ?? 0) + 1)
       }
     }
@@ -53,7 +55,7 @@ export function BlogStatistics({ blogTitles }: BlogStatisticsProps) {
       }
     }
 
-    const centralPost = blogTitles.find((b) => b.id === centralId)
+    const centralPost = centralId >= 0 ? blogTitles.find((b) => b.id === centralId) : undefined
     const rating = avg >= 8 ? 'Excellent' : avg >= 5 ? 'Good' : avg >= 2 ? 'Decent' : 'Bad'
 
     return {

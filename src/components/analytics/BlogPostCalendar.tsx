@@ -16,7 +16,12 @@ const COL = CELL + GAP // 14px per column
 const BLUE_STEPS = ['#F2F2F2', '#C7E0F4', '#71AFE5', '#2B88D8', '#0078D4'] // design system blue scale
 
 function dateKey(d: Date) {
-  return d.toISOString().slice(0, 10)
+  // Local calendar date (yyyy-MM-dd). Avoid toISOString(), which shifts to UTC
+  // and buckets posts on the wrong day near midnight for users east/west of UTC.
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 export function BlogPostCalendar({ blogTitles }: BlogPostCalendarProps) {
