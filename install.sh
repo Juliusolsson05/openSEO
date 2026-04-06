@@ -284,10 +284,10 @@ env_set PORT "$APP_PORT"
 env_set NEXT_PUBLIC_SITE_URL "$APP_URL"
 env_set FRONTEND_URL "$APP_URL"
 env_set AUTH_TRUST_HOST "true"
-env_set APP_IMAGE "openseo"
 
 # Generate secrets only on fresh install
 if [ "$FRESH_INSTALL" = 1 ]; then
+  env_set APP_IMAGE "openseo"
   env_set AUTH_SECRET "$(generate_secret 32)"
   env_set OPENSEO_ENCRYPTION_KEY "$(generate_secret 32)"
   env_set DB_PASSWORD "$(generate_secret 32 | tr -dc 'a-zA-Z0-9' | head -c 24)"

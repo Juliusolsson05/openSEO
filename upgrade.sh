@@ -147,6 +147,12 @@ if [ -d "$ROOT_DIR/.git" ]; then
     exit 1
   fi
 
+  # Ensure git-based installs use local image name
+  if ! grep -q "^APP_IMAGE=" "$ENV_FILE" 2>/dev/null; then
+    printf '%s\n' 'APP_IMAGE=openseo' >> "$ENV_FILE"
+    info "Set APP_IMAGE=openseo for local builds"
+  fi
+
   info "Building new image..."
   if docker compose build; then
     success "Build complete"

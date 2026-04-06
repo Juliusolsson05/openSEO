@@ -51,9 +51,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: |
-            ${{ env.GHCR_IMAGE }}
-            ${{ env.DOCKERHUB_IMAGE }}
+          images: ${{ env.GHCR_IMAGE }}
 
       - name: Build and push by digest
         id: build
@@ -65,7 +63,7 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.platform }}
           cache-to: type=gha,scope=${{ matrix.platform }},mode=max
           outputs: >-
-            type=image,"name=${{ env.GHCR_IMAGE }}${{ env.DOCKERHUB_IMAGE != '' && format(',{0}', env.DOCKERHUB_IMAGE) || '' }}",push-by-digest=true,name-canonical=true,push=true
+            type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -116,7 +114,6 @@ jobs:
         with:
           images: |
             ${{ env.GHCR_IMAGE }}
-            ${{ env.DOCKERHUB_IMAGE }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -133,10 +130,11 @@ jobs:
         if: env.DOCKERHUB_IMAGE != ''
         working-directory: ${{ runner.temp }}/digests
         run: |
-          tags=$(jq -cr '.tags | map(select(startswith("ghcr.io") | not)) | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          ghcr_tags=$(jq -cr '.tags | map(select(startswith("ghcr.io"))) | map(sub("ghcr.io/.*/"; ""))' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          tags=$(echo "$ghcr_tags" | jq -r '.[] | "-t ${{ env.DOCKERHUB_IMAGE }}:" + .' | tr '\n' ' ')
           if [ -n "$tags" ]; then
             docker buildx imagetools create $tags \
-              $(printf '${{ env.DOCKERHUB_IMAGE }}@sha256:%s ' *)
+              $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
           fi
 
       - name: Install cosign
