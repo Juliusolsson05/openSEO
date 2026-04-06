@@ -139,7 +139,7 @@ export default function QuilloChatInterface({ isOpen, blogPostId, onClose }: Pro
               <div key={i} className={`max-w-[80%] ${msg.sender === 'user' ? 'ml-auto' : 'mr-auto'}`}>
                 {msg.sender === 'quillo' && i === 0 ? (
                   <div className="bg-info-light border-l-[3px] border-primary p-4 rounded-sm">
-                    <p className="text-[14px] font-semibold mb-2">Hello, I'm Quillo! 👋</p>
+                    <p className="text-[14px] font-semibold mb-2">Hello, I&apos;m Quillo! 👋</p>
                     <p className="text-[13px] text-muted-foreground mb-2">I can help you with your content:</p>
                     <ul className="text-[12px] text-muted-foreground space-y-1 list-disc pl-4">
                       <li>Content analysis and suggestions</li>
