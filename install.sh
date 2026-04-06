@@ -284,6 +284,7 @@ env_set PORT "$APP_PORT"
 env_set NEXT_PUBLIC_SITE_URL "$APP_URL"
 env_set FRONTEND_URL "$APP_URL"
 env_set AUTH_TRUST_HOST "true"
+env_set APP_IMAGE "openseo"
 
 # Generate secrets only on fresh install
 if [ "$FRESH_INSTALL" = 1 ]; then
