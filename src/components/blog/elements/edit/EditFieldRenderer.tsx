@@ -8,9 +8,11 @@ import { TextFieldInput } from './fields/TextField'
 import { RichTextFieldInput } from './fields/RichTextField'
 import { ArrayFieldInput } from './fields/ArrayField'
 import { NumberFieldInput } from './fields/NumberField'
+import { PercentageFieldInput } from './fields/PercentageField'
 import { UrlFieldInput } from './fields/UrlField'
 import { SelectFieldInput } from './fields/SelectField'
 import { ObjectFieldInput } from './fields/ObjectField'
+import { NestedArrayFieldInput } from './fields/NestedArrayField'
 import { ArrayObjectFieldInput } from './fields/ArrayObjectField'
 import { FaqFieldInput } from './fields/FaqField'
 import { DynamicTableFieldInput } from './fields/DynamicTableField'
@@ -35,8 +37,10 @@ export function EditFieldRenderer({ field, value, onChange }: EditFieldRendererP
       return <RichTextFieldInput field={field} value={value} onChange={onChange} />
 
     case 'number':
-    case 'percentage':
       return <NumberFieldInput field={field} value={value} onChange={onChange} />
+
+    case 'percentage':
+      return <PercentageFieldInput field={field} value={value} onChange={onChange} />
 
     case 'url':
       return <UrlFieldInput field={field} value={value} onChange={onChange} />
@@ -48,8 +52,10 @@ export function EditFieldRenderer({ field, value, onChange }: EditFieldRendererP
       return <ArrayFieldInput field={field} value={value} onChange={onChange} />
 
     case 'object':
-    case 'nested-array':
       return <ObjectFieldInput field={field} value={value} onChange={onChange} />
+
+    case 'nested-array':
+      return <NestedArrayFieldInput field={field} value={value} onChange={onChange} />
 
     case 'array-object':
       return <ArrayObjectFieldInput field={field} value={value} onChange={onChange} />

@@ -1,12 +1,20 @@
 import type { EditField } from '../types'
 
+function isEmpty(value: any): boolean {
+  if (value === undefined || value === null) return true
+  if (typeof value === 'string') return value.trim().length === 0
+  if (Array.isArray(value)) return value.length === 0
+  if (typeof value === 'object') return Object.keys(value).length === 0
+  return false
+}
+
 export function useFieldValidation(field: EditField, value: any) {
   const errors: string[] = []
 
   for (const rule of field.validation ?? []) {
     switch (rule.type) {
       case 'required':
-        if (!value || (typeof value === 'string' && !value.trim())) errors.push(rule.message)
+        if (isEmpty(value)) errors.push(rule.message)
         break
       case 'minLength':
         if (typeof value === 'string' && value.length < (rule.value ?? 0)) errors.push(rule.message)
@@ -19,6 +27,12 @@ export function useFieldValidation(field: EditField, value: any) {
         break
       case 'max':
         if (typeof value === 'number' && value > (rule.value ?? 0)) errors.push(rule.message)
+        break
+      case 'minItems':
+        if (Array.isArray(value) && value.length < (rule.value ?? 0)) errors.push(rule.message)
+        break
+      case 'maxItems':
+        if (Array.isArray(value) && value.length > (rule.value ?? 0)) errors.push(rule.message)
         break
       case 'url':
         if (typeof value === 'string' && value && !/^https?:\/\//.test(value)) errors.push(rule.message)
