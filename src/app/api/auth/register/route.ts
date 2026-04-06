@@ -54,12 +54,10 @@ export const POST = apiHandler(
       },
     })
 
-    // Fire-and-forget: scrape website and build company profile
-    try {
-      analyzeWebsiteAsync(company.id, company_url)
-    } catch {
-      // Non-blocking — profile extraction failure shouldn't break registration
-    }
+    // Fire-and-forget: scrape website and build company profile.
+    // analyzeWebsiteAsync returns synchronously (launches an async IIFE
+    // internally with its own error handling), so no try/catch needed here.
+    analyzeWebsiteAsync(company.id, company_url)
 
     await prisma.user.update({
       where: { id: invited.id },

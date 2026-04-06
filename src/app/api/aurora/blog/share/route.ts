@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { generateShareToken } from '@/server/lib/share-token'
 
 function buildShareUrl(req: NextRequest, token: string) {
   const base = process.env.FRONTEND_URL || req.nextUrl.origin
@@ -20,6 +21,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ detail: 'Authentication required' }, { status: 401 })
   }
 
+  const companyId = session.user.companyId
+  if (!companyId) {
+    return NextResponse.json({ detail: 'No company context' }, { status: 403 })
+  }
+
   const body = await req.json().catch(() => ({}))
   const postId = Number(body?.post_id)
 
@@ -27,7 +33,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ detail: 'post_id must be a positive integer' }, { status: 400 })
   }
 
-  const token = crypto.randomUUID()
+  // Ownership check — the post must belong to the session's company.
+  const owned = await prisma.blogPost.findFirst({
+    where: { id: postId, companyId },
+    select: { id: true },
+  })
+  if (!owned) {
+    return NextResponse.json({ detail: 'Blog post not found' }, { status: 404 })
+  }
+
+  const token = generateShareToken()
+  const createdByUserId = session.user.id ?? null
 
   const link = await prisma.shareLink.upsert({
     where: { postId },
@@ -35,9 +51,14 @@ export async function POST(req: NextRequest) {
       token,
       enabled: true,
       expiresAt: null,
+      revokedAt: null,
+      companyId,
+      createdByUserId,
     },
     create: {
       postId,
+      companyId,
+      createdByUserId,
       token,
       enabled: true,
     },
@@ -55,6 +76,11 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ detail: 'Authentication required' }, { status: 401 })
   }
 
+  const companyId = session.user.companyId
+  if (!companyId) {
+    return NextResponse.json({ detail: 'No company context' }, { status: 403 })
+  }
+
   const body = await req.json().catch(() => ({}))
   const postId = Number(body?.post_id)
 
@@ -62,17 +88,22 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ detail: 'post_id must be a positive integer' }, { status: 400 })
   }
 
-  await prisma.shareLink.upsert({
+  // Only revoke links belonging to the caller's company.
+  const existing = await prisma.shareLink.findUnique({ where: { postId } })
+  if (!existing || existing.companyId !== companyId) {
+    // Treat as success (idempotent) but do nothing.
+    return NextResponse.json({ success: true })
+  }
+
+  // Soft revoke: keep row for audit, disable lookup, rotate token so the
+  // old URL cannot be reused even if the row were ever re-enabled.
+  await prisma.shareLink.update({
     where: { postId },
-    update: {
+    data: {
       enabled: false,
-      token: crypto.randomUUID(),
+      revokedAt: new Date(),
+      token: generateShareToken(),
       expiresAt: null,
-    },
-    create: {
-      postId,
-      enabled: false,
-      token: crypto.randomUUID(),
     },
   })
 
@@ -85,15 +116,34 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ detail: 'Authentication required' }, { status: 401 })
   }
 
+  const companyId = session.user.companyId
+  if (!companyId) {
+    return NextResponse.json({ detail: 'No company context' }, { status: 403 })
+  }
+
   const postId = Number(req.nextUrl.searchParams.get('post_id'))
 
   if (!Number.isInteger(postId) || postId <= 0) {
     return NextResponse.json({ detail: 'post_id must be a positive integer' }, { status: 400 })
   }
 
+  const belongs = await prisma.blogPost.findFirst({
+    where: { id: postId, companyId },
+    select: { id: true },
+  })
+  if (!belongs) {
+    return NextResponse.json({ detail: 'Post not found' }, { status: 404 })
+  }
+
   const link = await prisma.shareLink.findUnique({ where: { postId } })
 
-  if (!link) {
+  const inactive =
+    !link ||
+    link.companyId !== companyId ||
+    !link.enabled ||
+    link.revokedAt !== null
+
+  if (inactive) {
     return NextResponse.json({
       share_enabled: false,
       share_token: null,
@@ -103,9 +153,9 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
-    share_enabled: link.enabled,
-    share_token: link.token,
-    share_url: link.enabled ? buildShareUrl(req, link.token) : null,
-    share_expires_at: link.expiresAt,
+    share_enabled: link!.enabled,
+    share_token: link!.token,
+    share_url: buildShareUrl(req, link!.token),
+    share_expires_at: link!.expiresAt,
   })
 }

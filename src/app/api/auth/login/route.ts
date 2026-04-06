@@ -68,7 +68,13 @@ export const POST = apiHandler(
       },
     })
 
-    const secure = req.nextUrl.protocol === 'https:'
+    // In production we always want Secure cookies. We cannot rely on
+    // req.nextUrl.protocol because TLS-terminating proxies (nginx,
+    // Cloudflare, ALB, etc.) forward plaintext http: to the app even
+    // though the client-facing connection is https:. NODE_ENV is the
+    // simplest reliable signal; dev (localhost) keeps Secure=false so
+    // cookies still work over http://localhost.
+    const secure = process.env.NODE_ENV === 'production'
 
     res.cookies.set(SESSION_COOKIE, sessionToken, {
       path: '/',

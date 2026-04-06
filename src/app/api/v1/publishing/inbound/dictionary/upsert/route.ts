@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { readInboundKey, type InboundEnvelope, type InboundDictionaryPayload } from '@/types/publishing'
 import { prisma } from '@/lib/prisma'
 import { apiHandler } from '@/server/api/handler'
@@ -16,13 +17,23 @@ export const POST = apiHandler(async ({ body }, req) => {
   const envelope = (body ?? {}) as InboundEnvelope<InboundDictionaryPayload>
   if (!envelope.event_id) throw new ValidationError('event_id is required')
 
-  const existingInbound = await prisma.inboundEvent.findFirst({
-    where: { companyId, event_id: envelope.event_id },
-    select: { id: true, processed: true },
-  })
-
-  if (existingInbound?.processed) {
-    return success({ status: 'duplicate_ignored', event_id: envelope.event_id })
+  let inboundRow
+  try {
+    inboundRow = await prisma.inboundEvent.create({
+      data: {
+        companyId,
+        event_id: envelope.event_id,
+        event_type: envelope.event ?? 'dictionary.upsert',
+        payload: envelope as object,
+        processed: false,
+      },
+      select: { id: true },
+    })
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      return success({ status: 'duplicate_ignored', event_id: envelope.event_id, idempotent: true })
+    }
+    throw err
   }
 
   const dictionaryPayload = envelope.payload?.dictionary
@@ -68,23 +79,10 @@ export const POST = apiHandler(async ({ body }, req) => {
     })
   }
 
-  if (existingInbound) {
-    await prisma.inboundEvent.update({
-      where: { id: existingInbound.id },
-      data: { payload: envelope as object, event_type: envelope.event ?? 'dictionary.upsert', processed: true, processed_at: new Date() },
-    })
-  } else {
-    await prisma.inboundEvent.create({
-      data: {
-        companyId,
-        event_id: envelope.event_id,
-        event_type: envelope.event ?? 'dictionary.upsert',
-        payload: envelope as object,
-        processed: true,
-        processed_at: new Date(),
-      },
-    })
-  }
+  await prisma.inboundEvent.update({
+    where: { id: inboundRow.id },
+    data: { processed: true, processed_at: new Date() },
+  })
 
   return success({ status: 'processed', dictionary_id: dictionary.id, event_id: envelope.event_id })
 }, { auth: false })
