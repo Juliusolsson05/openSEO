@@ -342,7 +342,7 @@ Publishing inbound webhooks use API key authentication (\`x-api-key\` header).
           campaignId: { type: 'integer' },
           title: { type: 'string' },
           description: { type: 'string' },
-          image: { type: 'string', description: 'Cloudinary image URL' },
+          image: { type: 'string', description: 'Image URL' },
           link: { type: 'string' },
           created_at: { type: 'string', format: 'date-time' },
           updated_at: { type: 'string', format: 'date-time' },

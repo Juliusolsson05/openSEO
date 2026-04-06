@@ -1,7 +1,7 @@
 import { MODELS } from '@/server/ai/clients';
 import { generateElementFunctionParameters } from '@/server/ai/blog-elements/generate-function-parameters';
 import { fetchLogoUrl } from '@/server/ai/blog-elements/fetch-logo-url';
-import { uploadToCloudinary } from '@/server/ai/blog-elements/upload-to-cloudinary';
+import { uploadFromUrl } from '@/server/storage/upload';
 import { callModel } from '@/server/ai/providers';
 
 export async function regenerateElement(
@@ -14,6 +14,7 @@ export async function regenerateElement(
   belowElement: unknown = null,
   newElementType: string | null = null,
   newElementCount = 1,
+  companyId?: number,
 ): Promise<unknown> {
   const targetType = newElementType || elementType;
   const targetCount = newElementType ? newElementCount : 1;
@@ -69,8 +70,8 @@ Regeneration note (primary instruction — follow this above all else): "${regen
       if (companyUrl) {
         const logoUrl = await fetchLogoUrl(companyUrl);
         if (logoUrl) {
-          const cloudinaryUrl = await uploadToCloudinary(logoUrl);
-          if (cloudinaryUrl) element.companyLogo = cloudinaryUrl;
+          const uploadedUrl = await uploadFromUrl(logoUrl, companyId ?? 0, 'logos');
+          if (uploadedUrl) element.companyLogo = uploadedUrl;
         }
       }
     }

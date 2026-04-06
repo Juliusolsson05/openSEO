@@ -121,7 +121,7 @@ export class ElementService {
           if (!blogPost.focus_keyword) {
             throw new ValidationError('focus_keyword is required for case_study elements.')
           }
-          return generateCaseStudy(blogPost.title_text, blogPost.focus_keyword)
+          return generateCaseStudy(blogPost.title_text, blogPost.focus_keyword, companyId)
         })()
       : await generateNewElement(
           payload.elementType,
@@ -130,6 +130,7 @@ export class ElementService {
           payload.generationNote,
           elementsAbove,
           elementsBelow,
+          companyId,
         )
 
     return prisma.$transaction(async (tx) => {
@@ -187,6 +188,7 @@ export class ElementService {
       below?.content,
       payload.newElementType ?? null,
       count,
+      companyId,
     )
 
     if (count === 1) {

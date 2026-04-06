@@ -9,3 +9,9 @@ dist
 # Example site synced data
 
 # Generated Prisma client for example site
+
+# Uploaded media (local storage)
+uploads/*
+!uploads/.gitkeep
+.claude/
+file-dumps/

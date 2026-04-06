@@ -47,7 +47,10 @@ services:
       HOSTNAME: 0.0.0.0
     ports:
       - "${PORT:-4720}:3000"
+    volumes:
+      - uploads_data:/app/uploads
 
 volumes:
   postgres_data:
   redis_data:
+  uploads_data:

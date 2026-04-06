@@ -1,9 +1,9 @@
 import { MODELS } from '@/server/ai/clients';
 import { fetchLogoUrl } from '@/server/ai/blog-elements/fetch-logo-url';
-import { uploadToCloudinary } from '@/server/ai/blog-elements/upload-to-cloudinary';
+import { uploadFromUrl } from '@/server/storage/upload';
 import { callModel } from '@/server/ai/providers';
 
-export async function generateCaseStudy(blogTitle: string, focusKeyword: string): Promise<Record<string, unknown>> {
+export async function generateCaseStudy(blogTitle: string, focusKeyword: string, companyId?: number): Promise<Record<string, unknown>> {
   const caseStudySchema = {
     type: 'object',
     properties: {
@@ -89,8 +89,8 @@ Requirements:
   if (companyWebsite) {
     const logoUrl = await fetchLogoUrl(companyWebsite);
     if (logoUrl) {
-      const cloudinaryUrl = await uploadToCloudinary(logoUrl);
-      if (cloudinaryUrl) content.companyLogo = cloudinaryUrl;
+      const uploadedUrl = await uploadFromUrl(logoUrl, companyId ?? 0, 'logos');
+      if (uploadedUrl) content.companyLogo = uploadedUrl;
     }
   }
 

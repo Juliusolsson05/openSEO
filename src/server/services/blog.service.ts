@@ -20,7 +20,7 @@ import type {
 } from '@/server/validators/blog.validators'
 import { DEFAULT_GENERATION_ELEMENTS } from '@/lib/constants/generation'
 
-const DEFAULT_IMAGE = 'https://res.cloudinary.com/dl9qdd24e/image/upload/v1732560659/600x400_fqbihy.png'
+const DEFAULT_IMAGE = '/images/placeholder-cover.svg'
 
 function slugify(input: string): string {
   return input

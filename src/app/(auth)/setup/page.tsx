@@ -19,9 +19,6 @@ const AI_FIELDS = [
 const MEDIA_FIELDS = [
   { key: 'PEXELS', label: 'Pexels API key' },
   { key: 'IDEOGRAM', label: 'Ideogram API key' },
-  { key: 'CLOUDINARY_CLOUD_NAME', label: 'Cloudinary cloud name' },
-  { key: 'CLOUDINARY_API_KEY', label: 'Cloudinary API key' },
-  { key: 'CLOUDINARY_API_SECRET', label: 'Cloudinary API secret' },
 ] as const
 
 export default function SetupPage() {

@@ -1,7 +1,7 @@
 import { MODELS } from '@/server/ai/clients';
 import { generateElementFunctionParameters } from '@/server/ai/blog-elements/generate-function-parameters';
 import { fetchLogoUrl } from '@/server/ai/blog-elements/fetch-logo-url';
-import { uploadToCloudinary } from '@/server/ai/blog-elements/upload-to-cloudinary';
+import { uploadFromUrl } from '@/server/storage/upload';
 import { callModel } from '@/server/ai/providers';
 
 export async function generateNewElement(
@@ -11,6 +11,7 @@ export async function generateNewElement(
   generationNote: string,
   elementsAbove: unknown,
   elementsBelow: unknown,
+  companyId?: number,
 ): Promise<Record<string, unknown>> {
   const schema = generateElementFunctionParameters(elementType);
 
@@ -56,8 +57,8 @@ Generate a '${elementType}' element that fits naturally between these.`,
     if (companyUrl) {
       const logoUrl = await fetchLogoUrl(companyUrl);
       if (logoUrl) {
-        const cloudinaryUrl = await uploadToCloudinary(logoUrl);
-        if (cloudinaryUrl) generatedElement.companyLogo = cloudinaryUrl;
+        const uploadedUrl = await uploadFromUrl(logoUrl, companyId ?? 0, 'logos');
+        if (uploadedUrl) generatedElement.companyLogo = uploadedUrl;
       }
     }
   }

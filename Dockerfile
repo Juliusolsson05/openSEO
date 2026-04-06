@@ -43,6 +43,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.ts ./
 COPY --from=builder /app/instrumentation.ts ./
 
+# Create uploads directory for local storage
+RUN mkdir -p /app/uploads
+
 EXPOSE 3000
 
 CMD ["npm", "start"]

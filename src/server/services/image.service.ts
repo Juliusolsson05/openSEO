@@ -1,10 +1,10 @@
 import { NotFoundError, ValidationError } from '@/server/api/errors'
 import { generateGptImage, generateIdeogramImage, generateImagenImage, generateNanoBananaImage } from '@/server/ai/image/generate-image'
-import { uploadUrlToCloudinary, uploadBinaryToCloudinary, uploadBase64ToCloudinary } from '@/server/utils/cloudinary'
+import { uploadFromUrl, uploadFromBase64, uploadFromBinary } from '@/server/storage/upload'
 import * as imageRepository from '@/server/repositories/image.repository'
 import { vault } from '@/lib/vault'
 
-const DEFAULT_PLACEHOLDER_URL = 'https://res.cloudinary.com/dl9qdd24e/image/upload/v1732560659/600x400_fqbihy.png'
+const DEFAULT_PLACEHOLDER_URL = '/images/placeholder-cover.svg'
 
 export class ImageService {
   async generateImages(companyId: number, payload: unknown) {
@@ -34,8 +34,8 @@ export class ImageService {
     if (forceUpdate || (coverImage.url ?? '') === DEFAULT_PLACEHOLDER_URL) {
       const img = await generateIdeogramImage(coverDescription, coverVersion, body.magic_prompt ?? true)
       if ((img as any).url) {
-        const cloudinaryUrl = await uploadUrlToCloudinary((img as any).url, 'blog_covers')
-        if (cloudinaryUrl) coverImage.url = cloudinaryUrl
+        const uploadedUrl = await uploadFromUrl((img as any).url, companyId, 'covers')
+        if (uploadedUrl) coverImage.url = uploadedUrl
       }
     }
 
@@ -47,8 +47,8 @@ export class ImageService {
       if (forceUpdate || (content.url ?? '') === DEFAULT_PLACEHOLDER_URL) {
         const img = await generateIdeogramImage(description, version, body.magic_prompt ?? true)
         if ((img as any).url) {
-          const cloudinaryUrl = await uploadUrlToCloudinary((img as any).url, 'blog_covers')
-          if (cloudinaryUrl) content.url = cloudinaryUrl
+          const uploadedUrl = await uploadFromUrl((img as any).url, companyId, 'covers')
+          if (uploadedUrl) content.url = uploadedUrl
         }
       }
       await imageRepository.updateElementContent(element.id, content)
@@ -118,8 +118,9 @@ export class ImageService {
           console.error(`[ImageService] GPT image generation failed: ${(img as any).error}`)
           throw new ValidationError(`Image generation failed: ${(img as any).error}`)
         }
-        return uploadBase64ToCloudinary(
+        return uploadFromBase64(
           (img as any).b64_json,
+          companyId,
           folder,
           (img as any).output_format === 'jpeg' ? 'image/jpeg' : (img as any).output_format === 'webp' ? 'image/webp' : 'image/png',
         )
@@ -131,8 +132,9 @@ export class ImageService {
           console.error(`[ImageService] Nano Banana generation failed: ${(img as any).error}`)
           throw new ValidationError(`Image generation failed: ${(img as any).error}`)
         }
-        return uploadBase64ToCloudinary(
+        return uploadFromBase64(
           (img as any).b64_json,
+          companyId,
           folder,
           (img as any).mimeType === 'image/jpeg' ? 'image/jpeg' : (img as any).mimeType === 'image/webp' ? 'image/webp' : 'image/png',
         )
@@ -144,7 +146,7 @@ export class ImageService {
           console.error(`[ImageService] Imagen generation failed: ${(img as any).error}`)
           throw new ValidationError(`Image generation failed: ${(img as any).error}`)
         }
-        return uploadBase64ToCloudinary((img as any).b64_json, folder, 'image/png')
+        return uploadFromBase64((img as any).b64_json, companyId, folder, 'image/png')
       }
 
       const img = await generateIdeogramImage(description, version, body.magic_prompt ?? true)
@@ -152,7 +154,7 @@ export class ImageService {
         console.error(`[ImageService] AI image generation failed: ${(img as any).error}`)
         throw new ValidationError(`Image generation failed: ${(img as any).error}`)
       }
-      if ((img as any).url) return uploadUrlToCloudinary((img as any).url, folder)
+      if ((img as any).url) return uploadFromUrl((img as any).url, companyId, folder)
       return null
     }
 
@@ -165,9 +167,9 @@ export class ImageService {
       const cover = (post.cover_image as any) || {}
       const description = body.force_prompt || cover.description || ''
 
-      newUrl = await generateAndUpload(description, 'blog_covers')
+      newUrl = await generateAndUpload(description, 'covers')
 
-      if (!newUrl) console.error('[ImageService] Cloudinary upload returned null for cover image')
+      if (!newUrl) console.error('[ImageService] Storage upload returned null for cover image')
       if (newUrl) {
         cover.url = newUrl
         await imageRepository.updateBlogPostCover(post.id, cover)
@@ -180,16 +182,16 @@ export class ImageService {
       const content = (target.content as any) || {}
       const description = body.force_prompt || content.description || ''
 
-      newUrl = await generateAndUpload(description, 'blog_elements')
+      newUrl = await generateAndUpload(description, 'elements')
 
-      if (!newUrl) console.error('[ImageService] Cloudinary upload returned null for element image')
+      if (!newUrl) console.error('[ImageService] Storage upload returned null for element image')
       if (newUrl) {
         content.url = newUrl
         await imageRepository.updateElementContent(target.id, content)
       }
     }
 
-    if (!newUrl) throw new ValidationError('Image was generated but could not be uploaded to storage. Check Cloudinary credentials.')
+    if (!newUrl) throw new ValidationError('Image was generated but could not be uploaded to storage.')
 
     return {
       status: `Successfully regenerated image ${imageNumber} for blog post: ${post.title_text}`,
@@ -210,7 +212,7 @@ export class ImageService {
 
     let newUrl: string | null = null
     if (imageNumber === 1) {
-      newUrl = await uploadBinaryToCloudinary(image, 'blog_covers')
+      newUrl = await uploadFromBinary(image, companyId, 'covers')
       if (newUrl) {
         const cover = (post.cover_image as any) || {}
         cover.url = newUrl
@@ -220,7 +222,7 @@ export class ImageService {
       const imgs = post.elements.filter((e) => e.element_type === 'IMAGE')
       const target = imgs[imageNumber - 2]
       if (target) {
-        newUrl = await uploadBinaryToCloudinary(image, 'blog_elements')
+        newUrl = await uploadFromBinary(image, companyId, 'elements')
         if (newUrl) {
           const content = (target.content as any) || {}
           content.url = newUrl
@@ -266,7 +268,7 @@ export class ImageService {
     const imageNumber = Number(body.image_number ?? 1)
 
     if (imageNumber === 1) {
-      const uploaded = await uploadUrlToCloudinary(body.image_url, 'blog_covers')
+      const uploaded = await uploadFromUrl(body.image_url, companyId, 'covers')
       if (!uploaded) throw new ValidationError('Invalid image number or image could not be uploaded.')
       const cover = (post.cover_image as any) || {}
       cover.url = uploaded
@@ -281,7 +283,7 @@ export class ImageService {
     const target = imgs[imageNumber - 2]
     if (!target) throw new ValidationError('Invalid image number or image could not be uploaded.')
 
-    const uploaded = await uploadUrlToCloudinary(body.image_url, 'blog_elements')
+    const uploaded = await uploadFromUrl(body.image_url, companyId, 'elements')
     if (!uploaded) throw new ValidationError('Invalid image number or image could not be uploaded.')
 
     const content = (target.content as any) || {}

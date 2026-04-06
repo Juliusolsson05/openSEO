@@ -52,31 +52,6 @@ const VAULT_KEY_CATALOG: Record<string, VaultKeyConfig> = {
     label: 'Pexels API key',
     envFallback: ['PEXELS', 'PEXELS_API_KEY'],
   },
-  LOGO_API_TOKEN: {
-    category: 'media',
-    label: 'Logo.dev API token',
-    envFallback: ['LOGO_API_TOKEN'],
-  },
-  CLOUDINARY_CLOUD_NAME: {
-    category: 'media',
-    label: 'Cloudinary cloud name',
-    envFallback: ['CLOUDINARY_CLOUD_NAME'],
-  },
-  CLOUDINARY_API_KEY: {
-    category: 'media',
-    label: 'Cloudinary API key',
-    envFallback: ['CLOUDINARY_API_KEY'],
-  },
-  CLOUDINARY_API_SECRET: {
-    category: 'media',
-    label: 'Cloudinary API secret',
-    envFallback: ['CLOUDINARY_API_SECRET'],
-  },
-  CLOUDINARY_UPLOAD_PRESET: {
-    category: 'media',
-    label: 'Cloudinary upload preset',
-    envFallback: ['CLOUDINARY_UPLOAD_PRESET'],
-  },
   OPENSEO_OUTBOUND_KEY: {
     category: 'system',
     label: 'OpenSEO outbound webhook key',

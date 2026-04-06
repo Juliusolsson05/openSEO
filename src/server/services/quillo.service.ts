@@ -13,7 +13,7 @@ import { getParagraphSuggestions } from '@/server/ai/quillo/autopilot/get-paragr
 import { getContentImprovements } from '@/server/ai/quillo/autopilot/get-content-improvements'
 import { getImageSpecifications } from '@/server/ai/quillo/autopilot/get-image-specifications'
 import { generateIdeogramImage } from '@/server/ai/image/generate-image'
-import { uploadUrlToCloudinary } from '@/server/utils/cloudinary'
+import { uploadFromUrl } from '@/server/storage/upload'
 import { toAiElementType } from '@/server/utils/element-type'
 
 type QuilloMessage = {
@@ -475,8 +475,8 @@ export class QuilloService {
             const sourceUrl = (generated as any)?.url as string | undefined
             if (!sourceUrl) throw new ValidationError('Image generation did not return a URL')
 
-            const uploaded = await uploadUrlToCloudinary(sourceUrl, 'blog_elements')
-            if (!uploaded) throw new ValidationError('Cloudinary upload failed')
+            const uploaded = await uploadFromUrl(sourceUrl, companyId, 'elements')
+            if (!uploaded) throw new ValidationError('Image upload failed')
 
             const content = ((element.content ?? {}) as Record<string, unknown>)
             content.url = uploaded

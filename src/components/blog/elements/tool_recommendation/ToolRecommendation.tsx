@@ -28,7 +28,7 @@ export function ToolRecommendation({ content, blogId, elementId, onContentUpdate
       <div className="overflow-hidden rounded-xl border bg-card shadow-sm" style={{ borderColor: brandColor || undefined }}>
         <div className="flex items-center gap-5 border-b px-6 py-5" style={{ borderColor: brandColor || undefined, backgroundColor: brandColor ? `${brandColor}08` : undefined }}>
           <img
-            src={`https://img.logo.dev/${extractDomain(websiteUrl)}?token=pk_PJnue9akRVmT-qo6GmYjhA`}
+            src={`https://www.google.com/s2/favicons?domain=${extractDomain(websiteUrl)}&sz=128`}
             alt={`${content?.title || 'Tool'} Logo`}
             className="h-12 w-12 shrink-0 rounded-lg border border-border bg-white object-contain p-1.5"
           />

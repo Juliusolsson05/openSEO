@@ -54,7 +54,7 @@ export function CaseStudy({ content, blogId, elementId, onContentUpdated, onElem
               </div>
             </div>
             <img
-              src={`https://img.logo.dev/${extractDomain(content?.companyWebsite)}?token=pk_PJnue9akRVmT-qo6GmYjhA`}
+              src={`https://www.google.com/s2/favicons?domain=${extractDomain(content?.companyWebsite)}&sz=128`}
               alt={`${content?.clientName || 'Company'} Logo`}
               className="h-14 w-14 shrink-0 rounded-lg bg-white object-contain p-1.5 shadow-sm"
             />

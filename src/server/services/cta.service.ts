@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { generateIdeogramImage } from '@/server/ai/image/generate-image'
-import { uploadBinaryToCloudinary, uploadUrlToCloudinary } from '@/server/utils/cloudinary'
+import { uploadFromBinary, uploadFromUrl } from '@/server/storage/upload'
 import { NotFoundError, ValidationError } from '@/server/api/errors'
 import * as ctaRepository from '@/server/repositories/cta.repository'
 import { serializeElement } from '@/server/utils/element-type'
@@ -44,6 +44,7 @@ export class CtaService {
   }
 
   private async resolveCtaImage(options: {
+    companyId: number
     imageFile?: File | null
     imageUrl?: string | null
     generateImage?: boolean
@@ -52,13 +53,13 @@ export class CtaService {
     existingImage?: string | null
   }) {
     if (options.imageFile) {
-      const uploaded = await uploadBinaryToCloudinary(options.imageFile, 'cta_images')
+      const uploaded = await uploadFromBinary(options.imageFile, options.companyId, 'cta')
       if (!uploaded) throw new ValidationError('Failed to upload CTA image')
       return uploaded
     }
 
     if (options.imageUrl) {
-      const uploaded = await uploadUrlToCloudinary(options.imageUrl, 'cta_images')
+      const uploaded = await uploadFromUrl(options.imageUrl, options.companyId, 'cta')
       if (!uploaded) throw new ValidationError('Failed to upload CTA image URL')
       return uploaded
     }
@@ -68,7 +69,7 @@ export class CtaService {
       const generated = await generateIdeogramImage(prompt, 2, true)
       const generatedUrl = (generated as any)?.url as string | undefined
       if (!generatedUrl) throw new ValidationError('Failed to generate CTA image')
-      const uploaded = await uploadUrlToCloudinary(generatedUrl, 'cta_images')
+      const uploaded = await uploadFromUrl(generatedUrl, options.companyId, 'cta')
       if (!uploaded) throw new ValidationError('Failed to upload generated CTA image')
       return uploaded
     }
@@ -87,6 +88,7 @@ export class CtaService {
     }
 
     const image = await this.resolveCtaImage({
+      companyId,
       imageFile: options?.imageFile,
       imageUrl: options?.imageUrl,
       generateImage: payload.generateImage,
@@ -130,6 +132,7 @@ export class CtaService {
     const nextDescription = payload.description ?? cta.description
 
     const image = await this.resolveCtaImage({
+      companyId,
       imageFile: options?.imageFile,
       imageUrl: options?.imageUrl,
       generateImage: payload.generateImage,
