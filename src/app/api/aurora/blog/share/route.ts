@@ -141,7 +141,8 @@ export async function GET(req: NextRequest) {
     !link ||
     link.companyId !== companyId ||
     !link.enabled ||
-    link.revokedAt !== null
+    link.revokedAt !== null ||
+    (link.expiresAt !== null && link.expiresAt.getTime() < Date.now())
 
   if (inactive) {
     return NextResponse.json({

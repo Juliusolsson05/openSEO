@@ -54,9 +54,9 @@ function isSafeUrl(url: string): boolean {
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false
     const hostname = parsed.hostname.toLowerCase()
 
-    // Loopback
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') return false
-    if (hostname === '[::1]') return false
+    // Loopback (entire 127.0.0.0/8 range)
+    if (hostname === 'localhost' || hostname.startsWith('127.') || hostname === '0.0.0.0') return false
+    if (hostname === '::1' || hostname === '[::1]') return false
 
     // IPv4 private ranges
     if (hostname.startsWith('10.')) return false
@@ -73,6 +73,13 @@ function isSafeUrl(url: string): boolean {
     if (hostname.startsWith('fc') || hostname.startsWith('fd')) return false
     if (hostname.startsWith('fe80')) return false
     if (hostname.startsWith('[fc') || hostname.startsWith('[fd') || hostname.startsWith('[fe80')) return false
+
+    // IPv4-mapped IPv6 (::ffff:a.b.c.d) — re-check the embedded IPv4
+    const bare = hostname.replace(/^\[|\]$/g, '')
+    if (bare.startsWith('::ffff:') || bare.startsWith('0:0:0:0:0:ffff:')) {
+      const v4 = bare.slice(bare.lastIndexOf(':') + 1)
+      if (v4.includes('.') && !isSafeUrl(`http://${v4}/`)) return false
+    }
 
     // Internal TLDs
     if (hostname.endsWith('.local') || hostname.endsWith('.internal')) return false
