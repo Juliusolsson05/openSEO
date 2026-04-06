@@ -2,7 +2,7 @@
 
 OpenSEO is a self-hostable AI-powered SEO content platform for generating, editing, analyzing, and publishing long-form content.
 
-## What is included
+## Features
 
 - AI-assisted blog generation workflow
 - Block-based editor with rich content elements
@@ -10,70 +10,68 @@ OpenSEO is a self-hostable AI-powered SEO content platform for generating, editi
 - Publishing API and public content rendering
 - Company-scoped workspaces, analytics, scheduling, and CTA management
 
-## Local development
-
-1. Copy `.env.example` to `.env`
-2. Install dependencies with `npm install`
-3. Start infrastructure with `docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d postgres redis`
-4. Run Prisma migrations with `npx prisma migrate dev`
-5. Start the app with `npm run dev`
-6. Open `http://localhost:4720`
-7. Finish first-run onboarding at `/setup`
-
-The default Compose setup does not expose Postgres or Redis to your host. That is intentional for self-hosted OSS installs. Use `docker-compose.debug.yml` only when you want host access for local debugging.
-
-If you prefer to run the app entirely in containers, `./install.sh` is the recommended path.
-
-## One-command install
-
-For a guided local install, run:
+## Quick start (self-hosted)
 
 ```bash
 ./install.sh
 ```
 
-The script creates `.env`, starts Docker services, runs Prisma migrations, waits for the app to become healthy, and then sends you to `/setup` for the first admin account.
+The script generates secrets, starts Docker services (migrations run automatically on first container start), and opens the setup wizard. See `./install.sh --help` for options.
 
-By default it exposes only the app port. Postgres and Redis remain internal to the Docker network.
+## Local development
 
-If you need host access for debugging, run:
+1. Copy `.env.example` to `.env` and fill in the required secrets (or run `./install.sh` and use the generated `.env`)
+2. Install dependencies: `npm install`
+3. Start infrastructure: `docker compose -f compose.yml -f compose.dev.yml up -d postgres redis`
+4. Run migrations: `npx prisma migrate dev`
+5. Start the dev server: `npm run dev`
+6. Open `http://localhost:4720` and complete setup at `/setup`
+
+## Upgrading
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d
+./upgrade.sh
 ```
 
-This exposes:
+The upgrade script backs up your `.env`, merges any new configuration options, rebuilds the image, and restarts. Migrations run automatically on container start.
 
-- Postgres on `15432`
-- Redis on `16379`
+Use `./upgrade.sh --dry-run` to preview changes without applying them.
+
+## Production with dedicated worker
+
+By default, the background job worker runs inline with the web server. For production, use a dedicated worker process:
+
+```bash
+# Start app + worker
+DISABLE_INLINE_WORKER=1 docker compose --profile worker up -d
+```
+
+## Docker Compose files
+
+| File | Purpose | Committed |
+|------|---------|-----------|
+| `compose.yml` | Production base — do not edit | Yes |
+| `compose.dev.yml` | Development overrides (exposes DB/Redis ports) | Yes |
+| `compose.override.yml` | Your customizations (ports, extra services) | No (gitignored) |
 
 ## Environment variables
 
-The project currently supports provider configuration through environment variables. The next OSS step is moving provider secrets into an encrypted in-app vault.
+Start from `.env.example`. Required variables:
 
-Start from `.env.example` and configure at minimum:
+| Variable | Description |
+|----------|-------------|
+| `AUTH_SECRET` | Session signing key (generate: `openssl rand -base64 32`) |
+| `OPENSEO_ENCRYPTION_KEY` | AES-256 vault key (generate: `openssl rand -base64 32`) |
+| `NEXT_PUBLIC_SITE_URL` | Public URL (e.g., `https://seo.example.com`) |
 
-- `AUTH_SECRET`
-- `OPENSEO_ENCRYPTION_KEY`
-- `DATABASE_URL`
-- `REDIS_URL`
-- `FRONTEND_URL`
-- `NEXT_PUBLIC_SITE_URL`
-
-AI and media provider keys are only required for the features you use.
-
-Never commit `.env`. The repository intentionally tracks only `.env.example`.
-
-## Roadmap to public OSS launch
-
-- Replace environment-based provider secrets with an encrypted settings vault
-- Add a first-run `/setup` onboarding flow
-- Add `install.sh` for one-command setup
-- Finalize license, CI, and public docs
+AI and media provider keys are optional — configure only the providers you use. Keys can also be set in the app UI under Settings > Integrations.
 
 ## Scripts
 
-- `npm run dev` - start the dev server
-- `npm run build` - build for production
-- `npm run start` - run the production server
-- `npm run lint` - run ESLint
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm run start` | Production server |
+| `npm run worker` | Standalone background worker |
+| `npm run lint` | Run ESLint |

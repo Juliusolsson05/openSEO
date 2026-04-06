@@ -24,8 +24,8 @@ jobs:
       - name: Prepare env
         run: |
           cp .env.example .env
-          printf '\nAUTH_SECRET=test-auth-secret\n' >> .env
-          printf 'OPENSEO_ENCRYPTION_KEY=QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE=\n' >> .env
+          sed -i 's/^AUTH_SECRET=$/AUTH_SECRET=test-auth-secret-that-is-at-least-32-chars/' .env
+          sed -i 's/^OPENSEO_ENCRYPTION_KEY=$/OPENSEO_ENCRYPTION_KEY=QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE=/' .env
 
       - name: Generate Prisma client
         run: npx prisma generate
