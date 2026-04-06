@@ -28,7 +28,15 @@ export async function processHyperlinks(element: Record<string, unknown>) {
                         properties: {
                           keyword: { type: 'string' },
                           description: { type: 'string' },
-                          matched_positions: { type: 'array', items: { type: 'integer' } },
+                          matched_positions: {
+                            type: 'array',
+                            items: {
+                              type: 'array',
+                              items: { type: 'integer' },
+                              minItems: 2,
+                              maxItems: 2,
+                            },
+                          },
                         },
                         required: ['keyword', 'description', 'matched_positions'],
                         additionalProperties: false,

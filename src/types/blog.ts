@@ -19,7 +19,7 @@ export interface HyperlinkData {
     text: Array<{
       keyword: string
       description: string
-      matched_positions: number[]
+      matched_positions: Array<[number, number]>
     }>
   }
 }

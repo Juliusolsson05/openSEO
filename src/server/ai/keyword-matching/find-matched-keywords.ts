@@ -1,20 +1,29 @@
 export type KeywordWord = { keyword: string; description: string };
 
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function findMatchedKeywords(text: string, words: KeywordWord[]) {
-  const matchedKeywords: Array<{ keyword: string; description: string; matched_positions: number[] }> = [];
-  const wordsList = (text.toLowerCase().match(/\b\w+\b/g) ?? []);
+  const matchedKeywords: Array<{
+    keyword: string;
+    description: string;
+    matched_positions: Array<[number, number]>;
+  }> = [];
 
   for (const word of words) {
-    const matchedPositions = wordsList
-      .map((w, idx) => ({ w, pos: idx + 1 }))
-      .filter((item) => item.w === word.keyword.toLowerCase())
-      .map((item) => item.pos);
-
-    if (matchedPositions.length) {
+    const pattern = new RegExp(`\\b${escapeRegex(word.keyword)}\\b`, 'gi');
+    const positions: Array<[number, number]> = [];
+    let m: RegExpExecArray | null;
+    while ((m = pattern.exec(text)) !== null) {
+      positions.push([m.index, m.index + m[0].length]);
+      if (m.index === pattern.lastIndex) pattern.lastIndex++; // zero-width guard
+    }
+    if (positions.length) {
       matchedKeywords.push({
         keyword: word.keyword,
         description: word.description,
-        matched_positions: matchedPositions,
+        matched_positions: positions,
       });
     }
   }
@@ -41,6 +50,15 @@ function processListElement(content: Record<string, unknown>, words: KeywordWord
   if (typeof content.text_before_list === 'string') matchedKeywords.text_before_list = findMatchedKeywords(content.text_before_list, words);
   if (Array.isArray(content.list_items)) matchedKeywords.list_items = content.list_items.map((item) => findMatchedKeywords(String(item), words));
   if (typeof content.text_after_list === 'string') matchedKeywords.text_after_list = findMatchedKeywords(content.text_after_list, words);
+  return matchedKeywords;
+}
+
+function processListSnippetBlockElement(content: Record<string, unknown>, words: KeywordWord[]) {
+  const matchedKeywords: Record<string, unknown> = {};
+  if (typeof content.title === 'string') matchedKeywords.title = findMatchedKeywords(content.title, words);
+  if (Array.isArray(content.list)) {
+    matchedKeywords.list = content.list.map((item) => findMatchedKeywords(String(item), words));
+  }
   return matchedKeywords;
 }
 
@@ -141,6 +159,7 @@ export const ELEMENT_PROCESSING_MAP = {
   list_paragraph: processListElement,
   numbered_list_paragraph: processListElement,
   list_featured_snippet_block: processListElement,
+  list_snippet_block: processListSnippetBlockElement,
   faq: processFaqElement,
   quote: processQuoteElement,
   versus: processVersusElement,

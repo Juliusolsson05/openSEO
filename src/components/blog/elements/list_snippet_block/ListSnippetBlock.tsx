@@ -23,7 +23,7 @@ export function ListSnippetBlock({
   const items = Array.isArray(data.list) ? data.list : []
 
   const hyperlinkedListItem = (item: string, index: number) => {
-    const kws = (hyperlink?.matched_keywords as any)?.list_items?.[index]
+    const kws = (hyperlink?.matched_keywords as any)?.list?.[index]
     return Array.isArray(kws) && kws.length ? createHyperlinkedText(item, kws) : item
   }
 
