@@ -85,7 +85,7 @@ export default async function SharedBlogPage({ params }: { params: Promise<{ tok
 
   const link = await prisma.shareLink.findUnique({ where: { token } })
 
-  if (!link || !link.enabled) {
+  if (!link || !link.enabled || link.revokedAt !== null) {
     return <Message text="This link is invalid or has been revoked" />
   }
 

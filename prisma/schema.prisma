@@ -159,6 +159,7 @@ model Company {
   sync_conflicts           SyncConflict[]
   inbound_events           InboundEvent[]
   background_jobs          BackgroundJob[]
+  share_links              ShareLink[]
 }
 
 /// --- Durable background job queue (P24A) ---
@@ -290,10 +291,6 @@ model BlogPost {
   reviewed         Boolean  @default(false)
   last_updated     DateTime @updatedAt
 
-  share_token      String?  @unique
-  share_enabled    Boolean  @default(false)
-  share_expires_at DateTime?
-
   company       Company?      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   bulk_schedule BulkSchedule? @relation(fields: [bulkScheduleId], references: [id], onDelete: SetNull)
 
@@ -301,6 +298,7 @@ model BlogPost {
 
   sourceTitle Title?
 
+  share_links     ShareLink[]
   publishes       BlogPublish[]
   elements        BlogPostElement[]
   quillo_analyses QuilloBlogPostAnalysisLog[]
@@ -342,15 +340,24 @@ model BlogPostPostLink {
 }
 
 model ShareLink {
-  id        Int      @id @default(autoincrement())
-  postId    Int
-  token     String   @unique @default(uuid())
-  enabled   Boolean  @default(true)
-  expiresAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              Int       @id @default(autoincrement())
+  postId          Int
+  companyId       Int
+  createdByUserId String?
+  token           String    @unique
+  enabled         Boolean   @default(true)
+  expiresAt       DateTime?
+  revokedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  post    BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  company Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@unique([postId])
+  @@index([companyId])
+  @@index([token])
+  @@index([revokedAt])
 }
 
 model BlogPublish {
