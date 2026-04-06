@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client'
 import { readInboundKey, type InboundEnvelope, type InboundDictionaryPayload } from '@/types/publishing'
 import { prisma } from '@/lib/prisma'
 import { apiHandler } from '@/server/api/handler'
-import { ValidationError } from '@/server/api/errors'
+import { AppError, ValidationError } from '@/server/api/errors'
 import { raw, success } from '@/server/api/response'
 import { resolveCompanyByInboundApiKey } from '@/server/publishing/auth'
 
@@ -36,53 +36,63 @@ export const POST = apiHandler(async ({ body }, req) => {
     throw err
   }
 
-  const dictionaryPayload = envelope.payload?.dictionary
-  if (!dictionaryPayload) throw new ValidationError('payload.dictionary is required')
+  let result
+  try {
+    const dictionaryPayload = envelope.payload?.dictionary
+    if (!dictionaryPayload) throw new ValidationError('payload.dictionary is required')
 
-  let dictionary = null as Awaited<ReturnType<typeof prisma.dictionary.findFirst>>
+    let dictionary = null as Awaited<ReturnType<typeof prisma.dictionary.findFirst>>
 
-  if (dictionaryPayload.id) {
-    dictionary = await prisma.dictionary.findFirst({ where: { id: dictionaryPayload.id, companyId } })
-  }
-
-  if (!dictionary && dictionaryPayload.title) {
-    dictionary = await prisma.dictionary.findFirst({ where: { title: dictionaryPayload.title, companyId } })
-  }
-
-  if (!dictionary) {
-    if (!dictionaryPayload.title || !dictionaryPayload.subject || !dictionaryPayload.language) {
-      throw new ValidationError('For create, dictionary title/subject/language are required')
+    if (dictionaryPayload.id) {
+      dictionary = await prisma.dictionary.findFirst({ where: { id: dictionaryPayload.id, companyId } })
     }
 
-    dictionary = await prisma.dictionary.create({
-      data: {
-        companyId,
-        title: dictionaryPayload.title,
-        subject: dictionaryPayload.subject,
-        language: dictionaryPayload.language,
-        num_words: dictionaryPayload.num_words ?? 0,
-        current_letter: dictionaryPayload.current_letter ?? 'a',
-        status: dictionaryPayload.status ?? 'IN_PROGRESS',
-      },
+    if (!dictionary && dictionaryPayload.title) {
+      dictionary = await prisma.dictionary.findFirst({ where: { title: dictionaryPayload.title, companyId } })
+    }
+
+    if (!dictionary) {
+      if (!dictionaryPayload.title || !dictionaryPayload.subject || !dictionaryPayload.language) {
+        throw new ValidationError('For create, dictionary title/subject/language are required')
+      }
+
+      dictionary = await prisma.dictionary.create({
+        data: {
+          companyId,
+          title: dictionaryPayload.title,
+          subject: dictionaryPayload.subject,
+          language: dictionaryPayload.language,
+          num_words: dictionaryPayload.num_words ?? 0,
+          current_letter: dictionaryPayload.current_letter ?? 'a',
+          status: dictionaryPayload.status ?? 'IN_PROGRESS',
+        },
+      })
+    } else {
+      dictionary = await prisma.dictionary.update({
+        where: { id: dictionary.id },
+        data: {
+          ...(dictionaryPayload.title !== undefined ? { title: dictionaryPayload.title } : {}),
+          ...(dictionaryPayload.subject !== undefined ? { subject: dictionaryPayload.subject } : {}),
+          ...(dictionaryPayload.language !== undefined ? { language: dictionaryPayload.language } : {}),
+          ...(dictionaryPayload.num_words !== undefined ? { num_words: dictionaryPayload.num_words } : {}),
+          ...(dictionaryPayload.current_letter !== undefined ? { current_letter: dictionaryPayload.current_letter } : {}),
+          ...(dictionaryPayload.status !== undefined ? { status: dictionaryPayload.status } : {}),
+        },
+      })
+    }
+
+    await prisma.inboundEvent.update({
+      where: { id: inboundRow.id },
+      data: { processed: true, processed_at: new Date() },
     })
-  } else {
-    dictionary = await prisma.dictionary.update({
-      where: { id: dictionary.id },
-      data: {
-        ...(dictionaryPayload.title !== undefined ? { title: dictionaryPayload.title } : {}),
-        ...(dictionaryPayload.subject !== undefined ? { subject: dictionaryPayload.subject } : {}),
-        ...(dictionaryPayload.language !== undefined ? { language: dictionaryPayload.language } : {}),
-        ...(dictionaryPayload.num_words !== undefined ? { num_words: dictionaryPayload.num_words } : {}),
-        ...(dictionaryPayload.current_letter !== undefined ? { current_letter: dictionaryPayload.current_letter } : {}),
-        ...(dictionaryPayload.status !== undefined ? { status: dictionaryPayload.status } : {}),
-      },
-    })
+
+    result = success({ status: 'processed', dictionary_id: dictionary.id, event_id: envelope.event_id })
+  } catch (err) {
+    if (!(err instanceof AppError)) {
+      await prisma.inboundEvent.delete({ where: { id: inboundRow.id } }).catch(() => {})
+    }
+    throw err
   }
 
-  await prisma.inboundEvent.update({
-    where: { id: inboundRow.id },
-    data: { processed: true, processed_at: new Date() },
-  })
-
-  return success({ status: 'processed', dictionary_id: dictionary.id, event_id: envelope.event_id })
+  return result
 }, { auth: false })

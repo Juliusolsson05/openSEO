@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client'
 import { readInboundKey, type InboundEnvelope, type InboundPostDeletePayload } from '@/types/publishing'
 import { prisma } from '@/lib/prisma'
 import { apiHandler } from '@/server/api/handler'
-import { ValidationError } from '@/server/api/errors'
+import { AppError, ValidationError } from '@/server/api/errors'
 import { raw, success } from '@/server/api/response'
 import { resolveCompanyByInboundApiKey } from '@/server/publishing/auth'
 
@@ -36,40 +36,50 @@ export const POST = apiHandler(async ({ body }, req) => {
     throw err
   }
 
-  const postPayload = envelope.payload?.post
-  if (!postPayload) throw new ValidationError('payload.post is required')
+  let result
+  try {
+    const postPayload = envelope.payload?.post
+    if (!postPayload) throw new ValidationError('payload.post is required')
 
-  let postId: number | null = null
+    let postId: number | null = null
 
-  if (postPayload.id) {
-    const post = await prisma.blogPost.findFirst({ where: { id: postPayload.id, companyId }, select: { id: true } })
-    postId = post?.id ?? null
-  }
+    if (postPayload.id) {
+      const post = await prisma.blogPost.findFirst({ where: { id: postPayload.id, companyId }, select: { id: true } })
+      postId = post?.id ?? null
+    }
 
-  if (!postId && postPayload.remote_id) {
-    const mapping = await prisma.blogPublish.findFirst({
-      where: { remote_id: postPayload.remote_id, blog_post: { companyId } },
-      select: { blogPostId: true },
+    if (!postId && postPayload.remote_id) {
+      const mapping = await prisma.blogPublish.findFirst({
+        where: { remote_id: postPayload.remote_id, blog_post: { companyId } },
+        select: { blogPostId: true },
+      })
+      postId = mapping?.blogPostId ?? null
+    }
+
+    if (!postId && postPayload.slug) {
+      const post = await prisma.blogPost.findUnique({
+        where: { companyId_slug: { companyId, slug: postPayload.slug } },
+        select: { id: true },
+      })
+      postId = post?.id ?? null
+    }
+
+    if (!postId) throw new ValidationError('Post not found for delete')
+
+    await prisma.blogPost.delete({ where: { id: postId } })
+
+    await prisma.inboundEvent.update({
+      where: { id: inboundRow.id },
+      data: { processed: true, processed_at: new Date() },
     })
-    postId = mapping?.blogPostId ?? null
+
+    result = success({ status: 'processed', deleted_post_id: postId, event_id: envelope.event_id })
+  } catch (err) {
+    if (!(err instanceof AppError)) {
+      await prisma.inboundEvent.delete({ where: { id: inboundRow.id } }).catch(() => {})
+    }
+    throw err
   }
 
-  if (!postId && postPayload.slug) {
-    const post = await prisma.blogPost.findUnique({
-      where: { companyId_slug: { companyId, slug: postPayload.slug } },
-      select: { id: true },
-    })
-    postId = post?.id ?? null
-  }
-
-  if (!postId) throw new ValidationError('Post not found for delete')
-
-  await prisma.blogPost.delete({ where: { id: postId } })
-
-  await prisma.inboundEvent.update({
-    where: { id: inboundRow.id },
-    data: { processed: true, processed_at: new Date() },
-  })
-
-  return success({ status: 'processed', deleted_post_id: postId, event_id: envelope.event_id })
+  return result
 }, { auth: false })
