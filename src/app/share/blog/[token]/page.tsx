@@ -2,9 +2,8 @@ import { notFound } from 'next/navigation'
 
 import { prisma } from '@/lib/prisma'
 import { api } from '@/lib/api'
+import { SitePostRenderer } from '@/app/site/_components/SitePostRenderer'
 
-import '@/components/blog/elements'
-import { getPreviewComponent } from '@/components/blog/elements/registry'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -14,6 +13,7 @@ type SharedPost = {
   cover_image?: { url?: string; description?: string } | null
   elements: Array<{
     id: number
+    order: number
     element_type: string
     content: any
   }>
@@ -61,12 +61,12 @@ async function fetchPost(postId: number): Promise<SharedPost | null> {
   const local = await prisma.blogPost.findUnique({
     where: { id: postId },
     include: {
-      elements: {
-        orderBy: { order: 'asc' },
-        select: { id: true, element_type: true, content: true },
+        elements: {
+          orderBy: { order: 'asc' },
+          select: { id: true, order: true, element_type: true, content: true },
+        },
       },
-    },
-  })
+    })
 
   if (!local) return null
 
@@ -117,10 +117,7 @@ export default async function SharedBlogPage({ params }: { params: Promise<{ tok
             ) : null}
 
             <div>
-              {post.elements.map((element) => {
-                const Preview = getPreviewComponent(element.element_type as any)
-                return <Preview key={element.id} content={element.content} />
-              })}
+              <SitePostRenderer elements={post.elements as any} />
             </div>
           </article>
         </CardContent>
