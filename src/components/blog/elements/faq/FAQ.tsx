@@ -17,29 +17,17 @@ import { Button } from '@/components/ui/button'
 import { createHyperlinkedText, type HyperlinkData } from '../hyperlink-utils'
 
 import type { FAQItem, FAQContent } from '@/types/content-elements'
-
-const normalizeContent = (value: unknown): FAQContent => {
-  if (Array.isArray(value)) {
-    return { title: 'FAQ', items: value as FAQItem[] }
-  }
-
-  const raw = (value ?? {}) as { title?: string; items?: FAQItem[] }
-
-  return {
-    title: raw.title ?? 'FAQ',
-    items: Array.isArray(raw.items) ? raw.items : [],
-  }
-}
+import { normalizeFaqContent } from './shared'
 
 export function FAQ({ content, blogId, elementId, onContentUpdated, onElementAdded, onElementDeleted, hyperlink }: ElementComponentProps) {
   const { updateElement } = useElementsApi()
   const { isEditModeEnabled, isEditing, startEditing, stopEditing } = useInlineEdit()
   const editing = isEditing(elementId)
 
-  const initial = normalizeContent(content)
+  const initial = normalizeFaqContent(content)
   const { draft, patch, reset, commit, rebase, isDirty } = useElementDraft<FAQContent>(initial)
 
-  useEffect(() => { rebase(normalizeContent(content)) }, [content])
+  useEffect(() => { rebase(normalizeFaqContent(content)) }, [content])
 
   const saveFn = useCallback(async (data: FAQContent) => {
     const result = await updateElement(elementId, data, blogId)
@@ -74,7 +62,7 @@ export function FAQ({ content, blogId, elementId, onContentUpdated, onElementAdd
   const addItem = () => patch({ items: [...items, { question: '', answer: '' }] })
   const removeItem = (index: number) => patch({ items: items.filter((_, i) => i !== index) })
 
-  const viewContent = normalizeContent(content)
+  const viewContent = normalizeFaqContent(content)
 
   return (
     <BaseElement content={content} blogId={blogId} elementId={elementId} allowEdit={false} allowDelete={false} allowAddElement={false} onContentUpdated={onContentUpdated} onElementAdded={onElementAdded} onElementDeleted={onElementDeleted}>

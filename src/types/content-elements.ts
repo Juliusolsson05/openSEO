@@ -10,8 +10,17 @@ export interface FAQItem { question: string; answer: string }
 export interface FAQContent { title?: string; items: FAQItem[] }
 
 // ─── Checklist ───────────────────────────────────────────
-export interface ChecklistItem { text?: string; action?: string; checked?: boolean }
-export interface ChecklistContent { title?: string; items?: ChecklistItem[] }
+export interface ChecklistItem {
+  action: string
+  details?: string
+  checked?: boolean
+}
+export interface ChecklistContent {
+  title?: string
+  introduction?: string
+  items: ChecklistItem[]
+  conclusion?: string
+}
 
 // ─── Timeline ────────────────────────────────────────────
 export interface TimelineEvent { date: string; title: string; description: string }

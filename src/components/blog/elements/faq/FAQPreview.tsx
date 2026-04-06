@@ -6,14 +6,10 @@ import { BasePreview } from '../BasePreview'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import { Button } from '@/components/ui/button'
 import type { PreviewComponentProps } from '../registry'
-
-interface FAQItem {
-  question: string
-  answer: string
-}
+import { normalizeFaqContent } from './shared'
 
 export function FAQPreview({ content }: PreviewComponentProps) {
-  const items: FAQItem[] = Array.isArray(content) ? content : []
+  const { title, items } = normalizeFaqContent(content)
   const [openIndex, setOpenIndex] = useState<number | null>(items.length ? 0 : null)
 
   const toggleItem = (index: number) => {
@@ -21,15 +17,17 @@ export function FAQPreview({ content }: PreviewComponentProps) {
   }
 
   return (
-    <BasePreview content={items}>
+    <BasePreview content={content}>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="mt-12 text-3xl font-semibold tracking-tight">FAQ</h2>
+        <h2
+          className="mt-12 text-3xl font-semibold tracking-tight"
+          dangerouslySetInnerHTML={{ __html: renderMarkdownInline(title || 'FAQ') }}
+        />
       </div>
 
       <div className="space-y-3">
         {items.map((item, index) => {
           const expanded = openIndex === index
-
           return (
             <div key={index} className="overflow-hidden rounded-lg border bg-card">
               <Button

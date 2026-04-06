@@ -3,7 +3,7 @@
 import { useCallback, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { BaseElement } from '../BaseElement'
-import { renderMarkdownInline } from '@/lib/markdown'
+import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import type { ElementComponentProps } from '../registry'
 import { useElementsApi } from '@/hooks/use-elements-api'
 import { useInlineEdit } from '../inline/InlineEditProvider'
@@ -11,6 +11,7 @@ import { InlineEditorShell } from '../inline/InlineEditorShell'
 import { useElementDraft } from '@/hooks/use-element-draft'
 import { useElementSave } from '@/hooks/use-element-save'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 
@@ -50,10 +51,14 @@ export function Checklist({ content, blogId, elementId, onContentUpdated, onElem
 
   const items = Array.isArray(draft.items) ? draft.items : []
 
-  const updateItemText = (index: number, value: string) => {
+  const updateItemAction = (index: number, value: string) => {
     const next = [...items]
-    const prev = next[index] ?? {}
-    next[index] = { ...prev, text: value, action: value }
+    next[index] = { ...(next[index] ?? { action: '' }), action: value }
+    patch({ items: next })
+  }
+  const updateItemDetails = (index: number, value: string) => {
+    const next = [...items]
+    next[index] = { ...(next[index] ?? { action: '' }), details: value }
     patch({ items: next })
   }
 
@@ -64,7 +69,7 @@ export function Checklist({ content, blogId, elementId, onContentUpdated, onElem
     patch({ items: next })
   }
 
-  const addItem = () => patch({ items: [...items, { text: '', action: '', checked: false }] })
+  const addItem = () => patch({ items: [...items, { action: '', details: '', checked: false }] })
   const removeItem = (index: number) => patch({ items: items.filter((_, i) => i !== index) })
 
   const view = (content ?? {}) as ChecklistContent
@@ -89,6 +94,17 @@ export function Checklist({ content, blogId, elementId, onContentUpdated, onElem
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor={`${elementId}-introduction`}>Introduction</Label>
+                <Textarea
+                  id={`${elementId}-introduction`}
+                  value={draft.introduction ?? ''}
+                  onChange={(e) => patch({ introduction: e.target.value })}
+                  placeholder="Optional introduction shown above the list"
+                  rows={2}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label>Items</Label>
                 <div className="space-y-2">
                   {items.map((item, index) => (
@@ -98,11 +114,18 @@ export function Checklist({ content, blogId, elementId, onContentUpdated, onElem
                         onCheckedChange={(value) => updateItemChecked(index, value === true)}
                         aria-label={`Toggle item ${index + 1}`}
                       />
-                      <Input
-                        value={item.text ?? item.action ?? ''}
-                        onChange={(e) => updateItemText(index, e.target.value)}
-                        placeholder={`Item ${index + 1}`}
-                      />
+                      <div className="flex-1 space-y-2">
+                        <Input
+                          value={item.action ?? ''}
+                          onChange={(e) => updateItemAction(index, e.target.value)}
+                          placeholder={`Item ${index + 1}`}
+                        />
+                        <Input
+                          value={item.details ?? ''}
+                          onChange={(e) => updateItemDetails(index, e.target.value)}
+                          placeholder="Optional details"
+                        />
+                      </div>
                       <button type="button" onClick={() => removeItem(index)} className="rounded p-2 text-muted-foreground hover:text-destructive">
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -113,6 +136,17 @@ export function Checklist({ content, blogId, elementId, onContentUpdated, onElem
                   </button>
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor={`${elementId}-conclusion`}>Conclusion</Label>
+                <Textarea
+                  id={`${elementId}-conclusion`}
+                  value={draft.conclusion ?? ''}
+                  onChange={(e) => patch({ conclusion: e.target.value })}
+                  placeholder="Optional conclusion shown below the list"
+                  rows={2}
+                />
+              </div>
             </div>
           </InlineEditorShell>
         ) : (
@@ -120,19 +154,58 @@ export function Checklist({ content, blogId, elementId, onContentUpdated, onElem
             className={isEditModeEnabled ? 'cursor-text rounded-sm transition hover:ring-1 hover:ring-primary/30' : ''}
             onClick={() => isEditModeEnabled && startEditing(elementId)}
           >
-            <h2 className="mb-4 text-3xl font-bold text-primary" dangerouslySetInnerHTML={{ __html: renderMarkdownInline(view.title ?? '') }} />
+            <h2
+              className="mb-4 text-3xl font-bold text-primary"
+              dangerouslySetInnerHTML={{ __html: renderMarkdownInline(view.title ?? '') }}
+            />
+
+            {view.introduction ? (
+              <p
+                className="mb-6 text-base text-foreground"
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(view.introduction) }}
+              />
+            ) : null}
+
             <ul className="space-y-1">
               {viewItems.map((item, index) => {
-                const text = item.text ?? item.action ?? ''
+                const action = item.action ?? ''
                 const checked = !!item.checked
                 return (
-                  <li key={index} className="flex items-center gap-2" onClick={() => void toggleViewCheck(index)}>
-                    <input type="checkbox" checked={checked} onChange={() => void toggleViewCheck(index)} />
-                    <span className={checked ? 'text-muted-foreground line-through' : ''} dangerouslySetInnerHTML={{ __html: renderMarkdownInline(text) }} />
+                  <li
+                    key={index}
+                    className={`flex items-start gap-3 rounded-md px-3 py-2 transition-colors ${checked ? 'bg-emerald-50' : ''}`}
+                    onClick={() => void toggleViewCheck(index)}
+                  >
+                    <span
+                      className={`mt-1 inline-flex h-4 w-4 items-center justify-center rounded-sm border text-[10px] leading-none ${
+                        checked ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-muted-foreground/40'
+                      }`}
+                    >
+                      {checked ? '✓' : ''}
+                    </span>
+                    <div>
+                      <div
+                        className={`font-medium ${checked ? 'text-emerald-700 line-through' : 'text-foreground'}`}
+                        dangerouslySetInnerHTML={{ __html: renderMarkdownInline(action) }}
+                      />
+                      {item.details ? (
+                        <p
+                          className="mt-1 text-sm text-muted-foreground"
+                          dangerouslySetInnerHTML={{ __html: renderMarkdownInline(item.details) }}
+                        />
+                      ) : null}
+                    </div>
                   </li>
                 )
               })}
             </ul>
+
+            {view.conclusion ? (
+              <p
+                className="mt-4 text-sm text-emerald-700"
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(view.conclusion) }}
+              />
+            ) : null}
           </div>
         )}
       </div>

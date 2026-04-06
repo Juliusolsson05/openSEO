@@ -5,6 +5,7 @@ import type { PreviewComponentProps } from '../registry'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 
 type ConclusionContent = {
+  title?: string
   text?: string
 }
 
@@ -17,7 +18,7 @@ const formatConclusionText = (value: string) => {
 
 export function ConclusionPreview({ content }: PreviewComponentProps) {
   const parsedContent = (content ?? {}) as ConclusionContent
-  const titleHtml = renderMarkdownInline('Conclusion')
+  const titleHtml = renderMarkdownInline(parsedContent.title ?? 'Conclusion')
   const bodyHtml = formatConclusionText(parsedContent.text ?? '')
 
   return (

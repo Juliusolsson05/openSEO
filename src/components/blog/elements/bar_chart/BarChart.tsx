@@ -14,6 +14,7 @@ import {
 } from 'recharts'
 
 import type { BarItem, BarChartContent } from '@/types/content-elements'
+import { computeChartData } from './shared'
 
 interface BarChartProps extends Omit<ElementComponentProps, 'content'> {
   content: BarChartContent
@@ -75,21 +76,9 @@ export function BarChart({
   onContentUpdated,
   onElementDeleted,
 }: BarChartProps) {
-  const bars = Array.isArray(content?.bars) ? content.bars : []
-
-  if (!bars.length) {
-    return null
-  }
-
-  const values = bars.map((bar) => Number(bar.value) || 0)
-  const maxValue = Math.max(...values)
-  const minValue = Math.min(...values)
-  const roundedMax = Math.ceil(maxValue / 10) * 10
-  const startValue = minValue - 5
-  const data = [...bars].sort((a, b) => b.value - a.value)
-
-  const interval = Math.ceil((roundedMax - startValue) / 3)
-  const yTicks = [roundedMax, roundedMax - interval, startValue + interval, startValue]
+  const chart = computeChartData(content)
+  if (!chart) return null
+  const { data, domain, yTicks } = chart
 
   return (
     <BaseElement
@@ -128,7 +117,7 @@ export function BarChart({
               />
               <YAxis
                 ticks={yTicks}
-                domain={[startValue, roundedMax]}
+                domain={domain}
                 tick={{ fill: 'hsl(var(--foreground))', fontWeight: 600, fontSize: 14 }}
                 axisLine={{ stroke: 'hsl(var(--border))' }}
                 tickLine={false}

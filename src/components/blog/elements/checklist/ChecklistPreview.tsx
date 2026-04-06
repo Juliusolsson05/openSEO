@@ -3,19 +3,7 @@
 import { BasePreview } from '../BasePreview'
 import { renderMarkdown, renderMarkdownInline } from '@/lib/markdown'
 import type { PreviewComponentProps } from '../registry'
-
-type ChecklistItem = {
-  action: string
-  details?: string
-  checked?: boolean
-}
-
-type ChecklistContent = {
-  title: string
-  introduction?: string
-  items: ChecklistItem[]
-  conclusion?: string
-}
+import type { ChecklistContent } from '@/types/content-elements'
 
 interface ChecklistPreviewProps extends Omit<PreviewComponentProps, 'content'> {
   content: ChecklistContent

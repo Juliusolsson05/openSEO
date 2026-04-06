@@ -11,8 +11,9 @@ const formatText = (text: string) => {
 }
 
 export function IntroductionPreview({ content }: PreviewComponentProps) {
-  const titleHtml = renderMarkdownInline('Introduction')
-  const formattedText = formatText(content?.text ?? '')
+  const parsed = (content ?? {}) as { title?: string; text?: string }
+  const titleHtml = renderMarkdownInline(parsed.title ?? 'Introduction')
+  const formattedText = formatText(parsed.text ?? '')
 
   return (
     <BasePreview content={content}>

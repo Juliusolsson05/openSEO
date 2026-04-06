@@ -6,28 +6,18 @@ import type { PreviewComponentProps } from '../registry'
 import { renderMarkdownInline } from '@/lib/markdown'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-
-type CallToActionContent = {
-  image_url?: string
-  target_url?: string
-  title?: string
-}
-
-const resolveImageUrl = (imageUrl?: string) => {
-  if (!imageUrl) return ''
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl
-
-  const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '')
-  const normalizedPath = imageUrl.replace(/^\//, '')
-
-  return `${baseUrl}/media/${normalizedPath}`
-}
+import {
+  type CallToActionContent,
+  getCtaTargetUrl,
+  resolveCtaImageUrl,
+} from './shared'
 
 export function CallToActionPreview({ content }: PreviewComponentProps) {
   const [openModal, setOpenModal] = useState(false)
   const parsedContent = (content ?? {}) as CallToActionContent
 
-  const fullUrl = useMemo(() => resolveImageUrl(parsedContent.image_url), [parsedContent.image_url])
+  const fullUrl = useMemo(() => resolveCtaImageUrl(parsedContent), [parsedContent])
+  const targetUrl = getCtaTargetUrl(parsedContent)
 
   return (
     <BasePreview content={content}>
@@ -48,7 +38,7 @@ export function CallToActionPreview({ content }: PreviewComponentProps) {
           </DialogHeader>
           <p className="text-sm text-foreground">
             <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline('This Call to Action leads to ') }} />
-            <strong dangerouslySetInnerHTML={{ __html: renderMarkdownInline(parsedContent.target_url || '') }} />
+            <strong dangerouslySetInnerHTML={{ __html: renderMarkdownInline(targetUrl) }} />
           </p>
           <DialogFooter>
             <Button onClick={() => setOpenModal(false)}>Close</Button>
