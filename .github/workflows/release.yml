@@ -139,7 +139,7 @@ jobs:
           fi
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v4
+        uses: sigstore/cosign-installer@v3.8.2
 
       - name: Get GHCR digest
         id: ghcr-digest
