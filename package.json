@@ -63,7 +63,7 @@
     "dompurify": "^3.3.3",
     "flydrive": "^2.1.0",
     "framer-motion": "^12.33.0",
-    "isomorphic-dompurify": "^2.36.0",
+    "isomorphic-dompurify": "^3.7.1",
     "lucide-react": "^0.563.0",
     "marked": "^17.0.1",
     "next": "16.2.2",
