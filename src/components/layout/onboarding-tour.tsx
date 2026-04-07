@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import Joyride, { CallBackProps, STATUS, ACTIONS, Step } from 'react-joyride'
+import { Joyride, type EventData, type Controls, STATUS, ACTIONS, EVENTS, type Step } from 'react-joyride'
 
 const STEPS: Step[] = [
   {
@@ -10,7 +10,7 @@ const STEPS: Step[] = [
     content:
       'This is your content hub. All generated posts live here — create, edit, and manage them.',
     placement: 'right',
-    disableBeacon: true,
+    skipBeacon: true,
   },
   {
     target: '[data-tour="generate-post-btn"]',
@@ -18,7 +18,7 @@ const STEPS: Step[] = [
     content:
       'Click here to generate your first blog post from a title in the queue. OpenSEO handles structure, SEO, and content automatically.',
     placement: 'bottom',
-    disableBeacon: true,
+    skipBeacon: true,
   },
   {
     target: '[data-tour="nav-titles"]',
@@ -26,7 +26,7 @@ const STEPS: Step[] = [
     content:
       'Generate SEO-optimized blog titles based on your industry. Each title becomes a post when you hit generate.',
     placement: 'right',
-    disableBeacon: true,
+    skipBeacon: true,
   },
   {
     target: '[data-tour="nav-analytics"]',
@@ -34,7 +34,7 @@ const STEPS: Step[] = [
     content:
       'Track content performance — readability scores, keyword density, internal linking, and more.',
     placement: 'right',
-    disableBeacon: true,
+    skipBeacon: true,
   },
   {
     target: '[data-tour="nav-settings"]',
@@ -42,7 +42,7 @@ const STEPS: Step[] = [
     content:
       'Configure your publishing endpoint, API keys, company profile, and AI model preferences.',
     placement: 'right',
-    disableBeacon: true,
+    skipBeacon: true,
   },
   {
     target: '[data-tour="topbar-search"]',
@@ -50,7 +50,7 @@ const STEPS: Step[] = [
     content:
       'Quickly find any post, title, dictionary entry, or product across your workspace.',
     placement: 'bottom',
-    disableBeacon: true,
+    skipBeacon: true,
   },
 ]
 
@@ -110,8 +110,8 @@ export function OnboardingTour({ userId, enabled, onFinish }: Props) {
     }
   }, [enabled])
 
-  const handleCallback = useCallback(
-    (data: CallBackProps) => {
+  const handleEvent = useCallback(
+    (data: EventData, controls: Controls) => {
       const { status, action, index, type } = data
 
       if (
@@ -128,12 +128,12 @@ export function OnboardingTour({ userId, enabled, onFinish }: Props) {
         return
       }
 
-      if (type === 'error:target_not_found') {
+      if (type === EVENTS.TARGET_NOT_FOUND) {
         setRun(false)
         return
       }
 
-      if (type === 'step:after') {
+      if (type === EVENTS.STEP_AFTER) {
         if (action === ACTIONS.PREV) {
           setStepIndex(index - 1)
         } else {
@@ -152,12 +152,21 @@ export function OnboardingTour({ userId, enabled, onFinish }: Props) {
       run={run}
       stepIndex={stepIndex}
       continuous
-      showSkipButton
-      showProgress
       scrollToFirstStep
-      spotlightClicks={false}
-      disableOverlayClose={false}
-      callback={handleCallback}
+      onEvent={handleEvent}
+      options={{
+        primaryColor: 'hsl(221.2 83.2% 53.3%)',
+        arrowColor: '#fff',
+        backgroundColor: '#fff',
+        overlayColor: 'rgba(0, 0, 0, 0.55)',
+        textColor: '#1a1a2e',
+        zIndex: 10000,
+        showProgress: true,
+        blockTargetInteraction: true,
+        overlayClickAction: 'close',
+        buttons: ['back', 'close', 'primary', 'skip'],
+        spotlightRadius: 8,
+      }}
       locale={{
         back: 'Back',
         close: 'Close',
@@ -166,14 +175,6 @@ export function OnboardingTour({ userId, enabled, onFinish }: Props) {
         skip: 'Skip tour',
       }}
       styles={{
-        options: {
-          zIndex: 10000,
-          primaryColor: 'hsl(221.2 83.2% 53.3%)',
-          arrowColor: '#fff',
-          backgroundColor: '#fff',
-          overlayColor: 'rgba(0, 0, 0, 0.55)',
-          textColor: '#1a1a2e',
-        },
         tooltip: {
           borderRadius: '10px',
           fontSize: '14px',
@@ -189,7 +190,7 @@ export function OnboardingTour({ userId, enabled, onFinish }: Props) {
           color: '#64748b',
           padding: '12px 0 4px',
         },
-        buttonNext: {
+        buttonPrimary: {
           borderRadius: '6px',
           fontSize: '13px',
           fontWeight: 600,
@@ -204,9 +205,6 @@ export function OnboardingTour({ userId, enabled, onFinish }: Props) {
         buttonSkip: {
           fontSize: '12px',
           color: '#94a3b8',
-        },
-        spotlight: {
-          borderRadius: '8px',
         },
       }}
     />
