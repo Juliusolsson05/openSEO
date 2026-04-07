@@ -97,6 +97,7 @@ export function useImageStudioState(opts: Options) {
   const onStockSelect = useCallback(async (url: string) => {
     setIsGenerating(true)
     try {
+      // eslint-disable-next-line react-hooks/rules-of-hooks -- useStockPhoto is not a hook, it's a plain async function
       const data = await useStockPhoto({ post_id: blogId, image_number: imageNumber, image_url: url })
       if (data?.new_url) addToHistory(data.new_url, 'stock')
     } catch {

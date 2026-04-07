@@ -33,12 +33,10 @@ function stripHtml(html: string): string {
     // Remove all HTML tags
     .replace(/<[^>]+>/g, ' ')
     // Decode common entities
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
+    .replace(/&(nbsp|amp|lt|gt|quot|#39);/gi, (_, entity) => {
+      const map: Record<string, string> = { nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }
+      return map[entity.toLowerCase()] ?? _
+    })
     // Collapse whitespace
     .replace(/\s+/g, ' ')
     .trim()

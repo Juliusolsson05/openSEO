@@ -21,11 +21,12 @@ import {
 
 import type { DashboardDefinition as Definition, DashboardWord as WordDefinition } from '@/types/dictionary'
 
-const clean = (value?: string) =>
-  (value || '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]*>/g, '')
-    .trim()
+const clean = (value?: string) => {
+  let s = (value || '').replace(/<br\s*\/?>/gi, '\n')
+  let prev = ''
+  while (s !== prev) { prev = s; s = s.replace(/<[^>]*>/g, '') }
+  return s.trim()
+}
 
 export default function DictionaryPublicPreviewPage() {
   const params = useParams<{ id: string; wordid: string }>()
