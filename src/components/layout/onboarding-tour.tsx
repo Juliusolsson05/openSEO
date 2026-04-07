@@ -136,6 +136,11 @@ export function OnboardingTour({ userId, enabled, onFinish }: Props) {
       if (type === EVENTS.STEP_AFTER) {
         if (action === ACTIONS.PREV) {
           setStepIndex(index - 1)
+        } else if (index + 1 >= STEPS.length) {
+          // Last step — finish the tour
+          localStorage.setItem(`openseo:onboarding-tour:done:${userId}`, '1')
+          setRun(false)
+          onFinish?.()
         } else {
           setStepIndex(index + 1)
         }
