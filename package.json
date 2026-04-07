@@ -60,7 +60,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cookies-next": "^6.1.1",
-    "dompurify": "^3.3.1",
+    "dompurify": "^3.3.3",
     "flydrive": "^2.1.0",
     "framer-motion": "^12.33.0",
     "isomorphic-dompurify": "^2.36.0",
