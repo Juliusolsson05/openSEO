@@ -81,7 +81,7 @@
     "sharp": "^0.34.5",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
-    "tsx": "^4.21.0",
+    "tsx": "^4.22.4",
     "zod": "^4.3.6"
   },
   "devDependencies": {
